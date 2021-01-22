@@ -1,0 +1,69 @@
+{
+  "name": "splunk-otel-js",
+  "version": "0.1.0",
+  "description": "The Splunk distribution of OpenTelemetry Node Instrumentation provides a Node agent that automatically instruments your Node application to capture and report distributed traces to Splunk APM.",
+  "repository": "git@github.com:signalfx/splunk-otel-js.git",
+  "author": "Splunk <splunk-oss@splunk.com>",
+  "license": "Apache-2.0",
+  "main": "build/src/index.js",
+  "types": "build/src/index.d.ts",
+  "scripts": {
+    "compile": "tsc --build",
+    "clean": "tsc --build --clean",
+    "test": "nyc ts-mocha -p tsconfig.json 'test/**/*.test.ts'",
+    "codecov": "nyc report --reporter=json && codecov -f coverage/*.json -p .",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "watch": "tsc --build --watch"
+  },
+  "keywords": [
+    "splunk",
+    "signalfx",
+    "apm",
+    "opentelemetry",
+    "nodejs",
+    "tracing",
+    "profiling",
+    "metrics",
+    "stats"
+  ],
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "files": [
+    "build/src/**/*.js",
+    "build/src/**/*.js.map",
+    "build/src/**/*.d.ts",
+    "doc",
+    "LICENSE",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@opentelemetry/context-base": "^0.15.0",
+    "@opentelemetry/resources": "^0.15.0",
+    "@types/mocha": "8.2.0",
+    "@types/node": "14.14.20",
+    "@types/semver": "7.3.4",
+    "@types/shimmer": "1.0.1",
+    "codecov": "3.8.1",
+    "gts": "2.0.2",
+    "mocha": "7.2.0",
+    "nyc": "15.1.0",
+    "rimraf": "3.0.2",
+    "shimmer": "1.2.1",
+    "ts-mocha": "8.0.0",
+    "ts-node": "9.1.1",
+    "typescript": "3.9.7"
+  },
+  "dependencies": {
+    "@opentelemetry/context-async-hooks": "^0.15.0",
+    "@opentelemetry/core": "^0.15.0",
+    "@opentelemetry/exporter-jaeger": "^0.15.0",
+    "@opentelemetry/node": "^0.15.0",
+    "@opentelemetry/tracing": "^0.15.0",
+    "eslint-plugin-header": "^3.1.0"
+  }
+}
