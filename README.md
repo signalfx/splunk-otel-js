@@ -31,7 +31,7 @@ the SignalFx Tracing Library for JS](migration.md).
 
 ## All configuration options
 
-### Zipkin exporter
+### Jaeger exporter
 
 | Environment variable          | Default value                        | Notes                                                                  |
 | ----------------------------- | ------------------------------------ | ---------------------------------------------------------------------- |
