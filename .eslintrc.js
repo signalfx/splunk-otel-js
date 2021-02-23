@@ -12,7 +12,7 @@ module.exports = {
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
-      "project": "./tsconfig.json"
+      "project": "./tsconfig.eslint.json"
   },
   rules: {
     "@typescript-eslint/no-this-alias": "off",

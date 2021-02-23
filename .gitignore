@@ -1,3 +1,4 @@
+tsconfig.tsbuildinfo
 
 # Created by https://www.gitignore.io/api/node,macos,visualstudiocode
 
@@ -100,7 +101,7 @@ package-lock.json
 yarn.lock
 out
 versions
-build
+lib
 prebuilds
 docs/test.js
 !test/node_modules

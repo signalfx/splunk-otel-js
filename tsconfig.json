@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "rootDir": ".",
-    "outDir": "build",
+    "rootDir": "./src/",
+    "outDir": "lib",
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "composite": true,
@@ -22,8 +22,7 @@
     "newLine": "LF"
   },
   "include": [
-    "src/**/*.ts",
-    "test/**/*.ts"
+    "src/**/*.ts"
   ],
   "exclude": ["node_modules"],
   "references": []

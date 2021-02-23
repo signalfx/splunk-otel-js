@@ -18,6 +18,9 @@ jobs:
       - run:
           name: Run tests
           command: yarn test
+      - run:
+          name: Build
+          command: yarn compile 
 
 workflows:
   build: 
