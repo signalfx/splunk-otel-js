@@ -14,4 +14,19 @@
  * limitations under the License.
  */
 
-export const VERSION = '0.1.0';
+import * as sinon from 'sinon';
+import * as tracing from '../src/tracing';
+
+describe('instrumentation', () => {
+  const startTracingMock = sinon.stub(tracing, 'startTracing');
+
+  afterEach(() => {
+    startTracingMock.reset();
+    startTracingMock.restore();
+  });
+
+  it('importing auto calls startTracing', () => {
+    require('../src/instrument');
+    sinon.assert.calledOnce(startTracingMock);
+  });
+});

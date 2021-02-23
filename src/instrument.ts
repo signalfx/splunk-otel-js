@@ -14,4 +14,6 @@
  * limitations under the License.
  */
 
-export const VERSION = '0.1.0';
+import { startTracing } from './tracing';
+
+startTracing();

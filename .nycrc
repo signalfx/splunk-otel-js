@@ -4,10 +4,8 @@
   ],
   "exclude": [
     "**/*.d.ts",
-    "build/**/*.*",
+    "lib/**/*.*",
     "src/index.ts",
-    "src/platform/**/index.ts",
-    "src/platform/browser/*.ts",
     "src/version.ts",
     "test/**/*.*",
     ".eslintrc.js",
