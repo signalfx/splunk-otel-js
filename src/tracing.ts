@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
+import { propagation } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
+import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
+import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 
 import { EnvResourceDetector } from './resource';
 import { Options, _setDefaultOptions } from './options';
@@ -26,6 +29,10 @@ export function startTracing(opts: Partial<Options> = {}): void {
   if (process.env.OTEL_TRACE_ENABLED === 'false') {
     return;
   }
+
+  propagation.setGlobalPropagator(
+    new B3Propagator({ injectEncoding: B3InjectEncoding.MULTI_HEADER })
+  );
 
   const options = _setDefaultOptions(opts);
 
@@ -37,7 +44,7 @@ export function startTracing(opts: Partial<Options> = {}): void {
 
   registerInstrumentations({ tracerProvider: provider });
 
-  provider.register();
+  provider.register({ contextManager: new AsyncHooksContextManager() });
 
   const jaegerOptions = {
     serviceName: options.serviceName!,
