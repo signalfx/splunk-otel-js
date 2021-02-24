@@ -56,6 +56,13 @@ describe('tracing', () => {
     addSpanProcessorMock.reset();
   });
 
+  it('does not setup tracing OTEL_TRACE_ENABLED=false', () => {
+    process.env.OTEL_TRACE_ENABLED = 'false';
+    startTracing();
+    sinon.assert.notCalled(addSpanProcessorMock);
+    delete process.env.OTEL_TRACE_ENABLED;
+  });
+
   it('setups tracing with defaults', () => {
     startTracing();
     assertTracingPipeline(
@@ -92,7 +99,6 @@ describe('tracing', () => {
 
     startTracing();
     assertTracingPipeline(url, serviceName, accessToken);
-
     envExporterStub.restore();
     envServiceStub.restore();
     envAccessStub.restore();
