@@ -65,6 +65,7 @@
     "typescript": "3.9.7"
   },
   "dependencies": {
+    "@opentelemetry/api": "^0.17.0",
     "@opentelemetry/context-async-hooks": "^0.17.0",
     "@opentelemetry/core": "^0.17.0",
     "@opentelemetry/exporter-jaeger": "^0.17.0",

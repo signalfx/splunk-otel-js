@@ -18,6 +18,7 @@ import { NodeTracerProvider } from '@opentelemetry/node';
 import { BatchSpanProcessor } from '@opentelemetry/tracing';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
+import { EnvResourceDetector } from './resource';
 
 const defaultEndpoint = 'http://localhost:9080/v1/trace';
 const defaultServiceName = 'unnamed-node-service';
@@ -29,11 +30,15 @@ interface Options {
 }
 
 export function startTracing(options: Options = {}): void {
-  const provider = new NodeTracerProvider({});
+  if (process.env.OTEL_TRACE_ENABLED === 'false') {
+    return;
+  }
 
-  registerInstrumentations({
-    tracerProvider: provider,
+  const provider = new NodeTracerProvider({
+    resource: new EnvResourceDetector().detect(),
   });
+
+  registerInstrumentations({ tracerProvider: provider });
 
   provider.register();
 
