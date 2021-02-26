@@ -19,8 +19,10 @@ import * as sinon from 'sinon';
 import * as URL from 'url';
 import { BatchSpanProcessor } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
-import { startTracing } from '../src/tracing';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
+
+import { startTracing } from '../src/tracing';
+import * as jaeger from '../src/jaeger';
 
 describe('tracing', () => {
   const addSpanProcessorMock = sinon.stub(
@@ -28,10 +30,18 @@ describe('tracing', () => {
     'addSpanProcessor'
   );
 
+  const patchJaegerMock = sinon.stub(jaeger, '_patchJaeger');
+
+  beforeEach(() => {
+    addSpanProcessorMock.reset();
+    patchJaegerMock.reset();
+  });
+
   function assertTracingPipeline(
     exportURL: string,
     serviceName: string,
-    accessToken?: string
+    accessToken?: string,
+    maxAttrLength?: number
   ) {
     sinon.assert.calledOnce(addSpanProcessorMock);
     const processor = addSpanProcessorMock.getCall(0).args[0];
@@ -50,11 +60,9 @@ describe('tracing', () => {
 
     const process = exporter['_process'];
     assert.equal(process.serviceName, serviceName);
-  }
 
-  beforeEach(() => {
-    addSpanProcessorMock.reset();
-  });
+    assert.equal(maxAttrLength, patchJaegerMock.getCall(0).args[0]);
+  }
 
   it('does not setup tracing OTEL_TRACE_ENABLED=false', () => {
     process.env.OTEL_TRACE_ENABLED = 'false';
@@ -67,7 +75,9 @@ describe('tracing', () => {
     startTracing();
     assertTracingPipeline(
       'http://localhost:9080/v1/trace',
-      'unnamed-node-service'
+      'unnamed-node-service',
+      '',
+      1200
     );
   });
 
@@ -75,18 +85,21 @@ describe('tracing', () => {
     const endpoint = 'https://custom-endpoint:1111/path';
     const serviceName = 'test-node-service';
     const accessToken = '1234';
-    startTracing({ endpoint, serviceName, accessToken });
-    assertTracingPipeline(endpoint, serviceName, accessToken);
+    const maxAttrLength = 50;
+    startTracing({ endpoint, serviceName, accessToken, maxAttrLength });
+    assertTracingPipeline(endpoint, serviceName, accessToken, maxAttrLength);
   });
 
   it('setups tracing with custom options from env', () => {
     const url = 'https://url-from-env:3030/trace-path';
     const serviceName = 'env-service';
     const accessToken = 'zxcvb';
+    const maxAttrLength = 101;
 
     process.env.SPLK_TRACE_EXPORTER_URL = '';
     process.env.SPLK_SERVICE_NAME = '';
     process.env.SPLK_ACCESS_TOKEN = '';
+    process.env.SPLK_MAX_ATTR_LENGTH = '42';
     const envExporterStub = sinon
       .stub(process.env, 'SPLK_TRACE_EXPORTER_URL')
       .value(url);
@@ -96,11 +109,15 @@ describe('tracing', () => {
     const envAccessStub = sinon
       .stub(process.env, 'SPLK_ACCESS_TOKEN')
       .value(accessToken);
+    const envMaxAttrLength = sinon
+      .stub(process.env, 'SPLK_MAX_ATTR_LENGTH')
+      .value(maxAttrLength);
 
     startTracing();
-    assertTracingPipeline(url, serviceName, accessToken);
+    assertTracingPipeline(url, serviceName, accessToken, maxAttrLength);
     envExporterStub.restore();
     envServiceStub.restore();
     envAccessStub.restore();
+    envMaxAttrLength.restore();
   });
 });

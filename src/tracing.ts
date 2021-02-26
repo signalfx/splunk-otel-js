@@ -15,24 +15,21 @@
  */
 
 import { NodeTracerProvider } from '@opentelemetry/node';
-import { BatchSpanProcessor } from '@opentelemetry/tracing';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
+
 import { EnvResourceDetector } from './resource';
+import { Options, _setDefaultOptions } from './options';
+import { _patchJaeger } from './jaeger';
 
-const defaultEndpoint = 'http://localhost:9080/v1/trace';
-const defaultServiceName = 'unnamed-node-service';
-
-interface Options {
-  endpoint?: string;
-  serviceName?: string;
-  accessToken?: string;
-}
-
-export function startTracing(options: Options = {}): void {
+export function startTracing(opts: Partial<Options> = {}): void {
   if (process.env.OTEL_TRACE_ENABLED === 'false') {
     return;
   }
+
+  const options = _setDefaultOptions(opts);
+
+  _patchJaeger(options.maxAttrLength);
 
   const provider = new NodeTracerProvider({
     resource: new EnvResourceDetector().detect(),
@@ -43,14 +40,8 @@ export function startTracing(options: Options = {}): void {
   provider.register();
 
   const jaegerOptions = {
-    serviceName:
-      options.serviceName ||
-      process.env.SPLK_SERVICE_NAME ||
-      defaultServiceName,
-    endpoint:
-      options.endpoint ||
-      process.env.SPLK_TRACE_EXPORTER_URL ||
-      defaultEndpoint,
+    serviceName: options.serviceName!,
+    endpoint: options.endpoint,
     tags: [],
     username: '',
     password: '',
@@ -63,6 +54,6 @@ export function startTracing(options: Options = {}): void {
   }
 
   provider.addSpanProcessor(
-    new BatchSpanProcessor(new JaegerExporter(jaegerOptions))
+    new options.spanProcessor(new JaegerExporter(jaegerOptions))
   );
 }
