@@ -18,7 +18,11 @@ import * as sinon from 'sinon';
 import * as tracing from '../src/tracing';
 
 describe('instrumentation', () => {
-  const startTracingMock = sinon.stub(tracing, 'startTracing');
+  let startTracingMock;
+
+  beforeEach(() => {
+    startTracingMock = sinon.stub(tracing, 'startTracing');
+  });
 
   afterEach(() => {
     startTracingMock.reset();

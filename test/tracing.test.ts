@@ -25,10 +25,19 @@ import { startTracing } from '../src/tracing';
 import * as jaeger from '../src/jaeger';
 
 describe('tracing', () => {
-  const addSpanProcessorMock = sinon.stub(
-    NodeTracerProvider.prototype,
-    'addSpanProcessor'
-  );
+  let addSpanProcessorMock;
+
+  beforeEach(() => {
+    addSpanProcessorMock = sinon.stub(
+      NodeTracerProvider.prototype,
+      'addSpanProcessor'
+    );
+  });
+
+  afterEach(() => {
+    addSpanProcessorMock.reset();
+    addSpanProcessorMock.restore();
+  });
 
   const patchJaegerMock = sinon.stub(jaeger, '_patchJaeger');
 
