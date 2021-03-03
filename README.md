@@ -27,9 +27,38 @@ the SignalFx Tracing Library for JS](migration.md).
 
 ## Getting Started
 
-#### TODO
+Assuming the default Splunk APM setup with SignalFx Smart Agent running on localhost. If you're running a
+different setup, refer to the [configuration options](#config-options) below to customize trace export endpoint
+and other behaviour.
 
-## All configuration options
+1. Install @splunk/otel package
+
+```
+npm install @splunk/otel --save
+```
+
+2. Install instrumentation packages
+
+```
+npm install @opentelemetry/instrumentation-http --save
+```
+
+You can find a list of instrumentation packages supported out of the box [here](#default-instrumentation-packages).
+
+You can also install additional packages and use them as described [here](#custom-instrumentation-packages).
+
+
+3. Run node app with `-r @splunk/otel/lib/instrument` CLI argument
+
+```
+export SPLK_SERVICE_NAME=my-node-svc
+node -r @splunk/otel/lib/instrument app.js
+```
+
+You can also instrument your app with code as described [here](#instrument-with-code).
+
+
+## All configuration options <a name="config-options"></a>
 
 ### Jaeger exporter
 
@@ -99,7 +128,7 @@ node -r @splunk/otel/lib/instrument index.js
 ```
 
 
-## Manually instrument an application
+## Manually instrument an application <a name="instrument-with-code"></a>
 
 You can also manually instrument your application by adding the following lines before everything else in your application.
 
@@ -111,7 +140,7 @@ startTracing();
 // rest of your application entry point script
 ```
 
-## Using additional instrumentation plugins
+## Using additional instrumentation plugins <a name="custom-instrumentation-packages"></a>
 
 If you setup tracing manually by calling the `startTracing()` method, you can use custom or 3rd party instrumentations as long as they implement the [OpenTelemetry JS Instrumentation interface](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-instrumentation). Custom instrumentations can be enabled by passing them to the `startTracing()` method as follows:
 
@@ -141,7 +170,7 @@ startTracing({
   ]
 });
 ```
-## Default Instrumentation Packages
+## Default Instrumentation Packages <a name="default-instrumentation-packages"></a>
 
 By default the following instrumentations will automatically be enabled if they are installed. In order to use
 any of these instrumentations, you'll need to install them with npm and then run your app with `-r @splunk/otel/lib/instrument`
