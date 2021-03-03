@@ -16,24 +16,40 @@
 
 import * as assert from 'assert';
 import * as sinon from 'sinon';
-import { SimpleSpanProcessor } from '@opentelemetry/tracing';
-const { trace } = require('@opentelemetry/api');
+import {
+  Span,
+  SimpleSpanProcessor,
+  BasicTracerProvider,
+} from '@opentelemetry/tracing';
+const {
+  trace,
+  SpanKind,
+  ROOT_CONTEXT,
+  TraceFlags,
+} = require('@opentelemetry/api');
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { ThriftSpan } from '@opentelemetry/exporter-jaeger/build/src/types';
 
-import { startTracing } from '../src/tracing';
+import { _patchJaeger } from '../src/jaeger';
 
-describe('instrumentation', () => {
-  startTracing({ maxAttrLength: 3, spanProcessor: SimpleSpanProcessor });
+describe('exporter', () => {
+  const maxAttrLength = 3;
+  _patchJaeger(maxAttrLength);
 
   const jaegerFlushMock = sinon.stub(JaegerExporter.prototype, '_append');
+  const provider = new BasicTracerProvider({ traceParams: {} });
+  provider.addSpanProcessor(
+    new SimpleSpanProcessor(new JaegerExporter({ serviceName: 'test-service' }))
+  );
+
+  const tracer = provider.getTracer('default');
 
   afterEach(() => {
     jaegerFlushMock.reset();
     jaegerFlushMock.restore();
   });
 
-  it('importing auto calls startTracing', done => {
+  it('jaeger truncates tag values', done => {
     jaegerFlushMock.callsFake((span: ThriftSpan) => {
       try {
         const tagsByKey = span.tags.reduce((tags, tag) => {
@@ -55,13 +71,22 @@ describe('instrumentation', () => {
       }
     });
 
-    const tracer = trace.getTracer('test-tracer');
-    const span = tracer.startSpan('main');
+    const span = new Span(
+      tracer,
+      ROOT_CONTEXT,
+      'span1',
+      {
+        traceId: 'd4cda95b652f4a1592b449d5929fda1b',
+        spanId: '6e0c63257de34c92',
+        traceFlags: TraceFlags.SAMPLED,
+      },
+      SpanKind.CLIENT
+    );
     span.setAttribute('k1', 'v1');
     span.setAttribute('k2', 'vvvvvvvvvvvvvvvvvvvvvvvvvvvvv');
     span.setAttribute('k3', true);
     span.setAttribute('k4', 42);
     span.setAttribute('k5', 4.2);
     span.end();
-  }).timeout(10000);
+  }).timeout(3000);
 });
