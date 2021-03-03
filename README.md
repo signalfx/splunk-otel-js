@@ -84,7 +84,7 @@ In order to send traces directly to SignalFx ingest API, you need to:
 ## Automatically instrument an application
 
 You can use node's `-r` CLI flag to pre-load the instrumentation module and automatically instrument your NodeJS application.
-You can add `-r splunk-otel-js/lib/instrument` CLI parameter to automatically instrument your application. 
+You can add `-r @splunk/otel/lib/instrument` CLI parameter to automatically instrument your application. 
 
 For example, if you start your application as follows:
 
@@ -95,7 +95,7 @@ node index.js
 Then you can automatically instrument your application by running
 
 ```bash
-node -r splunk-otel-js/instrument index.js
+node -r @splunk/otel/lib/instrument index.js
 ```
 
 
@@ -104,7 +104,7 @@ node -r splunk-otel-js/instrument index.js
 You can also manually instrument your application by adding the following lines before everything else in your application.
 
 ```js
-const { startTracing } = require('splunk-otel-js');
+const { startTracing } = require('@splunk/otel');
 
 startTracing();
 
