@@ -111,6 +111,54 @@ startTracing();
 // rest of your application entry point script
 ```
 
+## Using additional instrumentation plugins
+
+If you setup tracing manually by calling the `startTracing()` method, you can use custom or 3rd party instrumentations as long as they implement the [OpenTelemetry JS Instrumentation interface](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-instrumentation). Custom instrumentations can be enabled by passing them to the `startTracing()` method as follows:
+
+```js
+const { startTracing } = require('splunk-otel-js');
+
+startTracing({
+  instrumentations: [
+    new MyCustomInstrumentation(),
+    new AnotherInstrumentation(),
+  ]
+});
+```
+
+You can also add the default set of instrumentation to the list as follows:
+
+
+```js
+const { startTracing } = require('splunk-otel-js');
+const { getInstrumentations } = require('splunk-otel-js/instrumentations');
+
+startTracing({
+  instrumentations: [
+    ...getInstrumentations(),
+    new MyCustomInstrumentation(),
+    new AnotherInstrumentation(),
+  ]
+});
+```
+## Default Instrumentation Packages
+
+By default the following instrumentations will automatically be enabled if they are installed. In order to use
+any of these instrumentations, you'll need to install them with npm and then run your app with `-r @splunk/otel/lib/instrument`
+flag as described above.
+
+```
+@opentelemetry/instrumentation-http
+@opentelemetry/instrumentation-dns
+@opentelemetry/instrumentation-graphql
+@opentelemetry/instrumentation-grpc
+@opentelemetry/instrumentation-koa
+@opentelemetry/hapi-instrumentation
+```
+
+You can find more instrumentation packages over at the [OpenTelemetry Registry](https://opentelemetry.io/registry/?language=js) and enable them manually 
+as described above.
+
 ## Troubleshooting
 
 TODO:

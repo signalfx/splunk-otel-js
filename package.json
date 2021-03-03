@@ -57,6 +57,8 @@
     "gts": "2.0.2",
     "mocha": "7.2.0",
     "nyc": "15.1.0",
+    "prettier": ">=1.13.0",
+    "rewire": "^5.0.0",
     "rimraf": "3.0.2",
     "shimmer": "1.2.1",
     "sinon": "^9.2.4",
@@ -65,15 +67,15 @@
     "typescript": "3.9.7"
   },
   "dependencies": {
-    "@opentelemetry/api": "^0.17.0",
-    "@opentelemetry/context-async-hooks": "^0.17.0",
-    "@opentelemetry/core": "^0.17.0",
-    "@opentelemetry/exporter-jaeger": "^0.17.0",
-    "@opentelemetry/instrumentation": "^0.17.0",
-    "@opentelemetry/node": "^0.17.0",
-    "@opentelemetry/propagator-b3": "^0.17.0",
-    "@opentelemetry/resources": "^0.17.0",
-    "@opentelemetry/tracing": "^0.17.0",
+    "@opentelemetry/api": "^0.18.0",
+    "@opentelemetry/context-async-hooks": "^0.18.0",
+    "@opentelemetry/core": "^0.18.0",
+    "@opentelemetry/exporter-jaeger": "^0.18.0",
+    "@opentelemetry/instrumentation": "^0.18.0",
+    "@opentelemetry/node": "^0.18.0",
+    "@opentelemetry/propagator-b3": "^0.18.0",
+    "@opentelemetry/resources": "^0.18.0",
+    "@opentelemetry/tracing": "^0.18.0",
     "jaeger-client": "^3.15.0"
   }
 }

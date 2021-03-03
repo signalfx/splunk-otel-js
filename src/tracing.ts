@@ -41,7 +41,10 @@ export function startTracing(opts: Partial<Options> = {}): void {
     resource: new EnvResourceDetector().detect(),
   });
 
-  registerInstrumentations({ tracerProvider: provider });
+  registerInstrumentations({
+    tracerProvider: provider,
+    instrumentations: options.instrumentations,
+  });
 
   provider.register();
 

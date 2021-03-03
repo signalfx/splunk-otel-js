@@ -18,7 +18,10 @@ import {
   BatchSpanProcessor,
   SimpleSpanProcessor,
 } from '@opentelemetry/tracing';
+import { InstrumentationOption } from '@opentelemetry/instrumentation';
 import { env } from 'process';
+
+import { getInstrumentations } from './instrumentations';
 
 const defaultEndpoint = 'http://localhost:9080/v1/trace';
 const defaultServiceName = 'unnamed-node-service';
@@ -29,6 +32,7 @@ export interface Options {
   serviceName: string;
   accessToken?: string;
   maxAttrLength: number;
+  instrumentations: InstrumentationOption[];
   spanProcessor: typeof SimpleSpanProcessor | typeof BatchSpanProcessor;
 }
 
@@ -47,12 +51,17 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   options.endpoint =
     options.endpoint || env.SPLK_TRACE_EXPORTER_URL || defaultEndpoint;
 
+  if (options.instrumentations === undefined) {
+    options.instrumentations = getInstrumentations();
+  }
+
   options.spanProcessor = options.spanProcessor || BatchSpanProcessor;
   return {
     endpoint: options.endpoint,
     serviceName: options.serviceName,
     accessToken: options.accessToken,
     maxAttrLength: options.maxAttrLength,
+    instrumentations: options.instrumentations,
     spanProcessor: options.spanProcessor,
   };
 }
