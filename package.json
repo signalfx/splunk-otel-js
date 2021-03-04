@@ -31,6 +31,9 @@
     "node": ">=8.0.0"
   },
   "files": [
+    "index.js",
+    "instrument.js",
+    "bin/*.js",
     "lib/**/*.js",
     "lib/**/*.js.map",
     "lib/**/*.d.ts",
