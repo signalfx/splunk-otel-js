@@ -48,11 +48,11 @@ You can find a list of instrumentation packages supported out of the box [here](
 You can also install additional packages and use them as described [here](#custom-instrumentation-packages).
 
 
-3. Run node app with `-r @splunk/otel/lib/instrument` CLI argument
+3. Run node app with `-r @splunk/otel/instrument` CLI argument
 
 ```
 export SPLK_SERVICE_NAME=my-node-svc
-node -r @splunk/otel/lib/instrument app.js
+node -r @splunk/otel/instrument app.js
 ```
 
 You can also instrument your app with code as described [here](#instrument-with-code).
@@ -113,7 +113,7 @@ In order to send traces directly to SignalFx ingest API, you need to:
 ## Automatically instrument an application
 
 You can use node's `-r` CLI flag to pre-load the instrumentation module and automatically instrument your NodeJS application.
-You can add `-r @splunk/otel/lib/instrument` CLI parameter to automatically instrument your application. 
+You can add `-r @splunk/otel/instrument` CLI parameter to automatically instrument your application. 
 
 For example, if you start your application as follows:
 
@@ -124,7 +124,7 @@ node index.js
 Then you can automatically instrument your application by running
 
 ```bash
-node -r @splunk/otel/lib/instrument index.js
+node -r @splunk/otel/instrument index.js
 ```
 
 
@@ -173,7 +173,7 @@ startTracing({
 ## Default Instrumentation Packages <a name="default-instrumentation-packages"></a>
 
 By default the following instrumentations will automatically be enabled if they are installed. In order to use
-any of these instrumentations, you'll need to install them with npm and then run your app with `-r @splunk/otel/lib/instrument`
+any of these instrumentations, you'll need to install them with npm and then run your app with `-r @splunk/otel/instrument`
 flag as described above.
 
 ```
