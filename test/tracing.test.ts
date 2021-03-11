@@ -17,7 +17,12 @@
 import * as assert from 'assert';
 import * as sinon from 'sinon';
 import * as URL from 'url';
-import { BatchSpanProcessor } from '@opentelemetry/tracing';
+import {
+  BatchSpanProcessor,
+  SimpleSpanProcessor,
+  ConsoleSpanExporter,
+  InMemorySpanExporter,
+} from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 
@@ -128,5 +133,28 @@ describe('tracing', () => {
     envServiceStub.restore();
     envAccessStub.restore();
     envMaxAttrLength.restore();
+  });
+
+  it('setups tracing with multiple processors', () => {
+    startTracing({
+      spanProcessorFactory: function (options) {
+        return [
+          new SimpleSpanProcessor(new ConsoleSpanExporter()),
+          new BatchSpanProcessor(new InMemorySpanExporter()),
+        ];
+      },
+    });
+
+    sinon.assert.calledTwice(addSpanProcessorMock);
+    const p1 = addSpanProcessorMock.getCall(0).args[0];
+
+    assert(p1 instanceof SimpleSpanProcessor);
+    const exp1 = p1['_exporter'];
+    assert(exp1 instanceof ConsoleSpanExporter);
+
+    const p2 = addSpanProcessorMock.getCall(1).args[0];
+    assert(p2 instanceof BatchSpanProcessor);
+    const exp2 = p2['_exporter'];
+    assert(exp2 instanceof InMemorySpanExporter);
   });
 });

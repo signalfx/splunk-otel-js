@@ -16,11 +16,9 @@
 
 import { propagation } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/node';
-import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
-import { EnvResourceDetector } from './resource';
 import { Options, _setDefaultOptions } from './options';
 import { _patchJaeger } from './jaeger';
 
@@ -37,9 +35,7 @@ export function startTracing(opts: Partial<Options> = {}): void {
     new B3Propagator({ injectEncoding: B3InjectEncoding.MULTI_HEADER })
   );
 
-  const provider = new NodeTracerProvider({
-    resource: new EnvResourceDetector().detect(),
-  });
+  const provider = new NodeTracerProvider(options.tracerConfig);
 
   registerInstrumentations({
     tracerProvider: provider,
@@ -48,21 +44,12 @@ export function startTracing(opts: Partial<Options> = {}): void {
 
   provider.register();
 
-  const jaegerOptions = {
-    serviceName: options.serviceName!,
-    endpoint: options.endpoint,
-    tags: [],
-    username: '',
-    password: '',
-  };
-
-  const accessToken = options.accessToken || process.env.SPLK_ACCESS_TOKEN;
-  if (accessToken) {
-    jaegerOptions.username = 'auth';
-    jaegerOptions.password = accessToken;
+  let processors = options.spanProcessorFactory(options);
+  if (!Array.isArray(processors)) {
+    processors = [processors];
   }
 
-  provider.addSpanProcessor(
-    new options.spanProcessor(new JaegerExporter(jaegerOptions))
-  );
+  for (const i in processors) {
+    provider.addSpanProcessor(processors[i]);
+  }
 }
