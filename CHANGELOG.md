@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.0 (03-11-2021)
+
 - `startTracing()` options now accepts a `tracerConfig` option which is
   merged with the default tracer config and passed on to the tracer provider.
 
