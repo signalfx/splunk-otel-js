@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.4.0 (03-12-2021)
+
+### Changes
+
+- Changed environment variable prefix from `SPLK_` to `SPLUNK_`. All environment
+  variables must be updated for the library to continue to work.
+
 ## 0.3.0 (03-11-2021)
 
 ### Changed
