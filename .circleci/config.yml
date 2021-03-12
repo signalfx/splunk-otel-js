@@ -32,6 +32,9 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths: project/
+      - run:
+          name: Report coverage 
+          command: yarn codecov 
   release:
     docker:
       - image: cimg/node:lts
