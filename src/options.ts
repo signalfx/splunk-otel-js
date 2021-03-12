@@ -50,10 +50,10 @@ export interface Options {
 
 export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   options.accessToken =
-    options.accessToken || process.env.SPLK_ACCESS_TOKEN || '';
+    options.accessToken || process.env.SPLUNK_ACCESS_TOKEN || '';
 
   if (!options.maxAttrLength) {
-    const maxAttrLength = parseInt(process.env.SPLK_MAX_ATTR_LENGTH || '');
+    const maxAttrLength = parseInt(process.env.SPLUNK_MAX_ATTR_LENGTH || '');
     if (!isNaN(maxAttrLength)) {
       options.maxAttrLength = maxAttrLength;
     } else {
@@ -62,9 +62,9 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   }
 
   options.serviceName =
-    options.serviceName || env.SPLK_SERVICE_NAME || defaultServiceName;
+    options.serviceName || env.SPLUNK_SERVICE_NAME || defaultServiceName;
   options.endpoint =
-    options.endpoint || env.SPLK_TRACE_EXPORTER_URL || defaultEndpoint;
+    options.endpoint || env.SPLUNK_TRACE_EXPORTER_URL || defaultEndpoint;
 
   const extraTracerConfig = options.tracerConfig || {};
   const tracerConfig = {
