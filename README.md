@@ -51,7 +51,7 @@ You can also install additional packages and use them as described [here](#custo
 3. Run node app with `-r @splunk/otel/instrument` CLI argument
 
 ```
-export SPLK_SERVICE_NAME=my-node-svc
+export SPLUNK_SERVICE_NAME=my-node-svc
 node -r @splunk/otel/instrument app.js
 ```
 
@@ -64,15 +64,15 @@ You can also instrument your app with code as described [here](#instrument-with-
 
 | Environment variable          | Default value                        | Notes                                                                  |
 | ----------------------------- | ------------------------------------ | ---------------------------------------------------------------------- |
-| SPLK_TRACE_EXPORTER_URL       | `http://localhost:9080/v1/trace`     | The jaeger endpoint to connect to. Currently only HTTP is supported.   |
-| SPLK_SERVICE_NAME             | `unnamed-node-service`               | The service name of this Node service.                                 |
-| SPLK_ACCESS_TOKEN             |                                      | The optional organization access token for trace submission requests.  |
+| SPLUNK_TRACE_EXPORTER_URL       | `http://localhost:9080/v1/trace`     | The jaeger endpoint to connect to. Currently only HTTP is supported.   |
+| SPLUNK_SERVICE_NAME             | `unnamed-node-service`               | The service name of this Node service.                                 |
+| SPLUNK_ACCESS_TOKEN             |                                      | The optional organization access token for trace submission requests.  |
 
 ### Trace configuration
 
 | Environment variable          | Default value  | Purpose                                                                                                                                                                                                                                                                                                                                                                                                   |
 | ----------------------------- | -------------- | ------------------------------------------------------------------------------------                                                                                                                                                                                                                                                                                                                      |
-| SPLK_MAX_ATTR_LENGTH          | 1200            | Maximum length of string attribute value in characters. Longer values are truncated.                                                                                                                                                                                                                                                                                                                      |
+| SPLUNK_MAX_ATTR_LENGTH          | 1200            | Maximum length of string attribute value in characters. Longer values are truncated.                                                                                                                                                                                                                                                                                                                      |
 | OTEL_RESOURCE_ATTRIBUTES      | unset          | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
 | OTEL_TRACE_ENABLED            | `true`         | Globally enables tracer creation and auto-instrumentation.                                                                                                                                                                                                                                                                                                                                                |
 
@@ -85,7 +85,7 @@ More details on config options can be seen [here](#config-options)
 
 This package exports spans in Jaeger Thrift format over HTTP and supports
 exporting to the SignalFx Smart Agent, OpenTelemetry collector and directly to
-SignalFx ingest API. You can use `SPLK_TRACE_EXPORTER_URL` environment variable
+SignalFx ingest API. You can use `SPLUNK_TRACE_EXPORTER_URL` environment variable
 to specify an export URL. The value must be a full URL including scheme and
 path.
 
@@ -99,7 +99,7 @@ when the environment variable is not specified.
 ### OpenTelemetry Collector
 
 In order to do this, you'll need to enable Jaeger Thrift HTTP receiver on
-OpenTelemetry Collector and set `SPLK_TRACE_EXPORTER_URL` to
+OpenTelemetry Collector and set `SPLUNK_TRACE_EXPORTER_URL` to
 `http://localhost:14268/api/traces` assuming the collector is reachable via
 localhost.
 
@@ -107,10 +107,10 @@ localhost.
 
 In order to send traces directly to SignalFx ingest API, you need to:
 
-1. Set `SPLK_TRACE_EXPORTER_URL` to
+1. Set `SPLUNK_TRACE_EXPORTER_URL` to
    `https://ingest.<realm>.signalfx.com/v2/trace` where `realm` is your
    SignalFx realm e.g, `https://ingest.us0.signalfx.com/v2/trace`.
-2. Set `SPLK_ACCESS_TOKEN` to one of your SignalFx APM access tokens.
+2. Set `SPLUNK_ACCESS_TOKEN` to one of your SignalFx APM access tokens.
 
 ## Automatically instrument an application
 
@@ -152,13 +152,13 @@ startTracing({
 
 `startTracing()` accepts an optional argument to pass down configuration. The argument must be an Object and may contain any of the following keys.
 
-- `endpoint`: corresponds to the `SPLK_TRACE_EXPORTER_URL` environment variable. Defaults to `http://localhost:9080/v1/trace`. Configures the http endpoint to which all spans will be exported.
+- `endpoint`: corresponds to the `SPLUNK_TRACE_EXPORTER_URL` environment variable. Defaults to `http://localhost:9080/v1/trace`. Configures the http endpoint to which all spans will be exported.
 
-- `serviceName`: corresponds to the `SPLK_SERVICE_NAME` environment variable. Defaults to `unnamed-node-service`. Configures the service name of the instrumented node service. The name is added to all spans as an attribute.
+- `serviceName`: corresponds to the `SPLUNK_SERVICE_NAME` environment variable. Defaults to `unnamed-node-service`. Configures the service name of the instrumented node service. The name is added to all spans as an attribute.
 
-- `accessToken`: corresponds to the `SPLK_ACCESS_TOKEN` environment variable. Configures the access token that should be used to authenticate with the span exporter http endpoint. Used when exporting directly to Splunk APM from a Node service.
+- `accessToken`: corresponds to the `SPLUNK_ACCESS_TOKEN` environment variable. Configures the access token that should be used to authenticate with the span exporter http endpoint. Used when exporting directly to Splunk APM from a Node service.
 
-- `maxAttrLength`: corresponds to the `SPLK_MAX_ATTR_LENGTH` environment variable. Defaults to `1200`. Configures the maximum length any span attribute value can have. Values longer than the specified length will be truncated.
+- `maxAttrLength`: corresponds to the `SPLUNK_MAX_ATTR_LENGTH` environment variable. Defaults to `1200`. Configures the maximum length any span attribute value can have. Values longer than the specified length will be truncated.
 
 - `tracerConfig`: a JS object that is merged into the default tracer config replacing any existing keys and is passed on to the tracer provider during initialization. This can be used to customize the tracer provider or tracer. Must satisfy [`TracerConfig` interface](https://github.com/open-telemetry/opentelemetry-js/blob/71ba83a0dc51118e08e3148c788b81fe711003e7/packages/opentelemetry-tracing/src/types.ts#L26)
 

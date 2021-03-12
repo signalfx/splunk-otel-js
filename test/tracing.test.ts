@@ -110,21 +110,21 @@ describe('tracing', () => {
     const accessToken = 'zxcvb';
     const maxAttrLength = 101;
 
-    process.env.SPLK_TRACE_EXPORTER_URL = '';
-    process.env.SPLK_SERVICE_NAME = '';
-    process.env.SPLK_ACCESS_TOKEN = '';
-    process.env.SPLK_MAX_ATTR_LENGTH = '42';
+    process.env.SPLUNK_TRACE_EXPORTER_URL = '';
+    process.env.SPLUNK_SERVICE_NAME = '';
+    process.env.SPLUNK_ACCESS_TOKEN = '';
+    process.env.SPLUNK_MAX_ATTR_LENGTH = '42';
     const envExporterStub = sinon
-      .stub(process.env, 'SPLK_TRACE_EXPORTER_URL')
+      .stub(process.env, 'SPLUNK_TRACE_EXPORTER_URL')
       .value(url);
     const envServiceStub = sinon
-      .stub(process.env, 'SPLK_SERVICE_NAME')
+      .stub(process.env, 'SPLUNK_SERVICE_NAME')
       .value(serviceName);
     const envAccessStub = sinon
-      .stub(process.env, 'SPLK_ACCESS_TOKEN')
+      .stub(process.env, 'SPLUNK_ACCESS_TOKEN')
       .value(accessToken);
     const envMaxAttrLength = sinon
-      .stub(process.env, 'SPLK_MAX_ATTR_LENGTH')
+      .stub(process.env, 'SPLUNK_MAX_ATTR_LENGTH')
       .value(maxAttrLength);
 
     startTracing();
