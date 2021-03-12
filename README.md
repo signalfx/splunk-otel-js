@@ -28,7 +28,7 @@ the SignalFx Tracing Library for JS](migration.md).
 ## Getting Started
 
 Assuming the default Splunk APM setup with SignalFx Smart Agent running on localhost. If you're running a
-different setup, refer to the [configuration options](#config-options) below to customize trace export endpoint
+different setup, refer to the [configuration options](#env-config-options) below to customize trace export endpoint
 and other behaviour.
 
 1. Install @splunk/otel package
@@ -58,7 +58,7 @@ node -r @splunk/otel/instrument app.js
 You can also instrument your app with code as described [here](#instrument-with-code).
 
 
-## All configuration options <a name="config-options"></a>
+## Environmental configuration options <a name="env-config-options"></a>
 
 ### Jaeger exporter
 
@@ -148,7 +148,7 @@ startTracing({
   serviceName: 'my-node-service',
 });
 ```
-### All config options<a name="config-options"></a>
+### All config options <a name="config-options"></a>
 
 `startTracing()` accepts an optional argument to pass down configuration. The argument must be an Object and may contain any of the following keys.
 
