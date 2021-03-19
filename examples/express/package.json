@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "start": "SPLUNK_TRACE_EXPORTER_URL=http://localhost:14268/api/traces node -r @splunk/otel/instrument index.js"
+    "start": "OTEL_EXPORTER_JAEGER_ENDPOINT=http://localhost:14268/api/traces node -r @splunk/otel/instrument index.js"
   },
   "dependencies": {
     "@opentelemetry/instrumentation-http": "^0.18.0",

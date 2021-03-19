@@ -64,7 +64,7 @@ You can also instrument your app with code as described [here](#instrument-with-
 
 | Environment variable          | Default value                        | Notes                                                                  |
 | ----------------------------- | ------------------------------------ | ---------------------------------------------------------------------- |
-| SPLUNK_TRACE_EXPORTER_URL       | `http://localhost:9080/v1/trace`     | The jaeger endpoint to connect to. Currently only HTTP is supported.   |
+| OTEL_EXPORTER_JAEGER_ENDPOINT       | `http://localhost:9080/v1/trace`     | The jaeger endpoint to connect to. Currently only HTTP is supported.   |
 | SPLUNK_SERVICE_NAME             | `unnamed-node-service`               | The service name of this Node service.                                 |
 | SPLUNK_ACCESS_TOKEN             |                                      | The optional organization access token for trace submission requests.  |
 
@@ -85,7 +85,7 @@ More details on config options can be seen [here](#config-options)
 
 This package exports spans in Jaeger Thrift format over HTTP and supports
 exporting to the SignalFx Smart Agent, OpenTelemetry collector and directly to
-SignalFx ingest API. You can use `SPLUNK_TRACE_EXPORTER_URL` environment variable
+SignalFx ingest API. You can use `OTEL_EXPORTER_JAEGER_ENDPOINT` environment variable
 to specify an export URL. The value must be a full URL including scheme and
 path.
 
@@ -99,7 +99,7 @@ when the environment variable is not specified.
 ### OpenTelemetry Collector
 
 In order to do this, you'll need to enable Jaeger Thrift HTTP receiver on
-OpenTelemetry Collector and set `SPLUNK_TRACE_EXPORTER_URL` to
+OpenTelemetry Collector and set `OTEL_EXPORTER_JAEGER_ENDPOINT` to
 `http://localhost:14268/api/traces` assuming the collector is reachable via
 localhost.
 
@@ -107,7 +107,7 @@ localhost.
 
 In order to send traces directly to SignalFx ingest API, you need to:
 
-1. Set `SPLUNK_TRACE_EXPORTER_URL` to
+1. Set `OTEL_EXPORTER_JAEGER_ENDPOINT` to
    `https://ingest.<realm>.signalfx.com/v2/trace` where `realm` is your
    SignalFx realm e.g, `https://ingest.us0.signalfx.com/v2/trace`.
 2. Set `SPLUNK_ACCESS_TOKEN` to one of your SignalFx APM access tokens.
@@ -152,7 +152,7 @@ startTracing({
 
 `startTracing()` accepts an optional argument to pass down configuration. The argument must be an Object and may contain any of the following keys.
 
-- `endpoint`: corresponds to the `SPLUNK_TRACE_EXPORTER_URL` environment variable. Defaults to `http://localhost:9080/v1/trace`. Configures the http endpoint to which all spans will be exported.
+- `endpoint`: corresponds to the `OTEL_EXPORTER_JAEGER_ENDPOINT` environment variable. Defaults to `http://localhost:9080/v1/trace`. Configures the http endpoint to which all spans will be exported.
 
 - `serviceName`: corresponds to the `SPLUNK_SERVICE_NAME` environment variable. Defaults to `unnamed-node-service`. Configures the service name of the instrumented node service. The name is added to all spans as an attribute.
 
