@@ -58,23 +58,16 @@ node -r @splunk/otel/instrument app.js
 You can also instrument your app with code as described [here](#instrument-with-code).
 
 
-## Environmental configuration options <a name="env-config-options"></a>
+## Configuration options <a name="env-config-options"></a>
 
-### Jaeger exporter
-
-| Environment variable          | Default value                        | Notes                                                                  |
-| ----------------------------- | ------------------------------------ | ---------------------------------------------------------------------- |
-| OTEL_EXPORTER_JAEGER_ENDPOINT       | `http://localhost:9080/v1/trace`     | The jaeger endpoint to connect to. Currently only HTTP is supported.   |
-| SPLUNK_SERVICE_NAME             | `unnamed-node-service`               | The service name of this Node service.                                 |
-| SPLUNK_ACCESS_TOKEN             |                                      | The optional organization access token for trace submission requests.  |
-
-### Trace configuration
-
-| Environment variable          | Default value  | Purpose                                                                                                                                                                                                                                                                                                                                                                                                   |
-| ----------------------------- | -------------- | ------------------------------------------------------------------------------------                                                                                                                                                                                                                                                                                                                      |
-| SPLUNK_MAX_ATTR_LENGTH          | 1200            | Maximum length of string attribute value in characters. Longer values are truncated.                                                                                                                                                                                                                                                                                                                      |
-| OTEL_RESOURCE_ATTRIBUTES      | unset          | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
-| OTEL_TRACE_ENABLED            | `true`         | Globally enables tracer creation and auto-instrumentation.                                                                                                                                                                                                                                                                                                                                                |
+| Environment variable          | Config Option | Default value                        | Notes                                                                  |
+| ----------------------------- |  ----------------------------- | ------------------------------------ | ---------------------------------------------------------------------- |
+| OTEL_EXPORTER_JAEGER_ENDPOINT | endpoint | `http://localhost:9080/v1/trace`     | The jaeger endpoint to connect to. Currently only HTTP is supported.   |
+| SPLUNK_SERVICE_NAME             | serviceName | `unnamed-node-service`               | The service name of this Node service.                                 |
+| SPLUNK_ACCESS_TOKEN             |  acceessToken | |                                    | The optional organization access token for trace submission requests.  |
+| SPLUNK_MAX_ATTR_LENGTH          | maxAttrLength | 1200            | Maximum length of string attribute value in characters. Longer values are truncated. |
+| OTEL_RESOURCE_ATTRIBUTES      | | unset          | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
+| OTEL_TRACE_ENABLED            | | `true`         | Globally enables tracer creation and auto-instrumentation.                                               |
 
 More details on config options can be seen [here](#config-options)
 
