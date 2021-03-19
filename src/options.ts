@@ -64,7 +64,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   options.serviceName =
     options.serviceName || env.SPLUNK_SERVICE_NAME || defaultServiceName;
   options.endpoint =
-    options.endpoint || env.SPLUNK_TRACE_EXPORTER_URL || defaultEndpoint;
+    options.endpoint || env.OTEL_EXPORTER_JAEGER_ENDPOINT || defaultEndpoint;
 
   const extraTracerConfig = options.tracerConfig || {};
   const tracerConfig = {

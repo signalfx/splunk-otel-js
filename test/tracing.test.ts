@@ -110,12 +110,12 @@ describe('tracing', () => {
     const accessToken = 'zxcvb';
     const maxAttrLength = 101;
 
-    process.env.SPLUNK_TRACE_EXPORTER_URL = '';
+    process.env.OTEL_EXPORTER_JAEGER_ENDPOINT = '';
     process.env.SPLUNK_SERVICE_NAME = '';
     process.env.SPLUNK_ACCESS_TOKEN = '';
     process.env.SPLUNK_MAX_ATTR_LENGTH = '42';
     const envExporterStub = sinon
-      .stub(process.env, 'SPLUNK_TRACE_EXPORTER_URL')
+      .stub(process.env, 'OTEL_EXPORTER_JAEGER_ENDPOINT')
       .value(url);
     const envServiceStub = sinon
       .stub(process.env, 'SPLUNK_SERVICE_NAME')
