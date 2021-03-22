@@ -10,22 +10,22 @@ jobs:
     steps:
       - checkout
       - node/install-packages:
-          pkg-manager: yarn 
+          pkg-manager: npm
       - run:
           name: Run linter 
-          command: yarn lint 
+          command: npm run lint 
       - run:
           name: Run tests
-          command: yarn test
+          command: npm run test
       - run:
           name: Build
-          command: yarn compile 
+          command: npm run compile 
       - run:
           name: Pack
-          command: yarn pack
+          command: npm pack
       - run:
           name: Copy package to artifacts directory 
-          command: mkdir -p dist && cp splunk-otel-v*.tgz dist
+          command: mkdir -p dist && cp splunk-otel-*.tgz dist
       - store_artifacts:
           path: dist/
           destination: built-packages
@@ -34,7 +34,7 @@ jobs:
           paths: project/
       - run:
           name: Report coverage 
-          command: yarn codecov 
+          command: npm run codecov 
   release:
     docker:
       - image: cimg/node:lts
@@ -45,7 +45,7 @@ jobs:
           name: Authenticate npm
           command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
       - run:
-          command: yarn publish 
+          command: npm publish 
 
 workflows:
   build: 
