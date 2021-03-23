@@ -19,6 +19,7 @@ import * as assert from 'assert';
 import * as otel from '@opentelemetry/api';
 import { B3Propagator } from '@opentelemetry/propagator-b3';
 import { startTracing } from '../src/tracing';
+import { CompositePropagator } from '@opentelemetry/core';
 
 describe('propagation', () => {
   it('must be set to b3', done => {
@@ -26,7 +27,7 @@ describe('propagation', () => {
 
     const propagator = otel.propagation._getGlobalPropagator();
     assert(
-      propagator instanceof B3Propagator,
+      propagator instanceof CompositePropagator,
       'propagator must be instance of B3Propagator'
     );
 
@@ -40,9 +41,13 @@ describe('propagation', () => {
         otel.defaultTextMapSetter
       );
       span.end();
-      assert.equal(carrier['x-b3-traceid'], span.context().traceId);
-      assert.equal(carrier['x-b3-spanid'], span.context().spanId);
-      assert.equal(carrier['x-b3-sampled'], 1);
+
+      const traceId = span.context().traceId;
+      const spanId = span.context().spanId;
+      assert.strictEqual(carrier['x-b3-traceid'], traceId);
+      assert.strictEqual(carrier['x-b3-spanid'], spanId);
+      assert.strictEqual(carrier['x-b3-sampled'], '1');
+      assert.strictEqual(carrier['traceparent'], `00-${traceId}-${spanId}-01`);
       done();
     });
   });

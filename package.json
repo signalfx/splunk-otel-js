@@ -79,6 +79,7 @@
     "@opentelemetry/propagator-b3": "^0.18.0",
     "@opentelemetry/resources": "^0.18.0",
     "@opentelemetry/tracing": "^0.18.0",
-    "jaeger-client": "^3.15.0"
+    "jaeger-client": "^3.15.0",
+    "semver": "^7.1.3"
   }
 }
