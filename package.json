@@ -67,7 +67,7 @@
     "sinon": "^10.0.0",
     "ts-mocha": "8.0.0",
     "ts-node": "9.1.1",
-    "typescript": "3.9.7"
+    "typescript": "3.9.9"
   },
   "dependencies": {
     "@opentelemetry/api": "^0.18.0",
