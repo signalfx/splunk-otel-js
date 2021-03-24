@@ -7,6 +7,21 @@
   at the same time.
 - `startTracing()` options now accepts a `propagatorFactory` option which can be
   used configure custom text map propagator.
+- Listed instrumentations as (optional) peer dependencies. This makes
+require()'ing instrumentations safer despite @splunk/otel not listing
+them as dependencies. Marking them optional ensures npm7 will not
+automatically install these packages. Note that this will still result
+in warnings for users on npm <7.
+- Added suport for the following instrumentations out of the box:
+  - @opentelemetry/instrumentation-express
+  - @opentelemetry/instrumentation-ioredis
+  - @opentelemetry/instrumentation-mongodb
+  - @opentelemetry/instrumentation-mysql
+  - @opentelemetry/instrumentation-net
+  - @opentelemetry/instrumentation-pg
+  - @opentelemetry/instrumentation-hapi
+- Removed support for the following instrumentations:
+  - @opentelemetry/hapi-instrumentation
 
 ## 0.4.0 (03-12-2021)
 

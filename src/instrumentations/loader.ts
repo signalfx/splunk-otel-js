@@ -28,7 +28,7 @@ export function load(
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     return require(module)[instrumentation];
   } catch (e) {
-    diag.info('cannot find instrumentation package: ' + instrumentation);
+    diag.debug('cannot find instrumentation package: ' + instrumentation);
   }
   return null;
 }
