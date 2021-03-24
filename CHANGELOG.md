@@ -8,6 +8,11 @@
 
 - Changed environment variable prefix from `SPLK_` to `SPLUNK_`. All environment
   variables must be updated for the library to continue to work.
+- `startTracing()` options now accepts a `propagatorFactory` option which can be
+  used configure custom text map propagator.
+- The default propagator was changed from B3 to a composite B3 + W3C tracecontext
+  propagator. This means splunk-otel-js will now support both B3 and tracecontext
+  at the same time.
 
 ## 0.3.0 (03-11-2021)
 

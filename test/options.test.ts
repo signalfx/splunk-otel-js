@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { TextMapGetter, TextMapPropagator } from '@opentelemetry/api';
+import { HttpBaggage } from '@opentelemetry/core';
 import { InstrumentationBase } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
 import {
@@ -29,6 +31,7 @@ import {
   defaultSpanProcessorFactory,
   defaultSpanExporterFactory,
   Options,
+  defaultPropagatorFactory,
 } from '../src/options';
 
 describe('options', () => {
@@ -45,6 +48,7 @@ describe('options', () => {
       },
       spanExporterFactory: defaultSpanExporterFactory,
       spanProcessorFactory: defaultSpanProcessorFactory,
+      propagatorFactory: defaultPropagatorFactory,
     });
   });
 
@@ -66,6 +70,7 @@ describe('options', () => {
       },
       spanExporterFactory: testSpanExporterFactory,
       spanProcessorFactory: testSpanProcessorFactory,
+      propagatorFactory: testPropagatorFactory,
     });
 
     assert.deepStrictEqual(options, {
@@ -80,6 +85,7 @@ describe('options', () => {
       },
       spanExporterFactory: testSpanExporterFactory,
       spanProcessorFactory: testSpanProcessorFactory,
+      propagatorFactory: testPropagatorFactory,
     });
   });
 });
@@ -104,4 +110,8 @@ function testSpanExporterFactory(): SpanExporter {
 
 function testSpanProcessorFactory(options: Options): SpanProcessor {
   return new SimpleSpanProcessor(options.spanExporterFactory(options));
+}
+
+function testPropagatorFactory(options: Options): TextMapPropagator {
+  return new HttpBaggage();
 }

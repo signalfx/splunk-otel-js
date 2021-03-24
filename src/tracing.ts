@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 
-import { propagation } from '@opentelemetry/api';
+import { context, propagation, trace } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
-import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
 import { Options, _setDefaultOptions } from './options';
 import { _patchJaeger } from './jaeger';
+import { gte } from 'semver';
+import {
+  AsyncHooksContextManager,
+  AsyncLocalStorageContextManager,
+} from '@opentelemetry/context-async-hooks';
 
 export function startTracing(opts: Partial<Options> = {}): void {
   if (process.env.OTEL_TRACE_ENABLED === 'false') {
@@ -31,19 +35,25 @@ export function startTracing(opts: Partial<Options> = {}): void {
 
   _patchJaeger(options.maxAttrLength);
 
-  propagation.setGlobalPropagator(
-    new B3Propagator({ injectEncoding: B3InjectEncoding.MULTI_HEADER })
-  );
+  // propagator
+  propagation.setGlobalPropagator(options.propagatorFactory(options));
 
+  // context manager
+  const ContextManager = gte(process.version, '14.8.0')
+    ? AsyncLocalStorageContextManager
+    : AsyncHooksContextManager;
+  context.setGlobalContextManager(new ContextManager());
+
+  // tracer provider
   const provider = new NodeTracerProvider(options.tracerConfig);
 
+  // instrumentations
   registerInstrumentations({
     tracerProvider: provider,
     instrumentations: options.instrumentations,
   });
 
-  provider.register();
-
+  // processors
   let processors = options.spanProcessorFactory(options);
   if (!Array.isArray(processors)) {
     processors = [processors];
@@ -52,4 +62,7 @@ export function startTracing(opts: Partial<Options> = {}): void {
   for (const i in processors) {
     provider.addSpanProcessor(processors[i]);
   }
+
+  // register global provider
+  trace.setGlobalTracerProvider(provider);
 }

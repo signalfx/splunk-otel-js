@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
+import { env } from 'process';
 import {
   BatchSpanProcessor,
   SpanExporter,
   SpanProcessor,
 } from '@opentelemetry/tracing';
 import { InstrumentationOption } from '@opentelemetry/instrumentation';
-import { env } from 'process';
+import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
 import { getInstrumentations } from './instrumentations';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { EnvResourceDetector } from './resource';
 import { NodeTracerConfig } from '@opentelemetry/node';
+import { TextMapPropagator } from '@opentelemetry/api';
+import { CompositePropagator, HttpTraceContext } from '@opentelemetry/core';
 
 const defaultEndpoint = 'http://localhost:9080/v1/trace';
 const defaultServiceName = 'unnamed-node-service';
@@ -37,6 +40,8 @@ type SpanProcessorFactory = (
   options: Options
 ) => SpanProcessor | SpanProcessor[];
 
+type PropagatorFactory = (options: Options) => TextMapPropagator;
+
 export interface Options {
   endpoint: string;
   serviceName: string;
@@ -46,6 +51,7 @@ export interface Options {
   tracerConfig: NodeTracerConfig;
   spanExporterFactory: SpanExporterFactory;
   spanProcessorFactory: SpanProcessorFactory;
+  propagatorFactory: PropagatorFactory;
 }
 
 export function _setDefaultOptions(options: Partial<Options> = {}): Options {
@@ -77,6 +83,8 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     options.spanExporterFactory || defaultSpanExporterFactory;
   options.spanProcessorFactory =
     options.spanProcessorFactory || defaultSpanProcessorFactory;
+  options.propagatorFactory =
+    options.propagatorFactory || defaultPropagatorFactory;
 
   // instrumentations
   if (options.instrumentations === undefined) {
@@ -92,6 +100,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     tracerConfig: tracerConfig,
     spanExporterFactory: options.spanExporterFactory,
     spanProcessorFactory: options.spanProcessorFactory,
+    propagatorFactory: options.propagatorFactory,
   };
 }
 
@@ -114,4 +123,14 @@ export function defaultSpanExporterFactory(options: Options): JaegerExporter {
 
 export function defaultSpanProcessorFactory(options: Options): SpanProcessor {
   return new BatchSpanProcessor(options.spanExporterFactory(options));
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function defaultPropagatorFactory(options: Options): TextMapPropagator {
+  return new CompositePropagator({
+    propagators: [
+      new B3Propagator({ injectEncoding: B3InjectEncoding.MULTI_HEADER }),
+      new HttpTraceContext(),
+    ],
+  });
 }
