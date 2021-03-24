@@ -43,6 +43,8 @@ npm install @splunk/otel --save
 npm install @opentelemetry/instrumentation-http --save
 ```
 
+Note: If you are using NPM 6 or older, it'll warn you about missing peer dependencies. All of these dependencies are instrumentation packages and are completely optional. You can install the ones you need and ignore the rest. NPM 7+ supports optional peer dependencies feature and will not complain about this.
+
 You can find a list of instrumentation packages supported out of the box [here](#default-instrumentation-packages).
 
 You can also install additional packages and use them as described [here](#custom-instrumentation-packages).

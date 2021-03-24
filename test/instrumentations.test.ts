@@ -22,6 +22,21 @@ import * as instrumentations from '../src/instrumentations';
 import * as loader from '../src/instrumentations/loader';
 
 describe('instrumentations', () => {
+  const supportedInstrumentations = [
+    ['@opentelemetry/instrumentation-http', 'HttpInstrumentation'],
+    ['@opentelemetry/instrumentation-dns', 'DnsInstrumentation'],
+    ['@opentelemetry/instrumentation-graphql', 'GraphQLInstrumentation'],
+    ['@opentelemetry/instrumentation-grpc', 'GrpcInstrumentation'],
+    ['@opentelemetry/instrumentation-koa', 'KoaInstrumentation'],
+    ['@opentelemetry/instrumentation-express', 'ExpressInstrumentation'],
+    ['@opentelemetry/instrumentation-ioredis', 'IORedisInstrumentation'],
+    ['@opentelemetry/instrumentation-mongodb', 'MongoDBInstrumentation'],
+    ['@opentelemetry/instrumentation-mysql', 'MySQLInstrumentation'],
+    ['@opentelemetry/instrumentation-net', 'NetInstrumentation'],
+    ['@opentelemetry/instrumentation-pg', 'PgInstrumentation'],
+    ['@opentelemetry/instrumentation-hapi', 'HapiInstrumentation'],
+  ];
+
   it('does not load if packages are not installed', () => {
     const inst = instrumentations.getInstrumentations();
     assert.strictEqual(inst.length, 0);
@@ -30,37 +45,14 @@ describe('instrumentations', () => {
   it('load instrumentations if they are not installed', () => {
     const loadStub = sinon.stub(loader, 'load');
     const inst = instrumentations.getInstrumentations();
-    sinon.assert.callCount(loadStub, 6);
-    sinon.assert.calledWith(
-      loader.load,
-      '@opentelemetry/instrumentation-http',
-      'HttpInstrumentation'
-    );
-    sinon.assert.calledWith(
-      loader.load,
-      '@opentelemetry/instrumentation-dns',
-      'DnsInstrumentation'
-    );
-    sinon.assert.calledWith(
-      loader.load,
-      '@opentelemetry/instrumentation-graphql',
-      'GraphQLInstrumentation'
-    );
-    sinon.assert.calledWith(
-      loader.load,
-      '@opentelemetry/instrumentation-grpc',
-      'GrpcInstrumentation'
-    );
-    sinon.assert.calledWith(
-      loader.load,
-      '@opentelemetry/instrumentation-koa',
-      'KoaInstrumentation'
-    );
-    sinon.assert.calledWith(
-      loader.load,
-      '@opentelemetry/hapi-instrumentation',
-      'HapiInstrumentation'
-    );
+    sinon.assert.callCount(loadStub, supportedInstrumentations.length);
+    for (let i = 0; i < supportedInstrumentations.length; i++) {
+      sinon.assert.calledWith(
+        loader.load,
+        supportedInstrumentations[i][0],
+        supportedInstrumentations[i][1]
+      );
+    }
 
     loadStub.reset();
     loadStub.restore();
