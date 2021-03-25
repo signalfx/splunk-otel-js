@@ -24,7 +24,13 @@ const supportedInstrumentations: [string, string][] = [
   ['@opentelemetry/instrumentation-graphql', 'GraphQLInstrumentation'],
   ['@opentelemetry/instrumentation-grpc', 'GrpcInstrumentation'],
   ['@opentelemetry/instrumentation-koa', 'KoaInstrumentation'],
-  ['@opentelemetry/hapi-instrumentation', 'HapiInstrumentation'],
+  ['@opentelemetry/instrumentation-express', 'ExpressInstrumentation'],
+  ['@opentelemetry/instrumentation-ioredis', 'IORedisInstrumentation'],
+  ['@opentelemetry/instrumentation-mongodb', 'MongoDBInstrumentation'],
+  ['@opentelemetry/instrumentation-mysql', 'MySQLInstrumentation'],
+  ['@opentelemetry/instrumentation-net', 'NetInstrumentation'],
+  ['@opentelemetry/instrumentation-pg', 'PgInstrumentation'],
+  ['@opentelemetry/instrumentation-hapi', 'HapiInstrumentation'],
 ];
 
 export function getInstrumentations(): InstrumentationOption[] {

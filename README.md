@@ -43,6 +43,8 @@ npm install @splunk/otel --save
 npm install @opentelemetry/instrumentation-http --save
 ```
 
+Note: If you are using NPM 6 or older, it'll warn you about missing peer dependencies. All of these dependencies are instrumentation packages and are completely optional. You can install the ones you need and ignore the rest. NPM 7+ supports optional peer dependencies feature and will not complain about this.
+
 You can find a list of instrumentation packages supported out of the box [here](#default-instrumentation-packages).
 
 You can also install additional packages and use them as described [here](#custom-instrumentation-packages).
@@ -197,8 +199,7 @@ startTracing({
 ## Default Instrumentation Packages <a name="default-instrumentation-packages"></a>
 
 By default the following instrumentations will automatically be enabled if they are installed. In order to use
-any of these instrumentations, you'll need to install them with npm and then run your app with `-r @splunk/otel/instrument`
-flag as described above.
+any of these instrumentations, you'll need to install them with npm and then run your app with `-r @splunk/otel/instrument` flag as described above.
 
 ```
 @opentelemetry/instrumentation-http
@@ -206,7 +207,13 @@ flag as described above.
 @opentelemetry/instrumentation-graphql
 @opentelemetry/instrumentation-grpc
 @opentelemetry/instrumentation-koa
-@opentelemetry/hapi-instrumentation
+@opentelemetry/instrumentation-express
+@opentelemetry/instrumentation-ioredis
+@opentelemetry/instrumentation-mongodb
+@opentelemetry/instrumentation-mysql
+@opentelemetry/instrumentation-net
+@opentelemetry/instrumentation-pg
+@opentelemetry/instrumentation-hapi
 ```
 
 You can find more instrumentation packages over at the [OpenTelemetry Registry](https://opentelemetry.io/registry/?language=js) and enable them manually 
