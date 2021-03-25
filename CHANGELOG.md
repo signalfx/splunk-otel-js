@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## 0.5.0 (03-24-2021)
+
+- Replaced `SPLUNK_TRACE_EXPORTER_URL` with `OTEL_EXPORTER_JAEGER_ENDPOINT`.
 - The default propagator was changed from B3 to a composite B3 + W3C tracecontext
   propagator. This means splunk-otel-js will now support both B3 and tracecontext
   at the same time.
