@@ -42,7 +42,9 @@ export function startTracing(opts: Partial<Options> = {}): void {
   const ContextManager = gte(process.version, '14.8.0')
     ? AsyncLocalStorageContextManager
     : AsyncHooksContextManager;
-  context.setGlobalContextManager(new ContextManager());
+  const contextManager = new ContextManager();
+  contextManager.enable();
+  context.setGlobalContextManager(contextManager);
 
   // tracer provider
   const provider = new NodeTracerProvider(options.tracerConfig);
