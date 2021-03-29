@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Changed
+
+- Context management should not work properly on older versions of NodeJS (<14.8).
+  ([#53](https://github.com/signalfx/splunk-otel-js/pull/53))
+
+
 ## 0.5.0 (03-24-2021)
 
 - Replaced `SPLUNK_TRACE_EXPORTER_URL` with `OTEL_EXPORTER_JAEGER_ENDPOINT`.
