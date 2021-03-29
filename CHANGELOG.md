@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.0 (03-29-2021)
+
 ### Changed
 
 - Context management should not work properly on older versions of NodeJS (<14.8).
