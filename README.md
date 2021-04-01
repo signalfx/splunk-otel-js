@@ -68,6 +68,8 @@ You can also instrument your app with code as described [here](#instrument-with-
 | SPLUNK_SERVICE_NAME             | serviceName | `unnamed-node-service`               | The service name of this Node service.                                 |
 | SPLUNK_ACCESS_TOKEN             |  acceessToken | |                                    | The optional organization access token for trace submission requests.  |
 | SPLUNK_MAX_ATTR_LENGTH          | maxAttrLength | 1200            | Maximum length of string attribute value in characters. Longer values are truncated. |
+| SPLUNK_SERVER_TIMING_ENABLED | serverTimingEnabled | false | Enable injection of `Server-Timing` header to HTTP
+responses. |
 | OTEL_RESOURCE_ATTRIBUTES      | | unset          | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
 | OTEL_TRACE_ENABLED            | | `true`         | Globally enables tracer creation and auto-instrumentation.                                               |
 
@@ -154,6 +156,8 @@ startTracing({
 - `accessToken`: corresponds to the `SPLUNK_ACCESS_TOKEN` environment variable. Configures the access token that should be used to authenticate with the span exporter http endpoint. Used when exporting directly to Splunk APM from a Node service.
 
 - `maxAttrLength`: corresponds to the `SPLUNK_MAX_ATTR_LENGTH` environment variable. Defaults to `1200`. Configures the maximum length any span attribute value can have. Values longer than the specified length will be truncated.
+
+- `serverTimingEnabled`: corresponds to the `SPLUNK_SERVER_TIMING_ENABLED` environment variable. Defaults to false. Enables injection of `Server-Timing` header to responses.
 
 - `tracerConfig`: a JS object that is merged into the default tracer config replacing any existing keys and is passed on to the tracer provider during initialization. This can be used to customize the tracer provider or tracer. Must satisfy [`TracerConfig` interface](https://github.com/open-telemetry/opentelemetry-js/blob/71ba83a0dc51118e08e3148c788b81fe711003e7/packages/opentelemetry-tracing/src/types.ts#L26)
 

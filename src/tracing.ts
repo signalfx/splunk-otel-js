@@ -17,6 +17,11 @@
 import { context, propagation, trace } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
+import {
+  HttpInstrumentationConfig,
+  HttpResponseCustomAttributeFunction,
+} from '@opentelemetry/instrumentation-http';
+import { ServerResponse } from 'http';
 
 import { Options, _setDefaultOptions } from './options';
 import { _patchJaeger } from './jaeger';
@@ -49,6 +54,8 @@ export function startTracing(opts: Partial<Options> = {}): void {
   // tracer provider
   const provider = new NodeTracerProvider(options.tracerConfig);
 
+  configureInstrumentations(options);
+
   // instrumentations
   registerInstrumentations({
     tracerProvider: provider,
@@ -67,4 +74,60 @@ export function startTracing(opts: Partial<Options> = {}): void {
 
   // register global provider
   trace.setGlobalTracerProvider(provider);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function configureHttpInstrumentation(instrumentation: any, options: Options) {
+  if (!options.serverTimingEnabled) {
+    return;
+  }
+
+  if (
+    typeof instrumentation['setConfig'] !== 'function' ||
+    typeof instrumentation['_getConfig'] !== 'function'
+  ) {
+    return;
+  }
+
+  const responseHook: HttpResponseCustomAttributeFunction = (
+    span,
+    response
+  ) => {
+    if (response instanceof ServerResponse) {
+      const { traceId, spanId } = span.context();
+      response.setHeader('Access-Control-Expose-Headers', 'Server-Timing');
+      response.setHeader(
+        'Server-Timing',
+        `traceparent;desc="00-${traceId}-${spanId}-01"`
+      );
+    }
+  };
+
+  let config = instrumentation._getConfig() as HttpInstrumentationConfig;
+
+  if (config === undefined) {
+    config = { responseHook };
+  } else if (config.responseHook !== undefined) {
+    const original = config.responseHook;
+    config.responseHook = function (this: unknown, span, response) {
+      responseHook(span, response);
+      original.call(this, span, response);
+    };
+  } else {
+    config.responseHook = responseHook;
+  }
+
+  instrumentation.setConfig(config);
+}
+
+function configureInstrumentations(options: Options) {
+  for (const instrumentation of options.instrumentations) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const instr = instrumentation as any;
+    if (
+      instr['instrumentationName'] === '@opentelemetry/instrumentation-http'
+    ) {
+      configureHttpInstrumentation(instr, options);
+    }
+  }
 }
