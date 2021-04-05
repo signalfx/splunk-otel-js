@@ -20,7 +20,7 @@ import {
   HttpInstrumentationConfig,
   HttpResponseCustomAttributeFunction,
 } from '@opentelemetry/instrumentation-http';
-import { isSpanContextValid } from '@opentelemetry/api';
+import { isSpanContextValid, TraceFlags } from '@opentelemetry/api';
 
 export function configureHttpInstrumentation(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -46,7 +46,11 @@ export function configureHttpInstrumentation(
       const spanContext = span.context();
 
       if (isSpanContextValid(spanContext)) {
-        const { traceId, spanId } = spanContext;
+        const { traceFlags, traceId, spanId } = spanContext;
+        const sampled =
+          (traceFlags & TraceFlags.SAMPLED) === TraceFlags.SAMPLED;
+        const flags = sampled ? '01' : '00';
+
         appendHeader(
           response,
           'Access-Control-Expose-Headers',
@@ -55,7 +59,7 @@ export function configureHttpInstrumentation(
         appendHeader(
           response,
           'Server-Timing',
-          `traceparent;desc="00-${traceId}-${spanId}-01"`
+          `traceparent;desc="00-${traceId}-${spanId}-${flags}"`
         );
       }
     }
