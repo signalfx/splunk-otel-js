@@ -39,6 +39,7 @@ import {
 
 describe('options', () => {
   it('verify default options', () => {
+    // Mock the default `getInstrumentations` in case some instrumentations (e.g. http) are part of dev dependencies.
     const getInstrumentationsStub = sinon
       .stub(instrumentations, 'getInstrumentations')
       .returns([]);
