@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-import { context, propagation, trace } from '@opentelemetry/api';
+import {
+  context,
+  isSpanContextValid,
+  propagation,
+  trace,
+} from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import {
@@ -94,12 +99,17 @@ function configureHttpInstrumentation(instrumentation: any, options: Options) {
     response
   ) => {
     if (response instanceof ServerResponse) {
-      const { traceId, spanId } = span.context();
-      response.setHeader('Access-Control-Expose-Headers', 'Server-Timing');
-      response.setHeader(
-        'Server-Timing',
-        `traceparent;desc="00-${traceId}-${spanId}-01"`
-      );
+      const spanContext = span.context();
+
+      if (isSpanContextValid(spanContext)) {
+        const { traceId, spanId } = spanContext;
+
+        response.setHeader('Access-Control-Expose-Headers', 'Server-Timing');
+        response.setHeader(
+          'Server-Timing',
+          `traceparent;desc="00-${traceId}-${spanId}-01"`
+        );
+      }
     }
   };
 
