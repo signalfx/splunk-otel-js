@@ -70,8 +70,9 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   if (options.serverTimingEnabled === undefined) {
     options.serverTimingEnabled =
-      (process.env.SPLUNK_SERVER_TIMING_ENABLED || '').trim().toLowerCase() ===
-      'true';
+      (process.env.SPLUNK_CONTEXT_SERVER_TIMING_ENABLED || '')
+        .trim()
+        .toLowerCase() === 'true';
   }
 
   options.serviceName =

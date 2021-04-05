@@ -68,7 +68,7 @@ You can also instrument your app with code as described [here](#instrument-with-
 | SPLUNK_SERVICE_NAME             | serviceName | `unnamed-node-service`               | The service name of this Node service.                                 |
 | SPLUNK_ACCESS_TOKEN             |  acceessToken | |                                    | The optional organization access token for trace submission requests.  |
 | SPLUNK_MAX_ATTR_LENGTH          | maxAttrLength | 1200            | Maximum length of string attribute value in characters. Longer values are truncated. |
-| SPLUNK_SERVER_TIMING_ENABLED | serverTimingEnabled | false | Enable injection of `Server-Timing` header to HTTP responses. |
+| SPLUNK_CONTEXT_SERVER_TIMING_ENABLED | serverTimingEnabled | false | Enable injection of `Server-Timing` header to HTTP responses. |
 | OTEL_RESOURCE_ATTRIBUTES      | | unset          | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
 | OTEL_TRACE_ENABLED            | | `true`         | Globally enables tracer creation and auto-instrumentation.                                               |
 
