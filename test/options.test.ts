@@ -48,7 +48,7 @@ describe('options', () => {
       endpoint: 'http://localhost:9080/v1/trace',
       serviceName: 'unnamed-node-service',
       accessToken: '',
-      serverTimingEnabled: false,
+      serverTimingEnabled: true,
       maxAttrLength: 1200,
       instrumentations: [],
       tracerConfig: {
@@ -87,7 +87,7 @@ describe('options', () => {
       serviceName: 'custom-service-name',
       accessToken: 'custom-access-token',
       maxAttrLength: 4000,
-      serverTimingEnabled: false,
+      serverTimingEnabled: true,
       instrumentations: [testInstrumentation],
       tracerConfig: {
         resource: new Resource({ attr1: 'value' }),

@@ -56,15 +56,9 @@ describe('servertiming', () => {
     });
   }
 
-  it('does not inject server timing by default', done => {
+  it('injects server timing by default', done => {
     startTracing({});
-    const http = require('http');
-    server = http.createServer((req, res) => res.end('ok'));
-    server.listen(PORT);
-    http.get(SERVER_URL, res => {
-      assert.strictEqual(undefined, res.headers['server-timing']);
-      done();
-    });
+    testHeadersAdded(done);
   });
 
   it('can be enabled via environment variables', done => {

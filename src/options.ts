@@ -69,10 +69,10 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   }
 
   if (options.serverTimingEnabled === undefined) {
-    options.serverTimingEnabled =
-      (process.env.SPLUNK_CONTEXT_SERVER_TIMING_ENABLED || '')
-        .trim()
-        .toLowerCase() === 'true';
+    options.serverTimingEnabled = getEnvBoolean(
+      'SPLUNK_CONTEXT_SERVER_TIMING_ENABLED',
+      true
+    );
   }
 
   options.serviceName =
@@ -142,4 +142,18 @@ export function defaultPropagatorFactory(options: Options): TextMapPropagator {
       new HttpTraceContext(),
     ],
   });
+}
+
+function getEnvBoolean(key: string, defaultValue = true) {
+  const value = process.env[key];
+
+  if (value === undefined) {
+    return defaultValue;
+  }
+
+  if (['false', 'no', '0'].indexOf(value.trim().toLowerCase()) >= 0) {
+    return false;
+  }
+
+  return true;
 }
