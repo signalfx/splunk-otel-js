@@ -14,20 +14,11 @@
  * limitations under the License.
  */
 
-import {
-  context,
-  isSpanContextValid,
-  propagation,
-  trace,
-} from '@opentelemetry/api';
+import { context, propagation, trace } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
-import {
-  HttpInstrumentationConfig,
-  HttpResponseCustomAttributeFunction,
-} from '@opentelemetry/instrumentation-http';
-import { ServerResponse } from 'http';
 
+import { configureHttpInstrumentation } from './instrumentations/http';
 import { Options, _setDefaultOptions } from './options';
 import { _patchJaeger } from './jaeger';
 import { gte } from 'semver';
@@ -79,55 +70,6 @@ export function startTracing(opts: Partial<Options> = {}): void {
 
   // register global provider
   trace.setGlobalTracerProvider(provider);
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function configureHttpInstrumentation(instrumentation: any, options: Options) {
-  if (!options.serverTimingEnabled) {
-    return;
-  }
-
-  if (
-    typeof instrumentation['setConfig'] !== 'function' ||
-    typeof instrumentation['_getConfig'] !== 'function'
-  ) {
-    return;
-  }
-
-  const responseHook: HttpResponseCustomAttributeFunction = (
-    span,
-    response
-  ) => {
-    if (response instanceof ServerResponse) {
-      const spanContext = span.context();
-
-      if (isSpanContextValid(spanContext)) {
-        const { traceId, spanId } = spanContext;
-
-        response.setHeader('Access-Control-Expose-Headers', 'Server-Timing');
-        response.setHeader(
-          'Server-Timing',
-          `traceparent;desc="00-${traceId}-${spanId}-01"`
-        );
-      }
-    }
-  };
-
-  let config = instrumentation._getConfig() as HttpInstrumentationConfig;
-
-  if (config === undefined) {
-    config = { responseHook };
-  } else if (config.responseHook !== undefined) {
-    const original = config.responseHook;
-    config.responseHook = function (this: unknown, span, response) {
-      responseHook(span, response);
-      original.call(this, span, response);
-    };
-  } else {
-    config.responseHook = responseHook;
-  }
-
-  instrumentation.setConfig(config);
 }
 
 function configureInstrumentations(options: Options) {
