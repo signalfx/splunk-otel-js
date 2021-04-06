@@ -24,8 +24,11 @@ import {
   SpanProcessor,
   InMemorySpanExporter,
 } from '@opentelemetry/tracing';
-import * as assert from 'assert';
 
+import * as assert from 'assert';
+import * as sinon from 'sinon';
+
+import * as instrumentations from '../src/instrumentations';
 import {
   _setDefaultOptions,
   defaultSpanProcessorFactory,
@@ -36,11 +39,16 @@ import {
 
 describe('options', () => {
   it('verify default options', () => {
+    // Mock the default `getInstrumentations` in case some instrumentations (e.g. http) are part of dev dependencies.
+    const getInstrumentationsStub = sinon
+      .stub(instrumentations, 'getInstrumentations')
+      .returns([]);
     const options = _setDefaultOptions();
     assert.deepStrictEqual(options, {
       endpoint: 'http://localhost:9080/v1/trace',
       serviceName: 'unnamed-node-service',
       accessToken: '',
+      serverTimingEnabled: true,
       maxAttrLength: 1200,
       instrumentations: [],
       tracerConfig: {
@@ -50,6 +58,7 @@ describe('options', () => {
       spanProcessorFactory: defaultSpanProcessorFactory,
       propagatorFactory: defaultPropagatorFactory,
     });
+    getInstrumentationsStub.restore();
   });
 
   it('verify custom options', () => {
@@ -78,6 +87,7 @@ describe('options', () => {
       serviceName: 'custom-service-name',
       accessToken: 'custom-access-token',
       maxAttrLength: 4000,
+      serverTimingEnabled: true,
       instrumentations: [testInstrumentation],
       tracerConfig: {
         resource: new Resource({ attr1: 'value' }),

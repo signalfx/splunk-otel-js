@@ -39,7 +39,7 @@ describe('instrumentations', () => {
 
   it('does not load if packages are not installed', () => {
     const inst = instrumentations.getInstrumentations();
-    assert.strictEqual(inst.length, 0);
+    assert.strictEqual(inst.length, 1);
   });
 
   it('load instrumentations if they are not installed', () => {
@@ -61,8 +61,8 @@ describe('instrumentations', () => {
   it('loader silently fails when package is not installed', () => {
     const loader = require('../src/instrumentations/loader');
     const result = loader.load(
-      '@opentelemetry/instrumentation-http',
-      'HttpInstrumentation'
+      '@opentelemetry/instrumentation-dns',
+      'DnsInstrumentation'
     );
     assert.strictEqual(result, null);
   });

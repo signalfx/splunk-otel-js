@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add injection of `Server-Timing` header.
+  ([#70](https://github.com/signalfx/splunk-otel-js/pull/70))
+
 ## 0.6.0 (03-29-2021)
 
 ### Changed

@@ -18,6 +18,7 @@ import { context, propagation, trace } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 
+import { configureHttpInstrumentation } from './instrumentations/http';
 import { Options, _setDefaultOptions } from './options';
 import { _patchJaeger } from './jaeger';
 import { gte } from 'semver';
@@ -49,6 +50,8 @@ export function startTracing(opts: Partial<Options> = {}): void {
   // tracer provider
   const provider = new NodeTracerProvider(options.tracerConfig);
 
+  configureInstrumentations(options);
+
   // instrumentations
   registerInstrumentations({
     tracerProvider: provider,
@@ -67,4 +70,16 @@ export function startTracing(opts: Partial<Options> = {}): void {
 
   // register global provider
   trace.setGlobalTracerProvider(provider);
+}
+
+function configureInstrumentations(options: Options) {
+  for (const instrumentation of options.instrumentations) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const instr = instrumentation as any;
+    if (
+      instr['instrumentationName'] === '@opentelemetry/instrumentation-http'
+    ) {
+      configureHttpInstrumentation(instr, options);
+    }
+  }
 }

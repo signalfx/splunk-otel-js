@@ -47,6 +47,7 @@ export interface Options {
   serviceName: string;
   accessToken: string;
   maxAttrLength: number;
+  serverTimingEnabled: boolean;
   instrumentations: InstrumentationOption[];
   tracerConfig: NodeTracerConfig;
   spanExporterFactory: SpanExporterFactory;
@@ -65,6 +66,13 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     } else {
       options.maxAttrLength = defaultMaxAttrLength;
     }
+  }
+
+  if (options.serverTimingEnabled === undefined) {
+    options.serverTimingEnabled = getEnvBoolean(
+      'SPLUNK_CONTEXT_SERVER_TIMING_ENABLED',
+      true
+    );
   }
 
   options.serviceName =
@@ -96,6 +104,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     serviceName: options.serviceName,
     accessToken: options.accessToken,
     maxAttrLength: options.maxAttrLength,
+    serverTimingEnabled: options.serverTimingEnabled,
     instrumentations: options.instrumentations,
     tracerConfig: tracerConfig,
     spanExporterFactory: options.spanExporterFactory,
@@ -133,4 +142,18 @@ export function defaultPropagatorFactory(options: Options): TextMapPropagator {
       new HttpTraceContext(),
     ],
   });
+}
+
+function getEnvBoolean(key: string, defaultValue = true) {
+  const value = process.env[key];
+
+  if (value === undefined) {
+    return defaultValue;
+  }
+
+  if (['false', 'no', '0'].indexOf(value.trim().toLowerCase()) >= 0) {
+    return false;
+  }
+
+  return true;
 }
