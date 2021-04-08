@@ -35,6 +35,11 @@ describe('instrumentations', () => {
     ['@opentelemetry/instrumentation-net', 'NetInstrumentation'],
     ['@opentelemetry/instrumentation-pg', 'PgInstrumentation'],
     ['@opentelemetry/instrumentation-hapi', 'HapiInstrumentation'],
+    ['opentelemetry-instrumentation-amqplib', 'AmqplibInstrumentation'],
+    [
+      'opentelemetry-instrumentation-elasticsearch',
+      'ElasticsearchInstrumentation',
+    ],
   ];
 
   it('does not load if packages are not installed', () => {

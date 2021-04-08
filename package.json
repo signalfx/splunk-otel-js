@@ -137,6 +137,12 @@
     },
     "@opentelemetry/instrumentation-hapi": {
       "optional": true
+    },
+    "opentelemetry-instrumentation-amqplib": {
+      "optional": true
+    },
+    "opentelemetry-instrumentation-elasticsearch": {
+      "optional": true
     }
   }
 }
