@@ -217,6 +217,8 @@ any of these instrumentations, you'll need to install them with npm and then run
 @opentelemetry/instrumentation-net
 @opentelemetry/instrumentation-pg
 @opentelemetry/instrumentation-hapi
+opentelemetry-instrumentation-amqplib
+opentelemetry-instrumentation-elasticsearch
 ```
 
 You can find more instrumentation packages over at the [OpenTelemetry Registry](https://opentelemetry.io/registry/?language=js) and enable them manually 
