@@ -4,6 +4,8 @@
 
 - Add injection of `Server-Timing` header.
   ([#70](https://github.com/signalfx/splunk-otel-js/pull/70))
+- Add support for amqplib and elasticsearch
+  ([#74](https://github.com/signalfx/splunk-otel-js/pull/74))
 
 ## 0.6.0 (03-29-2021)
 
