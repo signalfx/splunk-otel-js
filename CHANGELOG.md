@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.8.0 (04-15-2021)
+
+- Added support for `aws-sdk`, `mongoose`, `sequelize`, `typeorm` and `kafkajs`.
+  ([#83](https://github.com/signalfx/splunk-otel-js/pull/83))
+
+## 0.7.0 (04-15-2021)
+
 - Add injection of `Server-Timing` header.
   ([#70](https://github.com/signalfx/splunk-otel-js/pull/70))
 - Add support for amqplib and elasticsearch
