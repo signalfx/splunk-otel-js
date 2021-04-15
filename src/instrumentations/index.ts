@@ -36,6 +36,11 @@ const supportedInstrumentations: [string, string][] = [
     'opentelemetry-instrumentation-elasticsearch',
     'ElasticsearchInstrumentation',
   ],
+  ['opentelemetry-instrumentation-aws-sdk', 'AwsInstrumentation'],
+  ['opentelemetry-instrumentation-kafkajs', 'KafkaJsInstrumentation'],
+  ['opentelemetry-instrumentation-sequelize', 'SequelizeInstrumentation'],
+  ['opentelemetry-instrumentation-typeorm', 'TypeormInstrumentation'],
+  ['opentelemetry-instrumentation-mongoose', 'MongooseInstrumentation'],
 ];
 
 export function getInstrumentations(): InstrumentationOption[] {

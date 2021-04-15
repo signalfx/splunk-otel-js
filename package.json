@@ -98,7 +98,12 @@
     "@opentelemetry/instrumentation-pg": "^0.14.0",
     "@opentelemetry/instrumentation-redis": "^0.14.0",
     "opentelemetry-instrumentation-amqplib": "^0.3.0",
-    "opentelemetry-instrumentation-elasticsearch": "^0.3.0"
+    "opentelemetry-instrumentation-aws-sdk": "^0.3.1",
+    "opentelemetry-instrumentation-elasticsearch": "^0.3.0",
+    "opentelemetry-instrumentation-kafkajs": "^0.3.0",
+    "opentelemetry-instrumentation-mongoose": "^0.3.0",
+    "opentelemetry-instrumentation-sequelize": "^0.3.0",
+    "opentelemetry-instrumentation-typeorm": "^0.3.0"
   },
   "peerDependenciesMeta": {
     "@opentelemetry/instrumentation-http": {
@@ -144,6 +149,21 @@
       "optional": true
     },
     "opentelemetry-instrumentation-elasticsearch": {
+      "optional": true
+    },
+    "opentelemetry-instrumentation-aws-sdk": {
+      "optional": true
+    },
+    "opentelemetry-instrumentation-kafkajs": {
+      "optional": true
+    },
+    "opentelemetry-instrumentation-sequelize": {
+      "optional": true
+    },
+    "opentelemetry-instrumentation-typeorm": {
+      "optional": true
+    },
+    "opentelemetry-instrumentation-mongoose": {
       "optional": true
     }
   }
