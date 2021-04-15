@@ -40,6 +40,11 @@ describe('instrumentations', () => {
       'opentelemetry-instrumentation-elasticsearch',
       'ElasticsearchInstrumentation',
     ],
+    ['opentelemetry-instrumentation-aws-sdk', 'AwsInstrumentation'],
+    ['opentelemetry-instrumentation-kafkajs', 'KafkaJsInstrumentation'],
+    ['opentelemetry-instrumentation-sequelize', 'SequelizeInstrumentation'],
+    ['opentelemetry-instrumentation-typeorm', 'TypeormInstrumentation'],
+    ['opentelemetry-instrumentation-mongoose', 'MongooseInstrumentation'],
   ];
 
   it('does not load if packages are not installed', () => {
