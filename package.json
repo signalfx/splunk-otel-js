@@ -47,7 +47,7 @@
   "devDependencies": {
     "@opentelemetry/instrumentation-http": "^0.18.0",
     "@types/mocha": "8.2.2",
-    "@types/node": "15.0.2",
+    "@types/node": "15.0.3",
     "@types/semver": "7.3.5",
     "@types/shimmer": "1.0.1",
     "@types/sinon": "^10.0.0",
