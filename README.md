@@ -23,7 +23,7 @@ If you're currently using the SignalFx Tracing Library for Node and want to
 migrate to the Splunk Distribution of OpenTelemetry Node, see [Migrate from
 the SignalFx Tracing Library for JS](migration.md).
 
-> :construction: This project is currently in **BETA**.
+> :construction: This project is currently in **BETA**. It is **officially supported** by Splunk. However, breaking changes **MAY** be introduced.
 
 ## Getting Started
 
