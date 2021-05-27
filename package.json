@@ -98,7 +98,7 @@
     "@opentelemetry/instrumentation-pg": "~0.16.0",
     "@opentelemetry/instrumentation-redis": "~0.16.0",
     "opentelemetry-instrumentation-amqplib": "~0.4.2",
-    "opentelemetry-instrumentation-aws-sdk": "~0.3.1",
+    "opentelemetry-instrumentation-aws-sdk": "~0.4.3",
     "opentelemetry-instrumentation-elasticsearch": "~0.4.2",
     "opentelemetry-instrumentation-kafkajs": "~0.4.3",
     "opentelemetry-instrumentation-mongoose": "~0.4.3",
