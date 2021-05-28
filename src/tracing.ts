@@ -19,6 +19,7 @@ import { NodeTracerProvider } from '@opentelemetry/node';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 
 import { configureHttpInstrumentation } from './instrumentations/http';
+import { configureLogInjection } from './instrumentations/logging';
 import { Options, _setDefaultOptions } from './options';
 import { _patchJaeger } from './jaeger';
 import { gte } from 'semver';
@@ -76,10 +77,16 @@ function configureInstrumentations(options: Options) {
   for (const instrumentation of options.instrumentations) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const instr = instrumentation as any;
-    if (
-      instr['instrumentationName'] === '@opentelemetry/instrumentation-http'
-    ) {
-      configureHttpInstrumentation(instr, options);
+
+    switch (instr['instrumentationName']) {
+      case '@opentelemetry/instrumentation-http':
+        configureHttpInstrumentation(instr, options);
+        break;
+      case '@opentelemetry/instrumentation-bunyan':
+      case '@opentelemetry/instrumentation-pino':
+      case '@opentelemetry/instrumentation-winston':
+        configureLogInjection(instr, options);
+        break;
     }
   }
 }

@@ -48,6 +48,7 @@ export interface Options {
   accessToken: string;
   maxAttrLength: number;
   serverTimingEnabled: boolean;
+  logInjectionEnabled: boolean;
   instrumentations: InstrumentationOption[];
   tracerConfig: NodeTracerConfig;
   spanExporterFactory: SpanExporterFactory;
@@ -75,6 +76,10 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     );
   }
 
+  if (options.logInjectionEnabled === undefined) {
+    options.logInjectionEnabled = getEnvBoolean('SPLUNK_LOGS_INJECTION', false);
+  }
+
   options.serviceName =
     options.serviceName || env.SPLUNK_SERVICE_NAME || defaultServiceName;
   options.endpoint =
@@ -96,7 +101,9 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   // instrumentations
   if (options.instrumentations === undefined) {
-    options.instrumentations = getInstrumentations();
+    options.instrumentations = getInstrumentations({
+      logInjectionEnabled: options.logInjectionEnabled,
+    });
   }
 
   return {
@@ -105,6 +112,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     accessToken: options.accessToken,
     maxAttrLength: options.maxAttrLength,
     serverTimingEnabled: options.serverTimingEnabled,
+    logInjectionEnabled: options.logInjectionEnabled,
     instrumentations: options.instrumentations,
     tracerConfig: tracerConfig,
     spanExporterFactory: options.spanExporterFactory,

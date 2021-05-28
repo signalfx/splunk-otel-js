@@ -55,7 +55,8 @@ describe('tracing', () => {
     exportURL: string,
     serviceName: string,
     accessToken?: string,
-    maxAttrLength?: number
+    maxAttrLength?: number,
+    logsInjection: boolean
   ) {
     sinon.assert.calledOnce(addSpanProcessorMock);
     const processor = addSpanProcessorMock.getCall(0).args[0];
@@ -91,7 +92,8 @@ describe('tracing', () => {
       'http://localhost:9080/v1/trace',
       'unnamed-node-service',
       '',
-      1200
+      1200,
+      false
     );
   });
 
@@ -100,8 +102,21 @@ describe('tracing', () => {
     const serviceName = 'test-node-service';
     const accessToken = '1234';
     const maxAttrLength = 50;
-    startTracing({ endpoint, serviceName, accessToken, maxAttrLength });
-    assertTracingPipeline(endpoint, serviceName, accessToken, maxAttrLength);
+    const logInjectionEnabled = true;
+    startTracing({
+      endpoint,
+      serviceName,
+      accessToken,
+      maxAttrLength,
+      logInjectionEnabled,
+    });
+    assertTracingPipeline(
+      endpoint,
+      serviceName,
+      accessToken,
+      maxAttrLength,
+      logInjectionEnabled
+    );
   });
 
   it('setups tracing with custom options from env', () => {
@@ -109,11 +124,13 @@ describe('tracing', () => {
     const serviceName = 'env-service';
     const accessToken = 'zxcvb';
     const maxAttrLength = 101;
+    const logInjectionEnabled = true;
 
     process.env.OTEL_EXPORTER_JAEGER_ENDPOINT = '';
     process.env.SPLUNK_SERVICE_NAME = '';
     process.env.SPLUNK_ACCESS_TOKEN = '';
     process.env.SPLUNK_MAX_ATTR_LENGTH = '42';
+    process.env.SPLUNK_LOGS_INJECTION = 'true';
     const envExporterStub = sinon
       .stub(process.env, 'OTEL_EXPORTER_JAEGER_ENDPOINT')
       .value(url);
@@ -126,13 +143,23 @@ describe('tracing', () => {
     const envMaxAttrLength = sinon
       .stub(process.env, 'SPLUNK_MAX_ATTR_LENGTH')
       .value(maxAttrLength);
+    const envLogsInjection = sinon
+      .stub(process.env, 'SPLUNK_LOGS_INJECTION')
+      .value(logInjectionEnabled);
 
     startTracing();
-    assertTracingPipeline(url, serviceName, accessToken, maxAttrLength);
+    assertTracingPipeline(
+      url,
+      serviceName,
+      accessToken,
+      maxAttrLength,
+      logInjectionEnabled
+    );
     envExporterStub.restore();
     envServiceStub.restore();
     envAccessStub.restore();
     envMaxAttrLength.restore();
+    envLogsInjection.restore();
   });
 
   it('setups tracing with multiple processors', () => {

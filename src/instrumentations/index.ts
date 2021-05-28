@@ -43,12 +43,24 @@ const supportedInstrumentations: [string, string][] = [
   ['opentelemetry-instrumentation-mongoose', 'MongooseInstrumentation'],
 ];
 
-export function getInstrumentations(): InstrumentationOption[] {
+const loggingInstrumentations: [string, string][] = [
+  ['@opentelemetry/instrumentation-bunyan', 'BunyanInstrumentation'],
+  ['@opentelemetry/instrumentation-pino', 'PinoInstrumentation'],
+  ['@opentelemetry/instrumentation-winston', 'WinstonInstrumentation'],
+];
+
+export function getInstrumentations(
+  options: { logInjectionEnabled?: boolean } = {}
+): InstrumentationOption[] {
   const result = [];
 
+  const instrumentationsToLoad = options.logInjectionEnabled
+    ? [...supportedInstrumentations, ...loggingInstrumentations]
+    : supportedInstrumentations;
+
   // Defensively load all supported instrumentations
-  for (const i in supportedInstrumentations) {
-    const [module, name] = supportedInstrumentations[i];
+  for (const i in instrumentationsToLoad) {
+    const [module, name] = instrumentationsToLoad[i];
     const Instrumentation = load(module, name);
     if (Instrumentation != null) {
       result.push(new Instrumentation());
