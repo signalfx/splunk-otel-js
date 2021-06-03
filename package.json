@@ -155,6 +155,15 @@
     "@opentelemetry/instrumentation-hapi": {
       "optional": true
     },
+    "@opentelemetry/instrumentation-bunyan": {
+      "optional": true
+    },
+    "@opentelemetry/instrumentation-pino": {
+      "optional": true
+    },
+    "@opentelemetry/instrumentation-winston": {
+      "optional": true
+    },
     "opentelemetry-instrumentation-amqplib": {
       "optional": true
     },
