@@ -101,9 +101,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   // instrumentations
   if (options.instrumentations === undefined) {
-    options.instrumentations = getInstrumentations({
-      logInjectionEnabled: options.logInjectionEnabled,
-    });
+    options.instrumentations = getInstrumentations();
   }
 
   return {

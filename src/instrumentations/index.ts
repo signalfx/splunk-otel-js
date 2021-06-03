@@ -31,6 +31,9 @@ const supportedInstrumentations: [string, string][] = [
   ['@opentelemetry/instrumentation-net', 'NetInstrumentation'],
   ['@opentelemetry/instrumentation-pg', 'PgInstrumentation'],
   ['@opentelemetry/instrumentation-hapi', 'HapiInstrumentation'],
+  ['@opentelemetry/instrumentation-bunyan', 'BunyanInstrumentation'],
+  ['@opentelemetry/instrumentation-pino', 'PinoInstrumentation'],
+  ['@opentelemetry/instrumentation-winston', 'WinstonInstrumentation'],
   ['opentelemetry-instrumentation-amqplib', 'AmqplibInstrumentation'],
   [
     'opentelemetry-instrumentation-elasticsearch',
@@ -43,24 +46,12 @@ const supportedInstrumentations: [string, string][] = [
   ['opentelemetry-instrumentation-mongoose', 'MongooseInstrumentation'],
 ];
 
-const loggingInstrumentations: [string, string][] = [
-  ['@opentelemetry/instrumentation-bunyan', 'BunyanInstrumentation'],
-  ['@opentelemetry/instrumentation-pino', 'PinoInstrumentation'],
-  ['@opentelemetry/instrumentation-winston', 'WinstonInstrumentation'],
-];
-
-export function getInstrumentations(
-  options: { logInjectionEnabled?: boolean } = {}
-): InstrumentationOption[] {
+export function getInstrumentations(): InstrumentationOption[] {
   const result = [];
 
-  const instrumentationsToLoad = options.logInjectionEnabled
-    ? [...supportedInstrumentations, ...loggingInstrumentations]
-    : supportedInstrumentations;
-
   // Defensively load all supported instrumentations
-  for (const i in instrumentationsToLoad) {
-    const [module, name] = instrumentationsToLoad[i];
+  for (const i in supportedInstrumentations) {
+    const [module, name] = supportedInstrumentations[i];
     const Instrumentation = load(module, name);
     if (Instrumentation != null) {
       result.push(new Instrumentation());
