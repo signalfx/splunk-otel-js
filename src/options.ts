@@ -27,6 +27,8 @@ import { getInstrumentations } from './instrumentations';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { EnvResourceDetector } from './resource';
 import { NodeTracerConfig } from '@opentelemetry/node';
+import { Resource } from '@opentelemetry/resources';
+import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { TextMapPropagator } from '@opentelemetry/api';
 import { CompositePropagator, HttpTraceContext } from '@opentelemetry/core';
 
@@ -87,7 +89,11 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   const extraTracerConfig = options.tracerConfig || {};
   const tracerConfig = {
-    resource: new EnvResourceDetector().detect(),
+    resource: new EnvResourceDetector().detect().merge(
+      new Resource({
+        [ResourceAttributes.SERVICE_NAME]: options.serviceName,
+      })
+    ),
     ...extraTracerConfig,
   };
 

@@ -15,7 +15,8 @@
  */
 
 import { Options } from '../options';
-import { Span } from '@opentelemetry/api';
+import { Span } from '@opentelemetry/tracing';
+import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type LogRecord = Record<string, any>;
@@ -36,8 +37,9 @@ export function configureLogInjection(
     return;
   }
 
-  const logHook = (_span: Span, record: LogRecord) => {
-    record['service'] = options.serviceName;
+  const logHook = (span: Span, record: LogRecord) => {
+    record['service.name'] =
+      span.resource.attributes[ResourceAttributes.SERVICE_NAME];
   };
 
   let config = instrumentation.getConfig();

@@ -18,6 +18,7 @@ import { TextMapGetter, TextMapPropagator } from '@opentelemetry/api';
 import { HttpBaggage } from '@opentelemetry/core';
 import { InstrumentationBase } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
+import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
 import {
   SimpleSpanProcessor,
   SpanExporter,
@@ -53,7 +54,9 @@ describe('options', () => {
       maxAttrLength: 1200,
       instrumentations: [],
       tracerConfig: {
-        resource: new Resource({}),
+        resource: new Resource({
+          [ResourceAttributes.SERVICE_NAME]: 'unnamed-node-service',
+        }),
       },
       spanExporterFactory: defaultSpanExporterFactory,
       spanProcessorFactory: defaultSpanProcessorFactory,

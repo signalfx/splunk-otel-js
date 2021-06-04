@@ -33,7 +33,7 @@ describe('log injection', () => {
       logger.info('my-log-message');
       assert.strictEqual(record['trace_id'], traceId);
       assert.strictEqual(record['span_id'], spanId);
-      assert.strictEqual(record['service'], 'test-service');
+      assert.strictEqual(record['service.name'], 'test-service');
       done();
     });
   }
