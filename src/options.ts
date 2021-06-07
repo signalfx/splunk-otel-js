@@ -82,17 +82,25 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     options.logInjectionEnabled = getEnvBoolean('SPLUNK_LOGS_INJECTION', false);
   }
 
-  options.serviceName =
-    options.serviceName || env.SPLUNK_SERVICE_NAME || defaultServiceName;
   options.endpoint =
     options.endpoint || env.OTEL_EXPORTER_JAEGER_ENDPOINT || defaultEndpoint;
 
   const extraTracerConfig = options.tracerConfig || {};
 
+  const resource = new EnvResourceDetector().detect();
+
+  options.serviceName =
+    options.serviceName ||
+    env.SPLUNK_SERVICE_NAME ||
+    resource.attributes[ResourceAttributes.SERVICE_NAME]?.toString() ||
+    defaultServiceName;
+
   const tracerConfig = {
-    resource: configureResource({
-      serviceName: options.serviceName,
-    }),
+    resource: resource.merge(
+      new Resource({
+        [ResourceAttributes.SERVICE_NAME]: options.serviceName,
+      })
+    ),
     ...extraTracerConfig,
   };
 
@@ -167,18 +175,4 @@ function getEnvBoolean(key: string, defaultValue = true) {
   }
 
   return true;
-}
-
-function configureResource(options: { serviceName: string }): Resource {
-  const resource = new EnvResourceDetector().detect();
-
-  if (resource.attributes[ResourceAttributes.SERVICE_NAME] !== undefined) {
-    return resource;
-  }
-
-  return resource.merge(
-    new Resource({
-      [ResourceAttributes.SERVICE_NAME]: options.serviceName,
-    })
-  );
 }

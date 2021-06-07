@@ -105,7 +105,7 @@ describe('options', () => {
     });
   });
 
-  it('prefers resource information loaded from the environment', () => {
+  it('prefers service name from env resource info over the default service name', () => {
     process.env.OTEL_RESOURCE_ATTRIBUTES = 'service.name=foobar';
     const options = _setDefaultOptions();
     delete process.env.OTEL_RESOURCE_ATTRIBUTES;
