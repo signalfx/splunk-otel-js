@@ -27,6 +27,8 @@ import { getInstrumentations } from './instrumentations';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { EnvResourceDetector } from './resource';
 import { NodeTracerConfig } from '@opentelemetry/node';
+import { Resource } from '@opentelemetry/resources';
+import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { TextMapPropagator } from '@opentelemetry/api';
 import { CompositePropagator, HttpTraceContext } from '@opentelemetry/core';
 
@@ -48,6 +50,7 @@ export interface Options {
   accessToken: string;
   maxAttrLength: number;
   serverTimingEnabled: boolean;
+  logInjectionEnabled: boolean;
   instrumentations: InstrumentationOption[];
   tracerConfig: NodeTracerConfig;
   spanExporterFactory: SpanExporterFactory;
@@ -75,14 +78,29 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     );
   }
 
-  options.serviceName =
-    options.serviceName || env.SPLUNK_SERVICE_NAME || defaultServiceName;
+  if (options.logInjectionEnabled === undefined) {
+    options.logInjectionEnabled = getEnvBoolean('SPLUNK_LOGS_INJECTION', false);
+  }
+
   options.endpoint =
     options.endpoint || env.OTEL_EXPORTER_JAEGER_ENDPOINT || defaultEndpoint;
 
   const extraTracerConfig = options.tracerConfig || {};
+
+  const resource = new EnvResourceDetector().detect();
+
+  options.serviceName =
+    options.serviceName ||
+    env.SPLUNK_SERVICE_NAME ||
+    resource.attributes[ResourceAttributes.SERVICE_NAME]?.toString() ||
+    defaultServiceName;
+
   const tracerConfig = {
-    resource: new EnvResourceDetector().detect(),
+    resource: resource.merge(
+      new Resource({
+        [ResourceAttributes.SERVICE_NAME]: options.serviceName,
+      })
+    ),
     ...extraTracerConfig,
   };
 
@@ -105,6 +123,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     accessToken: options.accessToken,
     maxAttrLength: options.maxAttrLength,
     serverTimingEnabled: options.serverTimingEnabled,
+    logInjectionEnabled: options.logInjectionEnabled,
     instrumentations: options.instrumentations,
     tracerConfig: tracerConfig,
     spanExporterFactory: options.spanExporterFactory,

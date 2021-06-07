@@ -31,6 +31,9 @@ const supportedInstrumentations: [string, string][] = [
   ['@opentelemetry/instrumentation-net', 'NetInstrumentation'],
   ['@opentelemetry/instrumentation-pg', 'PgInstrumentation'],
   ['@opentelemetry/instrumentation-hapi', 'HapiInstrumentation'],
+  ['@opentelemetry/instrumentation-bunyan', 'BunyanInstrumentation'],
+  ['@opentelemetry/instrumentation-pino', 'PinoInstrumentation'],
+  ['@opentelemetry/instrumentation-winston', 'WinstonInstrumentation'],
   ['opentelemetry-instrumentation-amqplib', 'AmqplibInstrumentation'],
   [
     'opentelemetry-instrumentation-elasticsearch',

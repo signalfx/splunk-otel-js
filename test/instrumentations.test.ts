@@ -35,6 +35,9 @@ describe('instrumentations', () => {
     ['@opentelemetry/instrumentation-net', 'NetInstrumentation'],
     ['@opentelemetry/instrumentation-pg', 'PgInstrumentation'],
     ['@opentelemetry/instrumentation-hapi', 'HapiInstrumentation'],
+    ['@opentelemetry/instrumentation-bunyan', 'BunyanInstrumentation'],
+    ['@opentelemetry/instrumentation-pino', 'PinoInstrumentation'],
+    ['@opentelemetry/instrumentation-winston', 'WinstonInstrumentation'],
     ['opentelemetry-instrumentation-amqplib', 'AmqplibInstrumentation'],
     [
       'opentelemetry-instrumentation-elasticsearch',
@@ -49,7 +52,8 @@ describe('instrumentations', () => {
 
   it('does not load if packages are not installed', () => {
     const inst = instrumentations.getInstrumentations();
-    assert.strictEqual(inst.length, 1);
+    // Note: the number here is the devDependencies instrumentation count.
+    assert.strictEqual(inst.length, 4);
   });
 
   it('load instrumentations if they are not installed', () => {

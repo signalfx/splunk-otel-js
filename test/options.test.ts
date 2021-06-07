@@ -18,6 +18,7 @@ import { TextMapGetter, TextMapPropagator } from '@opentelemetry/api';
 import { HttpBaggage } from '@opentelemetry/core';
 import { InstrumentationBase } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
+import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
 import {
   SimpleSpanProcessor,
   SpanExporter,
@@ -49,10 +50,13 @@ describe('options', () => {
       serviceName: 'unnamed-node-service',
       accessToken: '',
       serverTimingEnabled: true,
+      logInjectionEnabled: false,
       maxAttrLength: 1200,
       instrumentations: [],
       tracerConfig: {
-        resource: new Resource({}),
+        resource: new Resource({
+          [ResourceAttributes.SERVICE_NAME]: 'unnamed-node-service',
+        }),
       },
       spanExporterFactory: defaultSpanExporterFactory,
       spanProcessorFactory: defaultSpanProcessorFactory,
@@ -70,6 +74,7 @@ describe('options', () => {
       serviceName: 'custom-service-name',
       accessToken: 'custom-access-token',
       maxAttrLength: 4000,
+      logInjectionEnabled: true,
       instrumentations: [testInstrumentation],
       tracerConfig: {
         resource: new Resource({
@@ -88,6 +93,7 @@ describe('options', () => {
       accessToken: 'custom-access-token',
       maxAttrLength: 4000,
       serverTimingEnabled: true,
+      logInjectionEnabled: true,
       instrumentations: [testInstrumentation],
       tracerConfig: {
         resource: new Resource({ attr1: 'value' }),
@@ -96,6 +102,18 @@ describe('options', () => {
       spanExporterFactory: testSpanExporterFactory,
       spanProcessorFactory: testSpanProcessorFactory,
       propagatorFactory: testPropagatorFactory,
+    });
+  });
+
+  it('prefers service name from env resource info over the default service name', () => {
+    process.env.OTEL_RESOURCE_ATTRIBUTES = 'service.name=foobar';
+    const options = _setDefaultOptions();
+    delete process.env.OTEL_RESOURCE_ATTRIBUTES;
+
+    assert.deepStrictEqual(options.tracerConfig, {
+      resource: new Resource({
+        [ResourceAttributes.SERVICE_NAME]: 'foobar',
+      }),
     });
   });
 });

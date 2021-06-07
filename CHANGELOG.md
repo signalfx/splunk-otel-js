@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add support for injecting trace context into logs.
+  ([#121](https://github.com/signalfx/splunk-otel-js/pull/121))
+
 ## 0.8.0 (04-15-2021)
 
 - Added support for `aws-sdk`, `mongoose`, `sequelize`, `typeorm` and `kafkajs`.
