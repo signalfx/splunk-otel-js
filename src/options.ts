@@ -88,12 +88,11 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     options.endpoint || env.OTEL_EXPORTER_JAEGER_ENDPOINT || defaultEndpoint;
 
   const extraTracerConfig = options.tracerConfig || {};
+
   const tracerConfig = {
-    resource: new EnvResourceDetector().detect().merge(
-      new Resource({
-        [ResourceAttributes.SERVICE_NAME]: options.serviceName,
-      })
-    ),
+    resource: configureResource({
+      serviceName: options.serviceName,
+    }),
     ...extraTracerConfig,
   };
 
@@ -168,4 +167,18 @@ function getEnvBoolean(key: string, defaultValue = true) {
   }
 
   return true;
+}
+
+function configureResource(options: { serviceName: string }): Resource {
+  const resource = new EnvResourceDetector().detect();
+
+  if (resource.attributes[ResourceAttributes.SERVICE_NAME] !== undefined) {
+    return resource;
+  }
+
+  return resource.merge(
+    new Resource({
+      [ResourceAttributes.SERVICE_NAME]: options.serviceName,
+    })
+  );
 }

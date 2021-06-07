@@ -104,6 +104,18 @@ describe('options', () => {
       propagatorFactory: testPropagatorFactory,
     });
   });
+
+  it('prefers resource information loaded from the environment', () => {
+    process.env.OTEL_RESOURCE_ATTRIBUTES = 'service.name=foobar';
+    const options = _setDefaultOptions();
+    delete process.env.OTEL_RESOURCE_ATTRIBUTES;
+
+    assert.deepStrictEqual(options.tracerConfig, {
+      resource: new Resource({
+        [ResourceAttributes.SERVICE_NAME]: 'foobar',
+      }),
+    });
+  });
 });
 
 class TestInstrumentation extends InstrumentationBase {
