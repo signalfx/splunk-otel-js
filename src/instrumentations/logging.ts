@@ -40,6 +40,18 @@ export function configureLogInjection(
   const logHook = (span: Span, record: LogRecord) => {
     record['service.name'] =
       span.resource.attributes[ResourceAttributes.SERVICE_NAME];
+
+    const version =
+      span.resource.attributes[ResourceAttributes.SERVICE_VERSION];
+    if (version !== undefined) {
+      record['service.version'] = version;
+    }
+
+    const environment =
+      span.resource.attributes[ResourceAttributes.DEPLOYMENT_ENVIRONMENT];
+    if (environment !== undefined) {
+      record['service.environment'] = environment;
+    }
   };
 
   let config = instrumentation.getConfig();

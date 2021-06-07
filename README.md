@@ -159,7 +159,7 @@ startTracing({
 
 - `serverTimingEnabled`: corresponds to the `SPLUNK_SERVER_TIMING_ENABLED` environment variable. Defaults to false. Enables injection of `Server-Timing` header to responses.
 
-- `logInjectionEnabled`: corresponds to the `SPLUNK_LOGS_INJECTION` environment variable. Defaults to false. Injects trace ID, span ID and service name to the log records. Supported logging libraries: bunyan, pino, winston.
+- `logInjectionEnabled`: corresponds to the `SPLUNK_LOGS_INJECTION` environment variable. Defaults to false. Injects trace ID, span ID and service name to the log records. Service version or deployment environment will be injected if available in the [configured resource](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/semantic_conventions/README.md). Supported logging libraries: bunyan, pino, winston.
 
 - `tracerConfig`: a JS object that is merged into the default tracer config replacing any existing keys and is passed on to the tracer provider during initialization. This can be used to customize the tracer provider or tracer. Must satisfy [`TracerConfig` interface](https://github.com/open-telemetry/opentelemetry-js/blob/71ba83a0dc51118e08e3148c788b81fe711003e7/packages/opentelemetry-tracing/src/types.ts#L26)
 

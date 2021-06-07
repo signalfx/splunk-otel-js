@@ -26,7 +26,7 @@ describe('log injection', () => {
   let stream: Writable;
   let record: any;
 
-  function assertInjection(logger, done) {
+  function assertInjection(logger, done, extra) {
     const span = trace.getTracer('test').startSpan('main');
     context.with(setSpan(context.active(), span), () => {
       const { traceId, spanId } = span.context();
@@ -34,6 +34,11 @@ describe('log injection', () => {
       assert.strictEqual(record['trace_id'], traceId);
       assert.strictEqual(record['span_id'], spanId);
       assert.strictEqual(record['service.name'], 'test-service');
+
+      for (const [key, value] of extra || []) {
+        assert.strictEqual(record[key], value);
+      }
+
       done();
     });
   }
@@ -70,5 +75,30 @@ describe('log injection', () => {
       transports: [new winston.transports.Stream({ stream })],
     });
     assertInjection(logger, done);
+  });
+
+  describe('injecting version and environment', () => {
+    before(() => {
+      process.env.OTEL_RESOURCE_ATTRIBUTES =
+        'service.version=1,deployment.environment=test';
+    });
+
+    after(() => {
+      delete process.env.OTEL_RESOURCE_ATTRIBUTES;
+    });
+
+    it('injects service version and service environment if available', done => {
+      startTracing({ logInjectionEnabled: true, serviceName: 'test-service' });
+
+      const logger: bunyan = require('bunyan').createLogger({
+        name: 'test',
+        stream,
+      });
+
+      assertInjection(logger, done, [
+        ['service.version', '1'],
+        ['service.environment', 'test'],
+      ]);
+    });
   });
 });
