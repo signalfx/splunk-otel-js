@@ -73,7 +73,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   if (options.serverTimingEnabled === undefined) {
     options.serverTimingEnabled = getEnvBoolean(
-      'SPLUNK_CONTEXT_SERVER_TIMING_ENABLED',
+      'SPLUNK_TRACE_RESPONSE_HEADER_ENABLED',
       true
     );
   }
