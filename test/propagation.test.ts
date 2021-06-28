@@ -33,7 +33,7 @@ describe('propagation', () => {
 
     const tracer = otel.trace.getTracer('test-tracer');
     const span = tracer.startSpan('main');
-    otel.context.with(otel.setSpan(otel.context.active(), span), () => {
+    otel.context.with(otel.trace.setSpan(otel.context.active(), span), () => {
       const carrier = {};
       otel.propagation.inject(
         otel.context.active(),
@@ -42,8 +42,8 @@ describe('propagation', () => {
       );
       span.end();
 
-      const traceId = span.context().traceId;
-      const spanId = span.context().spanId;
+      const traceId = span.spanContext().traceId;
+      const spanId = span.spanContext().spanId;
       assert.strictEqual(carrier['x-b3-traceid'], traceId);
       assert.strictEqual(carrier['x-b3-spanid'], spanId);
       assert.strictEqual(carrier['x-b3-sampled'], '1');

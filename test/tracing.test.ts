@@ -65,16 +65,15 @@ describe('tracing', () => {
     const exporter = processor['_exporter'];
     assert(exporter instanceof JaegerExporter);
 
-    const sender = exporter['_sender'];
-    assert.deepEqual(sender['_url'], URL.parse(exportURL)); // eslint-disable-line node/no-deprecated-api
+    const config = exporter['_localConfig'];
+    assert.deepEqual(config['endpoint'], exportURL);
 
     if (accessToken) {
-      assert.equal(sender['_username'], 'auth');
-      assert.equal(sender['_password'], accessToken);
+      assert.equal(config['username'], 'auth');
+      assert.equal(config['password'], accessToken);
     }
 
-    const process = exporter['_process'];
-    assert.equal(process.serviceName, serviceName);
+    assert.equal(config['serviceName'], serviceName);
 
     assert.equal(maxAttrLength, patchJaegerMock.getCall(0).args[0]);
   }
