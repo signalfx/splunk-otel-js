@@ -43,7 +43,11 @@ npm install @splunk/otel --save
 npm install @opentelemetry/instrumentation-http --save
 ```
 
-Note: If you are using NPM 6 or older, it'll warn you about missing peer dependencies. All of these dependencies are instrumentation packages and are completely optional. You can install the ones you need and ignore the rest. NPM 7+ supports optional peer dependencies feature and will not complain about this.
+> Note: If you are using NPM 6 or older, it'll warn you about missing peer
+> dependencies. All of these dependencies are instrumentation packages and are
+> completely optional. You can install the ones you need and ignore the rest.
+> NPM 7+ supports optional peer dependencies feature and will not complain
+> about this.
 
 You can find a list of instrumentation packages supported out of the box [here](#default-instrumentation-packages).
 
@@ -62,16 +66,16 @@ You can also instrument your app with code as described [here](#instrument-with-
 
 ## Configuration options <a name="env-config-options"></a>
 
-| Environment variable          | Config Option | Default value                        | Notes                                                                  |
-| ----------------------------- |  ----------------------------- | ------------------------------------ | ---------------------------------------------------------------------- |
-| OTEL_EXPORTER_JAEGER_ENDPOINT | endpoint | `http://localhost:9080/v1/trace`     | The jaeger endpoint to connect to. Currently only HTTP is supported.   |
-| SPLUNK_SERVICE_NAME             | serviceName | `unnamed-node-service`               | The service name of this Node service.                                 |
-| SPLUNK_ACCESS_TOKEN             |  acceessToken | |                                    | The optional organization access token for trace submission requests.  |
-| SPLUNK_MAX_ATTR_LENGTH          | maxAttrLength | 1200            | Maximum length of string attribute value in characters. Longer values are truncated. |
-| SPLUNK_CONTEXT_SERVER_TIMING_ENABLED | serverTimingEnabled | true | Enable injection of `Server-Timing` header to HTTP responses. |
-| SPLUNK_LOGS_INJECTION | logInjectionEnabled | false | Enable injecting of trace ID, span ID and service name to log records. Please note that the corresponding logging library instrumentation needs to be installed. |
-| OTEL_RESOURCE_ATTRIBUTES      | | unset          | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
-| OTEL_TRACE_ENABLED            | | `true`         | Globally enables tracer creation and auto-instrumentation.                                               |
+| Environment variable                 | Config Option                 | Default value                        | Notes                                                                                                                                                            |
+| -----------------------------        | ----------------------------- | ------------------------------------ | ----------------------------------------------------------------------                                                                                           |
+| OTEL_EXPORTER_JAEGER_ENDPOINT        | endpoint                      | `http://localhost:9080/v1/trace`     | The jaeger endpoint to connect to. Currently only HTTP is supported.                                                                                             |
+| SPLUNK_SERVICE_NAME                  | serviceName                   | `unnamed-node-service`               | The service name of this Node service.                                                                                                                           |
+| SPLUNK_ACCESS_TOKEN                  | acceessToken                  |                                      |                                                                                                                                                                  | The optional organization access token for trace submission requests. |
+| SPLUNK_MAX_ATTR_LENGTH               | maxAttrLength                 | 1200                                 | Maximum length of string attribute value in characters. Longer values are truncated.                                                                             |
+| SPLUNK_TRACE_RESPONSE_HEADER_ENABLED | serverTimingEnabled           | true                                 | Enable injection of `Server-Timing` header to HTTP responses.                                                                                                    |
+| SPLUNK_LOGS_INJECTION                | logInjectionEnabled           | false                                | Enable injecting of trace ID, span ID and service name to log records. Please note that the corresponding logging library instrumentation needs to be installed. |
+| OTEL_RESOURCE_ATTRIBUTES             |                               | unset                                | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
+| OTEL_TRACE_ENABLED                   |                               | `true`                               | Globally enables tracer creation and auto-instrumentation.                                                                                                       |
 
 More details on config options can be seen [here](#config-options)
 

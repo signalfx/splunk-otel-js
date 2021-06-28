@@ -4,6 +4,8 @@
 
 - Add support for injecting trace context into logs.
   ([#121](https://github.com/signalfx/splunk-otel-js/pull/121))
+- Rename `SPLUNK_CONTEXT_SERVER_TIMING_ENABLED`
+  ([#149](https://github.com/signalfx/splunk-otel-js/pull/149))
 
 ## 0.8.0 (04-15-2021)
 

@@ -62,9 +62,9 @@ describe('servertiming', () => {
   });
 
   it('can be enabled via environment variables', done => {
-    process.env.SPLUNK_CONTEXT_SERVER_TIMING_ENABLED = '';
+    process.env.SPLUNK_TRACE_RESPONSE_HEADER_ENABLED = '';
     const stub = sinon
-      .stub(process.env, 'SPLUNK_CONTEXT_SERVER_TIMING_ENABLED')
+      .stub(process.env, 'SPLUNK_TRACE_RESPONSE_HEADER_ENABLED')
       .value('true');
     startTracing({});
     testHeadersAdded(() => {
