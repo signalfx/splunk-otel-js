@@ -30,7 +30,10 @@ import { NodeTracerConfig } from '@opentelemetry/node';
 import { Resource } from '@opentelemetry/resources';
 import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { TextMapPropagator } from '@opentelemetry/api';
-import { CompositePropagator, HttpTraceContext } from '@opentelemetry/core';
+import {
+  CompositePropagator,
+  HttpTraceContextPropagator,
+} from '@opentelemetry/core';
 
 const defaultEndpoint = 'http://localhost:9080/v1/trace';
 const defaultServiceName = 'unnamed-node-service';
@@ -158,7 +161,7 @@ export function defaultPropagatorFactory(options: Options): TextMapPropagator {
   return new CompositePropagator({
     propagators: [
       new B3Propagator({ injectEncoding: B3InjectEncoding.MULTI_HEADER }),
-      new HttpTraceContext(),
+      new HttpTraceContextPropagator(),
     ],
   });
 }
