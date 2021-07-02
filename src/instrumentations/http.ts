@@ -43,7 +43,7 @@ export function configureHttpInstrumentation(
     response
   ) => {
     if (response instanceof ServerResponse) {
-      const spanContext = span.context();
+      const spanContext = span.spanContext();
 
       if (isSpanContextValid(spanContext)) {
         const { traceFlags, traceId, spanId } = spanContext;

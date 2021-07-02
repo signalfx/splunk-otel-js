@@ -54,5 +54,5 @@ release:
     - mv splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz dist/
     - shasum -a 256 dist/* > dist/checksums.txt
     - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
-    - npm publish dist/splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz
+    - npm publish ./dist/splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz
     - rm -f ~/.npmrc

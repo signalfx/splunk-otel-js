@@ -16,7 +16,7 @@
 
 import * as assert from 'assert';
 import { Writable } from 'stream';
-import { context, trace, getSpan, setSpan } from '@opentelemetry/api';
+import { context, trace } from '@opentelemetry/api';
 import { startTracing } from '../src/tracing';
 import type * as pino from 'pino';
 import type * as bunyan from 'bunyan';
@@ -28,8 +28,8 @@ describe('log injection', () => {
 
   function assertInjection(logger, done, extra) {
     const span = trace.getTracer('test').startSpan('main');
-    context.with(setSpan(context.active(), span), () => {
-      const { traceId, spanId } = span.context();
+    context.with(trace.setSpan(context.active(), span), () => {
+      const { traceId, spanId } = span.spanContext();
       logger.info('my-log-message');
       assert.strictEqual(record['trace_id'], traceId);
       assert.strictEqual(record['span_id'], spanId);
