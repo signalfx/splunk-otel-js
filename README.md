@@ -1,11 +1,17 @@
-# Splunk distribution of OpenTelemetry JS 
+<p align="center">
+  <img alt="Beta" src="https://img.shields.io/badge/status-beta-informational?style=for-the-badge">
+  <a href="https://github.com/signalfx/splunk-otel-js/releases">
+    <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/signalfx/splunk-otel-js?include_prereleases&style=for-the-badge">
+  </a>
+  <img alt="Codecov" src="https://img.shields.io/codecov/c/github/signalfx/splunk-otel-js?style=for-the-badge&token=XKXjEQKGaK">
+  <img alt="GitHub branch checks state" src="https://img.shields.io/github/checks-status/signalfx/splunk-otel-js/main?style=for-the-badge">
+</p>
 
-[![CircleCI](https://circleci.com/gh/signalfx/splunk-otel-js.svg?style=svg)](https://circleci.com/gh/signalfx/splunk-otel-js)
-[![codecov](https://codecov.io/gh/signalfx/splunk-otel-js/branch/main/graph/badge.svg?token=XKXjEQKGaK)](https://codecov.io/gh/signalfx/splunk-otel-js)
+# Splunk distribution of OpenTelemetry JS for NodeJS
 
 The Splunk distribution of [OpenTelemetry
 JS](https://github.com/open-telemetry/opentelemetry-js) provides
-multiple installable packages that automatically instruments your Node 
+multiple installable packages that automatically instruments your Node
 application to capture and report distributed traces to Splunk APM.
 
 This Splunk distribution comes with the following defaults:
@@ -21,7 +27,7 @@ This Splunk distribution comes with the following defaults:
 
 If you're currently using the SignalFx Tracing Library for Node and want to
 migrate to the Splunk Distribution of OpenTelemetry Node, see [Migrate from
-the SignalFx Tracing Library for JS](migration.md).
+the SignalFx Tracing Library for JS](./MIGRATING.md).
 
 > :construction: This project is currently in **BETA**. It is **officially supported** by Splunk. However, breaking changes **MAY** be introduced.
 
@@ -116,7 +122,7 @@ In order to send traces directly to SignalFx ingest API, you need to:
 ## Automatically instrument an application
 
 You can use node's `-r` CLI flag to pre-load the instrumentation module and automatically instrument your NodeJS application.
-You can add `-r @splunk/otel/instrument` CLI parameter to automatically instrument your application. 
+You can add `-r @splunk/otel/instrument` CLI parameter to automatically instrument your application.
 
 For example, if you start your application as follows:
 
@@ -212,20 +218,25 @@ By default the following instrumentations will automatically be enabled if they 
 any of these instrumentations, you'll need to install them with npm and then run your app with `-r @splunk/otel/instrument` flag as described above.
 
 ```
-@opentelemetry/instrumentation-http
 @opentelemetry/instrumentation-dns
+@opentelemetry/instrumentation-express
 @opentelemetry/instrumentation-graphql
 @opentelemetry/instrumentation-grpc
-@opentelemetry/instrumentation-koa
-@opentelemetry/instrumentation-express
+@opentelemetry/instrumentation-hapi
+@opentelemetry/instrumentation-http
 @opentelemetry/instrumentation-ioredis
+@opentelemetry/instrumentation-koa
 @opentelemetry/instrumentation-mongodb
 @opentelemetry/instrumentation-mysql
 @opentelemetry/instrumentation-net
 @opentelemetry/instrumentation-pg
-@opentelemetry/instrumentation-hapi
 opentelemetry-instrumentation-amqplib
+opentelemetry-instrumentation-aws-sdk
 opentelemetry-instrumentation-elasticsearch
+opentelemetry-instrumentation-kafkajs
+opentelemetry-instrumentation-mongoose
+opentelemetry-instrumentation-sequelize
+opentelemetry-instrumentation-typeorm
 ```
 
 If log injection is enabled, the corresponding logging library package will need to be installed beforehand. Supported logging library instrumentations:
@@ -236,7 +247,7 @@ If log injection is enabled, the corresponding logging library package will need
 @opentelemetry/instrumentation-winston
 ```
 
-You can find more instrumentation packages over at the [OpenTelemetry Registry](https://opentelemetry.io/registry/?language=js) and enable them manually 
+You can find more instrumentation packages over at the [OpenTelemetry Registry](https://opentelemetry.io/registry/?language=js) and enable them manually
 as described above.
 
 ## Troubleshooting
