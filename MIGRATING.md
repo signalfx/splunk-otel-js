@@ -47,7 +47,7 @@ signalfx-nodejs-tracing.
 | Old environment variable           | New environment variable             | notes |
 | ---------------------------------- | ------------------------------------ |
 | SIGNALFX_ACCESS_TOKEN              | SPLUNK_ACCESS_TOKEN                  |
-| SIGNALFX_SERVICE_NAME              | OTEL_SERVICE_NAME                    |
+| SIGNALFX_SERVICE_NAME              | OTEL_SERVICE_NAME                  |
 | SIGNALFX_ENDPOINT_URL              | OTEL_EXPORTER_JAEGER_ENDPOINT or OTEL_EXPORTER_OTLP_ENDPOINT |
 | SIGNALFX_RECORDED_VALUE_MAX_LENGTH | SPLUNK_MAX_ATTR_LENGTH               |
 | SIGNALFX_TRACING_DEBUG | |

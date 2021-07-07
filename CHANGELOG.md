@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Rename `SPLUNK_SERVICE_NAME` to `OTEL_SERVICE_NAME`
+
 ## 0.9.0 (07-02-2021)
 
 - Add support for injecting trace context into logs.
