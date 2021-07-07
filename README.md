@@ -57,7 +57,7 @@ You can also install additional packages and use them as described [here](#custo
 3. Run node app with `-r @splunk/otel/instrument` CLI argument
 
 ```
-export SPLUNK_SERVICE_NAME=my-node-svc
+export OTEL_SERVICE_NAME=my-node-svc
 node -r @splunk/otel/instrument app.js
 ```
 
@@ -69,7 +69,7 @@ You can also instrument your app with code as described [here](#instrument-with-
 | Environment variable                 | Config Option                 | Default value                        | Notes                                                                                                                                                            |
 | -----------------------------        | ----------------------------- | ------------------------------------ | ----------------------------------------------------------------------                                                                                           |
 | OTEL_EXPORTER_JAEGER_ENDPOINT        | endpoint                      | `http://localhost:9080/v1/trace`     | The jaeger endpoint to connect to. Currently only HTTP is supported.                                                                                             |
-| SPLUNK_SERVICE_NAME                  | serviceName                   | `unnamed-node-service`               | The service name of this Node service.                                                                                                                           |
+| OTEL_SERVICE_NAME                  | serviceName                   | `unnamed-node-service`               | The service name of this Node service.                                                                                                                           |
 | SPLUNK_ACCESS_TOKEN                  | acceessToken                  |                                      |                                                                                                                                                                  | The optional organization access token for trace submission requests. |
 | SPLUNK_MAX_ATTR_LENGTH               | maxAttrLength                 | 1200                                 | Maximum length of string attribute value in characters. Longer values are truncated.                                                                             |
 | SPLUNK_TRACE_RESPONSE_HEADER_ENABLED | serverTimingEnabled           | true                                 | Enable injection of `Server-Timing` header to HTTP responses.                                                                                                    |
@@ -149,13 +149,18 @@ startTracing({
   serviceName: 'my-node-service',
 });
 ```
+
+Please note that `startTracing` is destructive to Open Telemetry API globals. We provide the `stopTracing` method, but
+it won't revert to OTel API globals set before `startTracing` was run, it will only disable globals, which
+`startTracing` set.
+
 ### All config options <a name="config-options"></a>
 
 `startTracing()` accepts an optional argument to pass down configuration. The argument must be an Object and may contain any of the following keys.
 
 - `endpoint`: corresponds to the `OTEL_EXPORTER_JAEGER_ENDPOINT` environment variable. Defaults to `http://localhost:9080/v1/trace`. Configures the http endpoint to which all spans will be exported.
 
-- `serviceName`: corresponds to the `SPLUNK_SERVICE_NAME` environment variable. Defaults to `unnamed-node-service`. Configures the service name of the instrumented node service. The name is added to all spans as an attribute.
+- `serviceName`: corresponds to the `OTEL_SERVICE_NAME` environment variable. Defaults to `unnamed-node-service`. Configures the service name of the instrumented node service. The name is added to all spans as an attribute.
 
 - `accessToken`: corresponds to the `SPLUNK_ACCESS_TOKEN` environment variable. Configures the access token that should be used to authenticate with the span exporter http endpoint. Used when exporting directly to Splunk APM from a Node service.
 

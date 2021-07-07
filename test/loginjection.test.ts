@@ -17,7 +17,7 @@
 import * as assert from 'assert';
 import { Writable } from 'stream';
 import { context, trace } from '@opentelemetry/api';
-import { startTracing } from '../src/tracing';
+import { startTracing, stopTracing } from '../src/tracing';
 import type * as pino from 'pino';
 import type * as bunyan from 'bunyan';
 import type * as winston from 'winston';
@@ -26,7 +26,7 @@ describe('log injection', () => {
   let stream: Writable;
   let record: any;
 
-  function assertInjection(logger, done, extra) {
+  function assertInjection(logger, done, extra?) {
     const span = trace.getTracer('test').startSpan('main');
     context.with(trace.setSpan(context.active(), span), () => {
       const { traceId, spanId } = span.spanContext();
@@ -43,10 +43,6 @@ describe('log injection', () => {
     });
   }
 
-  before(() => {
-    startTracing({ logInjectionEnabled: true, serviceName: 'test-service' });
-  });
-
   beforeEach(() => {
     stream = new Writable({
       write: chunk => {
@@ -56,25 +52,35 @@ describe('log injection', () => {
     record = {};
   });
 
-  it('injects context to bunyan records', done => {
-    const logger: bunyan = require('bunyan').createLogger({
-      name: 'test',
-      stream,
+  describe('default flow', () => {
+    before(() => {
+      startTracing({ logInjectionEnabled: true, serviceName: 'test-service' });
     });
-    assertInjection(logger, done);
-  });
 
-  it('injects context to pino records', done => {
-    const logger: pino = require('pino')(stream);
-    assertInjection(logger, done);
-  });
-
-  it('injects context to winston records', done => {
-    const winston: winston = require('winston');
-    const logger = winston.createLogger({
-      transports: [new winston.transports.Stream({ stream })],
+    after(() => {
+      stopTracing();
     });
-    assertInjection(logger, done);
+
+    it('injects context to bunyan records', done => {
+      const logger: bunyan = require('bunyan').createLogger({
+        name: 'test',
+        stream,
+      });
+      assertInjection(logger, done);
+    });
+
+    it('injects context to pino records', done => {
+      const logger: pino = require('pino')(stream);
+      assertInjection(logger, done);
+    });
+
+    it('injects context to winston records', done => {
+      const winston: winston = require('winston');
+      const logger = winston.createLogger({
+        transports: [new winston.transports.Stream({ stream })],
+      });
+      assertInjection(logger, done);
+    });
   });
 
   describe('injecting version and environment', () => {
@@ -99,6 +105,8 @@ describe('log injection', () => {
         ['service.version', '1'],
         ['service.environment', 'test'],
       ]);
+
+      stopTracing();
     });
   });
 });

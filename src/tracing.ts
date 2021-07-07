@@ -28,6 +28,8 @@ import {
   AsyncLocalStorageContextManager,
 } from '@opentelemetry/context-async-hooks';
 
+let unregisterInstrumentations: (() => void) | null = null;
+
 export function startTracing(opts: Partial<Options> = {}): void {
   if (process.env.OTEL_TRACE_ENABLED === 'false') {
     return;
@@ -54,7 +56,7 @@ export function startTracing(opts: Partial<Options> = {}): void {
   configureInstrumentations(options);
 
   // instrumentations
-  registerInstrumentations({
+  unregisterInstrumentations = registerInstrumentations({
     tracerProvider: provider,
     instrumentations: options.instrumentations,
   });
@@ -71,6 +73,15 @@ export function startTracing(opts: Partial<Options> = {}): void {
 
   // register global provider
   trace.setGlobalTracerProvider(provider);
+}
+
+export function stopTracing() {
+  unregisterInstrumentations?.();
+  unregisterInstrumentations = null;
+
+  propagation.disable();
+  context.disable();
+  trace.disable();
 }
 
 function configureInstrumentations(options: Options) {
