@@ -84,7 +84,7 @@
     "@opentelemetry/exporter-jaeger": "^0.22.0",
     "@opentelemetry/instrumentation": "^0.22.0",
     "@opentelemetry/node": "^0.22.0",
-    "@opentelemetry/propagator-b3": "^0.22.0",
+    "@opentelemetry/propagator-b3": "^0.23.0",
     "@opentelemetry/resources": "^0.22.0",
     "@opentelemetry/semantic-conventions": "^0.22.0",
     "@opentelemetry/tracing": "^0.22.0",
