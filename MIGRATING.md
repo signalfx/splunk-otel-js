@@ -44,25 +44,51 @@ signalfx-nodejs-tracing.
 
 ### Environment variables
 
+Rename environment variables:
+
 | Old environment variable           | New environment variable             | notes |
-| ---------------------------------- | ------------------------------------ |
-| SIGNALFX_ACCESS_TOKEN              | SPLUNK_ACCESS_TOKEN                  |
-| SIGNALFX_SERVICE_NAME              | OTEL_SERVICE_NAME                  |
-| SIGNALFX_ENDPOINT_URL              | OTEL_EXPORTER_JAEGER_ENDPOINT or OTEL_EXPORTER_OTLP_ENDPOINT |
-| SIGNALFX_RECORDED_VALUE_MAX_LENGTH | SPLUNK_MAX_ATTR_LENGTH               |
-| SIGNALFX_TRACING_DEBUG | |
-| SIGNALFX_SPAN_TAGS | |
-| SIGNALFX_LOGS_INJECTION | |
-| SIGNALFX_LOGS_INJECTION_TAGS | |
-| SIGNALFX_ENABLED_PLUGINS | |
-| SIGNALFX_RECORDED_VALUE_MAX_LENGTH | |
-| SIGNALFX_SERVER_TIMING_CONTEXT | |
+| ---------------------------------- | ------------------------------------ | ----- |
+| SIGNALFX_ACCESS_TOKEN              | SPLUNK_ACCESS_TOKEN                  |       |
+| SIGNALFX_SERVICE_NAME              | OTEL_SERVICE_NAME                    |       |
+| SIGNALFX_ENDPOINT_URL              | OTEL_EXPORTER_JAEGER_ENDPOINT        | if jaeger is used |
+| SIGNALFX_ENDPOINT_URL              | OTEL_EXPORTER_OTLP_ENDPOINT          | if otlp is used |
+| SIGNALFX_RECORDED_VALUE_MAX_LENGTH | SPLUNK_MAX_ATTR_LENGTH               |       |
+| SIGNALFX_TRACING_DEBUG             | no direct equivalent                 | see [instrumentation logs](#instrumentation-logs) |
+| SIGNALFX_SPAN_TAGS | TODO | |
+| SIGNALFX_LOGS_INJECTION | TODO | |
+| SIGNALFX_LOGS_INJECTION_TAGS | TODO | |
+| SIGNALFX_ENABLED_PLUGINS | TODO | |
+| SIGNALFX_RECORDED_VALUE_MAX_LENGTH | TODO | |
+| SIGNALFX_SERVER_TIMING_CONTEXT | TODO | |
+| SIGNALFX_TRACING_ENABLED | TODO | |
+| SIGNALFX_ENABLED_PLUGINS | TODO | |
 
-Remove incompatible environment variables:
+### Instrumentation logs
 
-- `SIGNALFX_TRACING_ENABLED`
-- `SIGNALFX_ENABLED_PLUGINS` - this is controlled by configuration of the `TracerProvider`
+There isn't a 1-to-1 mapping for `SIGNALFX_TRACING_DEBUG`. Closest equivalent is `OTEL_LOG_LEVEL`, however the logged
+information might be different. Please note that this section is about the logs **produced by instrumentation**, and not
+about the logs produced by the application.
+
+Logging level is controlled by an ENV variable `OTEL_LOG_LEVEL`, two most common values are:
+- `INFO` - the default value
+- `VERBOSE` - highest value likely to be needed
+
+For all possible log levels see
+[this source file](https://github.com/open-telemetry/opentelemetry-js-api/blob/main/src/diag/types.ts).
+
+There is no default output for logs. Even if you set `OTEL_LOG_LEVEL=VERBOSE`, there won't be anything in the console.
+You need to set an output first, for example to `stdout`, by adding `DiagConsoleLogger`:
+
+```js
+const { diag, DiagConsoleLogger, DiagLogLevel } = require("@opentelemetry/api");
+
+diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL);
+```
 
 ### Main instrumentation entrypoint
 
+TODO
+
 ### Dependencies
+
+TODO
