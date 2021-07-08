@@ -79,7 +79,7 @@
   },
   "dependencies": {
     "@opentelemetry/api": "^1.0.0",
-    "@opentelemetry/context-async-hooks": "^0.22.0",
+    "@opentelemetry/context-async-hooks": "^0.23.0",
     "@opentelemetry/core": "^0.22.0",
     "@opentelemetry/exporter-jaeger": "^0.22.0",
     "@opentelemetry/instrumentation": "^0.22.0",
