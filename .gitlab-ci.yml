@@ -34,7 +34,7 @@ lint:
 build:
   artifacts:
     paths:
-      - splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz
+      - *.tgz
   script:
     - npm run compile
     - npm pack
