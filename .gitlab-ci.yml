@@ -34,7 +34,7 @@ lint:
 build:
   artifacts:
     paths:
-      - dist/
+      - splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz
   script:
     - npm run compile
     - npm pack
@@ -50,7 +50,6 @@ release:
     - branches
   script:
     - mkdir dist
-    - npm pack
     - mv splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz dist/
     - shasum -a 256 dist/* > dist/checksums.txt
     - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
