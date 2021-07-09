@@ -2,7 +2,12 @@
 
 ## Unreleased
 
+## 0.10.0 (07-09-2021)
+
 - Rename `SPLUNK_SERVICE_NAME` to `OTEL_SERVICE_NAME`
+  ([#170](https://github.com/signalfx/splunk-otel-js/pull/170))
+- Upgrade to OpenTelemetry SDK 0.23.0
+  ([#173](https://github.com/signalfx/splunk-otel-js/pull/173))
 
 ## 0.9.0 (07-02-2021)
 
