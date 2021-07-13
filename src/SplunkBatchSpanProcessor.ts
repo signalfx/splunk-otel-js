@@ -18,7 +18,6 @@ import { Span } from '@opentelemetry/tracing';
 import { BatchSpanProcessor } from '@opentelemetry/tracing';
 
 export const SYNTHETIC_RUN_ID_FIELD = 'Synthetics-RunId';
-const SyntheticRunIdRegex = /^[0-9a-z]{32}$/;
 
 export class SplunkBatchSpanProcessor extends BatchSpanProcessor {
   onStart(_span: Span, parentContext: Context = context.active()) {
@@ -27,7 +26,7 @@ export class SplunkBatchSpanProcessor extends BatchSpanProcessor {
     const syntheticsId = propagation
       .getBaggage(parentContext)
       ?.getEntry(SYNTHETIC_RUN_ID_FIELD)?.value;
-    if (syntheticsId && SyntheticRunIdRegex.test(syntheticsId)) {
+    if ((syntheticsId?.length ?? 0) > 0) {
       _span.setAttribute(SYNTHETIC_RUN_ID_FIELD, syntheticsId);
     }
   }
