@@ -23,15 +23,16 @@ import { getInstrumentations } from './instrumentations';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { EnvResourceDetector } from './resource';
 import { NodeTracerConfig } from '@opentelemetry/node';
-import { Resource } from '@opentelemetry/resources';
 import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { TextMapPropagator } from '@opentelemetry/api';
 import {
   CompositePropagator,
-  HttpTraceContext,
-  HttpBaggage,
+  getEnv,
+  HttpBaggagePropagator,
+  HttpTraceContextPropagator,
 } from '@opentelemetry/core';
 import { SplunkBatchSpanProcessor } from './SplunkBatchSpanProcessor';
+import { Resource } from '@opentelemetry/resources';
 
 const defaultEndpoint = 'http://localhost:9080/v1/trace';
 const defaultServiceName = 'unnamed-node-service';
@@ -88,20 +89,22 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   const extraTracerConfig = options.tracerConfig || {};
 
-  const resource = new EnvResourceDetector().detect();
+  let resource = new EnvResourceDetector().detect();
 
-  options.serviceName =
+  const serviceName =
     options.serviceName ||
-    env.SPLUNK_SERVICE_NAME ||
-    resource.attributes[ResourceAttributes.SERVICE_NAME]?.toString() ||
+    getEnv().OTEL_SERVICE_NAME ||
+    resource.attributes[ResourceAttributes.SERVICE_NAME] ||
     defaultServiceName;
 
+  resource = resource.merge(
+    new Resource({
+      [ResourceAttributes.SERVICE_NAME]: serviceName,
+    })
+  );
+
   const tracerConfig = {
-    resource: resource.merge(
-      new Resource({
-        [ResourceAttributes.SERVICE_NAME]: options.serviceName,
-      })
-    ),
+    resource,
     ...extraTracerConfig,
   };
 
@@ -120,7 +123,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   return {
     endpoint: options.endpoint,
-    serviceName: options.serviceName,
+    serviceName: String(resource.attributes[ResourceAttributes.SERVICE_NAME]),
     accessToken: options.accessToken,
     maxAttrLength: options.maxAttrLength,
     serverTimingEnabled: options.serverTimingEnabled,
@@ -159,8 +162,8 @@ export function defaultPropagatorFactory(options: Options): TextMapPropagator {
   return new CompositePropagator({
     propagators: [
       new B3Propagator({ injectEncoding: B3InjectEncoding.MULTI_HEADER }),
-      new HttpTraceContext(),
-      new HttpBaggage(),
+      new HttpBaggagePropagator(),
+      new HttpTraceContextPropagator(),
     ],
   });
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { TextMapGetter, TextMapPropagator } from '@opentelemetry/api';
+import { TextMapPropagator } from '@opentelemetry/api';
 import { HttpBaggage } from '@opentelemetry/core';
 import { InstrumentationBase } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';

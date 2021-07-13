@@ -2,11 +2,24 @@
 
 ## Unreleased
 
+- Support for Synthetic Run identification
+  ([#156](https://github.com/signalfx/splunk-otel-js/pull/156))
+
+## 0.10.0 (07-09-2021)
+
+- Rename `SPLUNK_SERVICE_NAME` to `OTEL_SERVICE_NAME`
+  ([#170](https://github.com/signalfx/splunk-otel-js/pull/170))
+- Upgrade to OpenTelemetry SDK 0.23.0
+  ([#173](https://github.com/signalfx/splunk-otel-js/pull/173))
+
+## 0.9.0 (07-02-2021)
+
 - Add support for injecting trace context into logs.
   ([#121](https://github.com/signalfx/splunk-otel-js/pull/121))
 - Rename `SPLUNK_CONTEXT_SERVER_TIMING_ENABLED`
   ([#149](https://github.com/signalfx/splunk-otel-js/pull/149))
-- Support for Synthetic Run identification
+- Upgrade to OpenTelemetry SDK 0.22.0, API 1.0.0.
+  ([#153](https://github.com/signalfx/splunk-otel-js/pull/153))
 
 ## 0.8.0 (04-15-2021)
 

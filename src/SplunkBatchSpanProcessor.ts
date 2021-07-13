@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { context, Context, getBaggage } from '@opentelemetry/api';
+import { context, Context, propagation } from '@opentelemetry/api';
 import { Span } from '@opentelemetry/tracing';
 import { BatchSpanProcessor } from '@opentelemetry/tracing';
 
@@ -24,9 +24,9 @@ export class SplunkBatchSpanProcessor extends BatchSpanProcessor {
   onStart(_span: Span, parentContext: Context = context.active()) {
     super.onStart(_span);
 
-    const syntheticsId = getBaggage(parentContext)?.getEntry(
-      SYNTHETIC_RUN_ID_FIELD
-    )?.value;
+    const syntheticsId = propagation
+      .getBaggage(parentContext)
+      ?.getEntry(SYNTHETIC_RUN_ID_FIELD)?.value;
     if (syntheticsId && SyntheticRunIdRegex.test(syntheticsId)) {
       _span.setAttribute(SYNTHETIC_RUN_ID_FIELD, syntheticsId);
     }

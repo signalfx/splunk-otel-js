@@ -16,7 +16,7 @@
 
 import * as assert from 'assert';
 import * as sinon from 'sinon';
-import { context, getSpanContext } from '@opentelemetry/api';
+import { context, trace } from '@opentelemetry/api';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { startTracing } from '../src/tracing';
 
@@ -46,7 +46,7 @@ describe('servertiming', () => {
     let spanContext;
     const http = require('http');
     server = http.createServer((req, res) => {
-      spanContext = getSpanContext(context.active());
+      spanContext = trace.getSpanContext(context.active());
       res.end('ok');
     });
     server.listen(PORT);
@@ -104,7 +104,7 @@ describe('servertiming', () => {
     const http = require('http');
     let spanContext;
     server = http.createServer((req, res) => {
-      spanContext = getSpanContext(context.active());
+      spanContext = trace.getSpanContext(context.active());
       res.end('ok');
     });
     server.listen(PORT);
