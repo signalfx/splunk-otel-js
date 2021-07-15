@@ -15,11 +15,7 @@
  */
 
 import { env } from 'process';
-import {
-  BatchSpanProcessor,
-  SpanExporter,
-  SpanProcessor,
-} from '@opentelemetry/tracing';
+import { SpanExporter, SpanProcessor } from '@opentelemetry/tracing';
 import { InstrumentationOption } from '@opentelemetry/instrumentation';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
@@ -32,8 +28,10 @@ import { TextMapPropagator } from '@opentelemetry/api';
 import {
   CompositePropagator,
   getEnv,
+  HttpBaggagePropagator,
   HttpTraceContextPropagator,
 } from '@opentelemetry/core';
+import { SplunkBatchSpanProcessor } from './SplunkBatchSpanProcessor';
 import { Resource } from '@opentelemetry/resources';
 
 const defaultEndpoint = 'http://localhost:9080/v1/trace';
@@ -156,7 +154,7 @@ export function defaultSpanExporterFactory(options: Options): JaegerExporter {
 }
 
 export function defaultSpanProcessorFactory(options: Options): SpanProcessor {
-  return new BatchSpanProcessor(options.spanExporterFactory(options));
+  return new SplunkBatchSpanProcessor(options.spanExporterFactory(options));
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -164,6 +162,7 @@ export function defaultPropagatorFactory(options: Options): TextMapPropagator {
   return new CompositePropagator({
     propagators: [
       new B3Propagator({ injectEncoding: B3InjectEncoding.MULTI_HEADER }),
+      new HttpBaggagePropagator(),
       new HttpTraceContextPropagator(),
     ],
   });

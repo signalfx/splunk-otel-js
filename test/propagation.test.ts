@@ -16,30 +16,32 @@
 
 import * as assert from 'assert';
 
-import * as otel from '@opentelemetry/api';
-import { B3Propagator } from '@opentelemetry/propagator-b3';
-import { startTracing } from '../src/tracing';
-import { CompositePropagator } from '@opentelemetry/core';
+import {
+  propagation,
+  trace,
+  context,
+  defaultTextMapSetter,
+} from '@opentelemetry/api';
+import { startTracing, stopTracing } from '../src/tracing';
+import { CompositePropagator, RandomIdGenerator } from '@opentelemetry/core';
+import { InMemorySpanExporter, SpanProcessor } from '@opentelemetry/tracing';
+import { SYNTHETIC_RUN_ID_FIELD } from '../src/SplunkBatchSpanProcessor';
+import { defaultSpanProcessorFactory } from '../src/options';
 
 describe('propagation', () => {
   it('must be set to b3', done => {
     startTracing();
 
-    const propagator = otel.propagation._getGlobalPropagator();
-    assert(
-      propagator instanceof CompositePropagator,
-      'propagator must be instance of B3Propagator'
-    );
+    assert(propagation.fields().includes('x-b3-traceid'));
+    assert(propagation.fields().includes('x-b3-spanid'));
+    assert(propagation.fields().includes('x-b3-sampled'));
+    assert(propagation.fields().includes('traceparent'));
 
-    const tracer = otel.trace.getTracer('test-tracer');
+    const tracer = trace.getTracer('test-tracer');
     const span = tracer.startSpan('main');
-    otel.context.with(otel.trace.setSpan(otel.context.active(), span), () => {
+    context.with(trace.setSpan(context.active(), span), () => {
       const carrier = {};
-      otel.propagation.inject(
-        otel.context.active(),
-        carrier,
-        otel.defaultTextMapSetter
-      );
+      propagation.inject(context.active(), carrier, defaultTextMapSetter);
       span.end();
 
       const traceId = span.spanContext().traceId;
@@ -48,6 +50,60 @@ describe('propagation', () => {
       assert.strictEqual(carrier['x-b3-spanid'], spanId);
       assert.strictEqual(carrier['x-b3-sampled'], '1');
       assert.strictEqual(carrier['traceparent'], `00-${traceId}-${spanId}-01`);
+      done();
+    });
+
+    stopTracing();
+  });
+
+  it('must extract synthetic run id', done => {
+    startTracing();
+    assert(propagation.fields().includes('baggage'));
+
+    const syntheticsTraceId = new RandomIdGenerator().generateTraceId();
+
+    const incomingCarrier = {
+      baggage: 'Synthetics-RunId=' + syntheticsTraceId,
+    };
+    const newContext = propagation.extract(context.active(), incomingCarrier);
+
+    const outgoingCarrier = {};
+    propagation.inject(newContext, outgoingCarrier);
+    assert.strictEqual(
+      outgoingCarrier['baggage'],
+      'Synthetics-RunId=' + syntheticsTraceId
+    );
+    done();
+  });
+
+  it('must extract synthetic run id', done => {
+    const exporter = new InMemorySpanExporter();
+    let spanProcessor: SpanProcessor;
+    startTracing({
+      spanExporterFactory: () => exporter,
+      spanProcessorFactory: options => {
+        spanProcessor = defaultSpanProcessorFactory(options);
+        return spanProcessor;
+      },
+    });
+
+    assert(propagation.fields().includes('baggage'));
+
+    const tracer = trace.getTracer('test-tracer');
+    const syntheticsTraceId = new RandomIdGenerator().generateTraceId();
+    const incomingCarrier = {
+      baggage: 'Synthetics-RunId=' + syntheticsTraceId,
+    };
+    const newContext = propagation.extract(context.active(), incomingCarrier);
+    tracer.startSpan('request handler', {}, newContext).end();
+
+    spanProcessor.forceFlush().then(() => {
+      assert(exporter.getFinishedSpans().length == 1);
+      assert.strictEqual(
+        exporter.getFinishedSpans()[0].attributes[SYNTHETIC_RUN_ID_FIELD],
+        syntheticsTraceId
+      );
+
       done();
     });
   });

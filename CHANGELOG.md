@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Support for Synthetic Run identification
+  ([#156](https://github.com/signalfx/splunk-otel-js/pull/156))
+
 ## 0.10.0 (07-09-2021)
 
 - Rename `SPLUNK_SERVICE_NAME` to `OTEL_SERVICE_NAME`
