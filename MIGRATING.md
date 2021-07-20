@@ -74,7 +74,7 @@ Rename environment variables:
 | SIGNALFX_SPAN_TAGS                 | OTEL_RESOURCE_ATTRIBUTES             | format needs to be changed to `key1=val1,key2=val2` |
 | SIGNALFX_LOGS_INJECTION            | SPLUNK_LOGS_INJECTION                | |
 | SIGNALFX_LOGS_INJECTION_TAGS       | OTEL_RESOURCE_ATTRIBUTES             | there's no direct equivalent, but values specified in `OTEL_RESOURCE_ATTRIBUTES` will also be used for logs injection |
-| SIGNALFX_ENABLED_PLUGINS           | n/a                                  | See <./README.md#custom-instrumentation-packages> |
+| SIGNALFX_ENABLED_PLUGINS           | n/a                                  | see [the README section about instrumentations](./README.md#custom-instrumentation-packages) |
 | SIGNALFX_SERVER_TIMING_CONTEXT     | SPLUNK_TRACE_RESPONSE_HEADER_ENABLED | |
 | SIGNALFX_TRACING_ENABLED           | OTEL_TRACE_ENABLED                   | |
 
@@ -91,7 +91,7 @@ Rename environment variables:
 | `logInjection`           | `logInjectionEnabled`   | |
 | `logInjectionTags`       | -                       | no direct equivalent, but `tracerConfig.resource` can be used |
 | `flushInterval`          | -                       | no direct equivalent, contact us if you had customized this value |
-| `plugins`                | -                       | see [the README section about instrumentatations](./README.md#default-instrumentation-packages) |
+| `plugins`                | -                       | see [the README section about instrumentations](./README.md#custom-instrumentation-packages) |
 | `recordedValueMaxLength` | `maxAttrLength`         | |
 | `enableServerTiming`     | `serverTimingEnabled`   | |
 
