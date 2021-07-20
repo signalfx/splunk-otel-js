@@ -37,13 +37,16 @@ If you're still using an earlier version of Node.js, continue using the SignalFx
 
 ## Equivalent configurations
 
+### Changes to defaults
+
+- default flush interval is now 30s instead of 2s (how frequently captured telemetry data is sent to the backend)
+
 ### Instrumented libraries
 
 With the exception of [explicitly listed limitations](#known-limitations) we aim to support all libraries supported by
-signalfx-nodejs-tracing.
-
-To find an equivalent auto-instrumentation open <https://opentelemetry.io/registry/> and for each instrumentation
-[from this list](https://github.com/signalfx/signalfx-nodejs-tracing/#requirements-and-supported-software)
+signalfx-nodejs-tracing. To find an equivalent auto-instrumentation open <https://opentelemetry.io/registry/> and for
+each instrumentation
+[from `signalfx-nodejs-tracing`'s README](https://github.com/signalfx/signalfx-nodejs-tracing/#requirements-and-supported-software)
 search by the name of the library in the registry.
 
 For example, if you'd like to migrate instrumentation for `mysql`, go to
@@ -64,18 +67,58 @@ Rename environment variables:
 | ---------------------------------- | ------------------------------------ | ----- |
 | SIGNALFX_ACCESS_TOKEN              | SPLUNK_ACCESS_TOKEN                  |       |
 | SIGNALFX_SERVICE_NAME              | OTEL_SERVICE_NAME                    |       |
-| SIGNALFX_ENDPOINT_URL              | OTEL_EXPORTER_JAEGER_ENDPOINT        | if jaeger is used |
-| SIGNALFX_ENDPOINT_URL              | OTEL_EXPORTER_OTLP_ENDPOINT          | if otlp is used |
+| SIGNALFX_ENDPOINT_URL              | OTEL_EXPORTER_JAEGER_ENDPOINT        | if Jaeger is used |
+| SIGNALFX_ENDPOINT_URL              | n/a                                  | OTLP is not implemented yet |
 | SIGNALFX_RECORDED_VALUE_MAX_LENGTH | SPLUNK_MAX_ATTR_LENGTH               |       |
 | SIGNALFX_TRACING_DEBUG             | no direct equivalent                 | see [instrumentation logs](#instrumentation-logs) |
-| SIGNALFX_SPAN_TAGS | TODO | |
-| SIGNALFX_LOGS_INJECTION | TODO | |
-| SIGNALFX_LOGS_INJECTION_TAGS | TODO | |
-| SIGNALFX_ENABLED_PLUGINS | TODO | |
-| SIGNALFX_RECORDED_VALUE_MAX_LENGTH | TODO | |
-| SIGNALFX_SERVER_TIMING_CONTEXT | TODO | |
-| SIGNALFX_TRACING_ENABLED | TODO | |
-| SIGNALFX_ENABLED_PLUGINS | TODO | |
+| SIGNALFX_SPAN_TAGS                 | OTEL_RESOURCE_ATTRIBUTES             | format needs to be changed to `key1=val1,key2=val2` |
+| SIGNALFX_LOGS_INJECTION            | SPLUNK_LOGS_INJECTION                | |
+| SIGNALFX_LOGS_INJECTION_TAGS       | OTEL_RESOURCE_ATTRIBUTES             | there's no direct equivalent, but values specified in `OTEL_RESOURCE_ATTRIBUTES` will also be used for logs injection |
+| SIGNALFX_ENABLED_PLUGINS           | n/a                                  | See <./README.md#custom-instrumentation-packages> |
+| SIGNALFX_SERVER_TIMING_CONTEXT     | SPLUNK_TRACE_RESPONSE_HEADER_ENABLED | |
+| SIGNALFX_TRACING_ENABLED           | OTEL_TRACE_ENABLED                   | |
+
+### Programmatic configuration
+
+| Old property             | New property    | Notes |
+| ------------------------ | --------------- | |
+| `service`                | `serviceName`   | |
+| `url`                    | `endpoint`      | |
+| `accessToken`            | `accessToken`   | |
+| `enabled`                | -               | no equivalent, but Environment Variable can be used |
+| `debug`                  | -               | no direct equivalent, see [instrumentation logs](#instrumentation-logs) |
+| `tags`                   | `tracerConfig.resource` | |
+| `logInjection`           | `logInjectionEnabled` | |
+| `logInjectionTags`       | -               | no direct equivalent, but `tracerConfig.resource` can be used |
+| `flushInterval`          | -               | no direct equivalent, contact us if you had customized this value |
+| `plugins`                | -               | see <./README.md#default-instrumentation-packages->
+| `recordedValueMaxLength` | `maxAttrLength` | |
+| `enableServerTiming`     | `serverTimingEnabled` | |
+
+### Invocation
+
+```javascript
+const tracer = require('signalfx-tracing').init({
+  // your options here
+})
+```
+
+becomes
+
+```javascript
+const { startTracing } = require('@splunk/otel');
+
+startTracing({
+  // your new options here
+});
+```
+
+and requires installing `@splunk/otel` first, using either NPM or Yarn. Same as in `signalfx-nodejs-tracing`, this code
+is to be run before your `import` or `require` statements.
+
+Alternatively, you can append the flag `-r @splunk/otel/instrument` instead when launching `node` (it runs
+`startTracing` under the hood). In that case you cannot use programmatic configuration and must rely on environment
+variables only.
 
 ### Instrumentation logs
 
@@ -98,11 +141,3 @@ const { diag, DiagConsoleLogger, DiagLogLevel } = require("@opentelemetry/api");
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL);
 ```
-
-### Main instrumentation entrypoint
-
-TODO
-
-### Dependencies
-
-TODO
