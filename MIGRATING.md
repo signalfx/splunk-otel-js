@@ -23,12 +23,12 @@ see [Migrate from OpenTracing to OpenTelemetry](https://docs.signalfx.com/en/lat
   - `sails`
 - Limited instrumentation for:
   - `nest` - only manual insturmentation helpers, provided by community
-  - `socket.io` - pending vetting, provided by community
 - other notes on instrumentation:
   - `express` instrumentation requires `http`/`https` instrumentation
   - `bluebird` - context propagation only (via `async_hooks`)
   - `q` - context propagation only (via `async_hooks`)
   - `when` - context propagation only (via `async_hooks`)
+  - `socket.io` - provided by community (<https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-socket.io>)
 
 ## Requirements
 
@@ -41,6 +41,20 @@ If you're still using an earlier version of Node.js, continue using the SignalFx
 
 With the exception of [explicitly listed limitations](#known-limitations) we aim to support all libraries supported by
 signalfx-nodejs-tracing.
+
+To find an equivalent auto-instrumentation open <https://opentelemetry.io/registry/> and for each instrumentation
+[from this list](https://github.com/signalfx/signalfx-nodejs-tracing/#requirements-and-supported-software)
+search by the name of the library in the registry.
+
+For example, if you'd like to migrate instrumentation for `mysql`, go to
+[https://opentelemetry.io/registry/?s=**mysql**&component=&language=**js**#](https://opentelemetry.io/registry/?s=mysql&component=&language=js#).
+
+Once you have identified an instrumentation package, install it using `npm` or `yarn` and:
+
+- if the package is [on this list](./README.md#default-instrumentation-packages-) then it
+  will be enabled automatically
+- if it's not on the list, then please follow the steps for
+  [installing other instrumentation packages](./README.md#custom-instrumentation-packages)
 
 ### Environment variables
 
