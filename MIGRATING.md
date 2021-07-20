@@ -80,20 +80,20 @@ Rename environment variables:
 
 ### Programmatic configuration
 
-| Old property             | New property    | Notes |
-| ------------------------ | --------------- | |
-| `service`                | `serviceName`   | |
-| `url`                    | `endpoint`      | |
-| `accessToken`            | `accessToken`   | |
-| `enabled`                | -               | no equivalent, but Environment Variable can be used |
-| `debug`                  | -               | no direct equivalent, see [instrumentation logs](#instrumentation-logs) |
+| Old property             | New property            | Notes |
+| ------------------------ | ----------------------- | ----- |
+| `service`                | `serviceName`           |       |
+| `url`                    | `endpoint`              |       |
+| `accessToken`            | `accessToken`           |       |
+| `enabled`                | -                       | no equivalent, but Environment Variable can be used |
+| `debug`                  | -                       | no direct equivalent, see [instrumentation logs](#instrumentation-logs) |
 | `tags`                   | `tracerConfig.resource` | |
-| `logInjection`           | `logInjectionEnabled` | |
-| `logInjectionTags`       | -               | no direct equivalent, but `tracerConfig.resource` can be used |
-| `flushInterval`          | -               | no direct equivalent, contact us if you had customized this value |
-| `plugins`                | -               | see <./README.md#default-instrumentation-packages->
-| `recordedValueMaxLength` | `maxAttrLength` | |
-| `enableServerTiming`     | `serverTimingEnabled` | |
+| `logInjection`           | `logInjectionEnabled`   | |
+| `logInjectionTags`       | -                       | no direct equivalent, but `tracerConfig.resource` can be used |
+| `flushInterval`          | -                       | no direct equivalent, contact us if you had customized this value |
+| `plugins`                | -                       | see [the README section about instrumentatations](./README.md#default-instrumentation-packages) |
+| `recordedValueMaxLength` | `maxAttrLength`         | |
+| `enableServerTiming`     | `serverTimingEnabled`   | |
 
 ### Invocation
 
