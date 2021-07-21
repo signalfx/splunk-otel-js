@@ -1,11 +1,19 @@
-# Splunk distribution of OpenTelemetry JS 
+<p align="center">
+  <img alt="Beta" src="https://img.shields.io/badge/status-beta-informational?style=for-the-badge">
+  <img alt="GitHub branch checks state" src="https://img.shields.io/github/checks-status/signalfx/splunk-otel-js/main?style=for-the-badge">
+  <a href="https://github.com/signalfx/splunk-otel-js/releases">
+    <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/signalfx/splunk-otel-js?include_prereleases&style=for-the-badge">
+  </a>
+  <img alt="npm" src="https://img.shields.io/npm/v/@splunk/otel?style=for-the-badge">
+  <img alt="node-current" src="https://img.shields.io/node/v/@splunk/otel?style=for-the-badge">
+  <img alt="Codecov" src="https://img.shields.io/codecov/c/github/signalfx/splunk-otel-js?style=for-the-badge&token=XKXjEQKGaK">
+</p>
 
-[![CircleCI](https://circleci.com/gh/signalfx/splunk-otel-js.svg?style=svg)](https://circleci.com/gh/signalfx/splunk-otel-js)
-[![codecov](https://codecov.io/gh/signalfx/splunk-otel-js/branch/main/graph/badge.svg?token=XKXjEQKGaK)](https://codecov.io/gh/signalfx/splunk-otel-js)
+# Splunk distribution of OpenTelemetry JS
 
 The Splunk distribution of [OpenTelemetry
 JS](https://github.com/open-telemetry/opentelemetry-js) provides
-multiple installable packages that automatically instruments your Node 
+multiple installable packages that automatically instruments your Node
 application to capture and report distributed traces to Splunk APM.
 
 This Splunk distribution comes with the following defaults:
@@ -116,7 +124,7 @@ In order to send traces directly to SignalFx ingest API, you need to:
 ## Automatically instrument an application
 
 You can use node's `-r` CLI flag to pre-load the instrumentation module and automatically instrument your NodeJS application.
-You can add `-r @splunk/otel/instrument` CLI parameter to automatically instrument your application. 
+You can add `-r @splunk/otel/instrument` CLI parameter to automatically instrument your application.
 
 For example, if you start your application as follows:
 
@@ -241,7 +249,7 @@ If log injection is enabled, the corresponding logging library package will need
 @opentelemetry/instrumentation-winston
 ```
 
-You can find more instrumentation packages over at the [OpenTelemetry Registry](https://opentelemetry.io/registry/?language=js) and enable them manually 
+You can find more instrumentation packages over at the [OpenTelemetry Registry](https://opentelemetry.io/registry/?language=js) and enable them manually
 as described above.
 
 ## Troubleshooting
