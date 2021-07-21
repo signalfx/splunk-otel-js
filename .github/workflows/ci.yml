@@ -12,7 +12,7 @@ jobs:
     permissions: read-all
     strategy:
       matrix:
-        nodejs: ['8.5', '10', '12', '14', '16']
+        nodejs: ['10', '12', '14', '16']
     steps:
       - name: Checkout
         uses: actions/checkout@v1
@@ -20,11 +20,7 @@ jobs:
         with:
           node-version: ${{ matrix.nodejs }}
       - name: Install NPM dependencies
-        if: ${{ matrix.nodejs != '8.5' }}
         run: npm ci
-      - name: Install NPM dependencies (legacy)
-        if: ${{ matrix.nodejs == '8.5' }}
-        run: npm install
       - name: Lint
         run: npm run lint
       - name: Test
