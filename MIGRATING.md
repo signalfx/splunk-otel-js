@@ -39,7 +39,7 @@ If you're still using an earlier version of Node.js, continue using the SignalFx
 
 ### Changes to defaults
 
-- default flush interval is now 30s instead of 2s (how frequently captured telemetry data is sent to the backend)
+- Default flush interval, which defines how frequently captured telemetry data is sent to the backend, is now 30s instead of 2s 
 
 ### Instrumented libraries
 
@@ -52,12 +52,12 @@ search by the name of the library in the registry.
 For example, if you'd like to migrate instrumentation for `mysql`, go to
 [https://opentelemetry.io/registry/?s=**mysql**&component=&language=**js**#](https://opentelemetry.io/registry/?s=mysql&component=&language=js#).
 
-Once you have identified an instrumentation package, install it using `npm` or `yarn` and:
+Once you have identified an instrumentation package, install it using `npm` or `yarn`.
 
-- if the package is [on this list](./README.md#default-instrumentation-packages-) then it
-  will be enabled automatically
-- if it's not on the list, then please follow the steps for
-  [installing other instrumentation packages](./README.md#custom-instrumentation-packages)
+- If the package is [on this list](./README.md#default-instrumentation-packages-), it
+  will be enabled automatically.
+- if it's not on the list, follow the steps for
+  [installing other instrumentation packages](./README.md#custom-instrumentation-packages).
 
 ### Environment variables
 
@@ -122,19 +122,20 @@ variables only.
 
 ### Instrumentation logs
 
-There isn't a 1-to-1 mapping for `SIGNALFX_TRACING_DEBUG`. Closest equivalent is `OTEL_LOG_LEVEL`, however the logged
-information might be different. Please note that this section is about the logs **produced by instrumentation**, and not
+There isn't a one-to-one mapping for `SIGNALFX_TRACING_DEBUG`. The closest equivalent is `OTEL_LOG_LEVEL`, however the logged
+information might be different. 
+
+> Note that this section is about the logs produced by instrumentation, and not
 about the logs produced by the application.
 
-Logging level is controlled by an ENV variable `OTEL_LOG_LEVEL`, two most common values are:
-- `INFO` - the default value
-- `VERBOSE` - highest value likely to be needed
+Logging level is controlled by the `OTEL_LOG_LEVEL` environment variable. The two most common values are:
+- `INFO`: the default value
+- `VERBOSE`: highest value likely to be needed
 
 For all possible log levels see
 [this source file](https://github.com/open-telemetry/opentelemetry-js-api/blob/main/src/diag/types.ts).
 
-There is no default output for logs. Even if you set `OTEL_LOG_LEVEL=VERBOSE`, there won't be anything in the console.
-You need to set an output first, for example to `stdout`, by adding `DiagConsoleLogger`:
+There is no default output for logs. Even if you set `OTEL_LOG_LEVEL=VERBOSE`, nothing is output to the console. You need to set an output first, for example to `stdout`, by adding `DiagConsoleLogger`:
 
 ```js
 const { diag, DiagConsoleLogger, DiagLogLevel } = require("@opentelemetry/api");
