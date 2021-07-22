@@ -1,0 +1,32 @@
+name: Continuous Integration
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+permissions: read-all
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    permissions: read-all
+    strategy:
+      fail-fast: false
+      matrix:
+        nodejs: ['10', '12', '14', '16']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.nodejs }}
+      - name: Install NPM dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Test
+        run: npm run test
+      - name: Build
+        run: npm run compile
+      - name: Report coverage
+        run: npm run codecov
