@@ -28,7 +28,7 @@
     "stats"
   ],
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=8.5.0 <17"
   },
   "files": [
     "index.js",

@@ -3,6 +3,8 @@
   <a href="https://github.com/signalfx/splunk-otel-js/releases">
     <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/signalfx/splunk-otel-js?include_prereleases&style=for-the-badge">
   </a>
+  <img alt="npm" src="https://img.shields.io/npm/v/@splunk/otel?style=for-the-badge">
+  <img alt="node-current" src="https://img.shields.io/node/v/@splunk/otel?style=for-the-badge">
   <img alt="Codecov" src="https://img.shields.io/codecov/c/github/signalfx/splunk-otel-js?style=for-the-badge&token=XKXjEQKGaK">
   <img alt="GitHub branch checks state" src="https://img.shields.io/github/checks-status/signalfx/splunk-otel-js/main?style=for-the-badge">
 </p>
