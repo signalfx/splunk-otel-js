@@ -2,7 +2,7 @@
 
 The Splunk Distribution of OpenTelemetry for NodeJS replaces the SignalFx Tracing
 Library for NodeJS. If you’re using the SignalFx Tracing Library, migrate to
-the Splunk Distribution of OpenTelemetry for NodeJS to use OpenTelemetry’s
+the Splunk Distribution of OpenTelemetry for NodeJS to use OpenTelemetry
 instrumentation to send traces to Splunk APM. The Splunk Distribution of
 OpenTelemetry for NodeJS uses OpenTelemetry to instrument applications, which is
 an open-source API to gather telemetry data, and has a smaller footprint.
@@ -11,6 +11,11 @@ Because the SignalFx Tracing Library for NodeJS uses OpenTracing and the Splunk 
 of OpenTelemetry for NodeJS uses OpenTelemetry, the semantic
 conventions for span tag names change when you migrate. For more information,
 see [Migrate from OpenTracing to OpenTelemetry](https://docs.signalfx.com/en/latest/apm/apm-getting-started/apm-opentelemetry-collector.html#apm-opentelemetry-migration).
+
+## Getting help
+
+If you experience any issues following the guide below, or something is unclear, or missing, please don't hesitate to
+open an issue in Github. Any and all ideas for improvements are also welcome.
 
 <a name="known-limitations"></a>
 ## Known limitations as compared to SignalFx Tracing Library
@@ -30,16 +35,18 @@ see [Migrate from OpenTracing to OpenTelemetry](https://docs.signalfx.com/en/lat
   - `when` - context propagation only (via `async_hooks`)
   - `socket.io` - provided by community (<https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-socket.io>)
 
+## Changes to defaults
+
+- Default flush interval, which defines how frequently captured telemetry data is sent to the backend, is now 30s instead of 2s
+
 ## Requirements
 
 This Splunk Distribution of OpenTelemetry requires Node.js 8.5 or later.
 If you're still using an earlier version of Node.js, continue using the SignalFx Tracing Library for Node.js.
 
-## Equivalent configurations
+Current effective required Node.js version is: ![node-current](https://img.shields.io/node/v/@splunk/otel?style=flat-square)
 
-### Changes to defaults
-
-- Default flush interval, which defines how frequently captured telemetry data is sent to the backend, is now 30s instead of 2s 
+## Migration steps
 
 ### Instrumented libraries
 
@@ -80,6 +87,8 @@ Rename environment variables:
 
 ### Programmatic configuration
 
+Update these programmatic configuration options:
+
 | Old property             | New property            | Notes |
 | ------------------------ | ----------------------- | ----- |
 | `service`                | `serviceName`           |       |
@@ -95,7 +104,7 @@ Rename environment variables:
 | `recordedValueMaxLength` | `maxAttrLength`         | |
 | `enableServerTiming`     | `serverTimingEnabled`   | |
 
-### Invocation
+### Instrumentation entry point
 
 ```javascript
 const tracer = require('signalfx-tracing').init({
@@ -123,7 +132,7 @@ variables only.
 ### Instrumentation logs
 
 There isn't a one-to-one mapping for `SIGNALFX_TRACING_DEBUG`. The closest equivalent is `OTEL_LOG_LEVEL`, however the logged
-information might be different. 
+information might be different.
 
 > Note that this section is about the logs produced by instrumentation, and not
 about the logs produced by the application.
