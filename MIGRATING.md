@@ -7,10 +7,10 @@ instrumentation to send traces to Splunk APM. The Splunk Distribution of
 OpenTelemetry for NodeJS uses OpenTelemetry to instrument applications, which is
 an open-source API to gather telemetry data, and has a smaller footprint.
 
-Because the SignalFx Tracing Library for NodeJS uses OpenTracing and the Splunk Distribution
-of OpenTelemetry for NodeJS uses OpenTelemetry, the semantic
-conventions for span tag names change when you migrate. For more information,
-see [Migrate from OpenTracing to OpenTelemetry](https://docs.signalfx.com/en/latest/apm/apm-getting-started/apm-opentelemetry-collector.html#apm-opentelemetry-migration).
+Because the SignalFx Tracing Library for NodeJS uses OpenTracing and the Splunk Distribution of OpenTelemetry for NodeJS
+uses OpenTelemetry, the semantic conventions for span names and attributes change when you migrate. For more
+information, see
+[Migrate from OpenTracing to OpenTelemetry](https://docs.signalfx.com/en/latest/apm/apm-getting-started/apm-opentelemetry-collector.html#apm-opentelemetry-migration).
 
 ## Getting help
 
@@ -20,20 +20,19 @@ open an issue in Github. Any and all ideas for improvements are also welcome.
 <a name="known-limitations"></a>
 ## Known limitations as compared to SignalFx Tracing Library
 
-- Lowest supported version of NodeJS is `v8.5`, [see more information here](https://github.com/open-telemetry/opentelemetry-js#node-support)
+- Different subset of supported Node.js versions, see [Requirements section](#requirements) for more information.
 - No auto-instrumentation for:
-  - `AdonisJS`
-  - `amqp10`
-  - `mongodb-core` ([because it's deprecated](https://github.com/mongodb-js/mongodb-core))
-  - `sails`
+  - `AdonisJS`,
+  - `amqp10`,
+  - `mongodb-core` ([because it's deprecated](https://github.com/mongodb-js/mongodb-core)), but note that there is
+    [an instrumentation for MongoDB driver](https://opentelemetry.io/registry/?s=mongodb&component=&language=js#),
+  - `sails`.
 - Limited instrumentation for:
-  - `nest` - only manual insturmentation helpers, provided by community
-- other notes on instrumentation:
-  - `express` instrumentation requires `http`/`https` instrumentation
-  - `bluebird` - context propagation only (via `async_hooks`)
-  - `q` - context propagation only (via `async_hooks`)
-  - `when` - context propagation only (via `async_hooks`)
-  - `socket.io` - provided by community (<https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-socket.io>)
+  - `nest` - only manual instrumentation helpers, provided by community.
+- Other notes on instrumentation:
+  - `express`, `koa` and `hapi` instrumentations require active `http`/`https` instrumentation to produce spans,
+  - `bluebird`, `q`, `when` - supported out-of-the-box via `AsyncLocalStorageContextManager` (or `AsyncHooksContextManager` in Node.js below `14.8`),
+  - `socket.io` - provided by community and improved by Splunk (<https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-socket.io>).
 
 ## Changes to defaults
 
@@ -41,7 +40,8 @@ open an issue in Github. Any and all ideas for improvements are also welcome.
 
 ## Requirements
 
-This Splunk Distribution of OpenTelemetry requires Node.js 8.5 or later.
+This Splunk Distribution of OpenTelemetry requires Node.js 8.5 or later,
+[see more information here](https://github.com/open-telemetry/opentelemetry-js#node-support)
 If you're still using an earlier version of Node.js, continue using the SignalFx Tracing Library for Node.js.
 
 Current effective required Node.js version is: ![node-current](https://img.shields.io/node/v/@splunk/otel?style=flat-square)
@@ -59,10 +59,10 @@ search by the name of the library in the registry.
 For example, if you'd like to migrate instrumentation for `mysql`, go to
 [https://opentelemetry.io/registry/?s=**mysql**&component=&language=**js**#](https://opentelemetry.io/registry/?s=mysql&component=&language=js#).
 
-Once you have identified an instrumentation package, install it using `npm` or `yarn`.
+Once you have identified an instrumentation package, **install it** using npm or Yarn.
 
 - If the package is [on this list](./README.md#default-instrumentation-packages-), it
-  will be enabled automatically.
+  will be enabled automatically (**but it won't be installed automatically**).
 - if it's not on the list, follow the steps for
   [installing other instrumentation packages](./README.md#custom-instrumentation-packages).
 
@@ -70,7 +70,7 @@ Once you have identified an instrumentation package, install it using `npm` or `
 
 Rename environment variables:
 
-| Old environment variable           | New environment variable             | notes |
+| OpenTracing environment variable   | OpenTelemetry environment variable   | notes |
 | ---------------------------------- | ------------------------------------ | ----- |
 | SIGNALFX_ACCESS_TOKEN              | SPLUNK_ACCESS_TOKEN                  |       |
 | SIGNALFX_SERVICE_NAME              | OTEL_SERVICE_NAME                    |       |
@@ -89,7 +89,7 @@ Rename environment variables:
 
 Update these programmatic configuration options:
 
-| Old property             | New property            | Notes |
+| OpenTracing property     | OpenTelemetry property  | Notes |
 | ------------------------ | ----------------------- | ----- |
 | `service`                | `serviceName`           |       |
 | `url`                    | `endpoint`              |       |
@@ -122,7 +122,7 @@ startTracing({
 });
 ```
 
-and requires installing `@splunk/otel` first, using either NPM or Yarn. Same as in `signalfx-nodejs-tracing`, this code
+and requires installing `@splunk/otel` first, using either npm or Yarn. Same as in `signalfx-nodejs-tracing`, this code
 is to be run before your `import` or `require` statements.
 
 Alternatively, you can append the flag `-r @splunk/otel/instrument` instead when launching `node` (it runs
@@ -131,8 +131,8 @@ variables only.
 
 ### Instrumentation logs
 
-There isn't a one-to-one mapping for `SIGNALFX_TRACING_DEBUG`. The closest equivalent is `OTEL_LOG_LEVEL`, however the logged
-information might be different.
+There isn't a one-to-one mapping for `SIGNALFX_TRACING_DEBUG`. The closest equivalent is `OTEL_LOG_LEVEL`, however the
+logged information will be different.
 
 > Note that this section is about the logs produced by instrumentation, and not
 about the logs produced by the application.
@@ -144,7 +144,8 @@ Logging level is controlled by the `OTEL_LOG_LEVEL` environment variable. The tw
 For all possible log levels see
 [this source file](https://github.com/open-telemetry/opentelemetry-js-api/blob/main/src/diag/types.ts).
 
-There is no default output for logs. Even if you set `OTEL_LOG_LEVEL=VERBOSE`, nothing is output to the console. You need to set an output first, for example to `stdout`, by adding `DiagConsoleLogger`:
+There is no default output for logs. Even if you set `OTEL_LOG_LEVEL=VERBOSE`, nothing is output to the console. You
+need to set an output first, for example to `stdout`, by adding `DiagConsoleLogger`:
 
 ```js
 const { diag, DiagConsoleLogger, DiagLogLevel } = require("@opentelemetry/api");
