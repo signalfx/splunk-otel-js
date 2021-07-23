@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { env } from 'process';
 import { SpanExporter, SpanProcessor } from '@opentelemetry/tracing';
 import { InstrumentationOption } from '@opentelemetry/instrumentation';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
@@ -84,8 +83,12 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     options.logInjectionEnabled = getEnvBoolean('SPLUNK_LOGS_INJECTION', false);
   }
 
+  const otelEnv = getEnv();
+
   options.endpoint =
-    options.endpoint || env.OTEL_EXPORTER_JAEGER_ENDPOINT || defaultEndpoint;
+    options.endpoint ||
+    otelEnv.OTEL_EXPORTER_JAEGER_ENDPOINT ||
+    defaultEndpoint;
 
   const extraTracerConfig = options.tracerConfig || {};
 
@@ -93,7 +96,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   const serviceName =
     options.serviceName ||
-    getEnv().OTEL_SERVICE_NAME ||
+    otelEnv.OTEL_SERVICE_NAME ||
     resource.attributes[ResourceAttributes.SERVICE_NAME] ||
     defaultServiceName;
 
