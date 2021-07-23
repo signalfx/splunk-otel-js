@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.11.0 (2021-07-23)
+
 - Support for Synthetic Run identification
   ([#156](https://github.com/signalfx/splunk-otel-js/pull/156))
 
