@@ -1,15 +1,15 @@
 <p align="center">
   <img alt="Beta" src="https://img.shields.io/badge/status-beta-informational?style=for-the-badge">
-  <img alt="GitHub branch checks state" src="https://img.shields.io/github/checks-status/signalfx/splunk-otel-js/main?style=for-the-badge">
   <a href="https://github.com/signalfx/splunk-otel-js/releases">
     <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/signalfx/splunk-otel-js?include_prereleases&style=for-the-badge">
   </a>
   <img alt="npm" src="https://img.shields.io/npm/v/@splunk/otel?style=for-the-badge">
   <img alt="node-current" src="https://img.shields.io/node/v/@splunk/otel?style=for-the-badge">
   <img alt="Codecov" src="https://img.shields.io/codecov/c/github/signalfx/splunk-otel-js?style=for-the-badge&token=XKXjEQKGaK">
+  <img alt="GitHub branch checks state" src="https://img.shields.io/github/checks-status/signalfx/splunk-otel-js/main?style=for-the-badge">
 </p>
 
-# Splunk distribution of OpenTelemetry JS
+# Splunk distribution of OpenTelemetry JS for NodeJS
 
 The Splunk distribution of [OpenTelemetry
 JS](https://github.com/open-telemetry/opentelemetry-js) provides
@@ -29,7 +29,7 @@ This Splunk distribution comes with the following defaults:
 
 If you're currently using the SignalFx Tracing Library for Node and want to
 migrate to the Splunk Distribution of OpenTelemetry Node, see [Migrate from
-the SignalFx Tracing Library for JS](migration.md).
+the SignalFx Tracing Library for JS](./MIGRATING.md).
 
 > :construction: This project is currently in **BETA**. It is **officially supported** by Splunk. However, breaking changes **MAY** be introduced.
 
@@ -225,20 +225,25 @@ By default the following instrumentations will automatically be enabled if they 
 any of these instrumentations, you'll need to install them with npm and then run your app with `-r @splunk/otel/instrument` flag as described above.
 
 ```
-@opentelemetry/instrumentation-http
 @opentelemetry/instrumentation-dns
+@opentelemetry/instrumentation-express
 @opentelemetry/instrumentation-graphql
 @opentelemetry/instrumentation-grpc
-@opentelemetry/instrumentation-koa
-@opentelemetry/instrumentation-express
+@opentelemetry/instrumentation-hapi
+@opentelemetry/instrumentation-http
 @opentelemetry/instrumentation-ioredis
+@opentelemetry/instrumentation-koa
 @opentelemetry/instrumentation-mongodb
 @opentelemetry/instrumentation-mysql
 @opentelemetry/instrumentation-net
 @opentelemetry/instrumentation-pg
-@opentelemetry/instrumentation-hapi
 opentelemetry-instrumentation-amqplib
+opentelemetry-instrumentation-aws-sdk
 opentelemetry-instrumentation-elasticsearch
+opentelemetry-instrumentation-kafkajs
+opentelemetry-instrumentation-mongoose
+opentelemetry-instrumentation-sequelize
+opentelemetry-instrumentation-typeorm
 ```
 
 If log injection is enabled, the corresponding logging library package will need to be installed beforehand. Supported logging library instrumentations:
