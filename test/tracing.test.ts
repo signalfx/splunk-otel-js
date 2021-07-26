@@ -27,6 +27,7 @@ import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 
 import { startTracing, stopTracing } from '../src/tracing';
 import * as jaeger from '../src/jaeger';
+import { VERSION } from '../src/index';
 
 describe('tracing', () => {
   let addSpanProcessorMock;
@@ -189,5 +190,9 @@ describe('tracing', () => {
     assert(exp2 instanceof InMemorySpanExporter);
 
     stopTracing();
+  });
+
+  it('declares the same version as package.json', () => {
+    assert.strictEqual(VERSION, require('../package.json').version);
   });
 });
