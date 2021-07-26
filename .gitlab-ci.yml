@@ -16,20 +16,20 @@ before_script:
 stages:
   - setup
   - test
-  - release 
+  - release
 
 install:
-  stage: setup 
+  stage: setup
   script:
     - npm install
 
 test:
   script:
-    - npm test 
+    - npm test
 
 lint:
   script:
-    - npm run lint 
+    - npm run lint
 
 build:
   artifacts:
