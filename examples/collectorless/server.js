@@ -16,8 +16,12 @@ const animals = [
 const animal = { name: 'Spot' };
 const getCrudController = (kind) => {
   const router = express.Router();
-  router.get('/', (req, res) => res.send([{ ...animal, kind }]));
+  router.get('/', (req, res) => {
+    log(`GET ${kind}`);
+    return res.send([{ ...animal, kind }]);
+  });
   router.post('/', (req, res) => {
+    log(`POST ${kind}`);
     return res.status(201).send({ ...animal, kind });
   });
   return router;
@@ -34,6 +38,7 @@ const authMiddleware = (req, res, next) => {
 
 app.use(express.json());
 app.get('/all', async (req, res) => {
+  log('GET all');
   // Calls another endpoint of the same API, somewhat mimicing an external API call
   const results = await Promise.all(animals.map((kind) => {
     return axios.get(`http://localhost:${PORT}/${kind}`, {
