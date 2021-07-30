@@ -1,4 +1,4 @@
-const { diag, DiagConsoleLogger, DiagLogLevel } = require("@opentelemetry/api");
+const { diag, DiagConsoleLogger, DiagLogLevel } = require('@opentelemetry/api');
 const {
 	logConfig,
 	populateEnv,
