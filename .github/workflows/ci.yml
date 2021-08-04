@@ -24,13 +24,43 @@ jobs:
           node-version: ${{ matrix.nodejs }}
       - name: Install NPM dependencies
         run: npm ci
-      - name: Check version
-        run: npm run version:check
-      - name: Lint
-        run: npm run lint
       - name: Test
         run: npm run test
-      - name: Build
-        run: npm run compile
       - name: Report coverage
         run: npm run codecov
+
+  lint:
+    runs-on: ubuntu-latest
+    permissions: read-all
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+      - name: Install NPM dependencies
+        run: npm ci
+      - name: Check version
+        run: npm run version:check
+      - name: Lint code
+        run: npm run lint
+      - name: Lint commits
+        run: npm run lint:commits
+
+  build:
+    runs-on: ubuntu-latest
+    permissions: read-all
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16
+      - name: Install NPM dependencies
+        run: npm ci
+      - name: Build
+        run: npm run compile
