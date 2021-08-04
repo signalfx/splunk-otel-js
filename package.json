@@ -16,6 +16,7 @@
     "compile": "tsc --build",
     "lint:fix": "eslint . --ext .ts --fix",
     "lint": "eslint . --ext .ts",
+    "lint:commits": "commitlint --from main",
     "test": "nyc ts-mocha -p tsconfig.json 'test/**/*.test.ts'",
     "version:check": "node scripts/version-check.js",
     "version:generate": "node scripts/version-generate.js",
@@ -50,6 +51,8 @@
     "access": "public"
   },
   "devDependencies": {
+    "@commitlint/cli": "^13.1.0",
+    "@commitlint/config-conventional": "^13.1.0",
     "@opentelemetry/instrumentation-bunyan": "^0.23.0",
     "@opentelemetry/instrumentation-http": "^0.23.0",
     "@opentelemetry/instrumentation-pino": "^0.23.0",
