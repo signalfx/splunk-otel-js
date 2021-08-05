@@ -1,27 +1,29 @@
+const http = require('http');
 const { trace } = require('@opentelemetry/api');
-const express = require('express')
-const axios = require('axios')
-const http = require("http")
+const express = require('express');
+const axios = require('axios');
 
-const app = express()
-const port = 3000
+const app = express();
+const port = 3000;
 
 app.get('/hello', (req, res) => {
-    const tracer = trace.getTracer('example-basic-tracer-node');
-    const span = tracer.startSpan('main');
-    res.status(201).send("hello from node\n")
-    span.end();
-})
+  const tracer = trace.getTracer('splunk-otel-example-express');
+  const span = tracer.startSpan('hello');
+  console.log(201, '/hello');
+  res.status(201).send('Hello from node\n');
+  span.end();
+});
 
 app.get('/', (req, res) => {
-    axios.get('http://localhost:3000/hello')
-    .then(response => {
-      res.status(201).send("hello from node\n" + response)
+  axios.get(`http://localhost:${port}/hello`)
+    .then((response) => {
+      console.log(200, '/');
+      res.status(200).send(`Hello from node: ${response.status}\n`);
     })
-    .catch(err => {
-      res.status(500).send("hello from node\n" + "error fetching from go")
-    }) 
+    .catch((err) => {
+      console.log(500, '/', err);
+      res.status(500).send(`Error from node: ${err.message}\n`);
+    });
+});
 
-})
-
-app.listen(port, 'localhost', () => console.log(`Example app listening on port ${port}!`))
+app.listen(port, 'localhost', () => console.log(`Example app listening on port ${port}!`));
