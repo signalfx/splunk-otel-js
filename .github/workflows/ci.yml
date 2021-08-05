@@ -18,7 +18,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          fetch-depth: 0
+          fetch-depth: 1
       - uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.nodejs }}
@@ -30,13 +30,14 @@ jobs:
         run: npm run codecov
 
   lint:
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     permissions: read-all
     steps:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          fetch-depth: 0
+          fetch-depth: 1
       - uses: actions/setup-node@v2
         with:
           node-version: 16
@@ -44,10 +45,10 @@ jobs:
         run: npm ci
       - name: Check version
         run: npm run version:check
-      - name: Lint code
-        run: npm run lint
       - name: Lint commits
-        run: npm run lint:commits
+        run: npm run lint:commits -- --from ${{ github.base_ref }}
+      - name: Verify changes
+        run: npm run change:check
 
   build:
     runs-on: ubuntu-latest
@@ -56,11 +57,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          fetch-depth: 0
+          fetch-depth: 1
       - uses: actions/setup-node@v2
         with:
           node-version: 16
       - name: Install NPM dependencies
         run: npm ci
+      - name: Lint code
+        run: npm run lint
       - name: Build
         run: npm run compile

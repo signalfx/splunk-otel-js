@@ -16,7 +16,7 @@
     "compile": "tsc --build",
     "lint:fix": "eslint . --ext .ts --fix",
     "lint": "eslint . --ext .ts",
-    "lint:commits": "commitlint --from main",
+    "lint:commits": "commitlint",
     "test": "nyc ts-mocha -p tsconfig.json 'test/**/*.test.ts'",
     "version:check": "node scripts/version-check.js",
     "version:generate": "node scripts/version-generate.js",
