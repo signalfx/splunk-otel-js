@@ -19,6 +19,7 @@ import { InstrumentationOption } from '@opentelemetry/instrumentation';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
 import { getInstrumentations } from './instrumentations';
+import { CollectorTraceExporter } from '@opentelemetry/exporter-collector-proto';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { EnvResourceDetector } from './resource';
 import { NodeTracerConfig } from '@opentelemetry/node';
@@ -33,7 +34,6 @@ import {
 import { SplunkBatchSpanProcessor } from './SplunkBatchSpanProcessor';
 import { Resource } from '@opentelemetry/resources';
 
-const defaultEndpoint = 'http://localhost:9080/v1/trace';
 const defaultServiceName = 'unnamed-node-service';
 const defaultMaxAttrLength = 1200;
 
@@ -46,7 +46,7 @@ type SpanProcessorFactory = (
 type PropagatorFactory = (options: Options) => TextMapPropagator;
 
 export interface Options {
-  endpoint: string;
+  endpoint?: string;
   serviceName: string;
   accessToken: string;
   maxAttrLength: number;
@@ -85,11 +85,6 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   const otelEnv = getEnv();
 
-  options.endpoint =
-    options.endpoint ||
-    otelEnv.OTEL_EXPORTER_JAEGER_ENDPOINT ||
-    defaultEndpoint;
-
   const extraTracerConfig = options.tracerConfig || {};
 
   let resource = new EnvResourceDetector().detect();
@@ -112,8 +107,23 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   };
 
   // factories
-  options.spanExporterFactory =
-    options.spanExporterFactory || defaultSpanExporterFactory;
+  if (!options.spanExporterFactory) {
+    if (process.env.OTEL_TRACES_EXPORTER === 'jaeger') {
+      options.spanExporterFactory = jaegerSpanExporterFactory;
+      options.endpoint =
+        options.endpoint ||
+        otelEnv.OTEL_EXPORTER_JAEGER_ENDPOINT ||
+         'http://localhost:14268/v1/traces';
+    } else if (process.env.OTEL_TRACES_EXPORTER === 'jaeger-thrift-splunk') {
+      options.spanExporterFactory = jaegerSpanExporterFactory;
+      options.endpoint =
+        options.endpoint ||
+        otelEnv.OTEL_EXPORTER_JAEGER_ENDPOINT ||
+        'http://localhost:9080/v1/trace';
+    } else {
+      options.spanExporterFactory = defaultSpanExporterFactory;
+    }
+  }
   options.spanProcessorFactory =
     options.spanProcessorFactory || defaultSpanProcessorFactory;
   options.propagatorFactory =
@@ -139,7 +149,16 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   };
 }
 
-export function defaultSpanExporterFactory(options: Options): JaegerExporter {
+export function defaultSpanExporterFactory(options: Options): SpanExporter {
+  return new CollectorTraceExporter({
+    url: options.endpoint,
+    headers: {
+      'X-SF-TOKEN': options.accessToken,
+    },
+  });
+}
+
+export function jaegerSpanExporterFactory(options: Options): SpanExporter {
   const jaegerOptions = {
     serviceName: options.serviceName!,
     endpoint: options.endpoint,

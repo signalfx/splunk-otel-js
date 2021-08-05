@@ -11,19 +11,14 @@
 
 # Splunk distribution of OpenTelemetry JS for NodeJS
 
-The Splunk distribution of [OpenTelemetry
-JS](https://github.com/open-telemetry/opentelemetry-js) provides
-multiple installable packages that automatically instruments your Node
-application to capture and report distributed traces to Splunk APM.
+The Splunk distribution of [OpenTelemetry JS](https://github.com/open-telemetry/opentelemetry-js) automatically instruments your Node application to capture and report distributed traces to Splunk APM.
 
 This Splunk distribution comes with the following defaults:
 
 - [B3 context propagation](https://github.com/openzipkin/b3-propagation).
-- [Jaeger thrift
-  exporter](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-exporter-jaeger)
-  configured to send spans to a locally running [SignalFx Smart
-  Agent](https://docs.signalfx.com/en/latest/apm/apm-getting-started/apm-smart-agent.html)
-  (`http://localhost:9080/v1/trace`).
+- [OTLP exporter](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-exporter-collector-proto)
+  configured to send spans to a locally running [OpenTelemetry Collector](https://github.com/open-telemetry/opentelemetry-collector)
+  (`http://localhost:55681/v1/traces`).
 - Unlimited default limits for [configuration options](#trace-configuration) to
   support full-fidelity traces.
 
@@ -35,7 +30,7 @@ the SignalFx Tracing Library for JS](./MIGRATING.md).
 
 ## Getting Started
 
-Assuming the default Splunk APM setup with SignalFx Smart Agent running on localhost. If you're running a
+Assuming the default Splunk APM setup with [OpenTelemetry Collector](https://github.com/open-telemetry/opentelemetry-collector) running on localhost. If you're running a
 different setup, refer to the [configuration options](#env-config-options) below to customize trace export endpoint
 and other behaviour.
 
@@ -71,62 +66,34 @@ node -r @splunk/otel/instrument app.js
 
 You can also instrument your app with code as described [here](#instrument-with-code).
 
+### Splunk APM
+
+In order to send traces directly to Splunk APM, you need to:
+
+1. Set `OTEL_EXPORTER_OTLP_ENDPOINT` to
+   `https://ingest.<realm>.signalfx.com/v2/trace/otlp` where `realm` is your
+   Splunk APM realm e.g, `https://ingest.us0.signalfx.com/v2/trace/otlp`.
+2. Set `SPLUNK_ACCESS_TOKEN` to your Splunk APM access token.
 
 ## Configuration options <a name="env-config-options"></a>
 
-| Environment variable                 | Config Option                 | Default value                        | Notes                                                                                                                                                            |
-| -----------------------------        | ----------------------------- | ------------------------------------ | ----------------------------------------------------------------------                                                                                           |
-| OTEL_EXPORTER_JAEGER_ENDPOINT        | endpoint                      | `http://localhost:9080/v1/trace`     | The jaeger endpoint to connect to. Currently only HTTP is supported.                                                                                             |
-| OTEL_SERVICE_NAME                  | serviceName                   | `unnamed-node-service`               | The service name of this Node service.                                                                                                                           |
-| SPLUNK_ACCESS_TOKEN                  | acceessToken                  |                                      |                                                                                                                                                                  | The optional organization access token for trace submission requests. |
-| SPLUNK_MAX_ATTR_LENGTH               | maxAttrLength                 | 1200                                 | Maximum length of string attribute value in characters. Longer values are truncated.                                                                             |
-| SPLUNK_TRACE_RESPONSE_HEADER_ENABLED | serverTimingEnabled           | true                                 | Enable injection of `Server-Timing` header to HTTP responses.                                                                                                    |
-| SPLUNK_LOGS_INJECTION                | logInjectionEnabled           | false                                | Enable injecting of trace ID, span ID and service name to log records. Please note that the corresponding logging library instrumentation needs to be installed. |
-| OTEL_RESOURCE_ATTRIBUTES             |                               | unset                                | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
-| OTEL_TRACE_ENABLED                   |                               | `true`                               | Globally enables tracer creation and auto-instrumentation.                                                                                                       |
+| Environment variable                 | Config Option                 | Default value                         | Notes
+| -----------------------------        | ----------------------------- | ------------------------------------- | ----
+| OTEL_EXPORTER_OTLP_ENDPOINT          | endpoint                      | `http://localhost:55681/v1/traces` | The OTLP endpoint to export to. Currently only HTTP is supported.
+| OTEL_SERVICE_NAME                    | serviceName                   | `unnamed-node-service`                | The service name of this Node service.
+| SPLUNK_ACCESS_TOKEN                  | acceessToken                  |                                       | The optional access token for exporting signal data directly to SignalFx API.
+| SPLUNK_MAX_ATTR_LENGTH               | maxAttrLength                 | 1200                                  | Maximum length of string attribute value in characters. Longer values are truncated.
+| SPLUNK_TRACE_RESPONSE_HEADER_ENABLED | serverTimingEnabled           | true                                  | Enable injection of `Server-Timing` header to HTTP responses.
+| SPLUNK_LOGS_INJECTION                | logInjectionEnabled           | false                                 | Enable injecting of trace ID, span ID and service name to log records. Please note that the corresponding logging library instrumentation needs to be installed.
+| OTEL_RESOURCE_ATTRIBUTES             |                               | unset                                 | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
+| OTEL_TRACE_ENABLED                   |                               | `true`                                | Globally enables tracer creation and auto-instrumentation.
 
 More details on config options can be seen [here](#config-options)
-
-## Advanced Getting Started
-
-
-## Exporting to Smart Agent, Otel collector or SignalFx ingest
-
-This package exports spans in Jaeger Thrift format over HTTP and supports
-exporting to the SignalFx Smart Agent, OpenTelemetry collector and directly to
-SignalFx ingest API. You can use `OTEL_EXPORTER_JAEGER_ENDPOINT` environment variable
-to specify an export URL. The value must be a full URL including scheme and
-path.
-
-### Smart Agent
-
-This is the default option. You do not need to set any config options if you
-want to export to the Smart Agent and you are running the agent on the default
-port (`9080`). The exporter will default to `http://localhost:9080/v1/trace`
-when the environment variable is not specified.
-
-### OpenTelemetry Collector
-
-In order to do this, you'll need to enable Jaeger Thrift HTTP receiver on
-OpenTelemetry Collector and set `OTEL_EXPORTER_JAEGER_ENDPOINT` to
-`http://localhost:14268/api/traces` assuming the collector is reachable via
-localhost.
-
-### SignalFx Ingest API
-
-In order to send traces directly to SignalFx ingest API, you need to:
-
-1. Set `OTEL_EXPORTER_JAEGER_ENDPOINT` to
-   `https://ingest.<realm>.signalfx.com/v2/trace` where `realm` is your
-   SignalFx realm e.g, `https://ingest.us0.signalfx.com/v2/trace`.
-2. Set `SPLUNK_ACCESS_TOKEN` to one of your SignalFx APM access tokens.
 
 ## Automatically instrument an application
 
 You can use node's `-r` CLI flag to pre-load the instrumentation module and automatically instrument your NodeJS application.
-You can add `-r @splunk/otel/instrument` CLI parameter to automatically instrument your application.
-
-For example, if you start your application as follows:
+For example, if you normally started your application as follows:
 
 ```bash
 node index.js
@@ -153,7 +120,6 @@ startTracing();
 
 ```js
 startTracing({
-  endpoint: 'http://localhost:14268/api/traces',
   serviceName: 'my-node-service',
 });
 ```
@@ -166,7 +132,7 @@ it won't revert to OTel API globals set before `startTracing` was run, it will o
 
 `startTracing()` accepts an optional argument to pass down configuration. The argument must be an Object and may contain any of the following keys.
 
-- `endpoint`: corresponds to the `OTEL_EXPORTER_JAEGER_ENDPOINT` environment variable. Defaults to `http://localhost:9080/v1/trace`. Configures the http endpoint to which all spans will be exported.
+- `endpoint`: corresponds to the `OTEL_EXPORTER_OTLP_ENDPOINT` environment variable. Defaults to `http://localhost:55681/v1/traces`. Configures the http endpoint to which all spans will be exported.
 
 - `serviceName`: corresponds to the `OTEL_SERVICE_NAME` environment variable. Defaults to `unnamed-node-service`. Configures the service name of the instrumented node service. The name is added to all spans as an attribute.
 

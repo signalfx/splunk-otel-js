@@ -72,12 +72,11 @@ Rename environment variables:
 
 | OpenTracing environment variable   | OpenTelemetry environment variable   | notes |
 | ---------------------------------- | ------------------------------------ | ----- |
-| SIGNALFX_ACCESS_TOKEN              | SPLUNK_ACCESS_TOKEN                  |       |
-| SIGNALFX_SERVICE_NAME              | OTEL_SERVICE_NAME                    |       |
-| SIGNALFX_ENDPOINT_URL              | OTEL_EXPORTER_JAEGER_ENDPOINT        | if Jaeger is used |
-| SIGNALFX_ENDPOINT_URL              | n/a                                  | OTLP is not implemented yet |
-| SIGNALFX_RECORDED_VALUE_MAX_LENGTH | SPLUNK_MAX_ATTR_LENGTH               |       |
-| SIGNALFX_TRACING_DEBUG             | no direct equivalent                 | see [instrumentation logs](#instrumentation-logs) |
+| SIGNALFX_ACCESS_TOKEN              | SPLUNK_ACCESS_TOKEN                  | |
+| SIGNALFX_SERVICE_NAME              | OTEL_SERVICE_NAME                    | |
+| SIGNALFX_ENDPOINT_URL              | _no direct equivalent_               | see [the notes on endpoint](#endpoint) |
+| SIGNALFX_RECORDED_VALUE_MAX_LENGTH | SPLUNK_MAX_ATTR_LENGTH               | currently not implemented. See [#2403](otel-issue-attr-limits) |
+| SIGNALFX_TRACING_DEBUG             | _no direct equivalent_               | see [instrumentation logs](#instrumentation-logs) |
 | SIGNALFX_SPAN_TAGS                 | OTEL_RESOURCE_ATTRIBUTES             | format needs to be changed to `key1=val1,key2=val2` |
 | SIGNALFX_LOGS_INJECTION            | SPLUNK_LOGS_INJECTION                | |
 | SIGNALFX_LOGS_INJECTION_TAGS       | OTEL_RESOURCE_ATTRIBUTES             | there's no direct equivalent, but values specified in `OTEL_RESOURCE_ATTRIBUTES` will also be used for logs injection |
@@ -152,3 +151,12 @@ const { diag, DiagConsoleLogger, DiagLogLevel } = require("@opentelemetry/api");
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL);
 ```
+
+### Endpoint
+
+This package uses OTLP for export format by default so `SIGNALFX_ENDPOINT_URL` doesn't have an direct equivalent without replacing the exporter with one that uses Jaeger format. Options to consider:
+
+- **Using OTLP**: If the recieving endpoint supports OTLP(Splunk APM does), set `OTEL_EXPORTER_OTLP_ENDPOINT` instead of `SIGNALFX_ENDPOINT_URL`.
+- **Replacing OTLP with Jaeger**: To swap the exporter back to Jaeger use `OTEL_EXPORTER_JAEGER_ENDPOINT` instead of `SIGNALFX_ENDPOINT_URL` and configure Jaeger Exporter. [See an example](./examples/express)).
+
+[otel-issue-attr-limits]: https://github.com/open-telemetry/opentelemetry-js/issues/2403

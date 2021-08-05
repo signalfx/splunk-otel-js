@@ -20,9 +20,10 @@ npm install
 This example app can be run in following ways:
 
 1. Uninstrumented
-2. Instrumented via OpenTelemetry(OTel) SDK
-3. Instrumented via OpenTelemetry(OTel) SDK and Jaeger Exporter
-4. Instrumented via legacy OpenTracing SDK
+2. Instrumented via OTel SDK
+3. Instrumented via OTel SDK and Jaeger Exporter
+4. Instrumented via OTel SDK and exporting to locally running collector
+5. Instrumented via legacy OpenTracing SDK
 
 ### Uninstrumented
 
@@ -69,6 +70,20 @@ That's it! To run the example with the Jaeger Exporter:
 npm run server:jaeger
 # in a separate terminal:
 npm run client:jaeger
+```
+
+### Instrumented via OTel SDK, exporting to locally running collector
+
+Instead of sending telemetry data directly to Splunk APM API, one can also use OTel Collector to as a forwarder or an endpoint.
+There is an exmample [.env](./.env.collector) file included, which following commands use:
+
+```shell
+# make sure the collector is running
+docker run --name otel-collector -d -p 55681:55681 otel/opentelemetry-collector
+# run the example server
+npm run server:collecor
+# in a separate terminal:
+npm run client:collecor
 ```
 
 ### Instrumented via legacy OpenTracing SDK

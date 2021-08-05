@@ -23,31 +23,32 @@ import {
   InMemorySpanExporter,
 } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
-import { CollectorTraceExporter } from '@opentelemetry/exporter-collector-proto';
+import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 
 import { startTracing, stopTracing } from '../src/tracing';
-import * as utils from './utils';
+import * as jaeger from '../src/jaeger';
 
-describe('tracing', () => {
-  let patchJaegerMock;
+describe('tracing with jaeger', () => {
   let addSpanProcessorMock;
 
-  before(() => {
-    patchJaegerMock = sinon.stub(jaeger, '_patchJaeger');
+  beforeEach(() => {
+    process.env.OTEL_TRACES_EXPORTER = 'jaeger';
     addSpanProcessorMock = sinon.stub(
       NodeTracerProvider.prototype,
       'addSpanProcessor'
     );
   });
 
-  beforeEach(() => {
-    utils.cleanEnvironment();
+  afterEach(() => {
     addSpanProcessorMock.reset();
+    addSpanProcessorMock.restore();
   });
 
-  after(() => {
-    addSpanProcessorMock.restore();
-    patchJaegerMock.restore();
+  const patchJaegerMock = sinon.stub(jaeger, '_patchJaeger');
+
+  beforeEach(() => {
+    addSpanProcessorMock.reset();
+    patchJaegerMock.reset();
   });
 
   function assertTracingPipeline(
@@ -62,13 +63,19 @@ describe('tracing', () => {
 
     assert(processor instanceof BatchSpanProcessor);
     const exporter = processor['_exporter'];
-    assert(exporter instanceof CollectorTraceExporter);
+    assert(exporter instanceof JaegerExporter);
 
-    assert.deepEqual(exporter.url, exportURL);
+    const config = exporter['_localConfig'];
+    assert.deepEqual(config['endpoint'], exportURL);
 
     if (accessToken) {
-      assert.equal(exporter.headers['X-SF-TOKEN'], accessToken);
+      assert.equal(config['username'], 'auth');
+      assert.equal(config['password'], accessToken);
     }
+
+    assert.equal(config['serviceName'], serviceName);
+
+    assert.equal(maxAttrLength, patchJaegerMock.getCall(0).args[0]);
   }
 
   it('does not setup tracing OTEL_TRACE_ENABLED=false', () => {
@@ -82,7 +89,7 @@ describe('tracing', () => {
   it('setups tracing with defaults', () => {
     startTracing();
     assertTracingPipeline(
-      'http://localhost:55681/v1/traces',
+      'http://localhost:14268/v1/traces',
       'unnamed-node-service',
       '',
       1200,
@@ -121,11 +128,27 @@ describe('tracing', () => {
     const maxAttrLength = 101;
     const logInjectionEnabled = true;
 
-    process.env.OTEL_EXPORTER_JAEGER_ENDPOINT = url;
-    process.env.OTEL_SERVICE_NAME = serviceName;
-    process.env.SPLUNK_ACCESS_TOKEN = accessToken;
-    process.env.SPLUNK_MAX_ATTR_LENGTH = maxAttrLength.toString();
-    process.env.SPLUNK_LOGS_INJECTION = logInjectionEnabled.toString();
+    process.env.OTEL_EXPORTER_JAEGER_ENDPOINT = '';
+    process.env.OTEL_SERVICE_NAME = '';
+    process.env.SPLUNK_ACCESS_TOKEN = '';
+    process.env.SPLUNK_MAX_ATTR_LENGTH = '42';
+    process.env.SPLUNK_LOGS_INJECTION = 'true';
+
+    const envExporterStub = sinon
+      .stub(process.env, 'OTEL_EXPORTER_JAEGER_ENDPOINT')
+      .value(url);
+    const envServiceStub = sinon
+      .stub(process.env, 'OTEL_SERVICE_NAME')
+      .value(serviceName);
+    const envAccessStub = sinon
+      .stub(process.env, 'SPLUNK_ACCESS_TOKEN')
+      .value(accessToken);
+    const envMaxAttrLength = sinon
+      .stub(process.env, 'SPLUNK_MAX_ATTR_LENGTH')
+      .value(maxAttrLength);
+    const envLogsInjection = sinon
+      .stub(process.env, 'SPLUNK_LOGS_INJECTION')
+      .value(logInjectionEnabled);
 
     startTracing();
     assertTracingPipeline(
@@ -136,6 +159,12 @@ describe('tracing', () => {
       logInjectionEnabled
     );
     stopTracing();
+
+    envExporterStub.restore();
+    envServiceStub.restore();
+    envAccessStub.restore();
+    envMaxAttrLength.restore();
+    envLogsInjection.restore();
   });
 
   it('setups tracing with multiple processors', () => {

@@ -49,7 +49,11 @@ describe('options', () => {
       .returns([]);
     const options = _setDefaultOptions();
     assert.deepStrictEqual(options, {
-      endpoint: 'http://localhost:9080/v1/trace',
+      /*
+        let @opentelemetry/exporter-collector-proto package itself
+        resolve the default for endpoint.
+      */
+      endpoint: undefined,
       serviceName: 'unnamed-node-service',
       accessToken: '',
       serverTimingEnabled: true,

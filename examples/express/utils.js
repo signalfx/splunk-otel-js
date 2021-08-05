@@ -20,6 +20,11 @@ const populateEnv = () => {
   if (!process.env.OTEL_EXPORTER_JAEGER_ENDPOINT) {
     process.env.OTEL_EXPORTER_JAEGER_ENDPOINT = process.env.SIGNALFX_ENDPOINT_URL;
   }
+  if (!process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
+    process.env.OTEL_EXPORTER_OTLP_ENDPOINT = (
+      process.env.SIGNALFX_ENDPOINT_URL || process.env.OTEL_EXPORTER_JAEGER_ENDPOINT
+    );
+  }
   if (!process.env.OTEL_RESOURCE_ATTRIBUTES && process.env.SIGNALFX_SPAN_TAGS) {
     process.env.OTEL_RESOURCE_ATTRIBUTES = process.env.SIGNALFX_SPAN_TAGS.split(',')
       .map((pair) => {
