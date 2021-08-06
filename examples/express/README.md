@@ -1,7 +1,11 @@
-
 # Overview
 
-This example demonstrates tracing client and server side calls to an Express app and setting up the the easiest export mechanism - the collectorless export - to a Splunk APM backend without any changes to the original code.
+This is a more extensive example that demonstrates tracing client and server side calls to an Express app with setting up tracing in different ways.
+In all the cases the application logic in  [server.js](./server.js) and [client.js](./client.js) files stay exactly the same. The difference comes from:
+
+1. The command used to run the application: to bootstrap with different tracing mechanism, we use `-r` option to require our tracing initialization script before the application code;
+2. The tracing initialization script: see `tracer.*` files for different variants;
+3. The environment variables to configure the traces: see `.env*` files for examples.
 
 ## Setup
 
@@ -17,7 +21,8 @@ This example app can be run in 3 ways:
 
 1. Uninstrumented
 2. Instrumented via OpenTelemetry(OTel) SDK
-3. Instrumented via legacy OpenTracing SDK
+3. Instrumented via OpenTelemetry(OTel) SDK and Jaeger Exporter
+4. Instrumented via legacy OpenTracing SDK
 
 ### Uninstrumented
 
