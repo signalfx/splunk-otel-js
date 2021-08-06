@@ -45,7 +45,7 @@
     "access": "public"
   },
   "devDependencies": {
-    "@opentelemetry/instrumentation-bunyan": "~0.23.0",
+    "@opentelemetry/instrumentation-bunyan": "~0.24.0",
     "@opentelemetry/instrumentation-http": "~0.23.0",
     "@opentelemetry/instrumentation-pino": "~0.23.0",
     "@opentelemetry/instrumentation-winston": "~0.24.0",
@@ -65,7 +65,7 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^3.4.0",
     "gts": "3.1.0",
-    "mocha": "9.0.3",
+    "mocha": "^8.4.0",
     "nyc": "15.1.0",
     "pino": "^6.13.0",
     "prettier": ">=2.3.2",
@@ -93,7 +93,7 @@
     "semver": "^7.3.5"
   },
   "peerDependencies": {
-    "@opentelemetry/instrumentation-bunyan": "~0.23.0",
+    "@opentelemetry/instrumentation-bunyan": "~0.24.0",
     "@opentelemetry/instrumentation-cassandra-driver": "~0.23.0",
     "@opentelemetry/instrumentation-dns": "~0.23.0",
     "@opentelemetry/instrumentation-express": "~0.23.0",
