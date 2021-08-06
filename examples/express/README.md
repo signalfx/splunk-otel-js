@@ -49,7 +49,22 @@ npm run client
 ```
 
 See the exact commands in [package.json](./package.json).
-If you are unsure about the values to use for `.env.example` but are familiar with configuring OpenTracing SDK, you can alternatively also use [.env.opentracing.example](./.env.opentracing.example) as the basis - the OTel configuration will be automatically derived from that in this example(see [utils.js](./utils.js) for the conversions).
+If unsure about the values to use for `.env.example` but familiar with configuring OpenTracing SDK, one can alternatively also use [.env.opentracing.example](./.env.opentracing.example) as the basis - the OTel configuration will be automatically derived from that in this example(see [utils.js](./utils.js) for the conversions).
+
+### Instrumented via OTel SDK, Jaeger Exporter
+
+There's an [tracer setup](./tracer.jaeger.js) to showcase replacing the default OTLP/HTTP exporter with one that exports in Jaeger format. The configuration is similar to the plain OTel SDK setup, but
+
+1. `@opentelemetry/exporter-jaeger` package has to be installed and the factory initiating the Exporter has to be passed to `startTracing`;
+2. The endpoint(`OTEL_EXPORTER_JAEGER_ENDPOINT`) for Splunk's APM has to be replaced by one that accepts Jaeger formatted tracing data: `https://ingest.<realm>.signalfx.com/v2/trace`.
+
+That's it! To run the example with the Jaeger Exporter:
+
+```shell
+npm run server:jaeger
+# in a separate terminal:
+npm run client:jaeger
+```
 
 ### Instrumented via legacy OpenTracing SDK
 
