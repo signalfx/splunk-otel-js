@@ -1,6 +1,6 @@
 console.log('Enabling tracing via OpenTracing');
 const {
-	logConfig,
+  logConfig,
 } = require('./utils.js');
 
 logConfig();
