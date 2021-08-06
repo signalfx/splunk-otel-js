@@ -6,8 +6,10 @@
   "main": "server.js",
   "scripts": {
     "client": "env-cmd nodemon -r ./tracer.js client.js",
+    "client:jaeger": "env-cmd nodemon -r ./tracer.jaeger.js client.js",
     "client:opentracing": "env-cmd nodemon -r ./tracer.opentracing.js client.js",
     "server": "env-cmd nodemon -r ./tracer.js server.js",
+    "server:jaeger": "env-cmd nodemon -r ./tracer.jaeger.js server.js",
     "server:opentracing": "env-cmd nodemon -r ./tracer.opentracing.js server.js"
   },
   "repository": {
@@ -33,6 +35,7 @@
     "url": "https://github.com/signalfx/splunk-otel-js/issues"
   },
   "dependencies": {
+    "@opentelemetry/exporter-jaeger": "^0.24.0",
     "@opentelemetry/instrumentation-express": "^0.24.0",
     "@opentelemetry/instrumentation-http": "^0.23.0",
     "@splunk/otel": "^0.11.0",
