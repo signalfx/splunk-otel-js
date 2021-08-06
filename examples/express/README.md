@@ -17,7 +17,7 @@ npm install
 
 ## Running
 
-This example app can be run in 3 ways:
+This example app can be run in following ways:
 
 1. Uninstrumented
 2. Instrumented via OpenTelemetry(OTel) SDK
