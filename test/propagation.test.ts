@@ -24,7 +24,7 @@ import {
 } from '@opentelemetry/api';
 import { startTracing, stopTracing } from '../src/tracing';
 import { CompositePropagator, RandomIdGenerator } from '@opentelemetry/core';
-import { InMemorySpanExporter, SpanProcessor } from '@opentelemetry/tracing';
+import { InMemorySpanExporter, ReadableSpan, SpanProcessor } from '@opentelemetry/tracing';
 import { SYNTHETIC_RUN_ID_FIELD } from '../src/SplunkBatchSpanProcessor';
 import { defaultSpanProcessorFactory } from '../src/options';
 
@@ -73,17 +73,18 @@ describe('propagation', () => {
       outgoingCarrier['baggage'],
       'Synthetics-RunId=' + syntheticsTraceId
     );
+
+    stopTracing();
     done();
   });
 
-  it('must extract synthetic run id', done => {
+  it('must attach synthetic run id to exported spans', done => {
     const exporter = new InMemorySpanExporter();
     let spanProcessor: SpanProcessor;
     startTracing({
       spanExporterFactory: () => exporter,
       spanProcessorFactory: options => {
-        spanProcessor = defaultSpanProcessorFactory(options);
-        return spanProcessor;
+        return (spanProcessor = defaultSpanProcessorFactory(options));
       },
     });
 
@@ -104,6 +105,7 @@ describe('propagation', () => {
         syntheticsTraceId
       );
 
+      stopTracing();
       done();
     });
   });
