@@ -5,10 +5,12 @@ module.exports = {
   },
   plugins: [
     "@typescript-eslint",
-    "header"
+    "header",
+    "prettier",
   ],
   extends: [
-      "./node_modules/gts",
+    "./node_modules/gts",
+    "prettier",
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
@@ -30,7 +32,7 @@ module.exports = {
     "@typescript-eslint/no-unused-vars": ["error", {"argsIgnorePattern": "^_", "args": "after-used"}],
     "@typescript-eslint/no-inferrable-types": ["error", { ignoreProperties: true }],
     "arrow-parens": ["error", "as-needed"],
-    "prettier/prettier": ["error", { "singleQuote": true, "arrowParens": "avoid" }],
+    "prettier/prettier": "error",
     "node/no-deprecated-api": ["warn"],
     "header/header": [2, "block", [
         "",
