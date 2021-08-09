@@ -1,0 +1,51 @@
+{
+  "name": "splunk-otel-example-express",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Example of instrumenting a toy Express app in different ways",
+  "main": "server.js",
+  "scripts": {
+    "client": "env-cmd nodemon -r ./tracer.js client.js",
+    "client:jaeger": "env-cmd nodemon -r ./tracer.jaeger.js client.js",
+    "client:opentracing": "env-cmd nodemon -r ./tracer.opentracing.js client.js",
+    "server": "env-cmd nodemon -r ./tracer.js server.js",
+    "server:jaeger": "env-cmd nodemon -r ./tracer.jaeger.js server.js",
+    "server:opentracing": "env-cmd nodemon -r ./tracer.opentracing.js server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/signalfx/splunk-otel-js.git"
+  },
+  "keywords": [
+    "splunk",
+    "signalfx",
+    "apm",
+    "example",
+    "opentelemetry",
+    "opentracing",
+    "express",
+    "tracing"
+  ],
+  "engines": {
+    "node": ">=8.5.0"
+  },
+  "author": "Splunk <splunk-oss@splunk.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/signalfx/splunk-otel-js/issues"
+  },
+  "dependencies": {
+    "@opentelemetry/exporter-jaeger": "^0.24.0",
+    "@opentelemetry/instrumentation-express": "^0.24.0",
+    "@opentelemetry/instrumentation-http": "^0.23.0",
+    "@splunk/otel": "^0.11.0",
+    "axios": "^0.21.1",
+    "env-cmd": "^10.1.0",
+    "express": "^4.17.1",
+    "signalfx-tracing": "^0.13.0"
+  },
+  "homepage": "https://github.com/signalfx/splunk-otel-js#readme",
+  "devDependencies": {
+    "nodemon": "^2.0.12"
+  }
+}
