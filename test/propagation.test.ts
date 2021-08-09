@@ -76,7 +76,7 @@ describe('propagation', () => {
     done();
   });
 
-  it('must extract synthetic run id', done => {
+  it('must propagate synthetic run id', done => {
     const exporter = new InMemorySpanExporter();
     let spanProcessor: SpanProcessor;
     startTracing({
@@ -98,13 +98,13 @@ describe('propagation', () => {
     tracer.startSpan('request handler', {}, newContext).end();
 
     spanProcessor.forceFlush().then(() => {
-      assert(exporter.getFinishedSpans().length == 1);
+      assert.strictEqual(exporter.getFinishedSpans().length, 1);
       assert.strictEqual(
         exporter.getFinishedSpans()[0].attributes[SYNTHETIC_RUN_ID_FIELD],
         syntheticsTraceId
       );
 
       done();
-    });
+    }).catch(done);
   });
 });
