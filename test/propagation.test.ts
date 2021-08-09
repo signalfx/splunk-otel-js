@@ -24,18 +24,13 @@ import {
 } from '@opentelemetry/api';
 import { startTracing, stopTracing } from '../src/tracing';
 import { CompositePropagator, RandomIdGenerator } from '@opentelemetry/core';
-import {
-  InMemorySpanExporter,
-  ReadableSpan,
-  SpanProcessor,
-} from '@opentelemetry/tracing';
+import { InMemorySpanExporter, SpanProcessor } from '@opentelemetry/tracing';
 import { SYNTHETIC_RUN_ID_FIELD } from '../src/SplunkBatchSpanProcessor';
 import { defaultSpanProcessorFactory } from '../src/options';
 
 describe('propagation', () => {
-  it('must be set to b3', done => {
+  it('must be set to b3', () => {
     startTracing();
-
     assert(propagation.fields().includes('x-b3-traceid'));
     assert(propagation.fields().includes('x-b3-spanid'));
     assert(propagation.fields().includes('x-b3-sampled'));
@@ -54,13 +49,11 @@ describe('propagation', () => {
       assert.strictEqual(carrier['x-b3-spanid'], spanId);
       assert.strictEqual(carrier['x-b3-sampled'], '1');
       assert.strictEqual(carrier['traceparent'], `00-${traceId}-${spanId}-01`);
-      done();
     });
-
     stopTracing();
   });
 
-  it('must extract synthetic run id', done => {
+  it('must extract synthetic run id', () => {
     startTracing();
     assert(propagation.fields().includes('baggage'));
 
@@ -79,7 +72,6 @@ describe('propagation', () => {
     );
 
     stopTracing();
-    done();
   });
 
   it('must attach synthetic run id to exported spans', done => {
@@ -102,15 +94,18 @@ describe('propagation', () => {
     const newContext = propagation.extract(context.active(), incomingCarrier);
     tracer.startSpan('request handler', {}, newContext).end();
 
-    spanProcessor.forceFlush().then(() => {
-      assert(exporter.getFinishedSpans().length == 1);
-      assert.strictEqual(
-        exporter.getFinishedSpans()[0].attributes[SYNTHETIC_RUN_ID_FIELD],
-        syntheticsTraceId
-      );
+    spanProcessor
+      .forceFlush()
+      .then(() => {
+        assert.strictEqual(exporter.getFinishedSpans().length, 1);
+        assert.strictEqual(
+          exporter.getFinishedSpans()[0].attributes[SYNTHETIC_RUN_ID_FIELD],
+          syntheticsTraceId
+        );
 
-      stopTracing();
-      done();
-    });
+        stopTracing();
+        done();
+      })
+      .catch(done);
   });
 });
