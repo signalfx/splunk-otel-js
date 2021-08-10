@@ -1,7 +1,5 @@
 # Changelog
 
-## Unreleased
-
 ## 0.11.0 (2021-07-23)
 
 - Support for Synthetic Run identification
