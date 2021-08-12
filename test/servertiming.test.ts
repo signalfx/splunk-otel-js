@@ -19,6 +19,7 @@ import * as sinon from 'sinon';
 import { context, trace } from '@opentelemetry/api';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { startTracing } from '../src/tracing';
+import * as utils from './utils';
 
 const PORT = 9111;
 const SERVER_URL = `http://localhost:${PORT}`;
@@ -38,6 +39,7 @@ function assertHeaders(spanContext, response) {
 describe('servertiming', () => {
   let server;
 
+  beforeEach(utils.cleanEnvironment);
   afterEach(() => {
     server.close();
   });
@@ -62,13 +64,9 @@ describe('servertiming', () => {
   });
 
   it('can be enabled via environment variables', done => {
-    process.env.SPLUNK_TRACE_RESPONSE_HEADER_ENABLED = '';
-    const stub = sinon
-      .stub(process.env, 'SPLUNK_TRACE_RESPONSE_HEADER_ENABLED')
-      .value('true');
+    process.env.SPLUNK_TRACE_RESPONSE_HEADER_ENABLED = 'true';
     startTracing({});
     testHeadersAdded(() => {
-      stub.restore();
       done();
     });
   });
