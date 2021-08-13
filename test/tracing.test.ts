@@ -30,26 +30,26 @@ import * as jaeger from '../src/jaeger';
 import * as utils from './utils';
 
 describe('tracing', () => {
+  let patchJaegerMock;
   let addSpanProcessorMock;
 
-  beforeEach(() => {
-    utils.cleanEnvironment();
+  before(() => {
+    patchJaegerMock = sinon.stub(jaeger, '_patchJaeger');
     addSpanProcessorMock = sinon.stub(
       NodeTracerProvider.prototype,
       'addSpanProcessor'
     );
   });
 
-  afterEach(() => {
-    addSpanProcessorMock.reset();
-    addSpanProcessorMock.restore();
-  });
-
-  const patchJaegerMock = sinon.stub(jaeger, '_patchJaeger');
-
   beforeEach(() => {
+    utils.cleanEnvironment();
     addSpanProcessorMock.reset();
     patchJaegerMock.reset();
+  });
+
+  after(() => {
+    addSpanProcessorMock.restore();
+    patchJaegerMock.restore();
   });
 
   function assertTracingPipeline(

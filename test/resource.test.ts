@@ -24,7 +24,6 @@ import * as utils from './utils';
 describe('resource detector', () => {
   beforeEach(() => {
     utils.cleanEnvironment();
-    process.env.OTEL_RESOURCE_ATTRIBUTES = '';
   });
 
   it('ignores missing attributes', () => {
