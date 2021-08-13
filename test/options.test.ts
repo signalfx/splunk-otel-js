@@ -37,8 +37,11 @@ import {
   Options,
   defaultPropagatorFactory,
 } from '../src/options';
+import * as utils from './utils';
 
 describe('options', () => {
+  beforeEach(utils.cleanEnvironment);
+
   it('verify default options', () => {
     // Mock the default `getInstrumentations` in case some instrumentations (e.g. http) are part of dev dependencies.
     const getInstrumentationsStub = sinon

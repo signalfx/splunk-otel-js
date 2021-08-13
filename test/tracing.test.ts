@@ -27,27 +27,29 @@ import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 
 import { startTracing, stopTracing } from '../src/tracing';
 import * as jaeger from '../src/jaeger';
+import * as utils from './utils';
 
 describe('tracing', () => {
+  let patchJaegerMock;
   let addSpanProcessorMock;
 
-  beforeEach(() => {
+  before(() => {
+    patchJaegerMock = sinon.stub(jaeger, '_patchJaeger');
     addSpanProcessorMock = sinon.stub(
       NodeTracerProvider.prototype,
       'addSpanProcessor'
     );
   });
 
-  afterEach(() => {
-    addSpanProcessorMock.reset();
-    addSpanProcessorMock.restore();
-  });
-
-  const patchJaegerMock = sinon.stub(jaeger, '_patchJaeger');
-
   beforeEach(() => {
+    utils.cleanEnvironment();
     addSpanProcessorMock.reset();
     patchJaegerMock.reset();
+  });
+
+  after(() => {
+    addSpanProcessorMock.restore();
+    patchJaegerMock.restore();
   });
 
   function assertTracingPipeline(
@@ -127,27 +129,11 @@ describe('tracing', () => {
     const maxAttrLength = 101;
     const logInjectionEnabled = true;
 
-    process.env.OTEL_EXPORTER_JAEGER_ENDPOINT = '';
-    process.env.OTEL_SERVICE_NAME = '';
-    process.env.SPLUNK_ACCESS_TOKEN = '';
-    process.env.SPLUNK_MAX_ATTR_LENGTH = '42';
-    process.env.SPLUNK_LOGS_INJECTION = 'true';
-
-    const envExporterStub = sinon
-      .stub(process.env, 'OTEL_EXPORTER_JAEGER_ENDPOINT')
-      .value(url);
-    const envServiceStub = sinon
-      .stub(process.env, 'OTEL_SERVICE_NAME')
-      .value(serviceName);
-    const envAccessStub = sinon
-      .stub(process.env, 'SPLUNK_ACCESS_TOKEN')
-      .value(accessToken);
-    const envMaxAttrLength = sinon
-      .stub(process.env, 'SPLUNK_MAX_ATTR_LENGTH')
-      .value(maxAttrLength);
-    const envLogsInjection = sinon
-      .stub(process.env, 'SPLUNK_LOGS_INJECTION')
-      .value(logInjectionEnabled);
+    process.env.OTEL_EXPORTER_JAEGER_ENDPOINT = url;
+    process.env.OTEL_SERVICE_NAME = serviceName;
+    process.env.SPLUNK_ACCESS_TOKEN = accessToken;
+    process.env.SPLUNK_MAX_ATTR_LENGTH = maxAttrLength.toString();
+    process.env.SPLUNK_LOGS_INJECTION = logInjectionEnabled.toString();
 
     startTracing();
     assertTracingPipeline(
@@ -158,12 +144,6 @@ describe('tracing', () => {
       logInjectionEnabled
     );
     stopTracing();
-
-    envExporterStub.restore();
-    envServiceStub.restore();
-    envAccessStub.restore();
-    envMaxAttrLength.restore();
-    envLogsInjection.restore();
   });
 
   it('setups tracing with multiple processors', () => {
