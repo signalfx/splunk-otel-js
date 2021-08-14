@@ -28,7 +28,7 @@ import { CollectorTraceExporter } from '@opentelemetry/exporter-collector-proto'
 import { startTracing, stopTracing } from '../../src/tracing';
 import * as utils from '../utils';
 
-describe('tracing:default', () => {
+describe('tracing:otlp', () => {
   let addSpanProcessorMock;
 
   before(() => {
