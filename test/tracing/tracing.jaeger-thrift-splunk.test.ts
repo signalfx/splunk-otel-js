@@ -25,30 +25,32 @@ import {
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 
-import { startTracing, stopTracing } from '../src/tracing';
-import * as jaeger from '../src/jaeger';
+import { startTracing, stopTracing } from '../../src/tracing';
+import * as jaeger from '../../src/jaeger';
+import * as utils from '../utils';
 
-describe('tracing with jaeger', () => {
+describe('tracing:jaeger-thrift-splunk', () => {
+  let patchJaegerMock;
   let addSpanProcessorMock;
 
-  beforeEach(() => {
-    process.env.OTEL_TRACES_EXPORTER = 'jaeger';
+  before(() => {
+    patchJaegerMock = sinon.stub(jaeger, '_patchJaeger');
     addSpanProcessorMock = sinon.stub(
       NodeTracerProvider.prototype,
       'addSpanProcessor'
     );
   });
 
-  afterEach(() => {
+  beforeEach(() => {
+    utils.cleanEnvironment();
+    process.env.OTEL_TRACES_EXPORTER = 'jaeger-thrift-splunk';
+    patchJaegerMock.reset();
     addSpanProcessorMock.reset();
-    addSpanProcessorMock.restore();
   });
 
-  const patchJaegerMock = sinon.stub(jaeger, '_patchJaeger');
-
-  beforeEach(() => {
-    addSpanProcessorMock.reset();
-    patchJaegerMock.reset();
+  after(() => {
+    patchJaegerMock.restore();
+    addSpanProcessorMock.restore();
   });
 
   function assertTracingPipeline(
@@ -78,18 +80,10 @@ describe('tracing with jaeger', () => {
     assert.equal(maxAttrLength, patchJaegerMock.getCall(0).args[0]);
   }
 
-  it('does not setup tracing OTEL_TRACE_ENABLED=false', () => {
-    process.env.OTEL_TRACE_ENABLED = 'false';
-    startTracing();
-    sinon.assert.notCalled(addSpanProcessorMock);
-    delete process.env.OTEL_TRACE_ENABLED;
-    stopTracing();
-  });
-
   it('setups tracing with defaults', () => {
     startTracing();
     assertTracingPipeline(
-      'http://localhost:14268/v1/traces',
+      'http://localhost:9080/v1/trace',
       'unnamed-node-service',
       '',
       1200,
@@ -128,27 +122,11 @@ describe('tracing with jaeger', () => {
     const maxAttrLength = 101;
     const logInjectionEnabled = true;
 
-    process.env.OTEL_EXPORTER_JAEGER_ENDPOINT = '';
-    process.env.OTEL_SERVICE_NAME = '';
-    process.env.SPLUNK_ACCESS_TOKEN = '';
-    process.env.SPLUNK_MAX_ATTR_LENGTH = '42';
-    process.env.SPLUNK_LOGS_INJECTION = 'true';
-
-    const envExporterStub = sinon
-      .stub(process.env, 'OTEL_EXPORTER_JAEGER_ENDPOINT')
-      .value(url);
-    const envServiceStub = sinon
-      .stub(process.env, 'OTEL_SERVICE_NAME')
-      .value(serviceName);
-    const envAccessStub = sinon
-      .stub(process.env, 'SPLUNK_ACCESS_TOKEN')
-      .value(accessToken);
-    const envMaxAttrLength = sinon
-      .stub(process.env, 'SPLUNK_MAX_ATTR_LENGTH')
-      .value(maxAttrLength);
-    const envLogsInjection = sinon
-      .stub(process.env, 'SPLUNK_LOGS_INJECTION')
-      .value(logInjectionEnabled);
+    process.env.OTEL_EXPORTER_JAEGER_ENDPOINT = url;
+    process.env.OTEL_SERVICE_NAME = serviceName;
+    process.env.SPLUNK_ACCESS_TOKEN = accessToken;
+    process.env.SPLUNK_MAX_ATTR_LENGTH = maxAttrLength.toString();
+    process.env.SPLUNK_LOGS_INJECTION = logInjectionEnabled.toString();
 
     startTracing();
     assertTracingPipeline(
@@ -158,37 +136,6 @@ describe('tracing with jaeger', () => {
       maxAttrLength,
       logInjectionEnabled
     );
-    stopTracing();
-
-    envExporterStub.restore();
-    envServiceStub.restore();
-    envAccessStub.restore();
-    envMaxAttrLength.restore();
-    envLogsInjection.restore();
-  });
-
-  it('setups tracing with multiple processors', () => {
-    startTracing({
-      spanProcessorFactory: function (options) {
-        return [
-          new SimpleSpanProcessor(new ConsoleSpanExporter()),
-          new BatchSpanProcessor(new InMemorySpanExporter()),
-        ];
-      },
-    });
-
-    sinon.assert.calledTwice(addSpanProcessorMock);
-    const p1 = addSpanProcessorMock.getCall(0).args[0];
-
-    assert(p1 instanceof SimpleSpanProcessor);
-    const exp1 = p1['_exporter'];
-    assert(exp1 instanceof ConsoleSpanExporter);
-
-    const p2 = addSpanProcessorMock.getCall(1).args[0];
-    assert(p2 instanceof BatchSpanProcessor);
-    const exp2 = p2['_exporter'];
-    assert(exp2 instanceof InMemorySpanExporter);
-
     stopTracing();
   });
 });

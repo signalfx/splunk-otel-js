@@ -23,12 +23,13 @@ import {
   InMemorySpanExporter,
 } from '@opentelemetry/tracing';
 import { NodeTracerProvider } from '@opentelemetry/node';
-import { CollectorTraceExporter } from '@opentelemetry/exporter-collector-proto';
+import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 
-import { startTracing, stopTracing } from '../src/tracing';
-import * as utils from './utils';
+import { startTracing, stopTracing } from '../../src/tracing';
+import * as jaeger from '../../src/jaeger';
+import * as utils from '../utils';
 
-describe('tracing', () => {
+describe('tracing:jaeger', () => {
   let patchJaegerMock;
   let addSpanProcessorMock;
 
@@ -42,12 +43,14 @@ describe('tracing', () => {
 
   beforeEach(() => {
     utils.cleanEnvironment();
+    process.env.OTEL_TRACES_EXPORTER = 'jaeger';
+    patchJaegerMock.reset();
     addSpanProcessorMock.reset();
   });
 
   after(() => {
-    addSpanProcessorMock.restore();
     patchJaegerMock.restore();
+    addSpanProcessorMock.restore();
   });
 
   function assertTracingPipeline(
@@ -62,27 +65,25 @@ describe('tracing', () => {
 
     assert(processor instanceof BatchSpanProcessor);
     const exporter = processor['_exporter'];
-    assert(exporter instanceof CollectorTraceExporter);
+    assert(exporter instanceof JaegerExporter);
 
-    assert.deepEqual(exporter.url, exportURL);
+    const config = exporter['_localConfig'];
+    assert.deepEqual(config['endpoint'], exportURL);
 
     if (accessToken) {
-      assert.equal(exporter.headers['X-SF-TOKEN'], accessToken);
+      assert.equal(config['username'], 'auth');
+      assert.equal(config['password'], accessToken);
     }
-  }
 
-  it('does not setup tracing OTEL_TRACE_ENABLED=false', () => {
-    process.env.OTEL_TRACE_ENABLED = 'false';
-    startTracing();
-    sinon.assert.notCalled(addSpanProcessorMock);
-    delete process.env.OTEL_TRACE_ENABLED;
-    stopTracing();
-  });
+    assert.equal(config['serviceName'], serviceName);
+
+    assert.equal(maxAttrLength, patchJaegerMock.getCall(0).args[0]);
+  }
 
   it('setups tracing with defaults', () => {
     startTracing();
     assertTracingPipeline(
-      'http://localhost:55681/v1/traces',
+      'http://localhost:14268/v1/traces',
       'unnamed-node-service',
       '',
       1200,
@@ -135,31 +136,6 @@ describe('tracing', () => {
       maxAttrLength,
       logInjectionEnabled
     );
-    stopTracing();
-  });
-
-  it('setups tracing with multiple processors', () => {
-    startTracing({
-      spanProcessorFactory: function (options) {
-        return [
-          new SimpleSpanProcessor(new ConsoleSpanExporter()),
-          new BatchSpanProcessor(new InMemorySpanExporter()),
-        ];
-      },
-    });
-
-    sinon.assert.calledTwice(addSpanProcessorMock);
-    const p1 = addSpanProcessorMock.getCall(0).args[0];
-
-    assert(p1 instanceof SimpleSpanProcessor);
-    const exp1 = p1['_exporter'];
-    assert(exp1 instanceof ConsoleSpanExporter);
-
-    const p2 = addSpanProcessorMock.getCall(1).args[0];
-    assert(p2 instanceof BatchSpanProcessor);
-    const exp2 = p2['_exporter'];
-    assert(exp2 instanceof InMemorySpanExporter);
-
     stopTracing();
   });
 });
