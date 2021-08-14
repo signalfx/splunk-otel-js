@@ -32,10 +32,11 @@ import * as sinon from 'sinon';
 import * as instrumentations from '../src/instrumentations';
 import {
   _setDefaultOptions,
-  defaultSpanProcessorFactory,
-  defaultSpanExporterFactory,
-  Options,
   defaultPropagatorFactory,
+  defaultSpanExporterFactory,
+  defaultSpanProcessorFactory,
+  Options,
+  TracesExporter,
 } from '../src/options';
 import * as utils from './utils';
 
@@ -65,6 +66,7 @@ describe('options', () => {
           [ResourceAttributes.SERVICE_NAME]: 'unnamed-node-service',
         }),
       },
+      tracesExporter: 'otlp',
       spanExporterFactory: defaultSpanExporterFactory,
       spanProcessorFactory: defaultSpanProcessorFactory,
       propagatorFactory: defaultPropagatorFactory,
@@ -89,6 +91,7 @@ describe('options', () => {
         }),
         idGenerator: idGenerator,
       },
+      tracesExporter: 'custom-exporter' as TracesExporter,
       spanExporterFactory: testSpanExporterFactory,
       spanProcessorFactory: testSpanProcessorFactory,
       propagatorFactory: testPropagatorFactory,
@@ -106,6 +109,7 @@ describe('options', () => {
         resource: new Resource({ attr1: 'value' }),
         idGenerator: idGenerator,
       },
+      tracesExporter: 'custom-exporter',
       spanExporterFactory: testSpanExporterFactory,
       spanProcessorFactory: testSpanProcessorFactory,
       propagatorFactory: testPropagatorFactory,

@@ -45,6 +45,12 @@ type SpanProcessorFactory = (
 
 type PropagatorFactory = (options: Options) => TextMapPropagator;
 
+export enum TracesExporter {
+  JAEGER = 'jaeger',
+  JAEGER_THRIFT_SPLUNK = 'jaeger-thrift-splunk',
+  OTLP = 'otlp',
+}
+
 export interface Options {
   endpoint?: string;
   serviceName: string;
@@ -53,6 +59,7 @@ export interface Options {
   serverTimingEnabled: boolean;
   logInjectionEnabled: boolean;
   instrumentations: InstrumentationOption[];
+  tracesExporter: TracesExporter;
   tracerConfig: NodeTracerConfig;
   spanExporterFactory: SpanExporterFactory;
   spanProcessorFactory: SpanProcessorFactory;
@@ -106,15 +113,21 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     ...extraTracerConfig,
   };
 
+  if (options.tracesExporter === undefined) {
+    options.tracesExporter = (process.env.OTEL_TRACES_EXPORTER || TracesExporter.OTLP) as TracesExporter;
+  }
+
   // factories
-  if (!options.spanExporterFactory) {
-    if (process.env.OTEL_TRACES_EXPORTER === 'jaeger') {
+  if (options.spanExporterFactory === undefined) {
+    if (options.tracesExporter === TracesExporter.JAEGER) {
       options.spanExporterFactory = jaegerSpanExporterFactory;
       options.endpoint =
         options.endpoint ||
         otelEnv.OTEL_EXPORTER_JAEGER_ENDPOINT ||
-         'http://localhost:14268/v1/traces';
-    } else if (process.env.OTEL_TRACES_EXPORTER === 'jaeger-thrift-splunk') {
+        'http://localhost:14268/v1/traces';
+    } else if (
+      options.tracesExporter === TracesExporter.JAEGER_THRIFT_SPLUNK
+    ) {
       options.spanExporterFactory = jaegerSpanExporterFactory;
       options.endpoint =
         options.endpoint ||
@@ -143,6 +156,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     logInjectionEnabled: options.logInjectionEnabled,
     instrumentations: options.instrumentations,
     tracerConfig: tracerConfig,
+    tracesExporter: options.tracesExporter,
     spanExporterFactory: options.spanExporterFactory,
     spanProcessorFactory: options.spanProcessorFactory,
     propagatorFactory: options.propagatorFactory,
