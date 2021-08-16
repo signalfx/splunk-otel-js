@@ -1,6 +1,6 @@
 <p align="center">
   <img alt="Beta" src="https://img.shields.io/badge/status-beta-informational?style=for-the-badge">
-  <a href="https://github.com/signalfx/splunk-otel-js/releases">
+ <a href="https://github.com/signalfx/splunk-otel-js/releases">
     <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/signalfx/splunk-otel-js?include_prereleases&style=for-the-badge">
   </a>
   <img alt="npm" src="https://img.shields.io/npm/v/@splunk/otel?style=for-the-badge">
@@ -34,7 +34,7 @@ Assuming the default Splunk APM setup with [OpenTelemetry Collector](https://git
 different setup, refer to the [configuration options](#env-config-options) below to customize trace export endpoint
 and other behaviour.
 
-1. Install @splunk/otel package
+1. Install `@splunk/otel` package
 
 ```
 npm install @splunk/otel --save
@@ -64,7 +64,7 @@ export OTEL_SERVICE_NAME=my-node-svc
 node -r @splunk/otel/instrument app.js
 ```
 
-You can also instrument your app with code as described [here](#instrument-with-code).
+That's it - the telemetry data is not sent to the locally running Opentelemetry Collector! You can also instrument your app with code as described [here](#instrument-with-code).
 
 ### Splunk APM
 
@@ -75,7 +75,7 @@ In order to send traces directly to Splunk APM, you need to:
    Splunk APM realm e.g, `https://ingest.us0.signalfx.com/v2/trace/otlp`.
 2. Set `SPLUNK_ACCESS_TOKEN` to your Splunk APM access token.
 
-## Configuration options <a name="env-config-options"></a>
+## Configuration options<a name="env-config-options"></a>
 
 | Environment variable                 | Config Option                 | Default value                         | Notes
 | -----------------------------        | ----------------------------- | ------------------------------------- | ----
@@ -106,7 +106,7 @@ Then you can automatically instrument your application by running
 node -r @splunk/otel/instrument index.js
 ```
 
-## Manually instrument an application <a name="instrument-with-code"></a>
+## Manually instrument an application<a name="instrument-with-code"></a>
 
 You can also manually instrument your application by adding the following lines before everything else in your application.
 
@@ -129,7 +129,7 @@ Please note that `startTracing` is destructive to Open Telemetry API globals. We
 it won't revert to OTel API globals set before `startTracing` was run, it will only disable globals, which
 `startTracing` set.
 
-### All config options <a name="config-options"></a>
+### All config options<a name="config-options"></a>
 
 `startTracing()` accepts an optional argument to pass down configuration. The argument must be an Object and may contain any of the following keys.
 
@@ -155,7 +155,7 @@ it won't revert to OTel API globals set before `startTracing` was run, it will o
 
 - `instrumentations`: defaults to the list of instrumentation listed [below](#default-instrumentation-packages). Can be used to enable additional instrumentation packages. Refer examples [here](#custom-instrumentation-packages)
 
-## Using additional instrumentation plugins <a name="custom-instrumentation-packages"></a>
+## Using additional instrumentation plugins<a name="custom-instrumentation-packages"></a>
 
 If you setup tracing manually by calling the `startTracing()` method, you can use custom or 3rd party instrumentations as long as they implement the [OpenTelemetry JS Instrumentation interface](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-instrumentation). Custom instrumentations can be enabled by passing them to the `startTracing()` method as follows:
 
@@ -172,7 +172,6 @@ startTracing({
 
 You can also add the default set of instrumentation to the list as follows:
 
-
 ```js
 const { startTracing } = require('@splunk/otel');
 const { getInstrumentations } = require('@splunk/otel/lib/instrumentations');
@@ -186,7 +185,7 @@ startTracing({
 });
 ```
 
-## Default Instrumentation Packages <a name="default-instrumentation-packages"></a>
+## Default Instrumentation Packages<a name="default-instrumentation-packages"></a>
 
 By default the following instrumentations will automatically be enabled if they are installed. In order to use
 any of these instrumentations, you'll need to install them with npm and then run your app with `-r @splunk/otel/instrument` flag as described above.
