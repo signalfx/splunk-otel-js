@@ -114,7 +114,8 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   };
 
   if (options.tracesExporter === undefined) {
-    options.tracesExporter = (process.env.OTEL_TRACES_EXPORTER || TracesExporter.OTLP) as TracesExporter;
+    options.tracesExporter = (process.env.OTEL_TRACES_EXPORTER ||
+      TracesExporter.OTLP) as TracesExporter;
   }
 
   // factories
@@ -125,9 +126,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
         options.endpoint ||
         otelEnv.OTEL_EXPORTER_JAEGER_ENDPOINT ||
         'http://localhost:14268/v1/traces';
-    } else if (
-      options.tracesExporter === TracesExporter.JAEGER_THRIFT_SPLUNK
-    ) {
+    } else if (options.tracesExporter === TracesExporter.JAEGER_THRIFT_SPLUNK) {
       options.spanExporterFactory = jaegerSpanExporterFactory;
       options.endpoint =
         options.endpoint ||
