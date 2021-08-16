@@ -16,6 +16,8 @@
 import * as assert from 'assert';
 import * as util from 'util';
 
+import * as assert from 'assert';
+
 import { SpanExporter, SpanProcessor } from '@opentelemetry/tracing';
 import { InstrumentationOption } from '@opentelemetry/instrumentation';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
@@ -58,6 +60,7 @@ export interface Options {
   spanExporterFactory: SpanExporterFactory;
   spanProcessorFactory: SpanProcessorFactory;
   propagatorFactory: PropagatorFactory;
+  propagators: string;
 }
 
 export function _setDefaultOptions(options: Partial<Options> = {}): Options {
@@ -111,6 +114,11 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   }
   options.spanProcessorFactory =
     options.spanProcessorFactory || defaultSpanProcessorFactory;
+
+  options.propagators =
+    options.propagators ??
+    process.env.OTEL_PROPAGATORS ??
+    'tracecontext,baggage';
   options.propagatorFactory =
     options.propagatorFactory || defaultPropagatorFactory;
 
@@ -131,6 +139,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     spanExporterFactory: options.spanExporterFactory,
     spanProcessorFactory: options.spanProcessorFactory,
     propagatorFactory: options.propagatorFactory,
+    propagators: options.propagators,
   };
 }
 
@@ -204,12 +213,32 @@ export function defaultSpanProcessorFactory(options: Options): SpanProcessor {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function defaultPropagatorFactory(options: Options): TextMapPropagator {
+  assert.equal(
+    typeof options.propagators,
+    'string',
+    'Expecting "propagators" configuration option to be a comma-delimited string. Set '
+  );
+  const propagators = [];
+  for (const propagator of deduplicate(options.propagators.split(','))) {
+    switch (propagator) {
+      case 'baggage':
+        propagators.push(new HttpBaggagePropagator());
+        break;
+      case 'tracecontext':
+        propagators.push(new HttpTraceContextPropagator());
+        break;
+      case 'b3multi':
+        propagators.push(
+          new B3Propagator({ injectEncoding: B3InjectEncoding.MULTI_HEADER })
+        );
+        break;
+      case 'b3':
+        propagators.push(new B3Propagator());
+        break;
+    }
+  }
   return new CompositePropagator({
-    propagators: [
-      new B3Propagator({ injectEncoding: B3InjectEncoding.MULTI_HEADER }),
-      new HttpBaggagePropagator(),
-      new HttpTraceContextPropagator(),
-    ],
+    propagators,
   });
 }
 
@@ -225,4 +254,8 @@ function getEnvBoolean(key: string, defaultValue = true) {
   }
 
   return true;
+}
+
+function deduplicate(arr: string[]) {
+  return [...new Set(arr)];
 }
