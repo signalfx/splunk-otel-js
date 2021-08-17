@@ -1,4 +1,16 @@
-# Changelog
+# Change Log - @splunk/otel
+
+This log was last generated on Tue, 17 Aug 2021 16:14:33 GMT and should not be manually modified.
+
+<!-- Start content -->
+
+## 0.12.0
+
+Tue, 17 Aug 2021 16:14:33 GMT
+
+### Minor changes
+
+- Added change management using beachball (jakubmal+github@gmail.com)
 
 ## 0.11.0 (2021-07-23)
 
