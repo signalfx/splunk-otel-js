@@ -24,3 +24,4 @@ Please delete options that are not relevant.
 - [ ] Unit tests have been added/updated
 - [ ] Documentation has been updated
 - [ ] Change file has been generated (`npm run change:new`)
+- [ ] Delete this branch (after the PR is merged)
