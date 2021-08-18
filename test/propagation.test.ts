@@ -31,6 +31,7 @@ import { defaultSpanProcessorFactory } from '../src/options';
 describe('propagation', () => {
   it('must be set to b3', () => {
     startTracing();
+
     assert(propagation.fields().includes('x-b3-traceid'));
     assert(propagation.fields().includes('x-b3-spanid'));
     assert(propagation.fields().includes('x-b3-sampled'));
@@ -38,18 +39,21 @@ describe('propagation', () => {
 
     const tracer = trace.getTracer('test-tracer');
     const span = tracer.startSpan('main');
+
+    const carrier = {};
+
     context.with(trace.setSpan(context.active(), span), () => {
-      const carrier = {};
       propagation.inject(context.active(), carrier, defaultTextMapSetter);
       span.end();
-
-      const traceId = span.spanContext().traceId;
-      const spanId = span.spanContext().spanId;
-      assert.strictEqual(carrier['x-b3-traceid'], traceId);
-      assert.strictEqual(carrier['x-b3-spanid'], spanId);
-      assert.strictEqual(carrier['x-b3-sampled'], '1');
-      assert.strictEqual(carrier['traceparent'], `00-${traceId}-${spanId}-01`);
     });
+
+    const traceId = span.spanContext().traceId;
+    const spanId = span.spanContext().spanId;
+    assert.strictEqual(carrier['x-b3-traceid'], traceId);
+    assert.strictEqual(carrier['x-b3-spanid'], spanId);
+    assert.strictEqual(carrier['x-b3-sampled'], '1');
+    assert.strictEqual(carrier['traceparent'], `00-${traceId}-${spanId}-01`);
+
     stopTracing();
   });
 
