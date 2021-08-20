@@ -61,7 +61,7 @@
     "@opentelemetry/instrumentation-winston": "~0.24.0",
     "@types/bunyan": "1.8.7",
     "@types/mocha": "9.0.0",
-    "@types/node": "16.4.13",
+    "@types/node": "16.6.2",
     "@types/semver": "7.3.8",
     "@types/shimmer": "1.0.2",
     "@types/sinon": "^10.0.2",
