@@ -80,7 +80,7 @@ In order to send traces directly to Splunk APM, you need to:
 | Environment variable                 | Config Option                 | Default value                         | Notes
 | -----------------------------        | ----------------------------- | ------------------------------------- | ----
 | OTEL_EXPORTER_OTLP_ENDPOINT          | endpoint                      | `http://localhost:55681/v1/traces`    | The OTLP endpoint to export to. Only OTLP over HTTP is supported.
-| OTEL_TRACES_EXPORTER                 | tracesExporter                | `otlp`                                | Chooses the exporter. Shortcut for setting `spanExporterFactory`. One of [`otlp`, `jaeger`, `jaeger-thrift-splunk`]. See [`TracesExporter`](./src/options.ts).
+| OTEL_TRACES_EXPORTER                 | tracesExporter                | `otlp`                                | Chooses the exporter. Shortcut for setting `spanExporterFactory`. One of [`otlp`, `jaeger-thrift-http`, `jaeger-thrift-splunk`]. See [`TracesExporter`](./src/options.ts).
 | OTEL_SERVICE_NAME                    | serviceName                   | `unnamed-node-service`                | The service name of this Node service.
 | SPLUNK_ACCESS_TOKEN                  | acceessToken                  |                                       | The optional access token for exporting signal data directly to SignalFx API.
 | SPLUNK_MAX_ATTR_LENGTH               | maxAttrLength                 | 1200                                  | Maximum length of string attribute value in characters. Longer values are truncated.

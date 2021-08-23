@@ -29,7 +29,7 @@ import { startTracing, stopTracing } from '../../src/tracing';
 import * as jaeger from '../../src/jaeger';
 import * as utils from '../utils';
 
-describe('tracing:jaeger', () => {
+describe('tracing:jaeger-thrift-http', () => {
   let patchJaegerMock;
   let addSpanProcessorMock;
 
@@ -43,7 +43,7 @@ describe('tracing:jaeger', () => {
 
   beforeEach(() => {
     utils.cleanEnvironment();
-    process.env.OTEL_TRACES_EXPORTER = 'jaeger';
+    process.env.OTEL_TRACES_EXPORTER = 'jaeger-thrift-http';
     patchJaegerMock.reset();
     addSpanProcessorMock.reset();
   });

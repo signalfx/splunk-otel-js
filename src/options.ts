@@ -46,7 +46,7 @@ type SpanProcessorFactory = (
 type PropagatorFactory = (options: Options) => TextMapPropagator;
 
 export enum TracesExporter {
-  JAEGER = 'jaeger',
+  JAEGER_THRIFT_HTTP = 'jaeger-thrift-http',
   JAEGER_THRIFT_SPLUNK = 'jaeger-thrift-splunk',
   OTLP = 'otlp',
 }
@@ -120,7 +120,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   // factories
   if (options.spanExporterFactory === undefined) {
-    if (options.tracesExporter === TracesExporter.JAEGER) {
+    if (options.tracesExporter === TracesExporter.JAEGER_THRIFT_HTTP) {
       options.spanExporterFactory = jaegerSpanExporterFactory;
       options.endpoint =
         options.endpoint ||
