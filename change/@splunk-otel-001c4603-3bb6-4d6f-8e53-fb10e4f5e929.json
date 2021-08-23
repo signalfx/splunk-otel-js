@@ -1,0 +1,7 @@
+{
+  "type": "minor",
+  "comment": "Make w3c(tracecontext, baggage) the default propagation mechanism",
+  "packageName": "@splunk/otel",
+  "email": "Rauno56@gmail.com",
+  "dependentChangeType": "patch"
+}

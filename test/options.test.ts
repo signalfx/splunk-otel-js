@@ -32,10 +32,11 @@ import * as sinon from 'sinon';
 import * as instrumentations from '../src/instrumentations';
 import {
   _setDefaultOptions,
-  defaultSpanProcessorFactory,
-  defaultSpanExporterFactory,
-  Options,
   defaultPropagatorFactory,
+  otlpSpanExporterFactory,
+  defaultSpanProcessorFactory,
+  Options,
+  TracesExporter,
 } from '../src/options';
 import * as utils from './utils';
 
@@ -49,7 +50,11 @@ describe('options', () => {
       .returns([]);
     const options = _setDefaultOptions();
     assert.deepStrictEqual(options, {
-      endpoint: 'http://localhost:9080/v1/trace',
+      /*
+        let @opentelemetry/exporter-collector-proto package itself
+        resolve the default for endpoint.
+      */
+      endpoint: undefined,
       serviceName: 'unnamed-node-service',
       accessToken: '',
       serverTimingEnabled: true,
@@ -61,9 +66,11 @@ describe('options', () => {
           [ResourceAttributes.SERVICE_NAME]: 'unnamed-node-service',
         }),
       },
-      spanExporterFactory: defaultSpanExporterFactory,
+      tracesExporter: 'otlp',
+      spanExporterFactory: otlpSpanExporterFactory,
       spanProcessorFactory: defaultSpanProcessorFactory,
       propagatorFactory: defaultPropagatorFactory,
+      propagators: 'tracecontext,baggage',
     });
     getInstrumentationsStub.restore();
   });
@@ -85,9 +92,11 @@ describe('options', () => {
         }),
         idGenerator: idGenerator,
       },
+      tracesExporter: 'custom-exporter' as TracesExporter,
       spanExporterFactory: testSpanExporterFactory,
       spanProcessorFactory: testSpanProcessorFactory,
       propagatorFactory: testPropagatorFactory,
+      propagators: 'b3',
     });
 
     assert.deepStrictEqual(options, {
@@ -102,9 +111,11 @@ describe('options', () => {
         resource: new Resource({ attr1: 'value' }),
         idGenerator: idGenerator,
       },
+      tracesExporter: 'custom-exporter',
       spanExporterFactory: testSpanExporterFactory,
       spanProcessorFactory: testSpanProcessorFactory,
       propagatorFactory: testPropagatorFactory,
+      propagators: 'b3',
     });
   });
 

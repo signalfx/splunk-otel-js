@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
+import * as assert from 'assert';
+
 import { SpanExporter, SpanProcessor } from '@opentelemetry/tracing';
 import { InstrumentationOption } from '@opentelemetry/instrumentation';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
 import { getInstrumentations } from './instrumentations';
+import { CollectorTraceExporter } from '@opentelemetry/exporter-collector-proto';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { EnvResourceDetector } from './resource';
 import { NodeTracerConfig } from '@opentelemetry/node';
@@ -33,7 +36,6 @@ import {
 import { SplunkBatchSpanProcessor } from './SplunkBatchSpanProcessor';
 import { Resource } from '@opentelemetry/resources';
 
-const defaultEndpoint = 'http://localhost:9080/v1/trace';
 const defaultServiceName = 'unnamed-node-service';
 const defaultMaxAttrLength = 1200;
 
@@ -45,18 +47,26 @@ type SpanProcessorFactory = (
 
 type PropagatorFactory = (options: Options) => TextMapPropagator;
 
+export enum TracesExporter {
+  JAEGER_THRIFT_HTTP = 'jaeger-thrift-http',
+  JAEGER_THRIFT_SPLUNK = 'jaeger-thrift-splunk',
+  OTLP = 'otlp',
+}
+
 export interface Options {
-  endpoint: string;
+  endpoint?: string;
   serviceName: string;
   accessToken: string;
   maxAttrLength: number;
   serverTimingEnabled: boolean;
   logInjectionEnabled: boolean;
   instrumentations: InstrumentationOption[];
+  tracesExporter: TracesExporter;
   tracerConfig: NodeTracerConfig;
   spanExporterFactory: SpanExporterFactory;
   spanProcessorFactory: SpanProcessorFactory;
   propagatorFactory: PropagatorFactory;
+  propagators: string;
 }
 
 export function _setDefaultOptions(options: Partial<Options> = {}): Options {
@@ -85,11 +95,6 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   const otelEnv = getEnv();
 
-  options.endpoint =
-    options.endpoint ||
-    otelEnv.OTEL_EXPORTER_JAEGER_ENDPOINT ||
-    defaultEndpoint;
-
   const extraTracerConfig = options.tracerConfig || {};
 
   let resource = new EnvResourceDetector().detect();
@@ -111,11 +116,36 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     ...extraTracerConfig,
   };
 
+  if (options.tracesExporter === undefined) {
+    options.tracesExporter = (process.env.OTEL_TRACES_EXPORTER ||
+      TracesExporter.OTLP) as TracesExporter;
+  }
+
   // factories
-  options.spanExporterFactory =
-    options.spanExporterFactory || defaultSpanExporterFactory;
+  if (options.spanExporterFactory === undefined) {
+    if (options.tracesExporter === TracesExporter.JAEGER_THRIFT_HTTP) {
+      options.spanExporterFactory = jaegerSpanExporterFactory;
+      options.endpoint =
+        options.endpoint ||
+        otelEnv.OTEL_EXPORTER_JAEGER_ENDPOINT ||
+        'http://localhost:14268/v1/traces';
+    } else if (options.tracesExporter === TracesExporter.JAEGER_THRIFT_SPLUNK) {
+      options.spanExporterFactory = jaegerSpanExporterFactory;
+      options.endpoint =
+        options.endpoint ||
+        otelEnv.OTEL_EXPORTER_JAEGER_ENDPOINT ||
+        'http://localhost:9080/v1/trace';
+    } else {
+      options.spanExporterFactory = otlpSpanExporterFactory;
+    }
+  }
   options.spanProcessorFactory =
     options.spanProcessorFactory || defaultSpanProcessorFactory;
+
+  options.propagators =
+    options.propagators ??
+    process.env.OTEL_PROPAGATORS ??
+    'tracecontext,baggage';
   options.propagatorFactory =
     options.propagatorFactory || defaultPropagatorFactory;
 
@@ -133,13 +163,24 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     logInjectionEnabled: options.logInjectionEnabled,
     instrumentations: options.instrumentations,
     tracerConfig: tracerConfig,
+    tracesExporter: options.tracesExporter,
     spanExporterFactory: options.spanExporterFactory,
     spanProcessorFactory: options.spanProcessorFactory,
     propagatorFactory: options.propagatorFactory,
+    propagators: options.propagators,
   };
 }
 
-export function defaultSpanExporterFactory(options: Options): JaegerExporter {
+export function otlpSpanExporterFactory(options: Options): SpanExporter {
+  return new CollectorTraceExporter({
+    url: options.endpoint,
+    headers: {
+      'X-SF-TOKEN': options.accessToken,
+    },
+  });
+}
+
+export function jaegerSpanExporterFactory(options: Options): SpanExporter {
   const jaegerOptions = {
     serviceName: options.serviceName!,
     endpoint: options.endpoint,
@@ -162,12 +203,32 @@ export function defaultSpanProcessorFactory(options: Options): SpanProcessor {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function defaultPropagatorFactory(options: Options): TextMapPropagator {
+  assert.equal(
+    typeof options.propagators,
+    'string',
+    'Expecting "propagators" (OTEL_PROPAGATORS environment variable) configuration option to be a comma-delimited string.'
+  );
+  const propagators = [];
+  for (const propagator of deduplicate(options.propagators.split(','))) {
+    switch (propagator) {
+      case 'baggage':
+        propagators.push(new HttpBaggagePropagator());
+        break;
+      case 'tracecontext':
+        propagators.push(new HttpTraceContextPropagator());
+        break;
+      case 'b3multi':
+        propagators.push(
+          new B3Propagator({ injectEncoding: B3InjectEncoding.MULTI_HEADER })
+        );
+        break;
+      case 'b3':
+        propagators.push(new B3Propagator());
+        break;
+    }
+  }
   return new CompositePropagator({
-    propagators: [
-      new B3Propagator({ injectEncoding: B3InjectEncoding.MULTI_HEADER }),
-      new HttpBaggagePropagator(),
-      new HttpTraceContextPropagator(),
-    ],
+    propagators,
   });
 }
 
@@ -183,4 +244,8 @@ function getEnvBoolean(key: string, defaultValue = true) {
   }
 
   return true;
+}
+
+function deduplicate(arr: string[]) {
+  return [...new Set(arr)];
 }

@@ -1,10 +1,10 @@
 # Basic Example
 
 This example showcases basic integration with OpenTelemetry(OTel): automatic(HTTP calls) as well as manual([index.js](./index.js) manually creates spans) instrumentation.
-By default it requires OTel Collector to be running with Jaeger reciever open on `localhost:14268`.
+By default it requires OTel Collector to be running with OTLP reciever open on `localhost:55681`.
 
 ```shell
-docker run --name otel-collector -d -p 14268:14268 otel/opentelemetry-collector
+docker run --name otel-collector -d -p 55681:55681 otel/opentelemetry-collector
 npm start
 ```
 
@@ -26,7 +26,7 @@ It's also possible to send the traces directly to Splunk APM. For that additiona
 
 ```shell
 # Replace <realm> with the correct realm:
-export OTEL_EXPORTER_JAEGER_ENDPOINT="https://ingest.<realm>.signalfx.com/v2/trace"
+export OTEL_EXPORTER_OTLP_ENDPOINT="https://ingest.<realm>.signalfx.com/v2/trace/otlp"
 export SPLUNK_ACCESS_TOKEN="<your access token>"
 # Optional. To set the environment:
 export OTEL_RESOURCE_ATTRIBUTES='deployment.environment=dev'
