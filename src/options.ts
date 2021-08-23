@@ -216,7 +216,7 @@ export function defaultPropagatorFactory(options: Options): TextMapPropagator {
   assert.equal(
     typeof options.propagators,
     'string',
-    'Expecting "propagators" configuration option to be a comma-delimited string. Set '
+    'Expecting "propagators" (OTEL_PROPAGATORS environment variable) configuration option to be a comma-delimited string.'
   );
   const propagators = [];
   for (const propagator of deduplicate(options.propagators.split(','))) {
