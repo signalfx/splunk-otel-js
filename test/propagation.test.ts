@@ -15,12 +15,14 @@
  */
 
 import * as assert from 'assert';
+import * as util from 'util';
 
 import {
   propagation,
   trace,
   context,
   defaultTextMapSetter,
+  defaultTextMapGetter,
 } from '@opentelemetry/api';
 import { startTracing, stopTracing } from '../src/tracing';
 import { CompositePropagator, RandomIdGenerator } from '@opentelemetry/core';
@@ -30,7 +32,11 @@ import { defaultSpanProcessorFactory } from '../src/options';
 import * as utils from './utils';
 
 function assertIncludes(arr: string[], item: string) {
-  assert(arr.includes(item), `Could not find "${item}"`);
+  assert(Array.isArray(arr), `Expected an array got ${util.inspect(arr)}`);
+  assert(
+    arr.includes(item),
+    `Could not find "${item}" in ${util.inspect(arr)}`
+  );
 }
 
 describe('propagation', () => {
@@ -51,15 +57,26 @@ describe('propagation', () => {
 
     const tracer = trace.getTracer('test-tracer');
     const span = tracer.startSpan('main');
-    context.with(trace.setSpan(context.active(), span), () => {
-      const carrier = {};
+    const carrier = {};
+    const baggage = propagation.createBaggage({
+      key1: { value: 'value1' },
+    });
+    const ctx = trace.setSpan(
+      propagation.setBaggage(context.active(), baggage),
+      span
+    );
+
+    context.with(ctx, () => {
       propagation.inject(context.active(), carrier, defaultTextMapSetter);
       span.end();
-
-      const traceId = span.spanContext().traceId;
-      const spanId = span.spanContext().spanId;
-      assert.strictEqual(carrier['traceparent'], `00-${traceId}-${spanId}-01`);
     });
+
+    const traceId = span.spanContext().traceId;
+    const spanId = span.spanContext().spanId;
+    assert.strictEqual(carrier['traceparent'], `00-${traceId}-${spanId}-01`);
+    assert.strictEqual(carrier['baggage'], 'key1=value1');
+
+    stopTracing();
   });
 
   it('must work with b3', () => {
