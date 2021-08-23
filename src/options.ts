@@ -133,7 +133,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
         otelEnv.OTEL_EXPORTER_JAEGER_ENDPOINT ||
         'http://localhost:9080/v1/trace';
     } else {
-      options.spanExporterFactory = defaultSpanExporterFactory;
+      options.spanExporterFactory = otlpSpanExporterFactory;
     }
   }
   options.spanProcessorFactory =
@@ -162,7 +162,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   };
 }
 
-export function defaultSpanExporterFactory(options: Options): SpanExporter {
+export function otlpSpanExporterFactory(options: Options): SpanExporter {
   return new CollectorTraceExporter({
     url: options.endpoint,
     headers: {

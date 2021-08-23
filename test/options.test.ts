@@ -33,7 +33,7 @@ import * as instrumentations from '../src/instrumentations';
 import {
   _setDefaultOptions,
   defaultPropagatorFactory,
-  defaultSpanExporterFactory,
+  otlpSpanExporterFactory,
   defaultSpanProcessorFactory,
   Options,
   TracesExporter,
@@ -67,7 +67,7 @@ describe('options', () => {
         }),
       },
       tracesExporter: 'otlp',
-      spanExporterFactory: defaultSpanExporterFactory,
+      spanExporterFactory: otlpSpanExporterFactory,
       spanProcessorFactory: defaultSpanProcessorFactory,
       propagatorFactory: defaultPropagatorFactory,
     });
