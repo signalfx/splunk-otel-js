@@ -79,7 +79,7 @@ describe('propagation', () => {
     stopTracing();
   });
 
-  it('must work with b3', () => {
+  it('has an option for b3multi', () => {
     startTracing({
       propagators: 'b3multi',
     });
@@ -102,6 +102,29 @@ describe('propagation', () => {
     assert.strictEqual(carrier['x-b3-traceid'], traceId);
     assert.strictEqual(carrier['x-b3-spanid'], spanId);
     assert.strictEqual(carrier['x-b3-sampled'], '1');
+
+    stopTracing();
+  });
+
+  it('has an option for b3', () => {
+    startTracing({
+      propagators: 'b3',
+    });
+    assertIncludes(propagation.fields(), 'b3');
+
+    const tracer = trace.getTracer('test-tracer');
+    const span = tracer.startSpan('main');
+
+    const carrier = {};
+
+    context.with(trace.setSpan(context.active(), span), () => {
+      propagation.inject(context.active(), carrier, defaultTextMapSetter);
+      span.end();
+    });
+
+    const traceId = span.spanContext().traceId;
+    const spanId = span.spanContext().spanId;
+    assert.strictEqual(carrier['b3'], `${traceId}-${spanId}-1`);
 
     stopTracing();
   });
