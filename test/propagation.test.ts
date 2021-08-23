@@ -38,18 +38,21 @@ describe('propagation', () => {
 
     const tracer = trace.getTracer('test-tracer');
     const span = tracer.startSpan('main');
+
+    const carrier = {};
+
     context.with(trace.setSpan(context.active(), span), () => {
-      const carrier = {};
       propagation.inject(context.active(), carrier, defaultTextMapSetter);
       span.end();
-
-      const traceId = span.spanContext().traceId;
-      const spanId = span.spanContext().spanId;
-      assert.strictEqual(carrier['x-b3-traceid'], traceId);
-      assert.strictEqual(carrier['x-b3-spanid'], spanId);
-      assert.strictEqual(carrier['x-b3-sampled'], '1');
-      assert.strictEqual(carrier['traceparent'], `00-${traceId}-${spanId}-01`);
     });
+
+    const traceId = span.spanContext().traceId;
+    const spanId = span.spanContext().spanId;
+    assert.strictEqual(carrier['x-b3-traceid'], traceId);
+    assert.strictEqual(carrier['x-b3-spanid'], spanId);
+    assert.strictEqual(carrier['x-b3-sampled'], '1');
+    assert.strictEqual(carrier['traceparent'], `00-${traceId}-${spanId}-01`);
+
     stopTracing();
   });
 
@@ -74,7 +77,7 @@ describe('propagation', () => {
     stopTracing();
   });
 
-  it('must attach synthetic run id to exported spans', done => {
+  it('must attach synthetic run id to exported spans', async () => {
     const exporter = new InMemorySpanExporter();
     let spanProcessor: SpanProcessor;
     startTracing({
@@ -94,18 +97,14 @@ describe('propagation', () => {
     const newContext = propagation.extract(context.active(), incomingCarrier);
     tracer.startSpan('request handler', {}, newContext).end();
 
-    spanProcessor
-      .forceFlush()
-      .then(() => {
-        assert.strictEqual(exporter.getFinishedSpans().length, 1);
-        assert.strictEqual(
-          exporter.getFinishedSpans()[0].attributes[SYNTHETIC_RUN_ID_FIELD],
-          syntheticsTraceId
-        );
+    await spanProcessor.forceFlush();
 
-        stopTracing();
-        done();
-      })
-      .catch(done);
+    assert.strictEqual(exporter.getFinishedSpans().length, 1);
+    assert.strictEqual(
+      exporter.getFinishedSpans()[0].attributes[SYNTHETIC_RUN_ID_FIELD],
+      syntheticsTraceId
+    );
+
+    stopTracing();
   });
 });
