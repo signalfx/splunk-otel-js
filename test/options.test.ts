@@ -32,24 +32,29 @@ import * as sinon from 'sinon';
 import * as instrumentations from '../src/instrumentations';
 import {
   _setDefaultOptions,
-  defaultSpanProcessorFactory,
-  defaultSpanExporterFactory,
-  Options,
   defaultPropagatorFactory,
+  otlpSpanExporterFactory,
+  splunkSpanExporterFactory,
+  defaultSpanProcessorFactory,
+  Options,
 } from '../src/options';
 import * as utils from './utils';
 
 describe('options', () => {
   beforeEach(utils.cleanEnvironment);
 
-  it('verify default options', () => {
+  it('has expected defaults', () => {
     // Mock the default `getInstrumentations` in case some instrumentations (e.g. http) are part of dev dependencies.
     const getInstrumentationsStub = sinon
       .stub(instrumentations, 'getInstrumentations')
       .returns([]);
     const options = _setDefaultOptions();
     assert.deepStrictEqual(options, {
-      endpoint: 'http://localhost:9080/v1/trace',
+      /*
+        let @opentelemetry/exporter-collector-proto package itself
+        resolve the default for endpoint.
+      */
+      endpoint: undefined,
       serviceName: 'unnamed-node-service',
       accessToken: '',
       serverTimingEnabled: true,
@@ -61,14 +66,14 @@ describe('options', () => {
           [ResourceAttributes.SERVICE_NAME]: 'unnamed-node-service',
         }),
       },
-      spanExporterFactory: defaultSpanExporterFactory,
+      spanExporterFactory: otlpSpanExporterFactory,
       spanProcessorFactory: defaultSpanProcessorFactory,
       propagatorFactory: defaultPropagatorFactory,
     });
     getInstrumentationsStub.restore();
   });
 
-  it('verify custom options', () => {
+  it('accepts and applies configuration', () => {
     const testInstrumentation = new TestInstrumentation('inst', '1.0');
     const idGenerator = new TestIdGenerator();
 
@@ -105,6 +110,22 @@ describe('options', () => {
       spanExporterFactory: testSpanExporterFactory,
       spanProcessorFactory: testSpanProcessorFactory,
       propagatorFactory: testPropagatorFactory,
+    });
+  });
+
+  describe('OTEL_TRACES_EXPORTER', () => {
+    it('accepts a valid key', () => {
+      process.env.OTEL_TRACES_EXPORTER = 'jaeger-thrift-splunk';
+      const options = _setDefaultOptions();
+      assert.strictEqual(
+        options.spanExporterFactory,
+        splunkSpanExporterFactory
+      );
+    });
+
+    it('throws on invalid key', () => {
+      process.env.OTEL_TRACES_EXPORTER = 'invalid-key';
+      assert.throws(_setDefaultOptions, /OTEL_TRACES_EXPORTER/);
     });
   });
 
