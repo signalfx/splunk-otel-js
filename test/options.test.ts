@@ -34,16 +34,16 @@ import {
   _setDefaultOptions,
   defaultPropagatorFactory,
   otlpSpanExporterFactory,
+  splunkSpanExporterFactory,
   defaultSpanProcessorFactory,
   Options,
-  TracesExporter,
 } from '../src/options';
 import * as utils from './utils';
 
 describe('options', () => {
   beforeEach(utils.cleanEnvironment);
 
-  it('verify default options', () => {
+  it('has expected defaults', () => {
     // Mock the default `getInstrumentations` in case some instrumentations (e.g. http) are part of dev dependencies.
     const getInstrumentationsStub = sinon
       .stub(instrumentations, 'getInstrumentations')
@@ -66,7 +66,6 @@ describe('options', () => {
           [ResourceAttributes.SERVICE_NAME]: 'unnamed-node-service',
         }),
       },
-      tracesExporter: 'otlp',
       spanExporterFactory: otlpSpanExporterFactory,
       spanProcessorFactory: defaultSpanProcessorFactory,
       propagatorFactory: defaultPropagatorFactory,
@@ -74,7 +73,7 @@ describe('options', () => {
     getInstrumentationsStub.restore();
   });
 
-  it('verify custom options', () => {
+  it('accepts and applies configuration', () => {
     const testInstrumentation = new TestInstrumentation('inst', '1.0');
     const idGenerator = new TestIdGenerator();
 
@@ -91,7 +90,6 @@ describe('options', () => {
         }),
         idGenerator: idGenerator,
       },
-      tracesExporter: 'custom-exporter' as TracesExporter,
       spanExporterFactory: testSpanExporterFactory,
       spanProcessorFactory: testSpanProcessorFactory,
       propagatorFactory: testPropagatorFactory,
@@ -109,10 +107,25 @@ describe('options', () => {
         resource: new Resource({ attr1: 'value' }),
         idGenerator: idGenerator,
       },
-      tracesExporter: 'custom-exporter',
       spanExporterFactory: testSpanExporterFactory,
       spanProcessorFactory: testSpanProcessorFactory,
       propagatorFactory: testPropagatorFactory,
+    });
+  });
+
+  describe('OTEL_TRACES_EXPORTER', () => {
+    it('accepts a valid key', () => {
+      process.env.OTEL_TRACES_EXPORTER = 'jaeger-thrift-splunk';
+      const options = _setDefaultOptions();
+      assert.strictEqual(
+        options.spanExporterFactory,
+        splunkSpanExporterFactory
+      );
+    });
+
+    it('throws on invalid key', () => {
+      process.env.OTEL_TRACES_EXPORTER = 'invalid-key';
+      assert.throws(_setDefaultOptions, /OTEL_TRACES_EXPORTER/);
     });
   });
 

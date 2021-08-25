@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import * as assert from 'assert';
+import * as util from 'util';
 
 import { SpanExporter, SpanProcessor } from '@opentelemetry/tracing';
 import { InstrumentationOption } from '@opentelemetry/instrumentation';
@@ -27,7 +29,6 @@ import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { TextMapPropagator } from '@opentelemetry/api';
 import {
   CompositePropagator,
-  getEnv,
   HttpBaggagePropagator,
   HttpTraceContextPropagator,
 } from '@opentelemetry/core';
@@ -45,12 +46,6 @@ type SpanProcessorFactory = (
 
 type PropagatorFactory = (options: Options) => TextMapPropagator;
 
-export enum TracesExporter {
-  JAEGER_THRIFT_HTTP = 'jaeger-thrift-http',
-  JAEGER_THRIFT_SPLUNK = 'jaeger-thrift-splunk',
-  OTLP = 'otlp',
-}
-
 export interface Options {
   endpoint?: string;
   serviceName: string;
@@ -59,7 +54,6 @@ export interface Options {
   serverTimingEnabled: boolean;
   logInjectionEnabled: boolean;
   instrumentations: InstrumentationOption[];
-  tracesExporter: TracesExporter;
   tracerConfig: NodeTracerConfig;
   spanExporterFactory: SpanExporterFactory;
   spanProcessorFactory: SpanProcessorFactory;
@@ -90,15 +84,13 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     options.logInjectionEnabled = getEnvBoolean('SPLUNK_LOGS_INJECTION', false);
   }
 
-  const otelEnv = getEnv();
-
   const extraTracerConfig = options.tracerConfig || {};
 
   let resource = new EnvResourceDetector().detect();
 
   const serviceName =
     options.serviceName ||
-    otelEnv.OTEL_SERVICE_NAME ||
+    process.env.OTEL_SERVICE_NAME ||
     resource.attributes[ResourceAttributes.SERVICE_NAME] ||
     defaultServiceName;
 
@@ -113,28 +105,9 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     ...extraTracerConfig,
   };
 
-  if (options.tracesExporter === undefined) {
-    options.tracesExporter = (process.env.OTEL_TRACES_EXPORTER ||
-      TracesExporter.OTLP) as TracesExporter;
-  }
-
   // factories
   if (options.spanExporterFactory === undefined) {
-    if (options.tracesExporter === TracesExporter.JAEGER_THRIFT_HTTP) {
-      options.spanExporterFactory = jaegerSpanExporterFactory;
-      options.endpoint =
-        options.endpoint ||
-        otelEnv.OTEL_EXPORTER_JAEGER_ENDPOINT ||
-        'http://localhost:14268/v1/traces';
-    } else if (options.tracesExporter === TracesExporter.JAEGER_THRIFT_SPLUNK) {
-      options.spanExporterFactory = jaegerSpanExporterFactory;
-      options.endpoint =
-        options.endpoint ||
-        otelEnv.OTEL_EXPORTER_JAEGER_ENDPOINT ||
-        'http://localhost:9080/v1/trace';
-    } else {
-      options.spanExporterFactory = otlpSpanExporterFactory;
-    }
+    options.spanExporterFactory = resolveTracesExporter();
   }
   options.spanProcessorFactory =
     options.spanProcessorFactory || defaultSpanProcessorFactory;
@@ -155,11 +128,25 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     logInjectionEnabled: options.logInjectionEnabled,
     instrumentations: options.instrumentations,
     tracerConfig: tracerConfig,
-    tracesExporter: options.tracesExporter,
     spanExporterFactory: options.spanExporterFactory,
     spanProcessorFactory: options.spanProcessorFactory,
     propagatorFactory: options.propagatorFactory,
   };
+}
+
+export function resolveTracesExporter(): SpanExporterFactory {
+  const factory =
+    SpanExporterMap[process.env.OTEL_TRACES_EXPORTER ?? 'default'];
+  assert.strictEqual(
+    typeof factory,
+    'function',
+    `Invalid value for OTEL_TRACES_EXPORTER env variable: ${util.inspect(
+      process.env.OTEL_TRACES_EXPORTER
+    )}. Pick one of ${util.inspect(Object.keys(SpanExporterMap), {
+      compact: true,
+    })} or leave undefined.`
+  );
+  return factory;
 }
 
 export function otlpSpanExporterFactory(options: Options): SpanExporter {
@@ -174,7 +161,10 @@ export function otlpSpanExporterFactory(options: Options): SpanExporter {
 export function jaegerSpanExporterFactory(options: Options): SpanExporter {
   const jaegerOptions = {
     serviceName: options.serviceName!,
-    endpoint: options.endpoint,
+    endpoint:
+      options.endpoint ??
+      process.env.OTEL_EXPORTER_JAEGER_ENDPOINT ??
+      'http://localhost:14268/v1/traces',
     tags: [],
     username: '',
     password: '',
@@ -187,6 +177,34 @@ export function jaegerSpanExporterFactory(options: Options): SpanExporter {
 
   return new JaegerExporter(jaegerOptions);
 }
+
+export function splunkSpanExporterFactory(options: Options): SpanExporter {
+  const jaegerOptions = {
+    serviceName: options.serviceName!,
+    endpoint:
+      options.endpoint ??
+      process.env.OTEL_EXPORTER_JAEGER_ENDPOINT ??
+      'http://localhost:9080/v1/trace',
+    tags: [],
+    username: '',
+    password: '',
+  };
+
+  if (options.accessToken) {
+    jaegerOptions.username = 'auth';
+    jaegerOptions.password = options.accessToken;
+  }
+
+  return new JaegerExporter(jaegerOptions);
+}
+
+const SpanExporterMap: Record<string, SpanExporterFactory> = {
+  default: otlpSpanExporterFactory,
+  'jaeger-thrift-http': jaegerSpanExporterFactory,
+  'jaeger-thrift-splunk': splunkSpanExporterFactory,
+  otlp: otlpSpanExporterFactory,
+  'otlp-http': otlpSpanExporterFactory,
+};
 
 export function defaultSpanProcessorFactory(options: Options): SpanProcessor {
   return new SplunkBatchSpanProcessor(options.spanExporterFactory(options));

@@ -27,8 +27,11 @@ import { CompositePropagator, RandomIdGenerator } from '@opentelemetry/core';
 import { InMemorySpanExporter, SpanProcessor } from '@opentelemetry/tracing';
 import { SYNTHETIC_RUN_ID_FIELD } from '../src/SplunkBatchSpanProcessor';
 import { defaultSpanProcessorFactory } from '../src/options';
+import * as utils from './utils';
 
 describe('propagation', () => {
+  beforeEach(utils.cleanEnvironment);
+
   it('must be set to b3', () => {
     startTracing();
     assert(propagation.fields().includes('x-b3-traceid'));
