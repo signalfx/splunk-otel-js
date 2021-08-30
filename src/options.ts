@@ -158,7 +158,10 @@ export function otlpSpanExporterFactory(options: Options): SpanExporter {
   });
 }
 
-export function genericJaegerSpanExporterFactory(defaultEndpoint: string, options: Options): SpanExporter {
+export function genericJaegerSpanExporterFactory(
+  defaultEndpoint: string,
+  options: Options
+): SpanExporter {
   const jaegerOptions = {
     serviceName: options.serviceName!,
     endpoint:
@@ -178,8 +181,14 @@ export function genericJaegerSpanExporterFactory(defaultEndpoint: string, option
   return new JaegerExporter(jaegerOptions);
 }
 
-export const jaegerSpanExporterFactory = genericJaegerSpanExporterFactory.bind(null, 'http://localhost:14268/v1/traces');
-export const splunkSpanExporterFactory = genericJaegerSpanExporterFactory.bind(null, 'http://localhost:9080/v1/trace');
+export const jaegerSpanExporterFactory = genericJaegerSpanExporterFactory.bind(
+  null,
+  'http://localhost:14268/v1/traces'
+);
+export const splunkSpanExporterFactory = genericJaegerSpanExporterFactory.bind(
+  null,
+  'http://localhost:9080/v1/trace'
+);
 
 const SpanExporterMap: Record<string, SpanExporterFactory> = {
   default: otlpSpanExporterFactory,
