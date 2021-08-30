@@ -158,13 +158,13 @@ export function otlpSpanExporterFactory(options: Options): SpanExporter {
   });
 }
 
-export function jaegerSpanExporterFactory(options: Options): SpanExporter {
+export function genericJaegerSpanExporterFactory(defaultEndpoint: string, options: Options): SpanExporter {
   const jaegerOptions = {
     serviceName: options.serviceName!,
     endpoint:
       options.endpoint ??
       process.env.OTEL_EXPORTER_JAEGER_ENDPOINT ??
-      'http://localhost:14268/v1/traces',
+      defaultEndpoint,
     tags: [],
     username: '',
     password: '',
@@ -178,25 +178,8 @@ export function jaegerSpanExporterFactory(options: Options): SpanExporter {
   return new JaegerExporter(jaegerOptions);
 }
 
-export function splunkSpanExporterFactory(options: Options): SpanExporter {
-  const jaegerOptions = {
-    serviceName: options.serviceName!,
-    endpoint:
-      options.endpoint ??
-      process.env.OTEL_EXPORTER_JAEGER_ENDPOINT ??
-      'http://localhost:9080/v1/trace',
-    tags: [],
-    username: '',
-    password: '',
-  };
-
-  if (options.accessToken) {
-    jaegerOptions.username = 'auth';
-    jaegerOptions.password = options.accessToken;
-  }
-
-  return new JaegerExporter(jaegerOptions);
-}
+export const jaegerSpanExporterFactory = genericJaegerSpanExporterFactory.bind(null, 'http://localhost:14268/v1/traces');
+export const splunkSpanExporterFactory = genericJaegerSpanExporterFactory.bind(null, 'http://localhost:9080/v1/trace');
 
 const SpanExporterMap: Record<string, SpanExporterFactory> = {
   default: otlpSpanExporterFactory,
