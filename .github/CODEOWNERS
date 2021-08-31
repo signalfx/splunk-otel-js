@@ -1,1 +1,14 @@
 * @signalfx/gdi-js-maintainers @signalfx/gdi-js-approvers
+
+.github/CODEOWNERS @signalfx/gdi-TEAM-maintainers
+
+#####################################################
+#
+# Docs reviewers
+#
+#####################################################
+
+*.md    @signalfx/gdi-js-maintainers @signalfx/gdi-js-approvers @signalfx/docs
+*.rst   @signalfx/gdi-js-maintainers @signalfx/gdi-js-approvers @signalfx/docs
+docs/   @signalfx/gdi-js-maintainers @signalfx/gdi-js-approvers @signalfx/docs
+README* @signalfx/gdi-js-maintainers @signalfx/gdi-js-approvers @signalfx/docs
