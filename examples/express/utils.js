@@ -20,6 +20,11 @@ const populateEnv = () => {
   if (!process.env.OTEL_EXPORTER_JAEGER_ENDPOINT) {
     process.env.OTEL_EXPORTER_JAEGER_ENDPOINT = process.env.SIGNALFX_ENDPOINT_URL;
   }
+  if (!process.env.OTEL_EXPORTER_OTLP_ENDPOINT) {
+    process.env.OTEL_EXPORTER_OTLP_ENDPOINT = (
+      process.env.OTEL_EXPORTER_JAEGER_ENDPOINT ?? process.env.SIGNALFX_ENDPOINT_URL
+    );
+  }
   if (!process.env.OTEL_RESOURCE_ATTRIBUTES && process.env.SIGNALFX_SPAN_TAGS) {
     process.env.OTEL_RESOURCE_ATTRIBUTES = process.env.SIGNALFX_SPAN_TAGS.split(',')
       .map((pair) => {
@@ -34,14 +39,19 @@ const populateEnv = () => {
 };
 const logConfig = () => {
   console.log(
-    Object.fromEntries(
+    fromEntries(
       Object.entries(process.env)
         .filter(isConfigVarEntry)
         .map(redactSecretEntry)
     )
   );
 };
-
+const fromEntries = (iterable) => {
+  return [...iterable].reduce((obj, [key, val]) => {
+    obj[key] = val;
+    return obj;
+  }, {});
+};
 const log = (...args) => {
   return console.log(new Date(), ...args);
 };
