@@ -158,7 +158,7 @@ export function otlpSpanExporterFactory(options: Options): SpanExporter {
   });
 }
 
-export function genericJaegerSpanExporterFactory(
+function genericJaegerSpanExporterFactory(
   defaultEndpoint: string,
   options: Options
 ): SpanExporter {
