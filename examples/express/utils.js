@@ -39,14 +39,19 @@ const populateEnv = () => {
 };
 const logConfig = () => {
   console.log(
-    Object.fromEntries(
+    fromEntries(
       Object.entries(process.env)
         .filter(isConfigVarEntry)
         .map(redactSecretEntry)
     )
   );
 };
-
+const fromEntries = (iterable) => {
+  return [...iterable].reduce((obj, [key, val]) => {
+    obj[key] = val;
+    return obj;
+  }, {});
+};
 const log = (...args) => {
   return console.log(new Date(), ...args);
 };
