@@ -16,8 +16,6 @@
 import * as assert from 'assert';
 import * as util from 'util';
 
-import * as assert from 'assert';
-
 import { SpanExporter, SpanProcessor } from '@opentelemetry/tracing';
 import { InstrumentationOption } from '@opentelemetry/instrumentation';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
