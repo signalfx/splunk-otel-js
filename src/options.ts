@@ -58,7 +58,6 @@ export interface Options {
   spanExporterFactory: SpanExporterFactory;
   spanProcessorFactory: SpanProcessorFactory;
   propagatorFactory: PropagatorFactory;
-  propagators: string;
 }
 
 export function _setDefaultOptions(options: Partial<Options> = {}): Options {
@@ -113,10 +112,6 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   options.spanProcessorFactory =
     options.spanProcessorFactory || defaultSpanProcessorFactory;
 
-  options.propagators =
-    options.propagators ??
-    process.env.OTEL_PROPAGATORS ??
-    'tracecontext,baggage';
   options.propagatorFactory =
     options.propagatorFactory || defaultPropagatorFactory;
 
@@ -137,7 +132,6 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     spanExporterFactory: options.spanExporterFactory,
     spanProcessorFactory: options.spanProcessorFactory,
     propagatorFactory: options.propagatorFactory,
-    propagators: options.propagators,
   };
 }
 
@@ -211,13 +205,14 @@ export function defaultSpanProcessorFactory(options: Options): SpanProcessor {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function defaultPropagatorFactory(options: Options): TextMapPropagator {
+  const propagatorsStr = process.env.OTEL_PROPAGATORS ?? 'tracecontext,baggage';
   assert.equal(
-    typeof options.propagators,
+    typeof propagatorsStr,
     'string',
-    'Expecting "propagators" (OTEL_PROPAGATORS environment variable) configuration option to be a comma-delimited string.'
+    'Expecting OTEL_PROPAGATORS environment variable to be a comma-delimited string.'
   );
   const propagators = [];
-  for (const propagator of deduplicate(options.propagators.split(','))) {
+  for (const propagator of deduplicate(propagatorsStr.split(','))) {
     switch (propagator) {
       case 'baggage':
         propagators.push(new HttpBaggagePropagator());

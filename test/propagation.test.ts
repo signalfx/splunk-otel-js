@@ -80,9 +80,8 @@ describe('propagation', () => {
   });
 
   it('has an option for b3multi', () => {
-    startTracing({
-      propagators: 'b3multi',
-    });
+    process.env.OTEL_PROPAGATORS = 'b3multi';
+    startTracing();
     assertIncludes(propagation.fields(), 'x-b3-traceid');
     assertIncludes(propagation.fields(), 'x-b3-spanid');
     assertIncludes(propagation.fields(), 'x-b3-sampled');
@@ -107,9 +106,8 @@ describe('propagation', () => {
   });
 
   it('has an option for b3', () => {
-    startTracing({
-      propagators: 'b3',
-    });
+    process.env.OTEL_PROPAGATORS = 'b3';
+    startTracing();
     assertIncludes(propagation.fields(), 'b3');
 
     const tracer = trace.getTracer('test-tracer');
