@@ -1,0 +1,7 @@
+{
+  "type": "none",
+  "comment": "chore: calculate test coverage accurately",
+  "packageName": "@splunk/otel",
+  "email": "Rauno56@gmail.com",
+  "dependentChangeType": "none"
+}

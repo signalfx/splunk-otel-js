@@ -2,15 +2,11 @@
   "extension": [
     ".ts"
   ],
+  "include": [
+    "src/**"
+  ],
   "exclude": [
-    "**/*.d.ts",
-    "lib/**/*.*",
-    "src/index.ts",
-    "src/version.ts",
-    "test/**/*.*",
-    ".eslintrc.js",
-    "karma.conf.js",
-    "webpack/*.js"
+    "src/version.ts"
   ],
   "all": true
 }
