@@ -111,6 +111,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   }
   options.spanProcessorFactory =
     options.spanProcessorFactory || defaultSpanProcessorFactory;
+
   options.propagatorFactory =
     options.propagatorFactory || defaultPropagatorFactory;
 
@@ -204,12 +205,33 @@ export function defaultSpanProcessorFactory(options: Options): SpanProcessor {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function defaultPropagatorFactory(options: Options): TextMapPropagator {
+  const propagatorsStr = process.env.OTEL_PROPAGATORS ?? 'tracecontext,baggage';
+  assert.equal(
+    typeof propagatorsStr,
+    'string',
+    'Expecting OTEL_PROPAGATORS environment variable to be a comma-delimited string.'
+  );
+  const propagators = [];
+  for (const propagator of deduplicate(propagatorsStr.split(','))) {
+    switch (propagator) {
+      case 'baggage':
+        propagators.push(new HttpBaggagePropagator());
+        break;
+      case 'tracecontext':
+        propagators.push(new HttpTraceContextPropagator());
+        break;
+      case 'b3multi':
+        propagators.push(
+          new B3Propagator({ injectEncoding: B3InjectEncoding.MULTI_HEADER })
+        );
+        break;
+      case 'b3':
+        propagators.push(new B3Propagator());
+        break;
+    }
+  }
   return new CompositePropagator({
-    propagators: [
-      new B3Propagator({ injectEncoding: B3InjectEncoding.MULTI_HEADER }),
-      new HttpBaggagePropagator(),
-      new HttpTraceContextPropagator(),
-    ],
+    propagators,
   });
 }
 
@@ -225,4 +247,8 @@ function getEnvBoolean(key: string, defaultValue = true) {
   }
 
   return true;
+}
+
+function deduplicate(arr: string[]) {
+  return [...new Set(arr)];
 }
