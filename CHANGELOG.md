@@ -1,4 +1,17 @@
-# Changelog
+# Change Log - @splunk/otel
+
+This log was last generated on Tue, 07 Sep 2021 12:05:40 GMT and should not be manually modified.
+
+<!-- Start content -->
+
+## 0.12.0
+
+Tue, 07 Sep 2021 12:05:40 GMT
+
+### Minor changes
+
+- Added change management using beachball (jakubmal+github@gmail.com)
+- Make w3c(tracecontext, baggage) the default propagation mechanism (Rauno56@gmail.com)
 
 ## 0.11.0 (2021-07-23)
 

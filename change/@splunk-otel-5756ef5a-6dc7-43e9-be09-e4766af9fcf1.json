@@ -1,7 +1,0 @@
-{
-  "type": "minor",
-  "comment": "Added change management using beachball",
-  "packageName": "@splunk/otel",
-  "email": "jakubmal+github@gmail.com",
-  "dependentChangeType": "none"
-}
