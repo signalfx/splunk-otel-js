@@ -1,7 +1,6 @@
 # Releasing Splunk OpenTelemetry Node
 
-
-This document explains the steps required to publish a new release of splunk-opentelemetry Node package to NPM.
+This document explains the steps required to publish a new release of splunk-opentelemetry Node package to npm.
 
 Release process:
 
@@ -9,7 +8,7 @@ Release process:
 2. [Generate changelog and version](#step-2)
 3. [Submit changes for review](#step-3)
 4. [Merge the PR](#step-4)
-5. [Verify the newly released NPM package](#step-5)
+5. [Verify the newly released npm package](#step-5)
 
 ## 1. Checkout a release branch <a href="step-1"></a>
 
@@ -24,17 +23,16 @@ Run `npm run change:bump`. Entries in `CHANGELOG.md` and `CHANGELOG.json` will b
 
 Commit the changes and submit them for review.
 The commit title should be `Release v<VERSION_NUMBER>` and the description should be all the changes,
-additions and deletions this versions will ship. This can be copied as is from the CHANGELOG file.
-Merge the PR back to main once it is approved.
+additions and deletions this version will ship with. This can be copied as-is from the CHANGELOG file.
 
 ## 4. Merge the PR <a href="step-4"></a>
 
 Once the PR is approved, you need to merge it. The rest of the process is automated. To start the release process, you need to push a signed tag `v<version>` to the internal Splunk mirror of this repository.
 
-## 5. Verify the newly released NPM package <a href="step-5"></a>
+## 5. Verify the newly released npm package <a href="step-5"></a>
 
 Go to the internal Splunk mirror of this repository and verify that the pipeline job for your new version was successful.
 
-Go to (https://www.npmjs.com/package/@splunk/otel)[https://www.npmjs.com/package/@splunk/otel] and verify the new package was published. It may take a few minutes for the npmjs.org web interface to reflect the new package but it should be installable instantly.
+Go to [https://www.npmjs.com/package/@splunk/otel](https://www.npmjs.com/package/@splunk/otel) and verify the new package was published. It may take a few minutes for the npmjs.com web interface to reflect the new package but it should be installable instantly.
 
 Navigate to all `examples/*`, install dependencies and manually verify that the examples are working as expected per README. `@splunk/otel` version in package.json in `examples/*` is updated while [generating changelog](#step-2).

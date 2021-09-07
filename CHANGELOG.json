@@ -2,7 +2,7 @@
   "name": "@splunk/otel",
   "entries": [
     {
-      "date": "Tue, 17 Aug 2021 16:14:33 GMT",
+      "date": "Tue, 07 Sep 2021 12:05:40 GMT",
       "tag": "@splunk/otel_v0.12.0",
       "version": "0.12.0",
       "comments": {
@@ -11,7 +11,21 @@
             "author": "jakubmal+github@gmail.com",
             "package": "@splunk/otel",
             "comment": "Added change management using beachball",
-            "commit": "3f8bb388bcd96fff93f66447c8d46316434c415f"
+            "commit": "4513c5bdd5a62d77c87b296ebad765a402c29a06"
+          },
+          {
+            "author": "Rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "comment": "Make w3c(tracecontext, baggage) the default propagation mechanism",
+            "commit": "4513c5bdd5a62d77c87b296ebad765a402c29a06"
+          }
+        ],
+        "none": [
+          {
+            "author": "Rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "comment": "chore: calculate test coverage accurately",
+            "commit": "4513c5bdd5a62d77c87b296ebad765a402c29a06"
           }
         ]
       }
