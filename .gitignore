@@ -104,3 +104,4 @@ lib
 prebuilds
 docs/test.js
 !test/node_modules
+/dist/
