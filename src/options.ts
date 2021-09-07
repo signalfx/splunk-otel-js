@@ -16,7 +16,7 @@
 import * as assert from 'assert';
 import * as util from 'util';
 
-import { SpanExporter, SpanProcessor } from '@opentelemetry/tracing';
+import { SpanExporter, SpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { InstrumentationOption } from '@opentelemetry/instrumentation';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
@@ -24,7 +24,7 @@ import { getInstrumentations } from './instrumentations';
 import { CollectorTraceExporter } from '@opentelemetry/exporter-collector-proto';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { EnvResourceDetector } from './resource';
-import { NodeTracerConfig } from '@opentelemetry/node';
+import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
 import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { TextMapPropagator } from '@opentelemetry/api';
 import {

@@ -15,7 +15,7 @@
  */
 
 import { Options } from '../options';
-import { Span } from '@opentelemetry/tracing';
+import { Span } from '@opentelemetry/sdk-trace-base';
 import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

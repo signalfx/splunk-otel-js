@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import { context, Context, propagation } from '@opentelemetry/api';
-import { Span } from '@opentelemetry/tracing';
-import { BatchSpanProcessor } from '@opentelemetry/tracing';
+import { Span } from '@opentelemetry/sdk-trace-base';
+import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 
 export const SYNTHETIC_RUN_ID_FIELD = 'Synthetics-RunId';
 

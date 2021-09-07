@@ -24,7 +24,7 @@ import {
   SpanExporter,
   SpanProcessor,
   InMemorySpanExporter,
-} from '@opentelemetry/tracing';
+} from '@opentelemetry/sdk-trace-base';
 
 import * as assert from 'assert';
 import * as sinon from 'sinon';

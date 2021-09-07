@@ -20,7 +20,7 @@ import {
   Span,
   SimpleSpanProcessor,
   BasicTracerProvider,
-} from '@opentelemetry/tracing';
+} from '@opentelemetry/sdk-trace-base';
 const {
   trace,
   SpanKind,
