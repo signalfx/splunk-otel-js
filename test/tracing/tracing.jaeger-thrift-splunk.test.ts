@@ -21,8 +21,8 @@ import {
   SimpleSpanProcessor,
   ConsoleSpanExporter,
   InMemorySpanExporter,
-} from '@opentelemetry/tracing';
-import { NodeTracerProvider } from '@opentelemetry/node';
+} from '@opentelemetry/sdk-trace-base';
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 
 import { startTracing, stopTracing } from '../../src/tracing';

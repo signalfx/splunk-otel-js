@@ -15,8 +15,8 @@
  */
 
 import { Options } from '../options';
-import { Span } from '@opentelemetry/tracing';
-import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { Span } from '@opentelemetry/sdk-trace-base';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type LogRecord = Record<string, any>;
@@ -39,16 +39,18 @@ export function configureLogInjection(
 
   const logHook = (span: Span, record: LogRecord) => {
     record['service.name'] =
-      span.resource.attributes[ResourceAttributes.SERVICE_NAME];
+      span.resource.attributes[SemanticResourceAttributes.SERVICE_NAME];
 
     const version =
-      span.resource.attributes[ResourceAttributes.SERVICE_VERSION];
+      span.resource.attributes[SemanticResourceAttributes.SERVICE_VERSION];
     if (version !== undefined) {
       record['service.version'] = version;
     }
 
     const environment =
-      span.resource.attributes[ResourceAttributes.DEPLOYMENT_ENVIRONMENT];
+      span.resource.attributes[
+        SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT
+      ];
     if (environment !== undefined) {
       record['service.environment'] = environment;
     }

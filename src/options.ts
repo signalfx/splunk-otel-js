@@ -16,7 +16,7 @@
 import * as assert from 'assert';
 import * as util from 'util';
 
-import { SpanExporter, SpanProcessor } from '@opentelemetry/tracing';
+import { SpanExporter, SpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { InstrumentationOption } from '@opentelemetry/instrumentation';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
@@ -24,8 +24,8 @@ import { getInstrumentations } from './instrumentations';
 import { CollectorTraceExporter } from '@opentelemetry/exporter-collector-proto';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { EnvResourceDetector } from './resource';
-import { NodeTracerConfig } from '@opentelemetry/node';
-import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { TextMapPropagator } from '@opentelemetry/api';
 import {
   CompositePropagator,
@@ -91,12 +91,12 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   const serviceName =
     options.serviceName ||
     process.env.OTEL_SERVICE_NAME ||
-    resource.attributes[ResourceAttributes.SERVICE_NAME] ||
+    resource.attributes[SemanticResourceAttributes.SERVICE_NAME] ||
     defaultServiceName;
 
   resource = resource.merge(
     new Resource({
-      [ResourceAttributes.SERVICE_NAME]: serviceName,
+      [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
     })
   );
 
@@ -122,7 +122,9 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   return {
     endpoint: options.endpoint,
-    serviceName: String(resource.attributes[ResourceAttributes.SERVICE_NAME]),
+    serviceName: String(
+      resource.attributes[SemanticResourceAttributes.SERVICE_NAME]
+    ),
     accessToken: options.accessToken,
     maxAttrLength: options.maxAttrLength,
     serverTimingEnabled: options.serverTimingEnabled,

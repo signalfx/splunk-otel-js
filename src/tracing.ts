@@ -15,7 +15,7 @@
  */
 
 import { context, propagation, trace } from '@opentelemetry/api';
-import { NodeTracerProvider } from '@opentelemetry/node';
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 
 import { configureHttpInstrumentation } from './instrumentations/http';

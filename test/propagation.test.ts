@@ -26,7 +26,10 @@ import {
 } from '@opentelemetry/api';
 import { startTracing, stopTracing } from '../src/tracing';
 import { CompositePropagator, RandomIdGenerator } from '@opentelemetry/core';
-import { InMemorySpanExporter, SpanProcessor } from '@opentelemetry/tracing';
+import {
+  InMemorySpanExporter,
+  SpanProcessor,
+} from '@opentelemetry/sdk-trace-base';
 import { SYNTHETIC_RUN_ID_FIELD } from '../src/SplunkBatchSpanProcessor';
 import { defaultSpanProcessorFactory } from '../src/options';
 import * as utils from './utils';

@@ -18,13 +18,13 @@ import { TextMapPropagator } from '@opentelemetry/api';
 import { HttpBaggage } from '@opentelemetry/core';
 import { InstrumentationBase } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
-import { ResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import {
   SimpleSpanProcessor,
   SpanExporter,
   SpanProcessor,
   InMemorySpanExporter,
-} from '@opentelemetry/tracing';
+} from '@opentelemetry/sdk-trace-base';
 
 import * as assert from 'assert';
 import * as sinon from 'sinon';
@@ -63,7 +63,7 @@ describe('options', () => {
       instrumentations: [],
       tracerConfig: {
         resource: new Resource({
-          [ResourceAttributes.SERVICE_NAME]: 'unnamed-node-service',
+          [SemanticResourceAttributes.SERVICE_NAME]: 'unnamed-node-service',
         }),
       },
       spanExporterFactory: otlpSpanExporterFactory,
@@ -136,7 +136,7 @@ describe('options', () => {
 
     assert.deepStrictEqual(options.tracerConfig, {
       resource: new Resource({
-        [ResourceAttributes.SERVICE_NAME]: 'foobar',
+        [SemanticResourceAttributes.SERVICE_NAME]: 'foobar',
       }),
     });
   });
