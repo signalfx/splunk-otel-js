@@ -8,16 +8,25 @@ services:
       - SPLUNK_CONFIG=/etc/otel/config.yml
     volumes:
       - ./collector.config.yml:/etc/otel/config.yml
-    ports:
-      - "4317:4317"
-      - "8378:8378"
-      - "13133:13133"
+    # ports:
+    #   - "55681:55681" # HTTP OTLP
+    #   - "4317:4317" # GRPC OTLP
+    #   - "8378:8378" # POLLING
+    #   - "13133:13133" # HEALTH CHECK
   app:
     build: ../../examples/express
+    command: npm run server
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:55681/v1/traces
     volumes:
       - ./app.env:/home/node/app/.env
   test:
     build: .
+    environment:
+      - REQ_URL=http://app/all
+      - COLLECTOR_URL=http://collector:8378
+    volumes:
+      - ./:/home/node/app
     depends_on:
       - app
       - collector
