@@ -8,6 +8,4 @@ RUN npm install
 
 COPY --chown=node:node ./ .
 
-EXPOSE 80
-ENV PORT=80
 CMD ["npm", "run", "start"]
