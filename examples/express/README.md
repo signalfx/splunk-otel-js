@@ -81,9 +81,9 @@ There is an exmample [.env](./.env.collector) file included, which following com
 # make sure the collector is running
 docker run --name otel-collector -d -p 55681:55681 otel/opentelemetry-collector
 # run the example server
-npm run server:collecor
+npm run server:collector
 # in a separate terminal:
-npm run client:collecor
+npm run client:collector
 ```
 
 ### Instrumented via legacy OpenTracing SDK
