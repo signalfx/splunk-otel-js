@@ -79,5 +79,5 @@ jobs:
         with:
           fetch-depth: 1
       - name: Run integration tests
-        working-directory: test/integration
+        working-directory: test/examples/express
         run: docker-compose up --build --exit-code-from test

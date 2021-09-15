@@ -14,7 +14,7 @@ services:
     #   - "8378:8378" # POLLING
     #   - "13133:13133" # HEALTH CHECK
   app:
-    build: ../../examples/express
+    build: ../../../examples/express
     command: npm run server
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:55681/v1/traces
@@ -23,11 +23,11 @@ services:
   test:
     build: .
     # command: npx nodemon -x npm run start # for fast local iteration
+    # volumes:
+    #   - ./:/home/node/app # for fast local iteration
     environment:
       - REQ_URL=http://app/all
       - COLLECTOR_URL=http://collector:8378
-    # volumes:
-    #   - ./:/home/node/app # for fast local iteration
     depends_on:
       - app
       - collector

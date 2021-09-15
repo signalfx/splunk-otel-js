@@ -37,6 +37,10 @@ const authMiddleware = (req, res, next) => {
 };
 
 app.use(express.json());
+app.get('/err', async (req, res) => {
+  log('GET err');
+  return res.status(500).send('Error!');
+});
 app.get('/all', async (req, res) => {
   log('GET all');
   // Calls another endpoint of the same API, somewhat mimicing an external API call
