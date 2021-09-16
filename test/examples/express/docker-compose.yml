@@ -14,17 +14,20 @@ services:
     #   - "8378:8378" # POLLING
     #   - "13133:13133" # HEALTH CHECK
   app:
-    build: ../../../examples/express
+    build:
+      context:  ../../../examples/express
+      dockerfile: ../../test/examples/express/Dockerfile
     command: npm run server
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:55681/v1/traces
+      - PORT=80
     volumes:
       - ./app.env:/home/node/app/.env
   test:
     build: .
-    # command: npx nodemon -x npm run start # for fast local iteration
+    # command: npx nodemon -x npm run start # for local iteration
     # volumes:
-    #   - ./:/home/node/app # for fast local iteration
+    #   - ./:/home/node/app # for local iteration
     environment:
       - REQ_URL=http://app/all
       - COLLECTOR_URL=http://collector:8378

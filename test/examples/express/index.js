@@ -168,24 +168,6 @@ waitSpans(1).then((data) => {
 	})
 }).then((data) => {
 	logSpanTable(data);
-	console.log(data);
-
-	assert.strictEqual(data.length, 21);
-
-
-	data.forEach((span) => {
-		if (span.attributes['otel.library.name'].match(/http/)) {
-			if (span.kind === 'server') {
-				return assert.match(span.name, /GET \//);
-			} else {
-				return assert.match(span.name, /HTTP GET/);
-			}
-		} else if (span.attributes['otel.library.name'].match(/express/)) {
-			return assert.strictEqual(typeof span.attributes['http.route'], 'string');
-		}
-		assert.fail(`Unknown lib: ${util.inspect(span.attributes['otel.library.name'])}`);
-	});
-
 	assertSpans(data, snapshot);
 }).catch(console.error);
 
