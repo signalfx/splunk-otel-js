@@ -191,4 +191,4 @@ waitSpans(1).then((data) => {
 
 setTimeout(() => {
 	request(process.env.REQ_URL ?? 'http://localhost:8080/all');
-}, 500);
+}, 1000);
