@@ -13,17 +13,6 @@ services:
     #   - "4317:4317" # GRPC OTLP
     #   - "8378:8378" # POLLING
     #   - "13133:13133" # HEALTH CHECK
-  test:
-    build: .
-    command: npx nodemon ./basic # for local iteration
-    volumes:
-      - ./:/home/node/app # for local iteration
-    environment:
-      - REQ_URL=http://app/hello
-      - COLLECTOR_URL=http://collector:8378
-    depends_on:
-      - app
-      - collector
   app:
     build:
       context:  ../../examples/basic
@@ -34,3 +23,15 @@ services:
       - PORT=80
     volumes:
       - ./express/app.env:/home/node/app/.env
+  test:
+    build: .
+    command: node ./basic
+    # command: npx nodemon ./basic # for local iteration
+    # volumes:
+    #   - ./:/home/node/app # for local iteration
+    environment:
+      - REQ_URL=http://app/hello
+      - COLLECTOR_URL=http://collector:8378
+    depends_on:
+      - app
+      - collector
