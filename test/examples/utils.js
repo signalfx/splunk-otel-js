@@ -98,6 +98,15 @@ const waitSpans = (count, timeout = 8) => {
 	});
 };
 
+const request = (url) => {
+  return got(url, {
+    retry: {
+      errorCodes: ['ECONNREFUSED'],
+      maxRetryAfter: 1000,
+    },
+  });
+};
+
 const assertSpans = (actualSpans, expectedSpans) => {
   assert(Array.isArray(actualSpans), 'Expected `actualSpans` to be an array');
   assert(
