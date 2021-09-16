@@ -6,6 +6,7 @@ RUN mkdir /home/node/app
 WORKDIR /home/node/app
 
 COPY --chown=node:node ["package*.json", "*.lock", "./"]
+RUN cat package.json
 RUN npm install
 
 COPY --chown=node:node ./ .
