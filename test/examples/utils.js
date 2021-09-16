@@ -153,5 +153,6 @@ const assertSpans = (actualSpans, expectedSpans) => {
 module.exports = {
   assertSpans,
   logSpanTable,
+  request,
   waitSpans,
 };
