@@ -80,8 +80,8 @@ jobs:
           fetch-depth: 1
       - name: Get versions
         run: |
-        docker-compose --version
-        docker --version
+          docker-compose --version
+          docker --version
       - name: Test basic example
         working-directory: test/examples
         run: docker-compose -f basic.docker-compose.yml up --build --exit-code-from test
