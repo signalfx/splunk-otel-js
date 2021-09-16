@@ -15,14 +15,14 @@ services:
     #   - "13133:13133" # HEALTH CHECK
   app:
     build:
-      context:  ../../../examples/express
-      dockerfile: ../../test/examples/express/Dockerfile
+      context:  ../../examples/express
+      dockerfile: ../../test/examples/Dockerfile
     command: npm run server
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:55681/v1/traces
       - PORT=80
     volumes:
-      - ./app.env:/home/node/app/.env
+      - ./express/app.env:/home/node/app/.env
   test:
     build: .
     # command: npx nodemon -x npm run start # for local iteration

@@ -1,1 +1,0 @@
-docker-compose up --exit-code-from test

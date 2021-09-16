@@ -15,7 +15,6 @@ exporters:
     endpoint: 0.0.0.0:8378
 
 service:
-  extensions: ["health_check"]
   pipelines:
     traces:
       receivers: [otlp]
