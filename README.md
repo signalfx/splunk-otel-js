@@ -64,7 +64,7 @@ export OTEL_SERVICE_NAME=my-node-svc
 node -r @splunk/otel/instrument app.js
 ```
 
-That's it - the telemetry data is not sent to the locally running Opentelemetry Collector! You can also instrument your app with code as described [here](#instrument-with-code).
+That's it - the telemetry data is now sent to the locally running Opentelemetry Collector! You can also instrument your app with code as described [here](#instrument-with-code).
 
 ### Splunk APM
 
