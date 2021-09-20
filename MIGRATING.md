@@ -1,21 +1,21 @@
-# Migrate from the SignalFx Tracing Library for NodeJS
+# Migrate from the SignalFx Tracing Library for Node.js
 
-The Splunk Distribution of OpenTelemetry for NodeJS replaces the SignalFx Tracing
-Library for NodeJS. If you’re using the SignalFx Tracing Library, migrate to
-the Splunk Distribution of OpenTelemetry for NodeJS to use OpenTelemetry
-instrumentation to send traces to Splunk APM. The Splunk Distribution of
-OpenTelemetry for NodeJS uses OpenTelemetry to instrument applications, which is
-an open-source API to gather telemetry data, and has a smaller footprint.
+The Splunk Distribution of OpenTelemetry for Node.js replaces the SignalFx Tracing
+Library for Node.js. If you’re using the SignalFx Tracing Library, migrate to
+the Splunk Distribution of OpenTelemetry for Node.js to send traces to Splunk 
+Observability Cloud. The Splunk Distribution of OpenTelemetry for Node.js uses 
+OpenTelemetry to instrument applications, which is an open-source API to gather 
+telemetry data, and has a smaller footprint.
 
-Because the SignalFx Tracing Library for NodeJS uses OpenTracing and the Splunk Distribution of OpenTelemetry for NodeJS
-uses OpenTelemetry, the semantic conventions for span names and attributes change when you migrate. For more
-information, see
-[Migrate from OpenTracing to OpenTelemetry](https://docs.signalfx.com/en/latest/apm/apm-getting-started/apm-opentelemetry-collector.html#apm-opentelemetry-migration).
+Because the SignalFx Tracing Library for Node.js uses OpenTracing and the Splunk
+ Distribution of OpenTelemetry for Node.js uses OpenTelemetry, the semantic 
+ conventions for span names and attributes change when you migrate. For more
+information, see [Migrate from OpenTracing to OpenTelemetry](https://docs.signalfx.com/en/latest/apm/apm-getting-started/apm-opentelemetry-collector.html#apm-opentelemetry-migration).
 
 ## Getting help
 
-If you experience any issues following the guide below, or something is unclear, or missing, please don't hesitate to
-open an issue in Github. Any and all ideas for improvements are also welcome.
+If you experience any issues following the guide below, or something is unclear, or missing, don't hesitate to
+open an issue in GitHub. Any and all ideas for improvements are also welcome.
 
 <a name="known-limitations"></a>
 ## Known limitations as compared to SignalFx Tracing Library
@@ -40,7 +40,7 @@ open an issue in Github. Any and all ideas for improvements are also welcome.
 
 ## Requirements
 
-This Splunk Distribution of OpenTelemetry requires Node.js 8.5 or later,
+This Splunk Distribution of OpenTelemetry requires Node.js 8.5 or higher,
 [see more information here](https://github.com/open-telemetry/opentelemetry-js#node-support)
 If you're still using an earlier version of Node.js, continue using the SignalFx Tracing Library for Node.js.
 
@@ -51,7 +51,7 @@ Current effective required Node.js version is: ![node-current](https://img.shiel
 ### Instrumented libraries
 
 With the exception of [explicitly listed limitations](#known-limitations) we aim to support all libraries supported by
-signalfx-nodejs-tracing. To find an equivalent auto-instrumentation open <https://opentelemetry.io/registry/> and for
+signalfx-nodejs-tracing. To find an equivalent autoinstrumentation open <https://opentelemetry.io/registry/> and for
 each instrumentation
 [from `signalfx-nodejs-tracing`'s README](https://github.com/signalfx/signalfx-nodejs-tracing/#requirements-and-supported-software)
 search by the name of the library in the registry.
@@ -59,7 +59,7 @@ search by the name of the library in the registry.
 For example, if you'd like to migrate instrumentation for `mysql`, go to
 [https://opentelemetry.io/registry/?s=**mysql**&component=&language=**js**#](https://opentelemetry.io/registry/?s=mysql&component=&language=js#).
 
-Once you have identified an instrumentation package, **install it** using npm or Yarn.
+Once you have identified an instrumentation package, **install it** using npm or yarn.
 
 - If the package is [on this list](./README.md#default-instrumentation-packages-), it
   will be enabled automatically (**but it won't be installed automatically**).
@@ -70,23 +70,23 @@ Once you have identified an instrumentation package, **install it** using npm or
 
 Rename environment variables:
 
-| OpenTracing environment variable   | OpenTelemetry environment variable   | notes |
-| ---------------------------------- | ------------------------------------ | ----- |
-| SIGNALFX_ACCESS_TOKEN              | SPLUNK_ACCESS_TOKEN                  | |
-| SIGNALFX_SERVICE_NAME              | OTEL_SERVICE_NAME                    | |
-| SIGNALFX_ENDPOINT_URL              | _no direct equivalent_               | see [the notes on endpoint](#endpoint) |
-| SIGNALFX_RECORDED_VALUE_MAX_LENGTH | SPLUNK_MAX_ATTR_LENGTH               | currently not implemented. See [#2403](otel-issue-attr-limits) |
-| SIGNALFX_TRACING_DEBUG             | _no direct equivalent_               | see [instrumentation logs](#instrumentation-logs) |
-| SIGNALFX_SPAN_TAGS                 | OTEL_RESOURCE_ATTRIBUTES             | format needs to be changed to `key1=val1,key2=val2` |
-| SIGNALFX_LOGS_INJECTION            | SPLUNK_LOGS_INJECTION                | |
-| SIGNALFX_LOGS_INJECTION_TAGS       | OTEL_RESOURCE_ATTRIBUTES             | there's no direct equivalent, but values specified in `OTEL_RESOURCE_ATTRIBUTES` will also be used for logs injection |
-| SIGNALFX_ENABLED_PLUGINS           | n/a                                  | see [the README section about instrumentations](./README.md#custom-instrumentation-packages) |
-| SIGNALFX_SERVER_TIMING_CONTEXT     | SPLUNK_TRACE_RESPONSE_HEADER_ENABLED | |
-| SIGNALFX_TRACING_ENABLED           | OTEL_TRACE_ENABLED                   | |
+| OpenTracing environment variable   | OpenTelemetry environment variable     | notes |
+| ---------------------------------- | -------------------------------------- | ----- |
+| SIGNALFX_ACCESS_TOKEN              | SPLUNK_ACCESS_TOKEN                    | |
+| SIGNALFX_SERVICE_NAME              | OTEL_SERVICE_NAME                      | |
+| SIGNALFX_ENDPOINT_URL              | _no direct equivalent_                 | see [the notes on endpoint](#endpoint) |
+| SIGNALFX_RECORDED_VALUE_MAX_LENGTH | OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT | |
+| SIGNALFX_TRACING_DEBUG             | _no direct equivalent_                 | see [instrumentation logs](#instrumentation-logs) |
+| SIGNALFX_SPAN_TAGS                 | OTEL_RESOURCE_ATTRIBUTES               | format needs to be changed to `key1=val1,key2=val2` |
+| SIGNALFX_LOGS_INJECTION            | SPLUNK_LOGS_INJECTION                  | |
+| SIGNALFX_LOGS_INJECTION_TAGS       | OTEL_RESOURCE_ATTRIBUTES               | there's no direct equivalent, but values specified in `OTEL_RESOURCE_ATTRIBUTES` will also be used for logs injection |
+| SIGNALFX_ENABLED_PLUGINS           | n/a                                    | see [the README section about instrumentations](./README.md#custom-instrumentation-packages) |
+| SIGNALFX_SERVER_TIMING_CONTEXT     | SPLUNK_TRACE_RESPONSE_HEADER_ENABLED   | |
+| SIGNALFX_TRACING_ENABLED           | OTEL_TRACE_ENABLED                     | |
 
 ### Programmatic configuration
 
-Update these programmatic configuration options:
+Update these programmatic configuration options (passed as arguments to `startTracing()`):
 
 | OpenTracing property     | OpenTelemetry property  | Notes |
 | ------------------------ | ----------------------- | ----- |

@@ -23,7 +23,7 @@ The following table contain the configuration options supported by this distribu
 | OTEL_PROPAGATORS                     | propagators                   | `tracecontext,baggage`                | Comma-delimited list of propagators to use. Valid keys: `baggage`, `tracecontext`, `b3multi`, `b3`.
 | OTEL_SERVICE_NAME                    | serviceName                   | `unnamed-node-service`                | The service name of this Node service.
 | SPLUNK_ACCESS_TOKEN                  | accessToken                   |                                       | The optional access token for exporting signal data directly to SignalFx API.
-| SPLUNK_MAX_ATTR_LENGTH               | maxAttrLength                 | 1200                                  | Maximum length of string attribute value in characters. Longer values are truncated.
+| OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT | maxAttrLength                 | 1200                                  | Maximum length of string attribute value in characters. Longer values are truncated.
 | SPLUNK_TRACE_RESPONSE_HEADER_ENABLED | serverTimingEnabled           | `true`                                | Enable injection of `Server-Timing` header to HTTP responses.
 | SPLUNK_LOGS_INJECTION                | logInjectionEnabled           | `false`                               | Enable injecting of trace ID, span ID and service name to log records. Please note that the corresponding logging library instrumentation needs to be installed.
 | OTEL_RESOURCE_ATTRIBUTES             |                               |                                       | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
