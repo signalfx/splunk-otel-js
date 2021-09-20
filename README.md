@@ -58,10 +58,10 @@ node -r @splunk/otel/instrument app.js
 
 That's it - the telemetry data is now sent to the locally running Opentelemetry Collector. You can also instrument your app programmatically as described [here](#instrument-with-code).
 
-> Note: If you are using NPM 6 or older, it'll warn you about missing peer
+> Note: If you are using npm 6 or older, it'll warn you about missing peer
 > dependencies. All of these dependencies are instrumentation packages and are
 > completely optional. You can install the ones you need and ignore the rest.
-> NPM 7+ supports optional peer dependencies feature and will not complain
+> npm 7+ supports optional peer dependencies feature and will not complain
 > about this.
 
 ### Send data directly to Splunk Observability Cloud
