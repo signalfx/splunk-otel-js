@@ -47,7 +47,7 @@ npm install @opentelemetry/instrumentation-http --save
 
 You can find a list of instrumentation packages supported out of the box [here](#default-instrumentation-packages).
 
-You can also install additional packages and use them as described in [Plugins](./docs/plugins.md).
+To install packages in addition to the default ones, see [Plugins](./docs/plugins.md).
 
 3. Run node app with the `-r @splunk/otel/instrument` CLI argument
 
