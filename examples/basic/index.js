@@ -4,7 +4,7 @@ const express = require('express');
 const axios = require('axios');
 
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 8080;
 
 app.get('/hello', (req, res) => {
   const tracer = trace.getTracer('splunk-otel-example-express');
@@ -15,7 +15,7 @@ app.get('/hello', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  axios.get(`http://localhost:${port}/hello`)
+  axios.get(`http://localhost:${PORT}/hello`)
     .then((response) => {
       console.log(200, '/');
       res.status(200).send(`Hello from node: ${response.status}\n`);
@@ -26,4 +26,4 @@ app.get('/', (req, res) => {
     });
 });
 
-app.listen(port, 'localhost', () => console.log(`Example app listening on port ${port}!`));
+app.listen(PORT, () => console.log(`Example app listening on port ${PORT}!`));

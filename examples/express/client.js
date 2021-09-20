@@ -1,12 +1,14 @@
 'use strict';
 const axios = require('axios').default;
 
+const SERVER_BASE = process.env.SERVER_BASE ?? 'http://localhost:8080';
+const { href } = new URL('/all', SERVER_BASE);
 const { log } = require('./utils.js');
 const jitter = () => {
   return (Math.random() * 300) >> 0;
 };
 const makeRequest = async () => {
-  return axios.get('http://localhost:8080/all')
+  return axios.get(href)
     .then((res) => log('success:', res.statusText))
     .catch((e) => log('failed:', e.message));
 };
