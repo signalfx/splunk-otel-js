@@ -6,7 +6,7 @@ const axios = require('axios').default;
 
 // Setup express
 const app = express();
-const port = process.env.PORT ?? 8080;
+const PORT = process.env.PORT ?? 8080;
 
 const { log } = require('./utils.js');
 const animals = [
@@ -41,7 +41,7 @@ app.get('/all', async (req, res) => {
   log('GET all');
   // Calls another endpoint of the same API, somewhat mimicing an external API call
   const results = await Promise.all(animals.map((kind) => {
-    return axios.get(`http://localhost:${port}/${kind}`, {
+    return axios.get(`http://localhost:${PORT}/${kind}`, {
       headers: {
         Authorization: 'secret_token',
       },
@@ -53,6 +53,6 @@ for (const kind of animals) {
   app.use(`/${kind}`, authMiddleware, getCrudController(kind));
 }
 
-app.listen(port, () => {
-  log(`Example app listening on port ${port}!`);
+app.listen(PORT, () => {
+  log(`Example app listening on port ${PORT}!`);
 });
