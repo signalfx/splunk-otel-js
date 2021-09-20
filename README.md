@@ -56,7 +56,7 @@ export OTEL_SERVICE_NAME=my-node-svc
 node -r @splunk/otel/instrument app.js
 ```
 
-That's it - the telemetry data is now sent to the locally running Opentelemetry Collector. You can also instrument your app with code as described [here](#instrument-with-code).
+That's it - the telemetry data is now sent to the locally running Opentelemetry Collector. You can also instrument your app programmatically as described [here](#instrument-with-code).
 
 > Note: If you are using NPM 6 or older, it'll warn you about missing peer
 > dependencies. All of these dependencies are instrumentation packages and are
