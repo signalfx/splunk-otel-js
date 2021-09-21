@@ -1,16 +1,20 @@
 const http = require('http');
 const { trace, SpanStatusCode } = require('@opentelemetry/api');
+const log = require('pino')();
 
 const PORT = process.env.PORT || 8080;
 const tracer = trace.getTracer('splunk-otel-example-mixed');
 // do really hard, but important work
 const work = async (duration = 500) => {
+  log.info({ duration }, 'working');
   return new Promise((resolve, reject) => {
     setTimeout(() => resolve(42), duration);
   });
 };
 
 const server = http.createServer(async (req, res) => {
+  const { url } = req;
+  log.info({ url }, 'request handler');
   /*
     Perhaps the easiest way to add instrumentation to your code is to
     manually start and stop spans in your code.
