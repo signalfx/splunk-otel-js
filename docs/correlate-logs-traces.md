@@ -1,5 +1,5 @@
+> The official Splunk documentation for this page is [Connect Node.js trace data with logs](https://docs.splunk.com/Observability/gdi/get-data-in/application/nodejs/instrumentation/connect-traces-logs.html). For instructions on how to contribute to the docs, see [CONTRIBUTE.md](../CONTRIBUTE.md).
 # Correlating traces with logs
-
 
 The Splunk Distribution of OpenTelemetry JS can make trace metadata available to many Node.js logging libraries capable of accessing them, like Pino, Winston, and Bunyan. You can use trace metadata to correlate traces with log events, and explore logs in Observability Cloud.
 
