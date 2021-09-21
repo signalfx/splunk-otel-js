@@ -128,9 +128,10 @@ const assertSpans = (actualSpans, expectedSpans) => {
 
       assert.strictEqual(span.name, expected.name);
 
-      assert.strictEqual(span.attributes['http.method'], span.attributes['http.method']);
-      assert.strictEqual(span.attributes['http.url'], span.attributes['http.url']);
-      assert.strictEqual(span.attributes['http.route'], span.attributes['http.route']);
+      assert.strictEqual(span.attributes['http.method'], expected.attributes['http.method']);
+      assert.strictEqual(span.attributes['http.url'], expected.attributes['http.url']);
+      assert.strictEqual(span.attributes['http.route'], expected.attributes['http.route']);
+      assert.strictEqual(span.attributes['otel.library.name'], expected.attributes['otel.library.name']);
 
       // TODO: Check for status. Polling endpoint on the collector doesn't return status correctly.
       if (expected.parentSpanId == undefined) {
