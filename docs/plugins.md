@@ -1,4 +1,4 @@
-> The official Splunk documentation for this page is [Instrument a Node application automatically](https://docs.splunk.com/Observability/gdi/get-data-in/application/nodejs/instrumentation/instrument-nodejs-application.html). For instructions on how to contribute to the docs, see [CONTRIBUTE.md](../CONTRIBUTE.md).
+> The official Splunk documentation for this page is [Instrument a Node application automatically](https://docs.splunk.com/Observability/gdi/get-data-in/application/nodejs/instrumentation/instrument-nodejs-application.html). For instructions on how to contribute to the docs, see [CONTRIBUTING.md](../CONTRIBUTING.md#documentation).
 
 # Using custom or third-party instrumentations
 

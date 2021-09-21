@@ -1,4 +1,4 @@
-> The official Splunk documentation for this page is [Troubleshoot Node.js instrumentation](https://docs.splunk.com/Observability/gdi/get-data-in/application/nodejs/troubleshooting/common-nodejs-troubleshooting.html). For instructions on how to contribute to the docs, see [CONTRIBUTE.md](../CONTRIBUTE.md).
+> The official Splunk documentation for this page is [Troubleshoot Node.js instrumentation](https://docs.splunk.com/Observability/gdi/get-data-in/application/nodejs/troubleshooting/common-nodejs-troubleshooting.html). For instructions on how to contribute to the docs, see [CONTRIBUTING.md](../CONTRIBUTING.md#documentation).
 
 # Troubleshooting
 
