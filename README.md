@@ -85,6 +85,12 @@ Then you can automatically instrument your application by running
 node -r @splunk/otel/instrument index.js
 ```
 
+## Correlate traces and logs
+
+The Splunk Distribution of OpenTelemetry JS can make trace metadata available to many Node.js logging libraries capable of accessing them, like Pino, Winston, and Bunyan. You can use trace metadata to correlate traces with log events, and explore logs in Observability Cloud. 
+
+For more information, see [Correlating traces with logs](./docs/correlate-logs-traces.md).
+
 ## Manually instrument an application<a name="instrument-with-code"></a>
 
 You can also manually instrument your application by adding the following lines before everything else in your application.
