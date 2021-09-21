@@ -38,64 +38,64 @@ entry:
 }
 */
 const entryToSpan = (entry) => {
-	const tags = getAttributes(entry);
-	// assuming the first reference is the parent
-	const parent = (entry.references ?? []).shift();
-	return {
-		traceId: entry.traceId,
-		id: entry.spanId,
-		startTime: entry.startTime,
-		name: entry.operationName,
-		kind: tags['span.kind'],
-		parentSpanId: parent?.spanId,
-		parent: parent && {
-			id: parent?.spanId,
-			traceId: parent?.traceId
-		} || undefined,
-		references: entry.references,
-		status: { code: tags['status.code'] },
-		attributes: tags,
-	};
+  const tags = getAttributes(entry);
+  // assuming the first reference is the parent
+  const parent = (entry.references ?? []).shift();
+  return {
+    traceId: entry.traceId,
+    id: entry.spanId,
+    startTime: entry.startTime,
+    name: entry.operationName,
+    kind: tags['span.kind'],
+    parentSpanId: parent?.spanId,
+    parent: parent && {
+      id: parent?.spanId,
+      traceId: parent?.traceId
+    } || undefined,
+    references: entry.references,
+    status: { code: tags['status.code'] },
+    attributes: tags,
+  };
 };
 
 const getAttributes = (e) => {
-	return Object.fromEntries(e.tags.map((t) => [t.key, t.vStr]));
+  return Object.fromEntries(e.tags.map((t) => [t.key, t.vStr]));
 };
 
 const logSpanTable = (spans) => {
-	console.table(
-		spans.map((e, idx) => {
-			return {
-				start: e.startTime,
-				id: e.id,
-				name: e.name,
-				kind: e.kind,
-				parentSpanId: e.parentSpanId,
-			};
-		})
-	);
+  console.table(
+    spans.map((e, idx) => {
+      return {
+        start: e.startTime,
+        id: e.id,
+        name: e.name,
+        kind: e.kind,
+        parentSpanId: e.parentSpanId,
+      };
+    })
+  );
 };
 
 const getParentSpan = (arr, span) => {
   assert.strictEqual(typeof span.parentSpanId, 'string', `Invalid parentSpanId: ${util.inspect(span)}`);
-	const parent = arr.find((s) => s.id === span.parentSpanId);
-	assert(parent, `Parent span with id "${span.parentSpanId}" not found.`);
+  const parent = arr.find((s) => s.id === span.parentSpanId);
+  assert(parent, `Parent span with id "${span.parentSpanId}" not found.`);
 
-	return parent;
+  return parent;
 };
 
 const waitSpans = (count, timeout = 8) => {
-	const collectorUrl = new URL(process.env.COLLECTOR_URL ?? 'http://localhost:8378');
-	collectorUrl.searchParams.set('count', count);
-	collectorUrl.searchParams.set('timeout', timeout);
+  const collectorUrl = new URL(process.env.COLLECTOR_URL ?? 'http://localhost:8378');
+  collectorUrl.searchParams.set('count', count);
+  collectorUrl.searchParams.set('timeout', timeout);
 
-	return got(collectorUrl, {
+  return got(collectorUrl, {
     retry: 0
   }).json().then((ret) => {
-		return ret.map(entryToSpan).sort((a, b) => {
-			return a.startTime > b.startTime ? 1 : -1;
-		});
-	});
+    return ret.map(entryToSpan).sort((a, b) => {
+      return a.startTime > b.startTime ? 1 : -1;
+    });
+  });
 };
 
 const request = (url) => {
@@ -133,8 +133,8 @@ const assertSpans = (actualSpans, expectedSpans) => {
       assert.strictEqual(span.attributes['http.route'], span.attributes['http.route']);
 
       // TODO: Check for status. Polling endpoint on the collector doesn't return status correctly.
-			if (expected.parentSpanId == undefined) {
-				assert.strictEqual(expected.parentSpanId, span.parentSpanId, 'Expected no parent span, but got one');
+      if (expected.parentSpanId == undefined) {
+        assert.strictEqual(expected.parentSpanId, span.parentSpanId, 'Expected no parent span, but got one');
       } else {
         assert.strictEqual(
           getParentSpan(actualSpans, span).name,
@@ -142,8 +142,8 @@ const assertSpans = (actualSpans, expectedSpans) => {
         );
       }
     } catch (e) {
-    	e.actualSpan = util.inspect(span);
-    	e.expectedSpan = expected;
+      e.actualSpan = util.inspect(span);
+      e.expectedSpan = expected;
       e.message = `At span[${idx}] "${span.name}": ${e.message}`;
       throw e;
     }
