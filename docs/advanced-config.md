@@ -1,6 +1,6 @@
 # Advanced Configuration
 
-The agent can be configured in the following ways:
+The Splunk Distribution of OpenTelemetry JS can be configured in the following ways:
 
 - Environment variables (also within `.env` files)
 
