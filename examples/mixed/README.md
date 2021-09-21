@@ -25,6 +25,13 @@ The generated spans then appear in collector logs:
 docker logs otel-collector -f 2>&1 | grep work
 ```
 
+and the application logs to stdout:
+
+```
+{"level":30,"time":1979374615686,"pid":728570,"hostname":"my_host","trace_id":"f8e261432221096329baf5e62090d856","span_id":"3235afe76b55fe51","trace_flags":"01","url":"/lkasd","msg":"request handler"}
+{"level":30,"time":1979374615689,"pid":728570,"hostname":"my_host","trace_id":"f8e261432221096329baf5e62090d856","span_id":"3235afe76b55fe51","trace_flags":"01","duration":300,"msg":"working"}
+```
+
 ### Running Collectorless
 
 It's also possible to send the traces directly to Splunk APM. For that additional environment variables need to be set up:
