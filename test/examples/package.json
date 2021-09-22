@@ -1,0 +1,16 @@
+{
+  "name": "test-express-example",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "node ./express",
+    "test": "doco up --build --exit-code-from test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "got": "^11.8.2",
+    "nodemon": "^2.0.12"
+  }
+}

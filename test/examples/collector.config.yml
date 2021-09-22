@@ -1,0 +1,21 @@
+extensions:
+  health_check:
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:55681
+
+exporters:
+  logging:
+  polling:
+    endpoint: 0.0.0.0:8378
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [polling]
