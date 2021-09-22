@@ -84,7 +84,7 @@ const getParentSpan = (arr, span) => {
   return parent;
 };
 
-const waitSpans = (count, timeout = 8) => {
+const waitSpans = (count, timeout = 11) => {
   const collectorUrl = new URL(process.env.COLLECTOR_URL ?? 'http://localhost:8378');
   collectorUrl.searchParams.set('count', count);
   collectorUrl.searchParams.set('timeout', timeout);
