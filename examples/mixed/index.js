@@ -29,7 +29,7 @@ const server = http.createServer(async (req, res) => {
       'work.my_parameter': 42,
     },
   });
-  // Do the work anc collect the result
+  // Do the work and collect the result
   const result = await work(expectedDuration)
     .catch((err) => {
       // If the work fails, you can reflect that in the span's status
