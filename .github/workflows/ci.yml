@@ -85,6 +85,16 @@ jobs:
       - name: Test mixed example
         working-directory: test/examples
         run: docker-compose -f mixed.docker-compose.yml up --build --exit-code-from test
+
+  e2e:
+    runs-on: ubuntu-latest
+    permissions: read-all
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
       - name: E2E test basic
         working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml up --build --exit-code-from test
+        run: docker-compose -f e2e.docker-compose.yml up --exit-code-from test
+      - name: Test express example
+        working-directory: test/examples
+        run: docker-compose -f e2e.express.docker-compose.yml up --exit-code-from test
