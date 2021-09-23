@@ -3,11 +3,11 @@ const { trace } = require('@opentelemetry/api');
 const express = require('express');
 const axios = require('axios');
 
-const app = express();
 const PORT = process.env.PORT || 8080;
+const app = express();
+const tracer = trace.getTracer('splunk-otel-example-basic');
 
 app.get('/hello', (req, res) => {
-  const tracer = trace.getTracer('splunk-otel-example-express');
   const span = tracer.startSpan('hello');
   console.log(201, '/hello');
   res.status(201).send('Hello from node\n');
