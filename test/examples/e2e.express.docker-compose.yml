@@ -18,20 +18,18 @@ services:
       context:  ../../
       dockerfile: test/examples/Dockerfile
       # target: published # enable to run tests on published package instead of the one compiled from source
-    working_dir: /home/node/app/examples/basic
-    # TODO: use env file
-    environment:
-      - PORT=80
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:55681/v1/traces
+    working_dir: /home/node/app/examples/express
+    volumes:
+      - ./express/app.env:/home/node/app/examples/express/.env
   test:
     build:
       context: .
       target: base
-    command: node ./basic
+    command: node ./express
     volumes:
       - ./:/home/node/app # for local iteration
     environment:
-      - REQ_URL=http://app/hello
+      - REQ_URL=http://app/all
       - COLLECTOR_URL=http://collector:8378
     depends_on:
       - app
