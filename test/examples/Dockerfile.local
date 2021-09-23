@@ -1,0 +1,18 @@
+FROM node:16-alpine
+
+USER node
+ENV TZ=UTC
+RUN mkdir /home/node/app
+WORKDIR /home/node/app
+
+COPY --chown=node:node ["package*.json", "*.lock", "./"]
+RUN npm install
+
+COPY --chown=node:node ./ .
+RUN npm run compile
+
+RUN cd examples/basic && npm i ../.. && npm install
+RUN cd examples/express && npm i ../.. && npm install
+RUN cd examples/mixed && npm i ../.. && npm install
+
+CMD ["npm", "run", "start"]
