@@ -41,7 +41,7 @@ module.exports = [{
   references: [],
   status: { code: undefined },
   attributes: {
-    'otel.library.name': 'splunk-otel-example-express',
+    'otel.library.name': 'splunk-otel-example-basic',
     'span.kind': 'internal',
     'status.code': undefined
   }
