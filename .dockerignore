@@ -1,1 +1,10 @@
 node_modules
+
+# examples
+examples/*/node_modules
+examples/*/package-lock.json
+examples/*/.env*
+!examples/*/.env.collector
+
+# example tests
+test/examples/node_modules
