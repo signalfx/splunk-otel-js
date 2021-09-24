@@ -1,0 +1,9 @@
+services:
+  app:
+    working_dir: /home/node/app/examples/mixed
+    env_file: ./mixed/app.env
+  test:
+    command: node ./mixed
+    environment:
+      REQ_URL: http://app/
+      COLLECTOR_URL: http://collector:8378

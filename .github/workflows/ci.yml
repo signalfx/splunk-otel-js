@@ -78,13 +78,13 @@ jobs:
           docker --version;
       - name: Test basic example
         working-directory: test/examples
-        run: docker-compose -f e2e.basic.docker-compose.yml -f published.override.yml up --exit-code-from test
+        run: docker-compose -f e2e.docker-compose.yml -f published.override.yml up --exit-code-from test
       - name: Test express example
         working-directory: test/examples
-        run: docker-compose -f e2e.express.docker-compose.yml -f published.override.yml up --exit-code-from test
+        run: docker-compose -f e2e.docker-compose.yml -f express.override -f published.override.yml up --exit-code-from test
       - name: Test mixed example
         working-directory: test/examples
-        run: docker-compose -f e2e.mixed.docker-compose.yml -f published.override.yml up --exit-code-from test
+        run: docker-compose -f e2e.docker-compose.yml -f mixed.override.yml -f published.override.yml up --exit-code-from test
 
   e2e:
     runs-on: ubuntu-latest
@@ -94,10 +94,10 @@ jobs:
         uses: actions/checkout@v2
       - name: Test basic example
         working-directory: test/examples
-        run: docker-compose -f e2e.basic.docker-compose.yml up --exit-code-from test
+        run: docker-compose -f e2e.docker-compose.yml up --exit-code-from test
       - name: Test express example
         working-directory: test/examples
-        run: docker-compose -f e2e.express.docker-compose.yml up --exit-code-from test
+        run: docker-compose -f e2e.docker-compose.yml -f express.override up --exit-code-from test
       - name: Test mixed example
         working-directory: test/examples
-        run: docker-compose -f e2e.mixed.docker-compose.yml up --exit-code-from test
+        run: docker-compose -f e2e.docker-compose.yml -f mixed.override.yml up --exit-code-from test
