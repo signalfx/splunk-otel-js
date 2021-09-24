@@ -12,6 +12,7 @@ services:
     build:
       context:  ../../examples/mixed
       dockerfile: ../../test/examples/Dockerfile
+      target: base
     command: npm start
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:55681/v1/traces
@@ -19,7 +20,9 @@ services:
     volumes:
       - ./mixed/app.env:/home/node/app/.env
   test:
-    build: .
+    build:
+      context: .
+      target: base
     command: node ./mixed
     # command: npx nodemon ./mixed # for local iteration
     # volumes:
