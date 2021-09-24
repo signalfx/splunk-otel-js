@@ -5,15 +5,15 @@
   "description": "Example of instrumenting a toy Express app in different ways",
   "main": "server.js",
   "scripts": {
-    "client": "env-cmd nodemon -r ./tracer.js client.js",
-    "client:jaeger": "env-cmd nodemon -r ./tracer.jaeger.js client.js",
-    "client:collector": "env-cmd -f .env.collector nodemon -r ./tracer.js client.js",
-    "client:opentracing": "env-cmd nodemon -r ./tracer.opentracing.js client.js",
+    "client": "env-cmd --silent nodemon -r ./tracer.js client.js",
+    "client:jaeger": "env-cmd --silent nodemon -r ./tracer.jaeger.js client.js",
+    "client:collector": "env-cmd --silent -f .env.collector nodemon -r ./tracer.js client.js",
+    "client:opentracing": "env-cmd --silent nodemon -r ./tracer.opentracing.js client.js",
     "start": "npm run server",
-    "server": "env-cmd nodemon -r ./tracer.js server.js",
-    "server:jaeger": "env-cmd nodemon -r ./tracer.jaeger.js server.js",
-    "server:collector": "env-cmd -f .env.collector nodemon -r ./tracer.js server.js",
-    "server:opentracing": "env-cmd nodemon -r ./tracer.opentracing.js server.js"
+    "server": "env-cmd --silent nodemon -r ./tracer.js server.js",
+    "server:jaeger": "env-cmd --silent nodemon -r ./tracer.jaeger.js server.js",
+    "server:collector": "env-cmd --silent -f .env.collector nodemon -r ./tracer.js server.js",
+    "server:opentracing": "env-cmd --silent nodemon -r ./tracer.opentracing.js server.js"
   },
   "repository": {
     "type": "git",

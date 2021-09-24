@@ -8,19 +8,13 @@ services:
       - SPLUNK_CONFIG=/etc/otel/config.yml
     volumes:
       - ./collector.config.yml:/etc/otel/config.yml
-    # ports:
-    #   - "55681:55681" # HTTP OTLP
-    #   - "4317:4317" # GRPC OTLP
-    #   - "8378:8378" # POLLING
-    #   - "13133:13133" # HEALTH CHECK
   app:
     build:
       context:  ../../
       dockerfile: test/examples/Dockerfile
       # target: published # enable to run tests on published package instead of the one compiled from source
     working_dir: /home/node/app/examples/express
-    volumes:
-      - ./express/app.env:/home/node/app/examples/express/.env
+    env_file: ./express/app.env
   test:
     build:
       context: .
