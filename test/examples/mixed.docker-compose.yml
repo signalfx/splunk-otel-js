@@ -10,22 +10,22 @@ services:
       - ./collector.config.yml:/etc/otel/config.yml
   app:
     build:
-      context:  ../../examples/basic
+      context:  ../../examples/mixed
       dockerfile: ../../test/examples/Dockerfile
     command: npm start
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:55681/v1/traces
       - PORT=80
     volumes:
-      - ./express/app.env:/home/node/app/.env
+      - ./mixed/app.env:/home/node/app/.env
   test:
     build: .
-    command: node ./basic
-    # command: npx nodemon ./basic # for local iteration
+    command: node ./mixed
+    # command: npx nodemon ./mixed # for local iteration
     # volumes:
     #   - ./:/home/node/app # for local iteration
     environment:
-      - REQ_URL=http://app/hello
+      - REQ_URL=http://app/
       - COLLECTOR_URL=http://collector:8378
     depends_on:
       - app

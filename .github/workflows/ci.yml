@@ -82,3 +82,6 @@ jobs:
       - name: Test express example
         working-directory: test/examples
         run: docker-compose -f express.docker-compose.yml up --build --exit-code-from test
+      - name: Test mixed example
+        working-directory: test/examples
+        run: docker-compose -f mixed.docker-compose.yml up --build --exit-code-from test
