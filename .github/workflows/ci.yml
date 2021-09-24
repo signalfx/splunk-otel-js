@@ -98,3 +98,6 @@ jobs:
       - name: Test express example
         working-directory: test/examples
         run: docker-compose -f e2e.express.docker-compose.yml up --exit-code-from test
+      - name: Test mixed example
+        working-directory: test/examples
+        run: docker-compose -f e2e.mixed.docker-compose.yml up --exit-code-from test
