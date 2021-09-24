@@ -26,8 +26,8 @@ services:
       context: .
       target: base
     command: node ./express
-    volumes:
-      - ./:/home/node/app # for local iteration
+    # volumes:
+    #   - ./:/home/node/app # for local iteration
     environment:
       - REQ_URL=http://app/all
       - COLLECTOR_URL=http://collector:8378
