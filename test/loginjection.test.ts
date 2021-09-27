@@ -26,21 +26,23 @@ describe('log injection', () => {
   let stream: Writable;
   let record: any;
 
-  function assertInjection(logger, done, extra?) {
+  function assertInjection(logger, extra?) {
     const span = trace.getTracer('test').startSpan('main');
+    let traceId;
+    let spanId;
     context.with(trace.setSpan(context.active(), span), () => {
-      const { traceId, spanId } = span.spanContext();
+      traceId = span.spanContext().traceId;
+      spanId = span.spanContext().spanId;
       logger.info('my-log-message');
-      assert.strictEqual(record['trace_id'], traceId);
-      assert.strictEqual(record['span_id'], spanId);
-      assert.strictEqual(record['service.name'], 'test-service');
-
-      for (const [key, value] of extra || []) {
-        assert.strictEqual(record[key], value);
-      }
-
-      done();
     });
+
+    assert.strictEqual(record['trace_id'], traceId);
+    assert.strictEqual(record['span_id'], spanId);
+    assert.strictEqual(record['service.name'], 'test-service');
+
+    for (const [key, value] of extra || []) {
+      assert.strictEqual(record[key], value, `Invalid value for ${key}`);
+    }
   }
 
   beforeEach(() => {
@@ -61,25 +63,25 @@ describe('log injection', () => {
       stopTracing();
     });
 
-    it('injects context to bunyan records', done => {
+    it('injects context to bunyan records', () => {
       const logger: bunyan = require('bunyan').createLogger({
         name: 'test',
         stream,
       });
-      assertInjection(logger, done);
+      assertInjection(logger);
     });
 
-    it('injects context to pino records', done => {
-      const logger: pino = require('pino')(stream);
-      assertInjection(logger, done);
+    it('injects context to pino records', () => {
+      const logger: pino.Logger = require('pino')(stream);
+      assertInjection(logger);
     });
 
-    it('injects context to winston records', done => {
+    it('injects context to winston records', () => {
       const winston: winston = require('winston');
       const logger = winston.createLogger({
         transports: [new winston.transports.Stream({ stream })],
       });
-      assertInjection(logger, done);
+      assertInjection(logger);
     });
   });
 
@@ -93,7 +95,7 @@ describe('log injection', () => {
       delete process.env.OTEL_RESOURCE_ATTRIBUTES;
     });
 
-    it('injects service version and service environment if available', done => {
+    it('injects service version and service environment if available', () => {
       startTracing({ logInjectionEnabled: true, serviceName: 'test-service' });
 
       const logger: bunyan = require('bunyan').createLogger({
@@ -101,7 +103,7 @@ describe('log injection', () => {
         stream,
       });
 
-      assertInjection(logger, done, [
+      assertInjection(logger, [
         ['service.version', '1'],
         ['service.environment', 'test'],
       ]);
