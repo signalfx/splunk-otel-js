@@ -19,7 +19,7 @@ import * as util from 'util';
 import { Writable } from 'stream';
 import { context, trace } from '@opentelemetry/api';
 import { startTracing, stopTracing } from '../src/tracing';
-import { logHook } from '../src/instrumentations/logging.ts';
+import { defaultLogHook } from '../src/instrumentations/logging.ts';
 import type * as pino from 'pino';
 import type * as bunyan from 'bunyan';
 import type * as winston from 'winston';
@@ -125,7 +125,7 @@ describe('log injection', () => {
         instrumentations: [
           new PinoInstrumentation({
             logHook: (span, logRecord) => {
-              logHook(span, logRecord);
+              defaultLogHook(span, logRecord);
               logRecord[MY_ATTRIBUTE] = MY_VALUE;
             }
           }),

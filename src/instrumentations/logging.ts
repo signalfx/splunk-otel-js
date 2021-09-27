@@ -21,7 +21,7 @@ import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type LogRecord = Record<string, any>;
 
-export const logHook = (span: Span, record: LogRecord) => {
+export const defaultLogHook = (span: Span, record: LogRecord) => {
   record['service.name'] =
     span.resource.attributes[SemanticResourceAttributes.SERVICE_NAME];
 
@@ -59,11 +59,11 @@ export function configureLogInjection(
   const config = instrumentation.getConfig();
 
   if (config === undefined) {
-    return instrumentation.setConfig({ logHook });
+    return instrumentation.setConfig({ logHook: defaultLogHook });
   }
 
   if (config.logHook === undefined) {
-    config.logHook = logHook;
+    config.logHook = defaultLogHook;
     return instrumentation.setConfig(config);
    }
 }
