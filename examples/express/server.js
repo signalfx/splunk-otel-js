@@ -6,12 +6,12 @@ const axios = require('axios').default;
 
 // Setup express
 const app = express();
-const PORT = 8080;
+const PORT = process.env.PORT ?? 8080;
 
 const { log } = require('./utils.js');
 const animals = [
   'cats',
-  'dogs'
+  'dogs',
 ];
 const animal = { name: 'Spot' };
 const getCrudController = (kind) => {
@@ -54,5 +54,5 @@ for (const kind of animals) {
 }
 
 app.listen(PORT, () => {
-  log(`Listening on http://localhost:${PORT}`);
+  log(`Example app listening on port ${PORT}!`);
 });

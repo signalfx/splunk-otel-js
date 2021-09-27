@@ -23,13 +23,13 @@ const isConfigVarEntry = key => {
 };
 
 /*
-	Has a side-effect of deleting environment variables in the running process.
-	To be used in tests to make sure:
-	1. that we don't depend on the actual environment in the tests.
-	2. there are no leaking setup between tests;
+  Has a side-effect of deleting environment variables in the running process.
+  To be used in tests to make sure:
+  1. that we don't depend on the actual environment in the tests.
+  2. there are no leaking setup between tests;
 
-	An alternative would be to sinon.stub all relevant options and restore them
-	between runs.
+  An alternative would be to sinon.stub all relevant options and restore them
+  between runs.
 */
 export const cleanEnvironment = () => {
   Object.keys(process.env)
