@@ -1,0 +1,16 @@
+{
+  "name": "splunk-otel-example-log-injection",
+  "private": true,
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node -r ./log-injection.tracer.js index.js",
+    "basic": "node -r @splunk/otel/instrument index.js"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.0.3",
+    "@opentelemetry/instrumentation-pino": "^0.25.0",
+    "@splunk/otel": "^0.12.0",
+    "pino": "^6.13.3"
+  }
+}
