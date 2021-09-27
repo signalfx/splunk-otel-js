@@ -1,7 +1,6 @@
 {
   "name": "splunk-otel-example-express",
   "private": true,
-  "version": "1.0.0",
   "main": "server.js",
   "scripts": {
     "client": "env-cmd nodemon -r ./tracer.js client.js",
