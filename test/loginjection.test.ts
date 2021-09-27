@@ -19,9 +19,11 @@ import * as util from 'util';
 import { Writable } from 'stream';
 import { context, trace } from '@opentelemetry/api';
 import { startTracing, stopTracing } from '../src/tracing';
+import { logHook } from '../src/instrumentations/logging.ts';
 import type * as pino from 'pino';
 import type * as bunyan from 'bunyan';
 import type * as winston from 'winston';
+import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
 
 describe('log injection', () => {
   let stream: Writable;
@@ -40,7 +42,6 @@ describe('log injection', () => {
 
     assert.strictEqual(record['trace_id'], traceId);
     assert.strictEqual(record['span_id'], spanId);
-    assert.strictEqual(record['service.name'], 'test-service');
 
     for (const [key, value] of extra || []) {
       assert.strictEqual(record[key], value, `Invalid value for "${key}": ${util.inspect(record[key])}`);
@@ -84,6 +85,59 @@ describe('log injection', () => {
         transports: [new winston.transports.Stream({ stream })],
       });
       assertInjection(logger);
+    });
+  });
+
+  describe('injecting with custom hook', () => {
+    afterEach(() => {
+      stopTracing();
+    });
+
+    it('is possible to opt out from injecting resource attributes', () => {
+      const MY_VALUE = 'myValue';
+      const MY_ATTRIBUTE = 'myAttribute';
+      startTracing({
+        logInjectionEnabled: true,
+        serviceName: 'test-service',
+        instrumentations: [
+          new PinoInstrumentation({
+            logHook: (span, logRecord) => {
+              logRecord[MY_ATTRIBUTE] = MY_VALUE;
+            }
+          }),
+        ]
+      });
+
+      const logger: pino.Logger = require('pino')(stream);
+
+      assertInjection(logger, [
+        ['service.name', undefined],
+        [MY_ATTRIBUTE, MY_VALUE],
+      ]);
+    });
+
+    it('is easy enough do do both', () => {
+      const MY_VALUE = 'myValue';
+      const MY_ATTRIBUTE = 'myAttribute';
+      startTracing({
+        logInjectionEnabled: true,
+        serviceName: 'test-service',
+        instrumentations: [
+          new PinoInstrumentation({
+            logHook: (span, logRecord) => {
+              logHook(span, logRecord);
+              logRecord[MY_ATTRIBUTE] = MY_VALUE;
+            }
+          }),
+        ]
+      });
+
+      const logger: pino.Logger = require('pino')(stream);
+
+      assertInjection(logger, [
+        ['service.name', 'test-service'],
+        [MY_ATTRIBUTE, MY_VALUE],
+      ]);
     });
   });
 

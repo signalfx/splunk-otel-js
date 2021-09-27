@@ -21,6 +21,25 @@ import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type LogRecord = Record<string, any>;
 
+export const logHook = (span: Span, record: LogRecord) => {
+  record['service.name'] =
+    span.resource.attributes[SemanticResourceAttributes.SERVICE_NAME];
+
+  const version =
+    span.resource.attributes[SemanticResourceAttributes.SERVICE_VERSION];
+  if (version !== undefined) {
+    record['service.version'] = version;
+  }
+
+  const environment =
+    span.resource.attributes[
+      SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT
+    ];
+  if (environment !== undefined) {
+    record['service.environment'] = environment;
+  }
+};
+
 export function configureLogInjection(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   instrumentation: any,
@@ -37,38 +56,14 @@ export function configureLogInjection(
     return;
   }
 
-  const logHook = (span: Span, record: LogRecord) => {
-    record['service.name'] =
-      span.resource.attributes[SemanticResourceAttributes.SERVICE_NAME];
-
-    const version =
-      span.resource.attributes[SemanticResourceAttributes.SERVICE_VERSION];
-    if (version !== undefined) {
-      record['service.version'] = version;
-    }
-
-    const environment =
-      span.resource.attributes[
-        SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT
-      ];
-    if (environment !== undefined) {
-      record['service.environment'] = environment;
-    }
-  };
-
-  let config = instrumentation.getConfig();
+  const config = instrumentation.getConfig();
 
   if (config === undefined) {
-    config = { logHook };
-  } else if (config.logHook !== undefined) {
-    const original = config.logHook;
-    config.logHook = function (this: unknown, span: Span, record: LogRecord) {
-      logHook(span, record);
-      original.call(this, span, record);
-    };
-  } else {
-    config.logHook = logHook;
+    return instrumentation.setConfig({ logHook });
   }
 
-  instrumentation.setConfig(config);
+  if (config.logHook === undefined) {
+    config.logHook = logHook;
+    return instrumentation.setConfig(config);
+   }
 }
