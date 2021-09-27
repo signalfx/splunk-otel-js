@@ -15,6 +15,7 @@
  */
 
 import * as assert from 'assert';
+import * as util from 'util';
 import { Writable } from 'stream';
 import { context, trace } from '@opentelemetry/api';
 import { startTracing, stopTracing } from '../src/tracing';
@@ -28,6 +29,7 @@ describe('log injection', () => {
 
   function assertInjection(logger, extra?) {
     const span = trace.getTracer('test').startSpan('main');
+    extra = extra ?? [['service.name', 'test-service']];
     let traceId;
     let spanId;
     context.with(trace.setSpan(context.active(), span), () => {
@@ -41,7 +43,7 @@ describe('log injection', () => {
     assert.strictEqual(record['service.name'], 'test-service');
 
     for (const [key, value] of extra || []) {
-      assert.strictEqual(record[key], value, `Invalid value for ${key}`);
+      assert.strictEqual(record[key], value, `Invalid value for "${key}": ${util.inspect(record[key])}`);
     }
   }
 
@@ -104,6 +106,7 @@ describe('log injection', () => {
       });
 
       assertInjection(logger, [
+        ['service.name', 'test-service'],
         ['service.version', '1'],
         ['service.environment', 'test'],
       ]);
