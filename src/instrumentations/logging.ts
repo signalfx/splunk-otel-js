@@ -32,9 +32,7 @@ export const defaultLogHook = (span: Span, record: LogRecord) => {
   }
 
   const environment =
-    span.resource.attributes[
-      SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT
-    ];
+    span.resource.attributes[SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT];
   if (environment !== undefined) {
     record['service.environment'] = environment;
   }
@@ -65,5 +63,5 @@ export function configureLogInjection(
   if (config.logHook === undefined) {
     config.logHook = defaultLogHook;
     return instrumentation.setConfig(config);
-   }
+  }
 }

@@ -44,7 +44,11 @@ describe('log injection', () => {
     assert.strictEqual(record['span_id'], spanId);
 
     for (const [key, value] of extra || []) {
-      assert.strictEqual(record[key], value, `Invalid value for "${key}": ${util.inspect(record[key])}`);
+      assert.strictEqual(
+        record[key],
+        value,
+        `Invalid value for "${key}": ${util.inspect(record[key])}`
+      );
     }
   }
 
@@ -103,9 +107,9 @@ describe('log injection', () => {
           new PinoInstrumentation({
             logHook: (span, logRecord) => {
               logRecord[MY_ATTRIBUTE] = MY_VALUE;
-            }
+            },
           }),
-        ]
+        ],
       });
 
       const logger: pino.Logger = require('pino')(stream);
@@ -127,9 +131,9 @@ describe('log injection', () => {
             logHook: (span, logRecord) => {
               defaultLogHook(span, logRecord);
               logRecord[MY_ATTRIBUTE] = MY_VALUE;
-            }
+            },
           }),
-        ]
+        ],
       });
 
       const logger: pino.Logger = require('pino')(stream);
