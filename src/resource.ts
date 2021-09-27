@@ -67,7 +67,8 @@ export class EnvResourceDetector {
       const attributes = this._parseResourceAttributes(rawAttributes);
       return new Resource(attributes);
     } catch (e) {
-      diag.debug(`EnvDetector failed: ${e.message}`);
+      const message = e instanceof Error ? e.message : e;
+      diag.debug(`EnvDetector failed: ${message}`);
       return Resource.empty();
     }
   }
