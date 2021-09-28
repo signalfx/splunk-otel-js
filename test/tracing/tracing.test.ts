@@ -23,7 +23,7 @@ import {
   InMemorySpanExporter,
 } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
-import { CollectorTraceExporter } from '@opentelemetry/exporter-collector-proto';
+import { CollectorTraceExporter } from '@opentelemetry/exporter-collector-grpc';
 
 import { startTracing, stopTracing } from '../../src/tracing';
 import * as utils from '../utils';

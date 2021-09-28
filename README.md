@@ -16,7 +16,7 @@ The Splunk Distribution of [OpenTelemetry JS](https://github.com/open-telemetry/
 This Splunk distribution comes with the following defaults:
 
 - [W3C tracecontext and baggage propagation](https://www.w3.org/TR/trace-context).
-- [OTLP exporter](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-exporter-collector-proto)
+- [OTLP exporter over gRPC](https://www.npmjs.com/package/@opentelemetry/exporter-collector-grpc)
   configured to send spans to a locally running [OpenTelemetry Collector](https://github.com/open-telemetry/opentelemetry-collector) over HTTP
   (default endpoint: `http://localhost:55681/v1/traces`).
 - Unlimited default limits for [configuration options](#trace-configuration) to
