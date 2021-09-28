@@ -23,3 +23,8 @@ context.with(spanContext, doWork);
 // anymore and thus will not be logged.
 log.info('done!');
 span.end();
+
+setTimeout(() => {
+	// wait for the spans to be flushed
+	console.log('Spans flushed');
+}, 5000);
