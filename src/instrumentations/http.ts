@@ -44,7 +44,7 @@ function parseUrlParams(request: IncomingMessage) {
   }
 
   try {
-    // If Node <11 is supported, need to use the legacy API.
+    // As long as Node <11 is supported, need to use the legacy API.
     // eslint-disable-next-line node/no-deprecated-api
     return Url.parse(request.url || '', true).query;
   } catch (err) {
