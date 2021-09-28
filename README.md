@@ -18,7 +18,7 @@ This Splunk distribution comes with the following defaults:
 - [W3C tracecontext and baggage propagation](https://www.w3.org/TR/trace-context).
 - [OTLP exporter](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-exporter-collector-proto)
   configured to send spans to a locally running [OpenTelemetry Collector](https://github.com/open-telemetry/opentelemetry-collector) over HTTP
-  (default endpoint: `http://localhost:55681/v1/traces`).
+  (default endpoint: `http://localhost:4317`).
 - Unlimited default limits for [configuration options](#trace-configuration) to
   support full-fidelity traces.
 

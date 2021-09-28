@@ -20,11 +20,11 @@ The following table contain the configuration options supported by this distribu
 
 | Environment variable                 | Arguments to ``startTracing()`` | Default value                         | Notes
 | -----------------------------        | ------------------------------- | ------------------------------------- | ----
-| OTEL_EXPORTER_OTLP_ENDPOINT          | endpoint                        | `http://localhost:55681/v1/traces`    | The OTLP endpoint to export to. Only OTLP over HTTP is supported.
+| OTEL_EXPORTER_OTLP_ENDPOINT          | endpoint                        | `http://localhost:4317`               | The OTLP endpoint to export to. Only OTLP over HTTP is supported.
 | OTEL_TRACES_EXPORTER                 | tracesExporter                  | `otlp`                                | Chooses the exporter. Shortcut for setting `spanExporterFactory`. One of [`otlp`, `jaeger-thrift-http`, `jaeger-thrift-splunk`]. See [`TracesExporter`](../src/options.ts).
 | OTEL_PROPAGATORS                     | propagators                     | `tracecontext,baggage`                | Comma-delimited list of propagators to use. Valid keys: `baggage`, `tracecontext`, `b3multi`, `b3`.
 | OTEL_SERVICE_NAME                    | serviceName                     | `unnamed-node-service`                | The service name of this Node service.
-| SPLUNK_ACCESS_TOKEN                  | accessToken                     |                                       | The optional access token for exporting signal data directly to SignalFx API.
+| SPLUNK_ACCESS_TOKEN                  | accessToken                     |                                       | The optional access token for exporting signal data directly to Splunk Observability Cloud.
 | OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT | maxAttrLength                 | 1200                                  | Maximum length of string attribute value in characters. Longer values are truncated.
 | SPLUNK_TRACE_RESPONSE_HEADER_ENABLED | serverTimingEnabled             | `true`                                | Enable injection of `Server-Timing` header to HTTP responses.
 | OTEL_RESOURCE_ATTRIBUTES             |                                 |                                       | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
