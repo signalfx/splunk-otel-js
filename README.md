@@ -26,8 +26,6 @@ If you're currently using the SignalFx Tracing Library for Node and want to
 migrate to the Splunk Distribution of OpenTelemetry Node, see [Migrate from
 the SignalFx Tracing Library for JS](./MIGRATING.md).
 
-> This project is currently in **BETA**. It is **officially supported** by Splunk. However, breaking changes **MAY** be introduced.
-
 ## Get started
 
 The following instructions assume that you're sending data to Splunk Observability Cloud using the [OpenTelemetry Collector](https://docs.splunk.com/Observability/gdi/opentelemetry/opentelemetry.html) running on localhost. If you're running a
@@ -74,7 +72,7 @@ In order to send traces directly to Splunk Observability Cloud, you need to:
 2. Set the `SPLUNK_ACCESS_TOKEN` to your Splunk Observability Cloud [access token](https://docs.splunk.com/Observability/admin/authentication-tokens/api-access-tokens.html).
 ## Automatically instrument an application
 
-You can use the `-r` CLI flag to preload the instrumentation module and automatically instrument your NodeJS application.
+You can use the `-r` CLI flag to preload the instrumentation module and automatically instrument your Node.js application.
 For example, if you normally started your application as follows:
 
 ```bash
@@ -86,6 +84,12 @@ Then you can automatically instrument your application by running
 ```bash
 node -r @splunk/otel/instrument index.js
 ```
+
+## Correlate traces and logs
+
+The Splunk Distribution of OpenTelemetry JS can make trace metadata available to many Node.js logging libraries capable of accessing them, like Pino, Winston, and Bunyan. You can use trace metadata to correlate traces with log events, and explore logs in Observability Cloud. 
+
+For more information, see [Correlating traces with logs](./docs/correlate-logs-traces.md).
 
 ## Manually instrument an application<a name="instrument-with-code"></a>
 
