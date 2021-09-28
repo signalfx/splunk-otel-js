@@ -74,12 +74,12 @@ Rename environment variables:
 | ---------------------------------- | -------------------------------------- | ----- |
 | SIGNALFX_ACCESS_TOKEN              | SPLUNK_ACCESS_TOKEN                    | |
 | SIGNALFX_SERVICE_NAME              | OTEL_SERVICE_NAME                      | |
-| SIGNALFX_ENDPOINT_URL              | _no direct equivalent_                 | see [the notes on endpoint](#endpoint) |
+| SIGNALFX_ENDPOINT_URL              | _no direct equivalent_                 | See [the notes on endpoint](#endpoint) |
 | SIGNALFX_RECORDED_VALUE_MAX_LENGTH | OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT | |
-| SIGNALFX_TRACING_DEBUG             | _no direct equivalent_                 | see [instrumentation logs](#instrumentation-logs) |
-| SIGNALFX_SPAN_TAGS                 | OTEL_RESOURCE_ATTRIBUTES               | format needs to be changed to `key1=val1,key2=val2` |
-| SIGNALFX_LOGS_INJECTION            | SPLUNK_LOGS_INJECTION                  | |
-| SIGNALFX_LOGS_INJECTION_TAGS       | OTEL_RESOURCE_ATTRIBUTES               | there's no direct equivalent, but values specified in `OTEL_RESOURCE_ATTRIBUTES` will also be used for logs injection |
+| SIGNALFX_TRACING_DEBUG             | _no direct equivalent_                 | See [Instrumentation logs](#instrumentation-logs) |
+| SIGNALFX_SPAN_TAGS                 | OTEL_RESOURCE_ATTRIBUTES               | Format needs to be changed to `key1=val1,key2=val2` |
+| SIGNALFX_LOGS_INJECTION            | n/a                                    | Logs injection is now enabled by default. |
+| SIGNALFX_LOGS_INJECTION_TAGS       | n/a                                    | |
 | SIGNALFX_ENABLED_PLUGINS           | n/a                                    | see [the README section about instrumentations](./README.md#custom-instrumentation-packages) |
 | SIGNALFX_SERVER_TIMING_CONTEXT     | SPLUNK_TRACE_RESPONSE_HEADER_ENABLED   | |
 | SIGNALFX_TRACING_ENABLED           | OTEL_TRACE_ENABLED                     | |
