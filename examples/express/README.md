@@ -79,7 +79,7 @@ There is an exmample [.env](./.env.collector) file included, which following com
 
 ```shell
 # make sure the collector is running
-docker run --name otel-collector -d -p 4317:4317 otel/opentelemetry-collector
+docker run --name otel-collector -d -p 55681:55681 otel/opentelemetry-collector
 # run the example server
 npm run server:collector
 # in a separate terminal:

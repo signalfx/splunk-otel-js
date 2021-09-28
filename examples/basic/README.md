@@ -1,10 +1,10 @@
 # Basic Example
 
 This example showcases basic integration with OpenTelemetry(OTel): automatic(HTTP calls) as well as manual([index.js](./index.js) manually creates spans) instrumentation.
-By default it requires OTel Collector to be running with OTLP reciever open on `localhost:4317`.
+By default it requires OTel Collector to be running with OTLP reciever open on `localhost:55681`.
 
 ```shell
-docker run --name otel-collector -d -p 4317:4317 otel/opentelemetry-collector
+docker run --name otel-collector -d -p 55681:55681 otel/opentelemetry-collector
 npm start
 ```
 
