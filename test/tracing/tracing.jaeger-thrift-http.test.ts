@@ -57,7 +57,7 @@ describe('tracing:jaeger-thrift-http', () => {
     exportURL: string,
     serviceName: string,
     accessToken?: string,
-    maxAttrLength?: number,
+    maxAttrLength?: number
   ) {
     sinon.assert.calledOnce(addSpanProcessorMock);
     const processor = addSpanProcessorMock.getCall(0).args[0];
@@ -85,7 +85,7 @@ describe('tracing:jaeger-thrift-http', () => {
       'http://localhost:14268/v1/traces',
       'unnamed-node-service',
       '',
-      1200,
+      1200
     );
     stopTracing();
   });
@@ -101,12 +101,7 @@ describe('tracing:jaeger-thrift-http', () => {
       accessToken,
       maxAttrLength,
     });
-    assertTracingPipeline(
-      endpoint,
-      serviceName,
-      accessToken,
-      maxAttrLength,
-    );
+    assertTracingPipeline(endpoint, serviceName, accessToken, maxAttrLength);
     stopTracing();
   });
 
@@ -122,12 +117,7 @@ describe('tracing:jaeger-thrift-http', () => {
     process.env.SPLUNK_MAX_ATTR_LENGTH = maxAttrLength.toString();
 
     startTracing();
-    assertTracingPipeline(
-      url,
-      serviceName,
-      accessToken,
-      maxAttrLength,
-    );
+    assertTracingPipeline(url, serviceName, accessToken, maxAttrLength);
     stopTracing();
   });
 });

@@ -51,7 +51,7 @@ describe('tracing:otlp', () => {
     exportURL: string,
     serviceName: string,
     accessToken?: string,
-    maxAttrLength?: number,
+    maxAttrLength?: number
   ) {
     sinon.assert.calledOnce(addSpanProcessorMock);
     const processor = addSpanProcessorMock.getCall(0).args[0];
@@ -80,7 +80,7 @@ describe('tracing:otlp', () => {
       'http://localhost:55681/v1/traces',
       'unnamed-node-service',
       '',
-      1200,
+      1200
     );
     stopTracing();
   });
@@ -96,12 +96,7 @@ describe('tracing:otlp', () => {
       accessToken,
       maxAttrLength,
     });
-    assertTracingPipeline(
-      endpoint,
-      serviceName,
-      accessToken,
-      maxAttrLength,
-    );
+    assertTracingPipeline(endpoint, serviceName, accessToken, maxAttrLength);
     stopTracing();
   });
 
@@ -117,12 +112,7 @@ describe('tracing:otlp', () => {
     process.env.SPLUNK_MAX_ATTR_LENGTH = maxAttrLength.toString();
 
     startTracing();
-    assertTracingPipeline(
-      url,
-      serviceName,
-      accessToken,
-      maxAttrLength,
-    );
+    assertTracingPipeline(url, serviceName, accessToken, maxAttrLength);
     stopTracing();
   });
 
