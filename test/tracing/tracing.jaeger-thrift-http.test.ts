@@ -58,7 +58,6 @@ describe('tracing:jaeger-thrift-http', () => {
     serviceName: string,
     accessToken?: string,
     maxAttrLength?: number,
-    logsInjection: boolean
   ) {
     sinon.assert.calledOnce(addSpanProcessorMock);
     const processor = addSpanProcessorMock.getCall(0).args[0];
@@ -87,7 +86,6 @@ describe('tracing:jaeger-thrift-http', () => {
       'unnamed-node-service',
       '',
       1200,
-      false
     );
     stopTracing();
   });
@@ -97,20 +95,17 @@ describe('tracing:jaeger-thrift-http', () => {
     const serviceName = 'test-node-service';
     const accessToken = '1234';
     const maxAttrLength = 50;
-    const logInjectionEnabled = true;
     startTracing({
       endpoint,
       serviceName,
       accessToken,
       maxAttrLength,
-      logInjectionEnabled,
     });
     assertTracingPipeline(
       endpoint,
       serviceName,
       accessToken,
       maxAttrLength,
-      logInjectionEnabled
     );
     stopTracing();
   });
@@ -120,13 +115,11 @@ describe('tracing:jaeger-thrift-http', () => {
     const serviceName = 'env-service';
     const accessToken = 'zxcvb';
     const maxAttrLength = 101;
-    const logInjectionEnabled = true;
 
     process.env.OTEL_EXPORTER_JAEGER_ENDPOINT = url;
     process.env.OTEL_SERVICE_NAME = serviceName;
     process.env.SPLUNK_ACCESS_TOKEN = accessToken;
     process.env.SPLUNK_MAX_ATTR_LENGTH = maxAttrLength.toString();
-    process.env.SPLUNK_LOGS_INJECTION = logInjectionEnabled.toString();
 
     startTracing();
     assertTracingPipeline(
@@ -134,7 +127,6 @@ describe('tracing:jaeger-thrift-http', () => {
       serviceName,
       accessToken,
       maxAttrLength,
-      logInjectionEnabled
     );
     stopTracing();
   });

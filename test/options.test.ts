@@ -58,7 +58,6 @@ describe('options', () => {
       serviceName: 'unnamed-node-service',
       accessToken: '',
       serverTimingEnabled: true,
-      logInjectionEnabled: false,
       maxAttrLength: 1200,
       instrumentations: [],
       tracerConfig: {
@@ -83,7 +82,6 @@ describe('options', () => {
       serviceName: 'custom-service-name',
       accessToken: 'custom-access-token',
       maxAttrLength: 4000,
-      logInjectionEnabled: true,
       instrumentations: [testInstrumentation],
       tracerConfig: {
         resource: new Resource({
@@ -103,7 +101,6 @@ describe('options', () => {
       accessToken: 'custom-access-token',
       maxAttrLength: 4000,
       serverTimingEnabled: true,
-      logInjectionEnabled: true,
       instrumentations: [testInstrumentation],
       tracerConfig: {
         resource: new Resource({ attr1: 'value' }),

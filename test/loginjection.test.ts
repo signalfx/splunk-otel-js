@@ -63,7 +63,7 @@ describe('log injection', () => {
 
   describe('default flow', () => {
     before(() => {
-      startTracing({ logInjectionEnabled: true, serviceName: 'test-service' });
+      startTracing({ serviceName: 'test-service' });
     });
 
     after(() => {
@@ -101,7 +101,6 @@ describe('log injection', () => {
       const MY_VALUE = 'myValue';
       const MY_ATTRIBUTE = 'myAttribute';
       startTracing({
-        logInjectionEnabled: true,
         serviceName: 'test-service',
         instrumentations: [
           new PinoInstrumentation({
@@ -124,7 +123,6 @@ describe('log injection', () => {
       const MY_VALUE = 'myValue';
       const MY_ATTRIBUTE = 'myAttribute';
       startTracing({
-        logInjectionEnabled: true,
         serviceName: 'test-service',
         instrumentations: [
           new PinoInstrumentation({
@@ -156,7 +154,7 @@ describe('log injection', () => {
     });
 
     it('injects service version and service environment if available', () => {
-      startTracing({ logInjectionEnabled: true, serviceName: 'test-service' });
+      startTracing({ serviceName: 'test-service' });
 
       const logger: bunyan = require('bunyan').createLogger({
         name: 'test',

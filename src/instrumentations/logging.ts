@@ -43,10 +43,6 @@ export function configureLogInjection(
   instrumentation: any,
   options: Options
 ) {
-  if (!options.logInjectionEnabled) {
-    return;
-  }
-
   if (
     typeof instrumentation['setConfig'] !== 'function' ||
     typeof instrumentation['getConfig'] !== 'function'
