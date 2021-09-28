@@ -1,9 +1,7 @@
 {
   "name": "splunk-otel-example-basic",
   "private": true,
-  "version": "1.0.0",
   "main": "index.js",
-  "license": "MIT",
   "scripts": {
     "start": "node -r @splunk/otel/instrument index.js"
   },
