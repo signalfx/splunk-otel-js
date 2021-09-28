@@ -69,6 +69,7 @@ describe('options', () => {
       spanExporterFactory: otlpSpanExporterFactory,
       spanProcessorFactory: defaultSpanProcessorFactory,
       propagatorFactory: defaultPropagatorFactory,
+      captureRequestUriParams: [],
     });
     getInstrumentationsStub.restore();
   });
@@ -93,6 +94,7 @@ describe('options', () => {
       spanExporterFactory: testSpanExporterFactory,
       spanProcessorFactory: testSpanProcessorFactory,
       propagatorFactory: testPropagatorFactory,
+      captureRequestUriParams: ['timestamp'],
     });
 
     assert.deepStrictEqual(options, {
@@ -110,6 +112,7 @@ describe('options', () => {
       spanExporterFactory: testSpanExporterFactory,
       spanProcessorFactory: testSpanProcessorFactory,
       propagatorFactory: testPropagatorFactory,
+      captureRequestUriParams: ['timestamp'],
     });
   });
 
