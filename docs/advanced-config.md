@@ -44,4 +44,4 @@ The following config options can be set by passing them as arguments to `startTr
 
 - `instrumentations`: Can be used to enable additional instrumentation packages.
 
-- `captureRequestUriParams`: Either a list of keys (case-sensitive) of HTTP query parameters to capture or a function which gets invoked with the current span and query parameters to set a custom span attribute. When using the former, parameters are set as span attributes as `http.request.param.${key}`. Attribute keys are normalized at capture time, meaning `.` is replaced with `_` to avoid any attribute namespacing issues.
+- `captureRequestUriParams`: Either a list of keys (case-sensitive) of HTTP query parameters to capture or a function that gets invoked with the current span and query parameters to set a custom span attribute. When using the former, parameters are set as span attributes as `http.request.param.${key}`. Attribute keys are normalized at capture time, meaning `.` is replaced with `_` to avoid any attribute namespacing issues.
