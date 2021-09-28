@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { Options } from '../options';
 import { Span } from '@opentelemetry/sdk-trace-base';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
@@ -40,8 +39,7 @@ export const defaultLogHook = (span: Span, record: LogRecord) => {
 
 export function configureLogInjection(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  instrumentation: any,
-  options: Options
+  instrumentation: any
 ) {
   if (
     typeof instrumentation['setConfig'] !== 'function' ||

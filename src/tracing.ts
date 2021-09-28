@@ -96,7 +96,7 @@ function configureInstrumentations(options: Options) {
       case '@opentelemetry/instrumentation-bunyan':
       case '@opentelemetry/instrumentation-pino':
       case '@opentelemetry/instrumentation-winston':
-        configureLogInjection(instr, options);
+        configureLogInjection(instr);
         break;
     }
   }
