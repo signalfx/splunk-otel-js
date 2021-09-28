@@ -15,7 +15,7 @@
  */
 
 import { TextMapPropagator } from '@opentelemetry/api';
-import { HttpBaggage } from '@opentelemetry/core';
+import { HttpBaggagePropagator } from '@opentelemetry/core';
 import { InstrumentationBase } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
@@ -165,5 +165,5 @@ function testSpanProcessorFactory(options: Options): SpanProcessor {
 }
 
 function testPropagatorFactory(options: Options): TextMapPropagator {
-  return new HttpBaggage();
+  return new HttpBaggagePropagator();
 }
