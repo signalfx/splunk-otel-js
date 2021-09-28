@@ -1,8 +1,10 @@
+> The official Splunk documentation for this page is [Configure the Splunk Distribution of OTel JS](https://docs.splunk.com/Observability/gdi/get-data-in/application/nodejs/configuration/advanced-nodejs-otel-configuration.html). For instructions on how to contribute to the docs, see [CONTRIBUTING.md](../CONTRIBUTING.md#documentation).
+
 # Advanced Configuration
 
-The agent can be configured in the following ways:
+To configure the Splunk Distribution of OpenTelemetry JS, you can use a combination of environment variables and arguments passed to the `startTracing()` function:
 
-- Environment variables (also within `.env` files)
+- Environment variables
 
    For example: `export OTEL_SERVICE_NAME='test-service'`
 
@@ -10,24 +12,23 @@ The agent can be configured in the following ways:
 
    For example: `startTracing({ serviceName: 'my-node-service', });`
 
-> Code arguments take precedence over the corresponding environment variables.
+> `startTracing()` arguments take precedence over the corresponding environment variables.
 
 ## List of settings
 
 The following table contain the configuration options supported by this distribution.
 
-| Environment variable                 | Config Option                 | Default value                         | Notes
-| -----------------------------        | ----------------------------- | ------------------------------------- | ----
-| OTEL_EXPORTER_OTLP_ENDPOINT          | endpoint                      | `http://localhost:55681/v1/traces`    | The OTLP endpoint to export to. Only OTLP over HTTP is supported.
-| OTEL_TRACES_EXPORTER                 | tracesExporter                | `otlp`                                | Chooses the exporter. Shortcut for setting `spanExporterFactory`. One of [`otlp`, `jaeger-thrift-http`, `jaeger-thrift-splunk`]. See [`TracesExporter`](./src/options.ts).
-| OTEL_PROPAGATORS                     | propagators                   | `tracecontext,baggage`                | Comma-delimited list of propagators to use. Valid keys: `baggage`, `tracecontext`, `b3multi`, `b3`.
-| OTEL_SERVICE_NAME                    | serviceName                   | `unnamed-node-service`                | The service name of this Node service.
-| SPLUNK_ACCESS_TOKEN                  | accessToken                   |                                       | The optional access token for exporting signal data directly to SignalFx API.
-| SPLUNK_MAX_ATTR_LENGTH               | maxAttrLength                 | 1200                                  | Maximum length of string attribute value in characters. Longer values are truncated.
-| SPLUNK_TRACE_RESPONSE_HEADER_ENABLED | serverTimingEnabled           | `true`                                | Enable injection of `Server-Timing` header to HTTP responses.
-| SPLUNK_LOGS_INJECTION                | logInjectionEnabled           | `false`                               | Enable injecting of trace ID, span ID and service name to log records. Please note that the corresponding logging library instrumentation needs to be installed.
-| OTEL_RESOURCE_ATTRIBUTES             |                               |                                       | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
-| OTEL_TRACE_ENABLED                   |                               | `true`                                | Globally enables tracer creation and auto-instrumentation.
+| Environment variable                 | Arguments to ``startTracing()`` | Default value                         | Notes
+| -----------------------------        | ------------------------------- | ------------------------------------- | ----
+| OTEL_EXPORTER_OTLP_ENDPOINT          | endpoint                        | `http://localhost:55681/v1/traces`    | The OTLP endpoint to export to. Only OTLP over HTTP is supported.
+| OTEL_TRACES_EXPORTER                 | tracesExporter                  | `otlp`                                | Chooses the exporter. Shortcut for setting `spanExporterFactory`. One of [`otlp`, `jaeger-thrift-http`, `jaeger-thrift-splunk`]. See [`TracesExporter`](../src/options.ts).
+| OTEL_PROPAGATORS                     | propagators                     | `tracecontext,baggage`                | Comma-delimited list of propagators to use. Valid keys: `baggage`, `tracecontext`, `b3multi`, `b3`.
+| OTEL_SERVICE_NAME                    | serviceName                     | `unnamed-node-service`                | The service name of this Node service.
+| SPLUNK_ACCESS_TOKEN                  | accessToken                     |                                       | The optional access token for exporting signal data directly to SignalFx API.
+| OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT | maxAttrLength                 | 1200                                  | Maximum length of string attribute value in characters. Longer values are truncated.
+| SPLUNK_TRACE_RESPONSE_HEADER_ENABLED | serverTimingEnabled             | `true`                                | Enable injection of `Server-Timing` header to HTTP responses.
+| OTEL_RESOURCE_ATTRIBUTES             |                                 |                                       | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
+| OTEL_TRACE_ENABLED                   |                                 | `true`                                | Globally enables tracer creation and auto-instrumentation.
 
 ## Additional config options
 
