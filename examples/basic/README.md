@@ -11,7 +11,7 @@ npm start
 Then generate spans by making requests to the applications endpoints:
 
 ```shell
-curl localhost:3000
+curl localhost:8080
 ```
 
 The generated spans then appear in collector logs:
