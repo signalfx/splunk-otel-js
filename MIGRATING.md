@@ -78,6 +78,8 @@ Rename environment variables:
 | SIGNALFX_RECORDED_VALUE_MAX_LENGTH | OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT | |
 | SIGNALFX_TRACING_DEBUG             | _no direct equivalent_                 | see [instrumentation logs](#instrumentation-logs) |
 | SIGNALFX_SPAN_TAGS                 | OTEL_RESOURCE_ATTRIBUTES               | format needs to be changed to `key1=val1,key2=val2` |
+| SIGNALFX_LOGS_INJECTION            | SPLUNK_LOGS_INJECTION                  | |
+| SIGNALFX_LOGS_INJECTION_TAGS       | OTEL_RESOURCE_ATTRIBUTES               | there's no direct equivalent, but values specified in `OTEL_RESOURCE_ATTRIBUTES` will also be used for logs injection |
 | SIGNALFX_ENABLED_PLUGINS           | n/a                                    | see [the README section about instrumentations](./README.md#custom-instrumentation-packages) |
 | SIGNALFX_SERVER_TIMING_CONTEXT     | SPLUNK_TRACE_RESPONSE_HEADER_ENABLED   | |
 | SIGNALFX_TRACING_ENABLED           | OTEL_TRACE_ENABLED                     | |
@@ -94,6 +96,8 @@ Update these programmatic configuration options (passed as arguments to `startTr
 | `enabled`                | -                       | no equivalent, but Environment Variable can be used |
 | `debug`                  | -                       | no direct equivalent, see [instrumentation logs](#instrumentation-logs) |
 | `tags`                   | `tracerConfig.resource` | |
+| `logInjection`           | `logInjectionEnabled`   | |
+| `logInjectionTags`       | -                       | no direct equivalent, but `tracerConfig.resource` can be used |
 | `flushInterval`          | -                       | no direct equivalent, contact us if you had customized this value |
 | `plugins`                | -                       | see [the README section about instrumentations](./README.md#custom-instrumentation-packages) |
 | `recordedValueMaxLength` | `maxAttrLength`         | |
