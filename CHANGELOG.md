@@ -50,7 +50,7 @@ Tue, 07 Sep 2021 12:05:40 GMT
 
 ### Changed
 
-- Context management should not work properly on older versions of NodeJS (<14.8).
+- Context management should not work properly on older versions of Node.js (<14.8).
   ([#53](https://github.com/signalfx/splunk-otel-js/pull/53))
 
 
