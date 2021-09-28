@@ -64,7 +64,8 @@ describe('tracing:otlp', () => {
     assert.deepEqual(exporter.url, exportURL);
 
     if (accessToken) {
-      assert.equal(exporter.headers['X-SF-TOKEN'], accessToken);
+      // gRPC not yet supported in ingest
+      assert.equal(exporter.metadata.get('x-sf-token'), accessToken);
     }
   }
 
@@ -78,7 +79,7 @@ describe('tracing:otlp', () => {
   it('setups tracing with defaults', () => {
     startTracing();
     assertTracingPipeline(
-      'http://localhost:55681/v1/traces',
+      'localhost:4317',
       'unnamed-node-service',
       '',
       1200,
@@ -88,7 +89,7 @@ describe('tracing:otlp', () => {
   });
 
   it('setups tracing with custom options', () => {
-    const endpoint = 'https://custom-endpoint:1111/path';
+    const endpoint = 'custom-endpoint:1111';
     const serviceName = 'test-node-service';
     const accessToken = '1234';
     const maxAttrLength = 50;
@@ -101,7 +102,7 @@ describe('tracing:otlp', () => {
       logInjectionEnabled,
     });
     assertTracingPipeline(
-      endpoint,
+      'custom-endpoint:1111',
       serviceName,
       accessToken,
       maxAttrLength,
@@ -111,7 +112,7 @@ describe('tracing:otlp', () => {
   });
 
   it('setups tracing with custom options from env', () => {
-    const url = 'https://url-from-env:3030/trace-path';
+    const url = 'url-from-env:3030';
     const serviceName = 'env-service';
     const accessToken = 'zxcvb';
     const maxAttrLength = 101;
