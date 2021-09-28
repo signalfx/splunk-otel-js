@@ -73,7 +73,7 @@ describe('Capturing URI parameters', () => {
     setupServer();
     const [span] = await doRequest(SERVER_URL);
     for (const key of Object.keys(span.attributes)) {
-      assert.doesNotMatch(key, /http\.request\.param\./);
+      assert.equal(key.startsWith('http.request.param'), false);
     }
   });
 
