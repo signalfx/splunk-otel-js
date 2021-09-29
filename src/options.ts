@@ -139,7 +139,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
 export function resolveTracesExporter(): SpanExporterFactory {
   const factory =
-    SpanExporterMap[process.env.OTEL_TRACES_EXPORTER ?? 'default'];
+    SpanExporterMap[process.env.OTEL_TRACES_EXPORTER || 'default'];
   assert.strictEqual(
     typeof factory,
     'function',
