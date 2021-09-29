@@ -16,9 +16,9 @@ The Splunk Distribution of [OpenTelemetry JS](https://github.com/open-telemetry/
 This Splunk distribution comes with the following defaults:
 
 - [W3C tracecontext and baggage propagation](https://www.w3.org/TR/trace-context).
-- [OTLP exporter over gRPC](https://www.npmjs.com/package/@opentelemetry/exporter-collector-grpc)
-  configured to send spans to a locally running [OpenTelemetry Collector](https://github.com/open-telemetry/opentelemetry-collector) over HTTP
-  (default endpoint: `http://localhost:55681/v1/traces`).
+- [OTLP exporter](https://www.npmjs.com/package/@opentelemetry/exporter-collector-grpc)
+  configured to send spans to a locally running [OpenTelemetry Collector](https://github.com/open-telemetry/opentelemetry-collector) over gRPC
+  (default endpoint: `localhost:4317`).
 - Unlimited default limits for [configuration options](#trace-configuration) to
   support full-fidelity traces.
 
@@ -66,10 +66,11 @@ That's it - the telemetry data is now sent to the locally running Opentelemetry 
 
 In order to send traces directly to Splunk Observability Cloud, you need to:
 
-1. Set `OTEL_EXPORTER_OTLP_ENDPOINT` to
-   `https://ingest.<realm>.signalfx.com/v2/trace/otlp` where `realm` is your
-   Splunk APM realm e.g, `https://ingest.us0.signalfx.com/v2/trace/otlp`.
-2. Set the `SPLUNK_ACCESS_TOKEN` to your Splunk Observability Cloud [access token](https://docs.splunk.com/Observability/admin/authentication-tokens/api-access-tokens.html).
+1. Set `OTEL_TRACES_EXPORTER` to `"jaeger-thrift-splunk"` to swap to Jaeger exporter.
+2. Set `OTEL_EXPORTER_JAEGER_ENDPOINT` to
+   `https://ingest.<realm>.signalfx.com/v2/trace` where `realm` is your
+   Splunk APM realm e.g, `https://ingest.us0.signalfx.com/v2/trace`.
+3. Set the `SPLUNK_ACCESS_TOKEN` to your Splunk Observability Cloud [access token](https://docs.splunk.com/Observability/admin/authentication-tokens/api-access-tokens.html).
 ## Automatically instrument an application
 
 You can use the `-r` CLI flag to preload the instrumentation module and automatically instrument your Node.js application.

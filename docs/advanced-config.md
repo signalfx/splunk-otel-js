@@ -20,7 +20,7 @@ The following table contain the configuration options supported by this distribu
 
 | Environment variable                 | Arguments to ``startTracing()`` | Default value                         | Notes
 | -----------------------------        | ------------------------------- | ------------------------------------- | ----
-| OTEL_EXPORTER_OTLP_ENDPOINT          | endpoint                        | `http://localhost:55681/v1/traces`    | The OTLP endpoint to export to. Only OTLP over HTTP is supported.
+| OTEL_EXPORTER_OTLP_ENDPOINT          | endpoint                        | `localhost:4317`                      | The OTLP endpoint to export to. Only OTLP over gRPC is supported.
 | OTEL_TRACES_EXPORTER                 | tracesExporter                  | `otlp`                                | Chooses the exporter. Shortcut for setting `spanExporterFactory`. One of [`otlp`, `jaeger-thrift-http`, `jaeger-thrift-splunk`]. See [`TracesExporter`](../src/options.ts).
 | OTEL_PROPAGATORS                     | propagators                     | `tracecontext,baggage`                | Comma-delimited list of propagators to use. Valid keys: `baggage`, `tracecontext`, `b3multi`, `b3`.
 | OTEL_SERVICE_NAME                    | serviceName                     | `unnamed-node-service`                | The service name of this Node service.

@@ -31,7 +31,7 @@ Original app files do not cointain any reference to neither OTel or OpenTracing,
 
 ```shell
 node server.js
-# in a separate terminal:
+# In a separate terminal:
 node client.js
 ```
 
@@ -50,7 +50,7 @@ Once `.env` file is filled in with access token(see file [.env.example](./.env.e
 
 ```shell
 npm run server
-# in a separate terminal:
+# In a separate terminal:
 npm run client
 ```
 
@@ -68,7 +68,7 @@ That's it! To run the example with the Jaeger Exporter:
 
 ```shell
 npm run server:jaeger
-# in a separate terminal:
+# In a separate terminal:
 npm run client:jaeger
 ```
 
@@ -78,11 +78,11 @@ Instead of sending telemetry data directly to Splunk APM API, one can also use O
 There is an exmample [.env](./.env.collector) file included, which following commands use:
 
 ```shell
-# make sure the collector is running
-docker run --name otel-collector -d -p 55681:55681 otel/opentelemetry-collector
-# run the example server
+# Exposing ports for OTLP/gRPC and Jaeger from collector
+docker run --name otel-collector -d -p 4317:4317 -p 14268:14268 otel/opentelemetry-collector
+# Run the example server
 npm run server:collector
-# in a separate terminal:
+# In a separate terminal:
 npm run client:collector
 ```
 
@@ -92,7 +92,7 @@ For comparison this example also includes the legacy OpenTracing SDK setup which
 
 ```shell
 npm run server:opentracing
-# in a separate terminal:
+# In a separate terminal:
 npm run client:opentracing
 ```
 
