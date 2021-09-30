@@ -66,10 +66,10 @@ That's it - the telemetry data is now sent to the locally running Opentelemetry 
 
 In order to send traces directly to Splunk Observability Cloud, you need to:
 
-1. Set `OTEL_TRACES_EXPORTER` to `"jaeger-thrift-splunk"` to swap to Jaeger exporter.
+1. Set `OTEL_TRACES_EXPORTER` to `"jaeger-thrift-splunk"` to use the Jaeger exporter.
 2. Set `OTEL_EXPORTER_JAEGER_ENDPOINT` to
    `https://ingest.<realm>.signalfx.com/v2/trace` where `realm` is your
-   Splunk APM realm e.g, `https://ingest.us0.signalfx.com/v2/trace`.
+   Splunk APM realm (for example, `https://ingest.us0.signalfx.com/v2/trace`).
 3. Set the `SPLUNK_ACCESS_TOKEN` to your Splunk Observability Cloud [access token](https://docs.splunk.com/Observability/admin/authentication-tokens/api-access-tokens.html).
 ## Automatically instrument an application
 

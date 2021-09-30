@@ -1,7 +1,7 @@
 # Basic Example
 
 This example showcases basic integration with OpenTelemetry(OTel): automatic(HTTP calls) as well as manual([index.js](./index.js) manually creates spans) instrumentation.
-By default it requires OTel Collector to be running with OTLP reciever open on `localhost:4317`.
+By default, the example requires the OTel Collector to run with the OTLP receiver listening on `localhost:4317`.
 
 ```shell
 # Exposing ports for OTLP/gRPC and Jaeger from collector

@@ -156,9 +156,9 @@ diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL);
 
 This package uses OTLP for export format by default so `SIGNALFX_ENDPOINT_URL` doesn't have an direct equivalent without replacing the exporter with one that uses Jaeger format. Options to consider:
 
-- **Using OTLP**: If the recieving endpoint supports OTLP over gRPC(OTel Collector does, Splunk Observability Cloud currently does not), set `OTEL_EXPORTER_OTLP_ENDPOINT` instead of `SIGNALFX_ENDPOINT_URL`.
-- **Replacing OTLP with Jaeger**: To export directly to Splunk Observability Cloud swap the exporter back to Jaeger by:
-  - setting `OTEL_TRACES_EXPORTER` environment variable to `jaeger-thrift-splunk` and
-  - using `OTEL_EXPORTER_JAEGER_ENDPOINT` instead of `SIGNALFX_ENDPOINT_URL` and configure Jaeger Exporter. [See an example](./examples/express)).
+- **Using OTLP**: If the receiving endpoint supports OTLP over gRPC (for example, the OTel Collector), set `OTEL_EXPORTER_OTLP_ENDPOINT` instead of `SIGNALFX_ENDPOINT_URL`.
+- **Replacing OTLP with Jaeger**: To export directly to Splunk Observability Cloud, set the exporter back to Jaeger by:
+  - setting the `OTEL_TRACES_EXPORTER` environment variable to `jaeger-thrift-splunk` and
+  - using `OTEL_EXPORTER_JAEGER_ENDPOINT` to configure the endpoint instead of `SIGNALFX_ENDPOINT_URL`. [See the example](./examples/express)).
 
 [otel-issue-attr-limits]: https://github.com/open-telemetry/opentelemetry-js/issues/2403

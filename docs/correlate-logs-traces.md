@@ -11,7 +11,7 @@ The following logging librares are supported:
 - Pino
 - Winston
 
-## Available trace data
+## Injected trace data
 
 The following attributes are available for applications instrumented using the Splunk distribution of OpenTelemetry JS:
 
