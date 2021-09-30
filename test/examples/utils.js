@@ -85,13 +85,18 @@ const getParentSpan = (arr, span) => {
 };
 
 const waitSpans = (count, timeout = 11) => {
+  console.error(`Waiting for ${count} spans for ${timeout}s`);
+  console.time('waitSpans');
   const collectorUrl = new URL(process.env.COLLECTOR_URL ?? 'http://localhost:8378');
   collectorUrl.searchParams.set('count', count);
   collectorUrl.searchParams.set('timeout', timeout);
 
   return got(collectorUrl, {
-    retry: 0
-  }).json().then((ret) => {
+    retry: 0,
+  }).json().catch((err) => {waitSpans
+    assert.doesNotMatch(err?.response?.body, /timed.*out.*waiting.*spans/, `Timed out waiting for ${count} spans for ${timeout}s.`);
+  }).then((ret) => {
+    console.timeEnd('waitSpans');
     return ret.map(entryToSpan).sort((a, b) => {
       return a.startTime > b.startTime ? 1 : -1;
     });

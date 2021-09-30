@@ -1,0 +1,5 @@
+services:
+  app:
+    build:
+      # run tests on published package instead of the one compiled from source
+      target: published
