@@ -14,13 +14,106 @@
  * limitations under the License.
  */
 
-import { Options } from '../options';
-import { ServerResponse } from 'http';
+import { Options, CaptureHttpUriParameters } from '../options';
+import { IncomingMessage, ServerResponse } from 'http';
 import {
   HttpInstrumentationConfig,
   HttpResponseCustomAttributeFunction,
+  HttpRequestCustomAttributeFunction,
 } from '@opentelemetry/instrumentation-http';
-import { isSpanContextValid, TraceFlags } from '@opentelemetry/api';
+import { diag, isSpanContextValid, TraceFlags } from '@opentelemetry/api';
+import { Span } from '@opentelemetry/api';
+import * as Url from 'url';
+
+type IncomingHttpRequestHook = (span: Span, request: IncomingMessage) => void;
+
+function shouldAddRequestHook(options: Options): boolean {
+  if (
+    Array.isArray(options.captureHttpRequestUriParams) &&
+    options.captureHttpRequestUriParams.length == 0
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+function parseUrlParams(request: IncomingMessage) {
+  if (request.url === undefined) {
+    return {};
+  }
+
+  try {
+    // As long as Node <11 is supported, need to use the legacy API.
+    // eslint-disable-next-line node/no-deprecated-api
+    return Url.parse(request.url || '', true).query;
+  } catch (err) {
+    diag.debug(`error parsing url '${request.url}`, err);
+  }
+
+  return {};
+}
+
+function captureUriParamByKeys(keys: string[]): IncomingHttpRequestHook {
+  const capturedKeys = new Map(keys.map(k => [k, k.replace(/\./g, '_')]));
+
+  return (span, request) => {
+    const params = parseUrlParams(request);
+
+    for (const [key, normalizedKey] of capturedKeys) {
+      const value = params[key];
+
+      if (value === undefined) {
+        continue;
+      }
+
+      const values = Array.isArray(value) ? value : [value];
+
+      if (values.length > 0) {
+        span.setAttribute(`http.request.param.${normalizedKey}`, values);
+      }
+    }
+  };
+}
+
+function captureUriParamByFunction(
+  process: CaptureHttpUriParameters
+): IncomingHttpRequestHook {
+  return (span, request) => {
+    const params = parseUrlParams(request);
+    process(span, params);
+  };
+}
+
+function createHttpRequestHook(
+  options: Options
+): HttpRequestCustomAttributeFunction {
+  const incomingRequestHooks: IncomingHttpRequestHook[] = [];
+
+  if (Array.isArray(options.captureHttpRequestUriParams)) {
+    incomingRequestHooks.push(
+      captureUriParamByKeys(options.captureHttpRequestUriParams)
+    );
+  } else {
+    incomingRequestHooks.push(
+      captureUriParamByFunction(options.captureHttpRequestUriParams)
+    );
+  }
+
+  return (span, request) => {
+    const spanContext = span.spanContext();
+
+    if (!isSpanContextValid(spanContext)) {
+      return;
+    }
+
+    if (request instanceof IncomingMessage) {
+      for (const hook of incomingRequestHooks) {
+        hook(span, request);
+      }
+    }
+  };
+}
 
 export function configureHttpInstrumentation(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,41 +135,55 @@ export function configureHttpInstrumentation(
     span,
     response
   ) => {
-    if (response instanceof ServerResponse) {
-      const spanContext = span.spanContext();
-
-      if (isSpanContextValid(spanContext)) {
-        const { traceFlags, traceId, spanId } = spanContext;
-        const sampled =
-          (traceFlags & TraceFlags.SAMPLED) === TraceFlags.SAMPLED;
-        const flags = sampled ? '01' : '00';
-
-        appendHeader(
-          response,
-          'Access-Control-Expose-Headers',
-          'Server-Timing'
-        );
-        appendHeader(
-          response,
-          'Server-Timing',
-          `traceparent;desc="00-${traceId}-${spanId}-${flags}"`
-        );
-      }
+    if (!(response instanceof ServerResponse)) {
+      return;
     }
+
+    const spanContext = span.spanContext();
+
+    if (!isSpanContextValid(spanContext)) {
+      return;
+    }
+
+    const { traceFlags, traceId, spanId } = spanContext;
+    const sampled = (traceFlags & TraceFlags.SAMPLED) === TraceFlags.SAMPLED;
+    const flags = sampled ? '01' : '00';
+
+    appendHeader(response, 'Access-Control-Expose-Headers', 'Server-Timing');
+    appendHeader(
+      response,
+      'Server-Timing',
+      `traceparent;desc="00-${traceId}-${spanId}-${flags}"`
+    );
   };
 
   let config = instrumentation._getConfig() as HttpInstrumentationConfig;
 
   if (config === undefined) {
-    config = { responseHook };
-  } else if (config.responseHook !== undefined) {
+    config = {};
+  }
+
+  if (config.responseHook === undefined) {
+    config.responseHook = responseHook;
+  } else {
     const original = config.responseHook;
     config.responseHook = function (this: unknown, span, response) {
       responseHook(span, response);
       original.call(this, span, response);
     };
-  } else {
-    config.responseHook = responseHook;
+  }
+
+  if (shouldAddRequestHook(options)) {
+    const requestHook = createHttpRequestHook(options);
+    if (config.requestHook === undefined) {
+      config.requestHook = requestHook;
+    } else {
+      const original = config.requestHook;
+      config.requestHook = function (this: unknown, span, request) {
+        requestHook(span, request);
+        original.call(this, span, request);
+      };
+    }
   }
 
   instrumentation.setConfig(config);
