@@ -43,3 +43,5 @@ The following config options can be set by passing them as arguments to `startTr
 - `propagatorFactory`: A function that returns a new instance of a TextMapPropagator. Defaults to a composite propagator comprised of W3C [Trace Context](https://www.w3.org/TR/trace-context/) and [Baggage](https://w3c.github.io/baggage/) propagators.
 
 - `instrumentations`: Can be used to enable additional instrumentation packages.
+
+- `captureHttpRequestUriParams`: Either a list of keys (case-sensitive) of HTTP query parameters to capture or a function that gets invoked with the current span and query parameters to set a custom span attribute. When using the former, parameters are set as span attributes as `http.request.param.${key}`. Attribute keys are normalized at capture time, meaning `.` is replaced with `_` to avoid any attribute namespacing issues.
