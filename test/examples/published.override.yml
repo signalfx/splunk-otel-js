@@ -1,4 +1,5 @@
 services:
   app:
     build:
-      target: published # enable to run tests on published package instead of the one compiled from source
+      # run tests on published package instead of the one compiled from source
+      target: published

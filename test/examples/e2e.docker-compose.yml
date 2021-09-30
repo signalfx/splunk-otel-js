@@ -12,7 +12,6 @@ services:
     build:
       context:  ../../
       dockerfile: test/examples/Dockerfile
-      # target: published # enable to run tests on published package instead of the one compiled from source
     working_dir: /home/node/app/examples/basic
     env_file: ./basic/app.env
   test:
