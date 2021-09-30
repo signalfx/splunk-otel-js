@@ -79,7 +79,7 @@ describe('Capturing URI parameters', () => {
 
   it('uri parameters can be captured by keys', async () => {
     startTracing({
-      captureRequestUriParams: ['sortBy', 'order', 'yes'],
+      captureHttpRequestUriParams: ['sortBy', 'order', 'yes'],
       ...testOpts(),
     });
     setupServer();
@@ -99,7 +99,7 @@ describe('Capturing URI parameters', () => {
 
   it('uri parameters can be captured by user supplied function', async () => {
     startTracing({
-      captureRequestUriParams: (span, params) => {
+      captureHttpRequestUriParams: (span, params) => {
         const value = params['order'];
         if (value === undefined) {
           return;
@@ -124,7 +124,7 @@ describe('Capturing URI parameters', () => {
 
   it('uri parameter keys are normalized', async () => {
     startTracing({
-      captureRequestUriParams: ["'();:@&=+$,/?#[]b ar._&-~-&123!*"],
+      captureHttpRequestUriParams: ["'();:@&=+$,/?#[]b ar._&-~-&123!*"],
       ...testOpts(),
     });
     setupServer();

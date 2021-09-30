@@ -63,7 +63,7 @@ export interface Options {
   spanExporterFactory: SpanExporterFactory;
   spanProcessorFactory: SpanProcessorFactory;
   propagatorFactory: PropagatorFactory;
-  captureRequestUriParams: string[] | CaptureHttpUriParameters;
+  captureHttpRequestUriParams: string[] | CaptureHttpUriParameters;
 }
 
 export function _setDefaultOptions(options: Partial<Options> = {}): Options {
@@ -126,8 +126,8 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     options.instrumentations = getInstrumentations();
   }
 
-  if (options.captureRequestUriParams === undefined) {
-    options.captureRequestUriParams = [];
+  if (options.captureHttpRequestUriParams === undefined) {
+    options.captureHttpRequestUriParams = [];
   }
 
   return {
@@ -144,7 +144,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     spanExporterFactory: options.spanExporterFactory,
     spanProcessorFactory: options.spanProcessorFactory,
     propagatorFactory: options.propagatorFactory,
-    captureRequestUriParams: options.captureRequestUriParams,
+    captureHttpRequestUriParams: options.captureHttpRequestUriParams,
   };
 }
 

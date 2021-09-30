@@ -29,8 +29,8 @@ type IncomingHttpRequestHook = (span: Span, request: IncomingMessage) => void;
 
 function shouldAddRequestHook(options: Options): boolean {
   if (
-    Array.isArray(options.captureRequestUriParams) &&
-    options.captureRequestUriParams.length == 0
+    Array.isArray(options.captureHttpRequestUriParams) &&
+    options.captureHttpRequestUriParams.length == 0
   ) {
     return false;
   }
@@ -90,13 +90,13 @@ function createHttpRequestHook(
 ): HttpRequestCustomAttributeFunction {
   const incomingRequestHooks: IncomingHttpRequestHook[] = [];
 
-  if (Array.isArray(options.captureRequestUriParams)) {
+  if (Array.isArray(options.captureHttpRequestUriParams)) {
     incomingRequestHooks.push(
-      captureUriParamByKeys(options.captureRequestUriParams)
+      captureUriParamByKeys(options.captureHttpRequestUriParams)
     );
   } else {
     incomingRequestHooks.push(
-      captureUriParamByFunction(options.captureRequestUriParams)
+      captureUriParamByFunction(options.captureHttpRequestUriParams)
     );
   }
 
