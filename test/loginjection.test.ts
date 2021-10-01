@@ -29,9 +29,8 @@ describe('log injection', () => {
   let stream: Writable;
   let record: any;
 
-  function assertInjection(logger, extra?) {
+  function assertInjection(logger, extra = [['service.name', 'test-service']]) {
     const span = trace.getTracer('test').startSpan('main');
-    extra = extra ?? [['service.name', 'test-service']];
     let traceId;
     let spanId;
     context.with(trace.setSpan(context.active(), span), () => {
