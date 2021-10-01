@@ -88,7 +88,7 @@ node -r @splunk/otel/instrument index.js
 
 ## Correlate traces and logs
 
-The Splunk Distribution of OpenTelemetry JS can make trace metadata available to many Node.js logging libraries capable of accessing them, like Pino, Winston, and Bunyan. You can use trace metadata to correlate traces with log events, and explore logs in Observability Cloud. 
+The Splunk Distribution of OpenTelemetry JS automatically injects trace metadata into logs so that Node.js logging libraries can access it. You can use trace metadata to correlate traces with log events and explore logs in Observability Cloud.
 
 For more information, see [Correlating traces with logs](./docs/correlate-logs-traces.md).
 
@@ -140,7 +140,7 @@ opentelemetry-instrumentation-sequelize
 opentelemetry-instrumentation-typeorm
 ```
 
-If log injection is enabled, the corresponding logging library package must be installed beforehand. Supported logging library instrumentations:
+The following logging library instrumentations are supported:
 
 ```
 @opentelemetry/instrumentation-bunyan
