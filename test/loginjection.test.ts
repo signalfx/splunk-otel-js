@@ -119,8 +119,8 @@ describe('log injection', () => {
     });
 
     it('is easy enough do do both', () => {
-      const MY_VALUE = 'myValue';
-      const MY_ATTRIBUTE = 'myAttribute';
+      const MY_VALUE = 'myValueBoth';
+      const MY_ATTRIBUTE = 'myAttributeBoth';
       startTracing({
         serviceName: 'test-service',
         instrumentations: [
