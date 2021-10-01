@@ -16,7 +16,7 @@ The following logging librares are supported:
 The following attributes are automatically injected into logs:
 
 - Trace information: `trace_id`, `span_id`, and `trace_flags`
-- Resource attributes: `service.name`, `service.version`, and `service.environment`
+- Resource attributes: `service.name`, `service.version`, and `deployment.environment`(as `service.environment`)
 
 The format of each log message depends on the logging library. The following is a sample log message formatted by the Pino library:
 
