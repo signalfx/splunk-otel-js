@@ -3,7 +3,7 @@
 
 The Splunk Distribution of OpenTelemetry JS automatically injects trace metadata into logs so that Node.js logging libraries can access it. You can use trace metadata to correlate traces with log events and explore logs in Observability Cloud.
 
-## Supported logging libraries
+## Supported logging libraries
 
 The following logging librares are supported:
 
@@ -24,7 +24,7 @@ The format of each log message depends on the logging library. The following is 
    {"level":30,"time":1979374615686,"pid":728570,"hostname":"my_host","trace_id":"f8e261432221096329baf5e62090d856","span_id":"3235afe76b55fe51","trace_flags":"01","url":"/lkasd","msg":"request handler"}
 ```
 
-## Enable logs injection
+## Enable logs injection
 
 To enable log injection, install the instrumentation package for your logging library:
 

@@ -85,7 +85,7 @@ Then you can automatically instrument your application by running
 node -r @splunk/otel/instrument index.js
 ```
 
-## Correlate traces and logs
+## Correlate traces and logs
 
 The Splunk Distribution of OpenTelemetry JS automatically injects trace metadata into logs so that Node.js logging libraries can access it. You can use trace metadata to correlate traces with log events and explore logs in Observability Cloud.
 

@@ -1,0 +1,9 @@
+services:
+  app:
+    working_dir: /home/node/app/examples/express
+    env_file: ./express/app.env
+  test:
+    command: node ./express
+    environment:
+      REQ_URL: http://app/all
+      COLLECTOR_URL: http://collector:8378

@@ -26,7 +26,7 @@ import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { EnvResourceDetector } from './resource';
 import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import { TextMapPropagator } from '@opentelemetry/api';
+import { Span, TextMapPropagator } from '@opentelemetry/api';
 import {
   CompositePropagator,
   HttpBaggagePropagator,
@@ -46,6 +46,11 @@ type SpanProcessorFactory = (
 
 type PropagatorFactory = (options: Options) => TextMapPropagator;
 
+export type CaptureHttpUriParameters = (
+  span: Span,
+  params: Record<string, string | string[] | undefined>
+) => void;
+
 export interface Options {
   endpoint?: string;
   serviceName: string;
@@ -58,6 +63,7 @@ export interface Options {
   spanExporterFactory: SpanExporterFactory;
   spanProcessorFactory: SpanProcessorFactory;
   propagatorFactory: PropagatorFactory;
+  captureHttpRequestUriParams: string[] | CaptureHttpUriParameters;
 }
 
 export function _setDefaultOptions(options: Partial<Options> = {}): Options {
@@ -120,6 +126,10 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     options.instrumentations = getInstrumentations();
   }
 
+  if (options.captureHttpRequestUriParams === undefined) {
+    options.captureHttpRequestUriParams = [];
+  }
+
   return {
     endpoint: options.endpoint,
     serviceName: String(
@@ -134,12 +144,13 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     spanExporterFactory: options.spanExporterFactory,
     spanProcessorFactory: options.spanProcessorFactory,
     propagatorFactory: options.propagatorFactory,
+    captureHttpRequestUriParams: options.captureHttpRequestUriParams,
   };
 }
 
 export function resolveTracesExporter(): SpanExporterFactory {
   const factory =
-    SpanExporterMap[process.env.OTEL_TRACES_EXPORTER ?? 'default'];
+    SpanExporterMap[process.env.OTEL_TRACES_EXPORTER || 'default'];
   assert.strictEqual(
     typeof factory,
     'function',
