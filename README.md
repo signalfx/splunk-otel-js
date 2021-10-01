@@ -139,7 +139,7 @@ opentelemetry-instrumentation-sequelize
 opentelemetry-instrumentation-typeorm
 ```
 
-If log injection is enabled, the corresponding logging library package must be installed beforehand. Supported logging library instrumentations:
+To enable log injection, corresponding logging library instrumentation must be installed beforehand. Supported logging library instrumentations:
 
 ```
 @opentelemetry/instrumentation-bunyan
