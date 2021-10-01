@@ -22,6 +22,7 @@ import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
 import { getInstrumentations } from './instrumentations';
 import { CollectorTraceExporter } from '@opentelemetry/exporter-collector-grpc';
+// eslint-disable-next-line node/no-extraneous-import
 import { Metadata } from '@grpc/grpc-js';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { EnvResourceDetector } from './resource';
