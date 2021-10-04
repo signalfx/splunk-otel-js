@@ -6,10 +6,11 @@ This example showcases a more extensive integration with OpenTelemetry(OTel):
 2. manual instrumentation: [index.js](./index.js) manually creates spans for custom "work",
 3. log injection: the example is using a logging library `pino` for structured logging, `trace_id` and `span_id` properties are added to every log line automatically.
 
-By default it requires OTel Collector to be running with OTLP reciever open on `localhost:55681`.
+By default it requires OTel Collector to be running with OTLP reciever open on `localhost:4317`.
 
 ```shell
-docker run --name otel-collector -d -p 55681:55681 otel/opentelemetry-collector
+# Exposing ports for OTLP/gRPC and Jaeger from collector
+docker run --name otel-collector -d -p 4317:4317 -p 14268:14268 otel/opentelemetry-collector
 npm start
 ```
 
@@ -37,8 +38,9 @@ and the application logs to stdout:
 It's also possible to send the traces directly to Splunk APM. For that additional environment variables need to be set up:
 
 ```shell
+export OTEL_TRACES_EXPORTER="jaeger-thrift-splunk"
 # Replace <realm> with the correct realm:
-export OTEL_EXPORTER_OTLP_ENDPOINT="https://ingest.<realm>.signalfx.com/v2/trace/otlp"
+export OTEL_EXPORTER_JAEGER_ENDPOINT="https://ingest.<realm>.signalfx.com/v2/trace"
 export SPLUNK_ACCESS_TOKEN="<your access token>"
 # Optional. To set the environment:
 export OTEL_RESOURCE_ATTRIBUTES='deployment.environment=dev'

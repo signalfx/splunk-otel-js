@@ -21,7 +21,9 @@ import { InstrumentationOption } from '@opentelemetry/instrumentation';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
 import { getInstrumentations } from './instrumentations';
-import { CollectorTraceExporter } from '@opentelemetry/exporter-collector-proto';
+import { CollectorTraceExporter } from '@opentelemetry/exporter-collector-grpc';
+// eslint-disable-next-line node/no-extraneous-import
+import { Metadata } from '@grpc/grpc-js';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { EnvResourceDetector } from './resource';
 import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
@@ -158,11 +160,14 @@ export function resolveTracesExporter(): SpanExporterFactory {
 }
 
 export function otlpSpanExporterFactory(options: Options): SpanExporter {
+  const metadata = new Metadata();
+  if (options.accessToken) {
+    // for forward compatibility, is not currently supported
+    metadata.set('X-SF-TOKEN', options.accessToken);
+  }
   return new CollectorTraceExporter({
     url: options.endpoint,
-    headers: {
-      'X-SF-TOKEN': options.accessToken,
-    },
+    metadata,
   });
 }
 
@@ -203,7 +208,7 @@ const SpanExporterMap: Record<string, SpanExporterFactory> = {
   'jaeger-thrift-http': jaegerSpanExporterFactory,
   'jaeger-thrift-splunk': splunkSpanExporterFactory,
   otlp: otlpSpanExporterFactory,
-  'otlp-http': otlpSpanExporterFactory,
+  'otlp-grpc': otlpSpanExporterFactory,
 };
 
 export function defaultSpanProcessorFactory(options: Options): SpanProcessor {

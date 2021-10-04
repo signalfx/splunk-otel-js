@@ -51,7 +51,7 @@ describe('options', () => {
     const options = _setDefaultOptions();
     assert.deepStrictEqual(options, {
       /*
-        let @opentelemetry/exporter-collector-proto package itself
+        let @opentelemetry/exporter-collector-grpc package itself
         resolve the default for endpoint.
       */
       endpoint: undefined,
