@@ -31,8 +31,8 @@ import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
 import { Span, TextMapPropagator } from '@opentelemetry/api';
 import {
   CompositePropagator,
-  HttpBaggagePropagator,
-  HttpTraceContextPropagator,
+  W3CBaggagePropagator,
+  W3CTraceContextPropagator
 } from '@opentelemetry/core';
 import { SplunkBatchSpanProcessor } from './SplunkBatchSpanProcessor';
 import { Resource } from '@opentelemetry/resources';
@@ -227,10 +227,10 @@ export function defaultPropagatorFactory(options: Options): TextMapPropagator {
   for (const propagator of deduplicate(propagatorsStr.split(','))) {
     switch (propagator) {
       case 'baggage':
-        propagators.push(new HttpBaggagePropagator());
+        propagators.push(new W3CBaggagePropagator());
         break;
       case 'tracecontext':
-        propagators.push(new HttpTraceContextPropagator());
+        propagators.push(new W3CTraceContextPropagator());
         break;
       case 'b3multi':
         propagators.push(
