@@ -14,7 +14,6 @@
     "server:opentracing": "env-cmd --silent nodemon -r ./tracer.opentracing.js server.js"
   },
   "dependencies": {
-    "@opentelemetry/exporter-jaeger": "^0.24.0",
     "@opentelemetry/instrumentation-express": "^0.25.0",
     "@opentelemetry/instrumentation-http": "^0.25.0",
     "@splunk/otel": "^0.13.0",
