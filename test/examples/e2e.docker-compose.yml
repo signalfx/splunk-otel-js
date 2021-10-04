@@ -14,6 +14,8 @@ services:
       dockerfile: test/examples/Dockerfile
     working_dir: /home/node/app/examples/basic
     env_file: ./basic/app.env
+    depends_on:
+      - collector
   test:
     build:
       context: .

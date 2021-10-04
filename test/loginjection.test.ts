@@ -15,32 +15,40 @@
  */
 
 import * as assert from 'assert';
+import * as util from 'util';
 import { Writable } from 'stream';
 import { context, trace } from '@opentelemetry/api';
 import { startTracing, stopTracing } from '../src/tracing';
+import { defaultLogHook } from '../src/instrumentations/logging.ts';
 import type * as pino from 'pino';
 import type * as bunyan from 'bunyan';
 import type * as winston from 'winston';
+import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
 
 describe('log injection', () => {
   let stream: Writable;
   let record: any;
 
-  function assertInjection(logger, done, extra?) {
+  function assertInjection(logger, extra = [['service.name', 'test-service']]) {
     const span = trace.getTracer('test').startSpan('main');
+    let traceId;
+    let spanId;
     context.with(trace.setSpan(context.active(), span), () => {
-      const { traceId, spanId } = span.spanContext();
+      traceId = span.spanContext().traceId;
+      spanId = span.spanContext().spanId;
       logger.info('my-log-message');
-      assert.strictEqual(record['trace_id'], traceId);
-      assert.strictEqual(record['span_id'], spanId);
-      assert.strictEqual(record['service.name'], 'test-service');
-
-      for (const [key, value] of extra || []) {
-        assert.strictEqual(record[key], value);
-      }
-
-      done();
     });
+
+    assert.strictEqual(record['trace_id'], traceId);
+    assert.strictEqual(record['span_id'], spanId);
+
+    for (const [key, value] of extra || []) {
+      assert.strictEqual(
+        record[key],
+        value,
+        `Invalid value for "${key}": ${util.inspect(record[key])}`
+      );
+    }
   }
 
   beforeEach(() => {
@@ -54,32 +62,83 @@ describe('log injection', () => {
 
   describe('default flow', () => {
     before(() => {
-      startTracing({ logInjectionEnabled: true, serviceName: 'test-service' });
+      startTracing({ serviceName: 'test-service' });
     });
 
     after(() => {
       stopTracing();
     });
 
-    it('injects context to bunyan records', done => {
+    it('injects context to bunyan records', () => {
       const logger: bunyan = require('bunyan').createLogger({
         name: 'test',
         stream,
       });
-      assertInjection(logger, done);
+      assertInjection(logger);
     });
 
-    it('injects context to pino records', done => {
-      const logger: pino = require('pino')(stream);
-      assertInjection(logger, done);
+    it('injects context to pino records', () => {
+      const logger: pino.Logger = require('pino')(stream);
+      assertInjection(logger);
     });
 
-    it('injects context to winston records', done => {
+    it('injects context to winston records', () => {
       const winston: winston = require('winston');
       const logger = winston.createLogger({
         transports: [new winston.transports.Stream({ stream })],
       });
-      assertInjection(logger, done);
+      assertInjection(logger);
+    });
+  });
+
+  describe('injecting with custom hook', () => {
+    afterEach(() => {
+      stopTracing();
+    });
+
+    it('is possible to opt out from injecting resource attributes', () => {
+      const MY_VALUE = 'myValue';
+      const MY_ATTRIBUTE = 'myAttribute';
+      startTracing({
+        serviceName: 'test-service',
+        instrumentations: [
+          new PinoInstrumentation({
+            logHook: (span, logRecord) => {
+              logRecord[MY_ATTRIBUTE] = MY_VALUE;
+            },
+          }),
+        ],
+      });
+
+      const logger: pino.Logger = require('pino')(stream);
+
+      assertInjection(logger, [
+        ['service.name', undefined],
+        [MY_ATTRIBUTE, MY_VALUE],
+      ]);
+    });
+
+    it('is easy enough do do both', () => {
+      const MY_VALUE = 'myValueBoth';
+      const MY_ATTRIBUTE = 'myAttributeBoth';
+      startTracing({
+        serviceName: 'test-service',
+        instrumentations: [
+          new PinoInstrumentation({
+            logHook: (span, logRecord) => {
+              defaultLogHook(span, logRecord);
+              logRecord[MY_ATTRIBUTE] = MY_VALUE;
+            },
+          }),
+        ],
+      });
+
+      const logger: pino.Logger = require('pino')(stream);
+
+      assertInjection(logger, [
+        ['service.name', 'test-service'],
+        [MY_ATTRIBUTE, MY_VALUE],
+      ]);
     });
   });
 
@@ -93,15 +152,16 @@ describe('log injection', () => {
       delete process.env.OTEL_RESOURCE_ATTRIBUTES;
     });
 
-    it('injects service version and service environment if available', done => {
-      startTracing({ logInjectionEnabled: true, serviceName: 'test-service' });
+    it('injects service version and service environment if available', () => {
+      startTracing({ serviceName: 'test-service' });
 
       const logger: bunyan = require('bunyan').createLogger({
         name: 'test',
         stream,
       });
 
-      assertInjection(logger, done, [
+      assertInjection(logger, [
+        ['service.name', 'test-service'],
         ['service.version', '1'],
         ['service.environment', 'test'],
       ]);
