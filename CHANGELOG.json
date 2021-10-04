@@ -2,6 +2,47 @@
   "name": "@splunk/otel",
   "entries": [
     {
+      "date": "Mon, 04 Oct 2021 12:27:07 GMT",
+      "tag": "@splunk/otel_v0.13.0",
+      "version": "0.13.0",
+      "comments": {
+        "patch": [
+          {
+            "author": "Rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "comment": "Update development dependencies",
+            "commit": "dbe545a7530fa91c194f071086935d8a8706abc6"
+          },
+          {
+            "author": "Rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "comment": "Updated OTel dependencies",
+            "commit": "dbe545a7530fa91c194f071086935d8a8706abc6"
+          }
+        ],
+        "minor": [
+          {
+            "author": "Rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "comment": "feat: use gRPC by default and Jaeger for collectorless scenario",
+            "commit": "dbe545a7530fa91c194f071086935d8a8706abc6"
+          },
+          {
+            "author": "Rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "comment": "feat: remove logInjectionEnabled and SPLUNK_LOGS_INJECTION options",
+            "commit": "dbe545a7530fa91c194f071086935d8a8706abc6"
+          },
+          {
+            "author": "siimkallas@gmail.com",
+            "package": "@splunk/otel",
+            "comment": "feat: add the option to capture URL parameters",
+            "commit": "dbe545a7530fa91c194f071086935d8a8706abc6"
+          }
+        ]
+      }
+    },
+    {
       "date": "Tue, 07 Sep 2021 12:05:40 GMT",
       "tag": "@splunk/otel_v0.12.0",
       "version": "0.12.0",

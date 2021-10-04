@@ -1,7 +1,0 @@
-{
-  "type": "minor",
-  "comment": "feat: remove logInjectionEnabled and SPLUNK_LOGS_INJECTION options",
-  "packageName": "@splunk/otel",
-  "email": "Rauno56@gmail.com",
-  "dependentChangeType": "patch"
-}

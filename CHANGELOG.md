@@ -1,8 +1,23 @@
 # Change Log - @splunk/otel
 
-This log was last generated on Tue, 07 Sep 2021 12:05:40 GMT and should not be manually modified.
+This log was last generated on Mon, 04 Oct 2021 12:27:07 GMT and should not be manually modified.
 
 <!-- Start content -->
+
+## 0.13.0
+
+Mon, 04 Oct 2021 12:27:07 GMT
+
+### Minor changes
+
+- feat: use gRPC by default and Jaeger for collectorless scenario (Rauno56@gmail.com)
+- feat: remove logInjectionEnabled and SPLUNK_LOGS_INJECTION options (Rauno56@gmail.com)
+- feat: add the option to capture URL parameters (siimkallas@gmail.com)
+
+### Patches
+
+- Update development dependencies (Rauno56@gmail.com)
+- Updated OTel dependencies (Rauno56@gmail.com)
 
 ## 0.12.0
 
