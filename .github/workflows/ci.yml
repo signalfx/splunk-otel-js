@@ -85,10 +85,9 @@ jobs:
       - name: Test mixed example
         working-directory: test/examples
         run: docker-compose -f e2e.docker-compose.yml -f mixed.override.yml -f published.override.yml up --exit-code-from test
-      # Should be enabled when 0.13 is released with exposing defaultLogHook
-      # - name: Test log-injection example
-      #   working-directory: test/examples
-      #   run: docker-compose -f e2e.docker-compose.yml -f log-injection.override.yml -f published.override.yml up --exit-code-from test
+      - name: Test log-injection example
+        working-directory: test/examples
+        run: docker-compose -f e2e.docker-compose.yml -f log-injection.override.yml -f published.override.yml up --exit-code-from test
 
   e2e:
     runs-on: ubuntu-latest
