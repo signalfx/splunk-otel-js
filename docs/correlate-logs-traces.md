@@ -13,9 +13,10 @@ The following logging librares are supported:
 
 ## Injected trace data
 
-The following attributes are available for applications instrumented using the Splunk distribution of OpenTelemetry JS:
+The following attributes are automatically injected into logs:
 
 - Trace information: `trace_id`, `span_id`, and `trace_flags`
+- Resource attributes: `service.name`, `service.version`, and `deployment.environment`(as `service.environment`)
 
 The format of each log message depends on the logging library. The following is a sample log message formatted by the Pino library:
 

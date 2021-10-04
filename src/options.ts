@@ -59,7 +59,6 @@ export interface Options {
   accessToken: string;
   maxAttrLength: number;
   serverTimingEnabled: boolean;
-  logInjectionEnabled: boolean;
   instrumentations: InstrumentationOption[];
   tracerConfig: NodeTracerConfig;
   spanExporterFactory: SpanExporterFactory;
@@ -86,10 +85,6 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
       'SPLUNK_TRACE_RESPONSE_HEADER_ENABLED',
       true
     );
-  }
-
-  if (options.logInjectionEnabled === undefined) {
-    options.logInjectionEnabled = getEnvBoolean('SPLUNK_LOGS_INJECTION', false);
   }
 
   const extraTracerConfig = options.tracerConfig || {};
@@ -140,7 +135,6 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     accessToken: options.accessToken,
     maxAttrLength: options.maxAttrLength,
     serverTimingEnabled: options.serverTimingEnabled,
-    logInjectionEnabled: options.logInjectionEnabled,
     instrumentations: options.instrumentations,
     tracerConfig: tracerConfig,
     spanExporterFactory: options.spanExporterFactory,

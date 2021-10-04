@@ -1,0 +1,8 @@
+services:
+  app:
+    working_dir: /home/node/app/examples/log-injection
+    env_file: ./log-injection/app.env
+  test:
+    command: node ./log-injection
+    environment:
+      COLLECTOR_URL: http://collector:8378

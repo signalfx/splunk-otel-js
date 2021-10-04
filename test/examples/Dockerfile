@@ -17,6 +17,7 @@ FROM base as published
 
 RUN cd examples/basic && npm install
 RUN cd examples/express && npm install
+RUN cd examples/log-injection && npm install
 RUN cd examples/mixed && npm install
 
 ## Project root doesn't have start script defined
@@ -31,4 +32,5 @@ RUN npm run compile
 RUN mv `npm pack` /tmp/splunk-otel.tgz
 RUN cd examples/basic && npm i /tmp/splunk-otel.tgz
 RUN cd examples/express && npm i /tmp/splunk-otel.tgz
+RUN cd examples/log-injection && npm i /tmp/splunk-otel.tgz
 RUN cd examples/mixed && npm i /tmp/splunk-otel.tgz
