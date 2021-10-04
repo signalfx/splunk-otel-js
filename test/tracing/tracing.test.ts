@@ -77,12 +77,7 @@ describe('tracing:otlp', () => {
 
   it('setups tracing with defaults', () => {
     startTracing();
-    assertTracingPipeline(
-      'localhost:4317',
-      'unnamed-node-service',
-      '',
-      1200
-    );
+    assertTracingPipeline('localhost:4317', 'unnamed-node-service', '', 1200);
     stopTracing();
   });
 
