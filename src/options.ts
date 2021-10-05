@@ -32,7 +32,7 @@ import { Span, TextMapPropagator } from '@opentelemetry/api';
 import {
   CompositePropagator,
   W3CBaggagePropagator,
-  W3CTraceContextPropagator
+  W3CTraceContextPropagator,
 } from '@opentelemetry/core';
 import { SplunkBatchSpanProcessor } from './SplunkBatchSpanProcessor';
 import { Resource } from '@opentelemetry/resources';
