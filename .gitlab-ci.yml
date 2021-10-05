@@ -53,7 +53,7 @@ release:
     - npm install
     - npm run compile
     - npm pack
-    - mkdir dist
+    - mkdir -p dist
     - mv splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz dist/
     - shasum -a 256 dist/* > dist/checksums.txt
 
