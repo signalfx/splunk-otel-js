@@ -1,7 +1,0 @@
-{
-  "type": "patch",
-  "comment": "Update development dependencies",
-  "packageName": "@splunk/otel",
-  "email": "Rauno56@gmail.com",
-  "dependentChangeType": "patch"
-}

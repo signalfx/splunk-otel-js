@@ -1,7 +1,0 @@
-{
-  "type": "major",
-  "comment": "feat: use gRPC by default and Jaeger for collectorless scenario",
-  "packageName": "@splunk/otel",
-  "email": "Rauno56@gmail.com",
-  "dependentChangeType": "patch"
-}
