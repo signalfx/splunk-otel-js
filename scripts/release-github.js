@@ -16,7 +16,7 @@ async function createRelease() {
   const tag = `v${version}`;
   console.log(`Tag: ${tag}`);
 
-  const owner = 'jtmalinowski';
+  const owner = 'signalfx';
   const repo = 'splunk-otel-js';
   console.log(`Repo: ${owner}/${repo}`);
 
