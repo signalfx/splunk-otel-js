@@ -1,0 +1,7 @@
+{
+  "type": "minor",
+  "comment": "feat: give OTEL_SPAN_LINK_COUNT_LIMIT and OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT GDI spec compliant defaults",
+  "packageName": "@splunk/otel",
+  "email": "rauno56@gmail.com",
+  "dependentChangeType": "patch"
+}
