@@ -68,6 +68,11 @@ export interface Options {
 }
 
 export function _setDefaultOptions(options: Partial<Options> = {}): Options {
+  process.env.OTEL_SPAN_LINK_COUNT_LIMIT =
+    process.env.OTEL_SPAN_LINK_COUNT_LIMIT ?? '1000';
+  process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT =
+    process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT ?? '12000';
+
   options.accessToken =
     options.accessToken || process.env.SPLUNK_ACCESS_TOKEN || '';
 
