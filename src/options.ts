@@ -28,7 +28,7 @@ import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { EnvResourceDetector } from './resource';
 import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import { Span, TextMapPropagator } from '@opentelemetry/api';
+import { diag, Span, TextMapPropagator } from '@opentelemetry/api';
 import {
   CompositePropagator,
   W3CBaggagePropagator,
@@ -99,12 +99,20 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   const serviceName =
     options.serviceName ||
     process.env.OTEL_SERVICE_NAME ||
-    resource.attributes[SemanticResourceAttributes.SERVICE_NAME] ||
-    defaultServiceName;
+    resource.attributes[SemanticResourceAttributes.SERVICE_NAME];
+
+  if (!serviceName) {
+    diag.warn(
+      'service.name attribute is not set, your service is unnamed and will be difficult to identify. ' +
+        'Set your service name using the OTEL_RESOURCE_ATTRIBUTES environment variable. ' +
+        'E.g. OTEL_RESOURCE_ATTRIBUTES="service.name=<YOUR_SERVICE_NAME_HERE>"'
+    );
+  }
 
   resource = resource.merge(
     new Resource({
-      [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
+      [SemanticResourceAttributes.SERVICE_NAME]:
+        serviceName || defaultServiceName,
     })
   );
 
@@ -126,6 +134,12 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   // instrumentations
   if (options.instrumentations === undefined) {
     options.instrumentations = getInstrumentations();
+  }
+
+  if (options.instrumentations.length === 0) {
+    diag.warn(
+      'No instrumentations set to be loaded. Install an instrumentation package to enable auto-instrumentation.'
+    );
   }
 
   if (options.captureHttpRequestUriParams === undefined) {
