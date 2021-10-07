@@ -16,8 +16,8 @@ async function createRelease() {
   const tag = `v${version}`;
   console.log(`Tag: ${tag}`);
 
-  const owner = 'jtmalinowski';
-  const repo = 'splunk-otel-js';
+  const owner = process.env.GITHUB_OWNER ?? 'signalfx';
+  const repo = process.env.GITHUB_REPO ?? 'splunk-otel-js';
   console.log(`Repo: ${owner}/${repo}`);
 
   const commit = process.env.CI_COMMIT_SHA;
