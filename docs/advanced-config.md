@@ -16,6 +16,13 @@ To configure the Splunk Distribution of OpenTelemetry JS, you can use a combinat
 
 ## List of settings
 
+This distribution supports all the configuration options supported by the components it uses with the defaults specified by the [OTel Specification](https://github.com/open-telemetry/opentelemetry-specification) with few exceptions:
+
+| Environment variable | Default value
+| --- | --- |
+| OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT | `1000` |
+| OTEL_SPAN_LINK_COUNT_LIMIT | `12000` |
+
 The following table contain the configuration options supported by this distribution.
 
 | Environment variable                 | Arguments to ``startTracing()`` | Default value                         | Notes
