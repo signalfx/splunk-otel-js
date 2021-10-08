@@ -9,9 +9,9 @@ const { startTracing } = require('@splunk/otel');
 const { getInstrumentations } = require('@splunk/otel/lib/instrumentations');
 
 startTracing({
-  instrumentations: [
+	instrumentations: [
 		...getInstrumentations()
-    new HttpInstrumentation({
+		new HttpInstrumentation({
 			headersToSpanAttributes: {
 				// Server side capturing, e.g. express
 				server: {
@@ -26,7 +26,7 @@ startTracing({
 				}
 			}
 		}),
-  ]
+	]
 });
 ```
 # Converting HTTP request parameters to span attributes
