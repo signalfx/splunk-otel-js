@@ -8,7 +8,7 @@
 #
 #####################################################
 
-*.md    @signalfx/gdi-js-maintainers @signalfx/gdi-js-approvers @signalfx/docs
-*.rst   @signalfx/gdi-js-maintainers @signalfx/gdi-js-approvers @signalfx/docs
-docs/   @signalfx/gdi-js-maintainers @signalfx/gdi-js-approvers @signalfx/docs
-README* @signalfx/gdi-js-maintainers @signalfx/gdi-js-approvers @signalfx/docs
+*.md    @signalfx/gdi-js-maintainers @signalfx/gdi-js-approvers @signalfx/gdi-docs
+*.rst   @signalfx/gdi-js-maintainers @signalfx/gdi-js-approvers @signalfx/gdi-docs
+docs/   @signalfx/gdi-js-maintainers @signalfx/gdi-js-approvers @signalfx/gdi-docs
+README* @signalfx/gdi-js-maintainers @signalfx/gdi-js-approvers @signalfx/gdi-docs
