@@ -22,7 +22,10 @@ startTracing({
 				},
 				// Client side capturing, e.g. node-fetch, got
 				client: {
-					responseHeaders: ['server-timing
+					// Incoming response headers
+					responseHeaders: ['server-timing'],
+					// Outgoing request headers
+					requestHeaders: ['accept-encoding']
 				}
 			}
 		}),
