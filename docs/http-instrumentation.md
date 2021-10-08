@@ -10,7 +10,7 @@ const { getInstrumentations } = require('@splunk/otel/lib/instrumentations');
 
 startTracing({
 	instrumentations: [
-		...getInstrumentations()
+		...getInstrumentations(),
 		new HttpInstrumentation({
 			headersToSpanAttributes: {
 				// Server side capturing, e.g. express
