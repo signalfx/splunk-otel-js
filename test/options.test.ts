@@ -84,7 +84,6 @@ describe('options', () => {
       serviceName: 'unnamed-node-service',
       accessToken: '',
       serverTimingEnabled: true,
-      maxAttrLength: 1200,
       instrumentations: [],
       tracerConfig: {
         resource: new Resource({
@@ -114,7 +113,6 @@ describe('options', () => {
       endpoint: 'custom-endpoint',
       serviceName: 'custom-service-name',
       accessToken: 'custom-access-token',
-      maxAttrLength: 4000,
       instrumentations: [testInstrumentation],
       tracerConfig: {
         resource: new Resource({
@@ -132,7 +130,6 @@ describe('options', () => {
       endpoint: 'custom-endpoint',
       serviceName: 'custom-service-name',
       accessToken: 'custom-access-token',
-      maxAttrLength: 4000,
       serverTimingEnabled: true,
       instrumentations: [testInstrumentation],
       tracerConfig: {

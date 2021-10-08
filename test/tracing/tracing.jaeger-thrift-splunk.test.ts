@@ -26,15 +26,12 @@ import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 
 import { startTracing, stopTracing } from '../../src/tracing';
-import * as jaeger from '../../src/jaeger';
 import * as utils from '../utils';
 
 describe('tracing:jaeger-thrift-splunk', () => {
-  let patchJaegerMock;
   let addSpanProcessorMock;
 
   before(() => {
-    patchJaegerMock = sinon.stub(jaeger, '_patchJaeger');
     addSpanProcessorMock = sinon.stub(
       NodeTracerProvider.prototype,
       'addSpanProcessor'
@@ -44,20 +41,17 @@ describe('tracing:jaeger-thrift-splunk', () => {
   beforeEach(() => {
     utils.cleanEnvironment();
     process.env.OTEL_TRACES_EXPORTER = 'jaeger-thrift-splunk';
-    patchJaegerMock.reset();
     addSpanProcessorMock.reset();
   });
 
   after(() => {
-    patchJaegerMock.restore();
     addSpanProcessorMock.restore();
   });
 
   function assertTracingPipeline(
     exportURL: string,
     serviceName: string,
-    accessToken?: string,
-    maxAttrLength?: number
+    accessToken?: string
   ) {
     sinon.assert.calledOnce(addSpanProcessorMock);
     const processor = addSpanProcessorMock.getCall(0).args[0];
@@ -75,8 +69,6 @@ describe('tracing:jaeger-thrift-splunk', () => {
     }
 
     assert.equal(config['serviceName'], serviceName);
-
-    assert.equal(maxAttrLength, patchJaegerMock.getCall(0).args[0]);
   }
 
   it('setups tracing with defaults', () => {
@@ -84,8 +76,7 @@ describe('tracing:jaeger-thrift-splunk', () => {
     assertTracingPipeline(
       'http://localhost:9080/v1/trace',
       'unnamed-node-service',
-      '',
-      1200
+      ''
     );
     stopTracing();
   });
@@ -94,14 +85,12 @@ describe('tracing:jaeger-thrift-splunk', () => {
     const endpoint = 'https://custom-endpoint:1111/path';
     const serviceName = 'test-node-service';
     const accessToken = '1234';
-    const maxAttrLength = 50;
     startTracing({
       endpoint,
       serviceName,
       accessToken,
-      maxAttrLength,
     });
-    assertTracingPipeline(endpoint, serviceName, accessToken, maxAttrLength);
+    assertTracingPipeline(endpoint, serviceName, accessToken);
     stopTracing();
   });
 
@@ -109,15 +98,13 @@ describe('tracing:jaeger-thrift-splunk', () => {
     const url = 'https://url-from-env:3030/trace-path';
     const serviceName = 'env-service';
     const accessToken = 'zxcvb';
-    const maxAttrLength = 101;
 
     process.env.OTEL_EXPORTER_JAEGER_ENDPOINT = url;
     process.env.OTEL_SERVICE_NAME = serviceName;
     process.env.SPLUNK_ACCESS_TOKEN = accessToken;
-    process.env.SPLUNK_MAX_ATTR_LENGTH = maxAttrLength.toString();
 
     startTracing();
-    assertTracingPipeline(url, serviceName, accessToken, maxAttrLength);
+    assertTracingPipeline(url, serviceName, accessToken);
     stopTracing();
   });
 });
