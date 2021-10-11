@@ -38,7 +38,6 @@ import { SplunkBatchSpanProcessor } from './SplunkBatchSpanProcessor';
 import { Resource } from '@opentelemetry/resources';
 
 const defaultServiceName = 'unnamed-node-service';
-const defaultMaxAttrLength = 1200;
 
 type SpanExporterFactory = (options: Options) => SpanExporter;
 
@@ -57,7 +56,6 @@ export interface Options {
   endpoint?: string;
   serviceName: string;
   accessToken: string;
-  maxAttrLength: number;
   serverTimingEnabled: boolean;
   instrumentations: InstrumentationOption[];
   tracerConfig: NodeTracerConfig;
@@ -75,15 +73,6 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   options.accessToken =
     options.accessToken || process.env.SPLUNK_ACCESS_TOKEN || '';
-
-  if (!options.maxAttrLength) {
-    const maxAttrLength = parseInt(process.env.SPLUNK_MAX_ATTR_LENGTH || '');
-    if (!isNaN(maxAttrLength)) {
-      options.maxAttrLength = maxAttrLength;
-    } else {
-      options.maxAttrLength = defaultMaxAttrLength;
-    }
-  }
 
   if (options.serverTimingEnabled === undefined) {
     options.serverTimingEnabled = getEnvBoolean(
@@ -152,7 +141,6 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
       resource.attributes[SemanticResourceAttributes.SERVICE_NAME]
     ),
     accessToken: options.accessToken,
-    maxAttrLength: options.maxAttrLength,
     serverTimingEnabled: options.serverTimingEnabled,
     instrumentations: options.instrumentations,
     tracerConfig: tracerConfig,
