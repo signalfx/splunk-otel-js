@@ -1,8 +1,6 @@
-> The official Splunk documentation for this page is [Instrument a Node application automatically](https://docs.splunk.com/Observability/gdi/get-data-in/application/nodejs/instrumentation/instrument-nodejs-application.html). For instructions on how to contribute to the docs, see [CONTRIBUTING.md](../CONTRIBUTING.md#documentation).
+# Convert HTTP headers to span attributes
 
-# Converting HTTP headers to span attributes
-
-Specify a list of header names (case insensitive) to capture as span attributes. Headers will be converted to span attributes in the form of `http.response.header.header_name` or `http.request.header.header_name`.
+To capture HTTP header names as span attributes, you must specify a list of header names. Headers are case insensitive and are be converted to span attributes in the form of `http.response.header.header_name` or `http.request.header.header_name`, depending on the type of request.
 
 ```js
 const { startTracing } = require('@splunk/otel');
@@ -32,9 +30,9 @@ startTracing({
 	]
 });
 ```
-# Converting HTTP request parameters to span attributes
+# Convert HTTP request parameters to span attributes
 
-Specify a list of query parameters (case sensitive) to capture as span attributes on the server side. Query parameters will be converted to span attributes in the form of `http.request.param.key`. To avoid attribute namespacing issues, `.` characters in keys are converted to `_`.
+To capture query parameters as span attributes, you must specify a list of query parameters. Query parameters are case sensitive and are converted to span attributes in the form of `http.request.param.key`. To avoid name spacing issues in the resulting span attributes, `.` characters in the resulting span to `_`.
 
 ```js
 const { startTracing } = require('@splunk/otel');
