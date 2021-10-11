@@ -65,8 +65,8 @@ export function getInstrumentations(): InstrumentationOption[] {
   for (const i in supportedInstrumentations) {
     const [module, name] = supportedInstrumentations[i];
     const Instrumentation = load(module, name);
-    if (Instrumentation != null) {
-      result.push(new Instrumentation());
+    if (typeof Instrumentation === 'function') {
+      result.push(new (Instrumentation as typeof Instrumentation)());
     }
   }
 

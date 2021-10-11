@@ -7,7 +7,7 @@ Diagnostic logs can help you troubleshoot instrumentation issues.
 To output instrumentation logs to the console, add `DiagConsoleLogger` and `DiagLogLevel`:
 
 ```javascript
-   const { diag, DiagConsoleLogger, DiagLogLevel } = require("@opentelemetry/api");
+   const { diag, DiagConsoleLogger, DiagLogLevel } = require('@opentelemetry/api');
 
    diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL);
 ```

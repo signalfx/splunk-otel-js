@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { Octokit } = require("octokit");
+const { Octokit } = require('octokit');
 
 const { version } = require('../package.json');
 const { getReleaseMessage } = require('./release-message');
