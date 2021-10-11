@@ -21,7 +21,6 @@ import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { configureHttpInstrumentation } from './instrumentations/http';
 import { configureLogInjection } from './instrumentations/logging';
 import { Options, _setDefaultOptions } from './options';
-import { _patchJaeger } from './jaeger';
 import { gte } from 'semver';
 import {
   AsyncHooksContextManager,
@@ -36,8 +35,6 @@ export function startTracing(opts: Partial<Options> = {}): void {
   }
 
   const options = _setDefaultOptions(opts);
-
-  _patchJaeger(options.maxAttrLength);
 
   // propagator
   propagation.setGlobalPropagator(options.propagatorFactory(options));

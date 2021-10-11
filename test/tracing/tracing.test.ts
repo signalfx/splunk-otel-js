@@ -50,8 +50,7 @@ describe('tracing:otlp', () => {
   function assertTracingPipeline(
     exportURL: string,
     serviceName: string,
-    accessToken?: string,
-    maxAttrLength?: number
+    accessToken?: string
   ) {
     sinon.assert.calledOnce(addSpanProcessorMock);
     const processor = addSpanProcessorMock.getCall(0).args[0];
@@ -77,7 +76,7 @@ describe('tracing:otlp', () => {
 
   it('setups tracing with defaults', () => {
     startTracing();
-    assertTracingPipeline('localhost:4317', 'unnamed-node-service', '', 1200);
+    assertTracingPipeline('localhost:4317', 'unnamed-node-service', '');
     stopTracing();
   });
 
@@ -85,14 +84,12 @@ describe('tracing:otlp', () => {
     const endpoint = 'custom-endpoint:1111';
     const serviceName = 'test-node-service';
     const accessToken = '1234';
-    const maxAttrLength = 50;
     startTracing({
       endpoint,
       serviceName,
       accessToken,
-      maxAttrLength,
     });
-    assertTracingPipeline(endpoint, serviceName, accessToken, maxAttrLength);
+    assertTracingPipeline(endpoint, serviceName, accessToken);
     stopTracing();
   });
 
@@ -100,15 +97,13 @@ describe('tracing:otlp', () => {
     const url = 'url-from-env:3030';
     const serviceName = 'env-service';
     const accessToken = 'zxcvb';
-    const maxAttrLength = 101;
 
     process.env.OTEL_EXPORTER_OTLP_ENDPOINT = url;
     process.env.OTEL_SERVICE_NAME = serviceName;
     process.env.SPLUNK_ACCESS_TOKEN = accessToken;
-    process.env.SPLUNK_MAX_ATTR_LENGTH = maxAttrLength.toString();
 
     startTracing();
-    assertTracingPipeline(url, serviceName, accessToken, maxAttrLength);
+    assertTracingPipeline(url, serviceName, accessToken);
     stopTracing();
   });
 
