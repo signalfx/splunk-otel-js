@@ -147,7 +147,7 @@ There is no default output for logs. Even if you set `OTEL_LOG_LEVEL=VERBOSE`, n
 need to set an output first, for example to `stdout`, by adding `DiagConsoleLogger`:
 
 ```js
-const { diag, DiagConsoleLogger, DiagLogLevel } = require("@opentelemetry/api");
+const { diag, DiagConsoleLogger, DiagLogLevel } = require('@opentelemetry/api');
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL);
 ```

@@ -16,6 +16,13 @@ To configure the Splunk Distribution of OpenTelemetry JS, you can use a combinat
 
 ## List of settings
 
+This distribution supports all the configuration options supported by the components it uses with the defaults specified by the [OTel Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md) with few exceptions:
+
+| Environment variable | Overwritten default value | Description
+| --- | --- |
+| OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT | `12000` | Maximum allowed attribute value size. Empty value is treated as infinity. Longer values are truncated.
+| OTEL_SPAN_LINK_COUNT_LIMIT | `1000` | Maximum allowed span link count.
+
 The following table contain the configuration options supported by this distribution.
 
 | Environment variable                 | Arguments to ``startTracing()`` | Default value                         | Notes
@@ -25,7 +32,6 @@ The following table contain the configuration options supported by this distribu
 | OTEL_PROPAGATORS                     | propagators                     | `tracecontext,baggage`                | Comma-delimited list of propagators to use. Valid keys: `baggage`, `tracecontext`, `b3multi`, `b3`.
 | OTEL_SERVICE_NAME                    | serviceName                     | `unnamed-node-service`                | The service name of this Node service.
 | SPLUNK_ACCESS_TOKEN                  | accessToken                     |                                       | The optional access token for exporting signal data directly to SignalFx API.
-| OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT | maxAttrLength                 | 1200                                  | Maximum length of string attribute value in characters. Longer values are truncated.
 | SPLUNK_TRACE_RESPONSE_HEADER_ENABLED | serverTimingEnabled             | `true`                                | Enable injection of `Server-Timing` header to HTTP responses.
 | OTEL_RESOURCE_ATTRIBUTES             |                                 |                                       | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
 | OTEL_TRACE_ENABLED                   |                                 | `true`                                | Globally enables tracer creation and auto-instrumentation.

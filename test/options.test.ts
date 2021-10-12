@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { TextMapPropagator } from '@opentelemetry/api';
+import * as api from '@opentelemetry/api';
 import { HttpBaggagePropagator } from '@opentelemetry/core';
 import { InstrumentationBase } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
@@ -40,8 +40,34 @@ import {
 } from '../src/options';
 import * as utils from './utils';
 
+/*
+  service.name attribute is not set, your service is unnamed and will be difficult to identify.
+  Set your service name using the OTEL_RESOURCE_ATTRIBUTES environment variable.
+  E.g. OTEL_RESOURCE_ATTRIBUTES="service.name=<YOUR_SERVICE_NAME_HERE>"
+*/
+const MATCH_SERVICE_NAME_WARNING = sinon.match(/service\.name.*not.*set/i);
+// No instrumentations set to be loaded. Install an instrumentation package to enable auto-instrumentation.
+const MATCH_NO_INSTRUMENTATIONS_WARNING = sinon.match(
+  /no.*instrumentation.*install.*package/i
+);
+
 describe('options', () => {
+  let logger;
+
   beforeEach(utils.cleanEnvironment);
+
+  beforeEach(() => {
+    logger = {
+      warn: sinon.spy(),
+    };
+    api.diag.setLogger(logger, api.DiagLogLevel.ALL);
+    // Setting logger logs stuff. Cleaning that up.
+    logger.warn.resetHistory();
+  });
+
+  afterEach(() => {
+    api.diag.disable();
+  });
 
   it('has expected defaults', () => {
     // Mock the default `getInstrumentations` in case some instrumentations (e.g. http) are part of dev dependencies.
@@ -58,7 +84,6 @@ describe('options', () => {
       serviceName: 'unnamed-node-service',
       accessToken: '',
       serverTimingEnabled: true,
-      maxAttrLength: 1200,
       instrumentations: [],
       tracerConfig: {
         resource: new Resource({
@@ -70,6 +95,13 @@ describe('options', () => {
       propagatorFactory: defaultPropagatorFactory,
       captureHttpRequestUriParams: [],
     });
+
+    sinon.assert.calledWithMatch(logger.warn, MATCH_SERVICE_NAME_WARNING);
+    sinon.assert.calledWithMatch(
+      logger.warn,
+      MATCH_NO_INSTRUMENTATIONS_WARNING
+    );
+
     getInstrumentationsStub.restore();
   });
 
@@ -81,7 +113,6 @@ describe('options', () => {
       endpoint: 'custom-endpoint',
       serviceName: 'custom-service-name',
       accessToken: 'custom-access-token',
-      maxAttrLength: 4000,
       instrumentations: [testInstrumentation],
       tracerConfig: {
         resource: new Resource({
@@ -99,7 +130,6 @@ describe('options', () => {
       endpoint: 'custom-endpoint',
       serviceName: 'custom-service-name',
       accessToken: 'custom-access-token',
-      maxAttrLength: 4000,
       serverTimingEnabled: true,
       instrumentations: [testInstrumentation],
       tracerConfig: {
@@ -111,6 +141,12 @@ describe('options', () => {
       propagatorFactory: testPropagatorFactory,
       captureHttpRequestUriParams: ['timestamp'],
     });
+
+    sinon.assert.neverCalledWithMatch(logger.warn, MATCH_SERVICE_NAME_WARNING);
+    sinon.assert.neverCalledWithMatch(
+      logger.warn,
+      MATCH_NO_INSTRUMENTATIONS_WARNING
+    );
   });
 
   describe('OTEL_TRACES_EXPORTER', () => {
@@ -164,6 +200,6 @@ function testSpanProcessorFactory(options: Options): SpanProcessor {
   return new SimpleSpanProcessor(options.spanExporterFactory(options));
 }
 
-function testPropagatorFactory(options: Options): TextMapPropagator {
+function testPropagatorFactory(options: Options): api.TextMapPropagator {
   return new HttpBaggagePropagator();
 }

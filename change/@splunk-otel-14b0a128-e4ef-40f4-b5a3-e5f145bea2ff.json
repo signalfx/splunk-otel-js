@@ -1,0 +1,7 @@
+{
+  "type": "minor",
+  "comment": "feat: warn about missing service.name and no instrumentations",
+  "packageName": "@splunk/otel",
+  "email": "rauno56@gmail.com",
+  "dependentChangeType": "patch"
+}

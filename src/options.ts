@@ -28,7 +28,7 @@ import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { EnvResourceDetector } from './resource';
 import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import { Span, TextMapPropagator } from '@opentelemetry/api';
+import { diag, Span, TextMapPropagator } from '@opentelemetry/api';
 import {
   CompositePropagator,
   W3CBaggagePropagator,
@@ -38,7 +38,6 @@ import { SplunkBatchSpanProcessor } from './SplunkBatchSpanProcessor';
 import { Resource } from '@opentelemetry/resources';
 
 const defaultServiceName = 'unnamed-node-service';
-const defaultMaxAttrLength = 1200;
 
 type SpanExporterFactory = (options: Options) => SpanExporter;
 
@@ -57,7 +56,6 @@ export interface Options {
   endpoint?: string;
   serviceName: string;
   accessToken: string;
-  maxAttrLength: number;
   serverTimingEnabled: boolean;
   instrumentations: InstrumentationOption[];
   tracerConfig: NodeTracerConfig;
@@ -68,17 +66,13 @@ export interface Options {
 }
 
 export function _setDefaultOptions(options: Partial<Options> = {}): Options {
+  process.env.OTEL_SPAN_LINK_COUNT_LIMIT =
+    process.env.OTEL_SPAN_LINK_COUNT_LIMIT ?? '1000';
+  process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT =
+    process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT ?? '12000';
+
   options.accessToken =
     options.accessToken || process.env.SPLUNK_ACCESS_TOKEN || '';
-
-  if (!options.maxAttrLength) {
-    const maxAttrLength = parseInt(process.env.SPLUNK_MAX_ATTR_LENGTH || '');
-    if (!isNaN(maxAttrLength)) {
-      options.maxAttrLength = maxAttrLength;
-    } else {
-      options.maxAttrLength = defaultMaxAttrLength;
-    }
-  }
 
   if (options.serverTimingEnabled === undefined) {
     options.serverTimingEnabled = getEnvBoolean(
@@ -94,12 +88,20 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   const serviceName =
     options.serviceName ||
     process.env.OTEL_SERVICE_NAME ||
-    resource.attributes[SemanticResourceAttributes.SERVICE_NAME] ||
-    defaultServiceName;
+    resource.attributes[SemanticResourceAttributes.SERVICE_NAME];
+
+  if (!serviceName) {
+    diag.warn(
+      'service.name attribute is not set, your service is unnamed and will be difficult to identify. ' +
+        'Set your service name using the OTEL_RESOURCE_ATTRIBUTES environment variable. ' +
+        'E.g. OTEL_RESOURCE_ATTRIBUTES="service.name=<YOUR_SERVICE_NAME_HERE>"'
+    );
+  }
 
   resource = resource.merge(
     new Resource({
-      [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
+      [SemanticResourceAttributes.SERVICE_NAME]:
+        serviceName || defaultServiceName,
     })
   );
 
@@ -123,6 +125,12 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     options.instrumentations = getInstrumentations();
   }
 
+  if (options.instrumentations.length === 0) {
+    diag.warn(
+      'No instrumentations set to be loaded. Install an instrumentation package to enable auto-instrumentation.'
+    );
+  }
+
   if (options.captureHttpRequestUriParams === undefined) {
     options.captureHttpRequestUriParams = [];
   }
@@ -133,7 +141,6 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
       resource.attributes[SemanticResourceAttributes.SERVICE_NAME]
     ),
     accessToken: options.accessToken,
-    maxAttrLength: options.maxAttrLength,
     serverTimingEnabled: options.serverTimingEnabled,
     instrumentations: options.instrumentations,
     tracerConfig: tracerConfig,
