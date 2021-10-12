@@ -30,7 +30,7 @@ type IncomingHttpRequestHook = (span: Span, request: IncomingMessage) => void;
 function shouldAddRequestHook(options: Options): boolean {
   if (
     Array.isArray(options.captureHttpRequestUriParams) &&
-    options.captureHttpRequestUriParams.length == 0
+    options.captureHttpRequestUriParams.length === 0
   ) {
     return false;
   }
