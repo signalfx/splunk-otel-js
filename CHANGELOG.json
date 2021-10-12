@@ -2,6 +2,39 @@
   "name": "@splunk/otel",
   "entries": [
     {
+      "date": "Tue, 12 Oct 2021 06:38:40 GMT",
+      "tag": "@splunk/otel_v0.14.0",
+      "version": "0.14.0",
+      "comments": {
+        "minor": [
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "comment": "feat: remove support for `maxAttrLength`",
+            "commit": "91a2faa6cc2b1a00d2bd25ed97b23564d778a066"
+          },
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "comment": "feat: warn about missing service.name and no instrumentations",
+            "commit": "91a2faa6cc2b1a00d2bd25ed97b23564d778a066"
+          },
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "comment": "feat: give OTEL_SPAN_LINK_COUNT_LIMIT and OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT GDI spec compliant defaults",
+            "commit": "91a2faa6cc2b1a00d2bd25ed97b23564d778a066"
+          },
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "comment": "chore: update core OTel deps to v1.0",
+            "commit": "91a2faa6cc2b1a00d2bd25ed97b23564d778a066"
+          }
+        ]
+      }
+    },
+    {
       "date": "Mon, 04 Oct 2021 12:27:07 GMT",
       "tag": "@splunk/otel_v0.13.0",
       "version": "0.13.0",

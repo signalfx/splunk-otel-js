@@ -1,7 +1,0 @@
-{
-  "type": "minor",
-  "comment": "chore: update core OTel deps to v1.0",
-  "packageName": "@splunk/otel",
-  "email": "rauno56@gmail.com",
-  "dependentChangeType": "patch"
-}
