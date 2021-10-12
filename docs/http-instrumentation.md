@@ -7,27 +7,27 @@ const { startTracing } = require('@splunk/otel');
 const { getInstrumentations } = require('@splunk/otel/lib/instrumentations');
 
 startTracing({
-	instrumentations: [
-		...getInstrumentations(),
-		new HttpInstrumentation({
-			headersToSpanAttributes: {
-				// Server side capturing, e.g. express
-				server: {
-					// Outgoing response headers
-					responseHeaders: ['content-type'],
-					// Incoming request headers
-					requestHeaders: ['accept-language']
-				},
-				// Client side capturing, e.g. node-fetch, got
-				client: {
-					// Incoming response headers
-					responseHeaders: ['server-timing'],
-					// Outgoing request headers
-					requestHeaders: ['accept-encoding']
-				}
-			}
-		}),
-	]
+  instrumentations: [
+    ...getInstrumentations(),
+    new HttpInstrumentation({
+      headersToSpanAttributes: {
+        // Server side capturing, e.g. express
+        server: {
+          // Outgoing response headers
+          responseHeaders: ['content-type'],
+          // Incoming request headers
+          requestHeaders: ['accept-language']
+        },
+        // Client side capturing, e.g. node-fetch, got
+        client: {
+          // Incoming response headers
+          responseHeaders: ['server-timing'],
+          // Outgoing request headers
+          requestHeaders: ['accept-encoding']
+        }
+      }
+    }),
+  ]
 });
 ```
 # Convert HTTP request parameters to span attributes
@@ -38,6 +38,6 @@ To capture query parameters as span attributes, you must specify a list of query
 const { startTracing } = require('@splunk/otel');
 
 startTracing({
-	captureHttpRequestUriParams: ['sortBy']
+  captureHttpRequestUriParams: ['sortBy']
 });
 ```
