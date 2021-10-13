@@ -32,7 +32,7 @@ startTracing({
 ```
 # Convert HTTP request parameters to span attributes
 
-To capture query parameters as span attributes, you must specify a list of query parameters. Query parameters are case sensitive and are converted to span attributes in the form of `http.request.param.key`. To avoid name spacing issues in the resulting span attributes, `.` characters in the resulting span to `_`.
+To capture query parameters as span attributes, you must specify a list of query parameters. Query parameters are case sensitive and are converted to span attributes in the form of `http.request.param.key`. To avoid name spacing issues in the resulting span attributes, `.` characters in the resulting span are converted to `_`.
 
 ```js
 const { startTracing } = require('@splunk/otel');
