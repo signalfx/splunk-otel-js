@@ -25,15 +25,19 @@ This distribution supports all the configuration options supported by the compon
 
 The following table contain the configuration options supported by this distribution.
 
-| Environment variable                 | Arguments to ``startTracing()`` | Default value                         | Notes
-| -----------------------------        | ------------------------------- | ------------------------------------- | ----
-| OTEL_EXPORTER_OTLP_ENDPOINT          | endpoint                        | `localhost:4317`                      | The OTLP endpoint to export to. Only OTLP over gRPC is supported.
-| OTEL_TRACES_EXPORTER                 | tracesExporter                  | `otlp`                                | Chooses the exporter. Shortcut for setting `spanExporterFactory`. One of [`otlp`, `jaeger-thrift-http`, `jaeger-thrift-splunk`]. See [`TracesExporter`](../src/options.ts).
-| OTEL_PROPAGATORS                     | propagators                     | `tracecontext,baggage`                | Comma-delimited list of propagators to use. Valid keys: `baggage`, `tracecontext`, `b3multi`, `b3`.
-| OTEL_SERVICE_NAME                    | serviceName                     | `unnamed-node-service`                | The service name of this Node service.
-| SPLUNK_ACCESS_TOKEN                  | accessToken                     |                                       | The optional access token for exporting signal data directly to SignalFx API.
-| SPLUNK_TRACE_RESPONSE_HEADER_ENABLED | serverTimingEnabled             | `true`                                | Enable injection of `Server-Timing` header to HTTP responses.
-| OTEL_RESOURCE_ATTRIBUTES             |                                 |                                       | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
+| Environment variable<br>``startTracing()`` argument         | Default value          | Support | Notes
+| ----------------------------------------------------------- | ---------------------- | ------- | --- | ----
+| OTEL_TRACES_EXPORTER<br>tracesExporter                      | `otlp`                 | Stable  | Chooses the exporter. Shortcut for setting `spanExporterFactory`. One of [`otlp`, `jaeger-thrift-http`, `jaeger-thrift-splunk`]. See [`TracesExporter`](../src/options.ts).
+| OTEL_PROPAGATORS<br>propagators                             | `tracecontext,baggage` | Stable  | Comma-delimited list of propagators to use. Valid keys: `baggage`, `tracecontext`, `b3multi`, `b3`.
+| SPLUNK_ACCESS_TOKEN<br>accessToken                          |                        | Stable  | The optional access token for exporting signal data directly to SignalFx API.
+| SPLUNK_TRACE_RESPONSE_HEADER_ENABLED<br>serverTimingEnabled | `true`                 | Stable  | Enable injection of `Server-Timing` header to HTTP responses.
+| OTEL_SERVICE_NAME<br>serviceName                            | `unnamed-node-service` | Stable  | The service name of this Node service.
+| OTEL_RESOURCE_ATTRIBUTES                                    |                        | Stable  | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
+| OTEL_EXPORTER_OTLP_ENDPOINT<br>endpoint                     | `localhost:4317`       | Stable  | The OTLP endpoint to export to. Only OTLP over gRPC is supported.
+| OTEL_EXPORTER_JAEGER_ENDPOINT                               | `http://localhost:14268/v1/traces` or<br>`http://localhost:9080/v1/trace` if `jaeger-thrift-splunk` is used as exporter ` | Stable | HTTP endpoint for Jaeger traces
+| OTEL_EXPORTER_JAEGER_PASSWORD                               |                        | Stable | Password to be used for HTTP basic authentication
+| OTEL_EXPORTER_JAEGER_USER                                   |                        | Stable | Username to be used for HTTP basic authentication
+| OTEL_LOG_LEVEL                                              |                        | Stable | Log level to use in diagnostics logging. **Does not set the logger.**
 
 ## Additional config options
 
