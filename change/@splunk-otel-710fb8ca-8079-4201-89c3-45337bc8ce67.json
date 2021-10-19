@@ -1,0 +1,7 @@
+{
+  "type": "minor",
+  "comment": "feat: remove OTEL_TRACE_ENABLED",
+  "packageName": "@splunk/otel",
+  "email": "rauno56@gmail.com",
+  "dependentChangeType": "patch"
+}

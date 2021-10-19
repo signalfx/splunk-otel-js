@@ -34,7 +34,6 @@ The following table contain the configuration options supported by this distribu
 | SPLUNK_ACCESS_TOKEN                  | accessToken                     |                                       | The optional access token for exporting signal data directly to SignalFx API.
 | SPLUNK_TRACE_RESPONSE_HEADER_ENABLED | serverTimingEnabled             | `true`                                | Enable injection of `Server-Timing` header to HTTP responses.
 | OTEL_RESOURCE_ATTRIBUTES             |                                 |                                       | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
-| OTEL_TRACE_ENABLED                   |                                 | `true`                                | Globally enables tracer creation and auto-instrumentation.
 
 ## Additional config options
 

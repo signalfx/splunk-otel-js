@@ -82,7 +82,7 @@ Rename environment variables:
 | SIGNALFX_LOGS_INJECTION_TAGS       | n/a                                    | |
 | SIGNALFX_ENABLED_PLUGINS           | n/a                                    | see [the README section about instrumentations](./README.md#custom-instrumentation-packages) |
 | SIGNALFX_SERVER_TIMING_CONTEXT     | SPLUNK_TRACE_RESPONSE_HEADER_ENABLED   | |
-| SIGNALFX_TRACING_ENABLED           | OTEL_TRACE_ENABLED                     | |
+| SIGNALFX_TRACING_ENABLED           | n/a                                    | |
 
 ### Programmatic configuration
 
