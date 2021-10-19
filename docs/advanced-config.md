@@ -35,9 +35,23 @@ The following table contain the configuration options supported by this distribu
 | OTEL_RESOURCE_ATTRIBUTES                                    |                        | Stable  | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
 | OTEL_EXPORTER_OTLP_ENDPOINT<br>endpoint                     | `localhost:4317`       | Stable  | The OTLP endpoint to export to. Only OTLP over gRPC is supported.
 | OTEL_EXPORTER_JAEGER_ENDPOINT                               | `http://localhost:14268/v1/traces` or<br>`http://localhost:9080/v1/trace` if `jaeger-thrift-splunk` is used as exporter ` | Stable | HTTP endpoint for Jaeger traces
-| OTEL_EXPORTER_JAEGER_PASSWORD                               |                        | Stable | Password to be used for HTTP basic authentication
-| OTEL_EXPORTER_JAEGER_USER                                   |                        | Stable | Username to be used for HTTP basic authentication
-| OTEL_LOG_LEVEL                                              |                        | Stable | Log level to use in diagnostics logging. **Does not set the logger.**
+| OTEL_EXPORTER_JAEGER_PASSWORD                               |                        | Stable  | Password to be used for HTTP basic authentication
+| OTEL_EXPORTER_JAEGER_USER                                   |                        | Stable  | Username to be used for HTTP basic authentication
+| OTEL_LOG_LEVEL                                              |                        | Stable  | Log level to use in diagnostics logging. **Does not set the logger.**
+| OTEL_ATTRIBUTE_COUNT_LIMIT                                  |                        | Stable  | Maximum allowed span attribute count
+| OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT                           | `12000`\*              | Stable  | Maximum allowed attribute value size
+| OTEL_BSP_EXPORT_TIMEOUT                                     | `30000`                | Stable  | Maximum allowed time to export data
+| OTEL_BSP_MAX_EXPORT_BATCH_SIZE                              | `512`                  | Stable  | Maximum batch size Must be less than or equal to OTEL_BSP_MAX_QUEUE_SIZE
+| OTEL_BSP_MAX_QUEUE_SIZE                                     | `2048`                 | Stable  | Maximum queue size
+| OTEL_BSP_SCHEDULE_DELAY                                     | `5000`                 | Stable  | Delay interval between two consecutive exports
+| OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT                             | `128`                  | Stable  | Maximum allowed span attribute count
+| OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT                      |                        | Stable  | Maximum allowed attribute value size. Empty value is treated as infinity
+| OTEL_SPAN_EVENT_COUNT_LIMIT                                 | `128`                  | Stable  | 
+| OTEL_SPAN_LINK_COUNT_LIMIT                                  | `1000`\*               | Stable  | 
+| OTEL_TRACES_SAMPLER                                         | `parentbased_always_on`| Stable  | Sampler to be used for traces. See [Sampling](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling)
+| OTEL_TRACES_SAMPLER_ARG                                     |                        | Stable  | String value to be used as the sampler argument. Only be used if OTEL_TRACES_SAMPLER is set.
+
+* Overwritten default value
 
 ## Additional config options
 
