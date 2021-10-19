@@ -26,7 +26,7 @@ This distribution supports all the configuration options supported by the compon
 | `OTEL_BSP_MAX_EXPORT_BATCH_SIZE`                                | `512`                   | Stable  | Maximum batch size Must be less than or equal to OTEL_BSP_MAX_QUEUE_SIZE
 | `OTEL_BSP_MAX_QUEUE_SIZE`                                       | `2048`                  | Stable  | Maximum queue size
 | `OTEL_BSP_SCHEDULE_DELAY`                                       | `5000`                  | Stable  | Delay interval between two consecutive exports
-| `OTEL_EXPORTER_JAEGER_ENDPOINT`                                 | `http://localhost:14268/v1/traces` or<br>`http://localhost:9080/v1/trace` if `jaeger-thrift-splunk` is used as exporter `  | Stable | HTTP endpoint for Jaeger traces
+| `OTEL_EXPORTER_JAEGER_ENDPOINT`                                 | `http://localhost:14268/v1/traces` or<br>`http://localhost:9080/v1/trace`<br>if `jaeger-thrift-splunk` is used as exporter | Stable | HTTP endpoint for Jaeger traces
 | `OTEL_EXPORTER_JAEGER_PASSWORD`                                 |                         | Stable  | Password to be used for HTTP basic authentication
 | `OTEL_EXPORTER_JAEGER_USER`                                     |                         | Stable  | Username to be used for HTTP basic authentication
 | `OTEL_EXPORTER_OTLP_ENDPOINT`<br>`endpoint`                     | `localhost:4317`        | Stable  | The OTLP endpoint to export to. Only OTLP over gRPC is supported.
