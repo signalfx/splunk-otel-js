@@ -44,7 +44,7 @@ This distribution supports all the configuration options supported by the compon
 | SPLUNK_ACCESS_TOKEN<br>accessToken                          |                         | Stable  | The optional access token for exporting signal data directly to SignalFx API.
 | SPLUNK_TRACE_RESPONSE_HEADER_ENABLED<br>serverTimingEnabled | `true`                  | Stable  | Enable injection of `Server-Timing` header to HTTP responses.
 
-* Overwritten default value
+\*: Overwritten default value
 
 ## Additional config options
 
