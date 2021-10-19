@@ -101,7 +101,6 @@
     "@opentelemetry/sdk-trace-base": "~1.0.0",
     "@opentelemetry/sdk-trace-node": "~1.0.0",
     "@opentelemetry/semantic-conventions": "~1.0.0",
-    "@types/sonic-boom": "^0.7.0",
     "jaeger-client": "^3.18.1",
     "semver": "^7.3.5"
   },
