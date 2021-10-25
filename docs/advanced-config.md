@@ -22,13 +22,7 @@ This distribution supports all the configuration options supported by the compon
 | --------------------------------------------------------------- | ----------------------- | ------- | ---
 | `OTEL_ATTRIBUTE_COUNT_LIMIT`                                    |                         | Stable  | Maximum allowed span attribute count
 | `OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT`                             | `12000`\*               | Stable  | Maximum allowed attribute value size
-| `OTEL_BSP_EXPORT_TIMEOUT`                                       | `30000`                 | Stable  | Maximum allowed time to export data
-| `OTEL_BSP_MAX_EXPORT_BATCH_SIZE`                                | `512`                   | Stable  | Maximum batch size Must be less than or equal to OTEL_BSP_MAX_QUEUE_SIZE
-| `OTEL_BSP_MAX_QUEUE_SIZE`                                       | `2048`                  | Stable  | Maximum queue size
-| `OTEL_BSP_SCHEDULE_DELAY`                                       | `5000`                  | Stable  | Delay interval between two consecutive exports
 | `OTEL_EXPORTER_JAEGER_ENDPOINT`                                 | `http://localhost:14268/v1/traces` or<br>`http://localhost:9080/v1/trace`<br>if `jaeger-thrift-splunk` is used as exporter | Stable | HTTP endpoint for Jaeger traces
-| `OTEL_EXPORTER_JAEGER_PASSWORD`                                 |                         | Stable  | Password to be used for HTTP basic authentication
-| `OTEL_EXPORTER_JAEGER_USER`                                     |                         | Stable  | Username to be used for HTTP basic authentication
 | `OTEL_EXPORTER_OTLP_ENDPOINT`<br>`endpoint`                     | `localhost:4317`        | Stable  | The OTLP endpoint to export to. Only OTLP over gRPC is supported.
 | `OTEL_LOG_LEVEL`                                                |                         | Stable  | Log level to use in diagnostics logging. **Does not set the logger.**
 | `OTEL_PROPAGATORS`<br>`propagators`                             | `tracecontext,baggage`  | Stable  | Comma-delimited list of propagators to use. Valid keys: `baggage`, `tracecontext`, `b3multi`, `b3`.
