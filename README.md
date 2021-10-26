@@ -22,14 +22,11 @@ This Splunk distribution comes with the following defaults:
 - Unlimited default limits for [configuration options](#trace-configuration) to
   support full-fidelity traces.
 
-If you're currently using the SignalFx Tracing Library for Node and want to
-migrate to the Splunk Distribution of OpenTelemetry Node, see [Migrate from
-the SignalFx Tracing Library for JS](./MIGRATING.md).
+If you're currently using the SignalFx Tracing Library for Node and want to migrate to the Splunk Distribution of OpenTelemetry Node, see [Migrate from the SignalFx Tracing Library for JS](./MIGRATING.md).
 
 ## Get started
 
-The following instructions assume that you're sending data to Splunk Observability Cloud using the [OpenTelemetry Collector](https://docs.splunk.com/Observability/gdi/opentelemetry/opentelemetry.html) running on localhost. If you're running a
-different setup, refer to the [configuration options](./docs/advanced-config.md) to customize your settings.
+The following instructions assume that you're sending data to Splunk Observability Cloud using the [OpenTelemetry Collector](https://docs.splunk.com/Observability/gdi/opentelemetry/opentelemetry.html) running on localhost. If you're running a different setup, refer to the [configuration options](./docs/advanced-config.md) to customize your settings.
 
 1. Install the `@splunk/otel` package:
 
@@ -149,6 +146,8 @@ The following logging library instrumentations are supported:
 ```
 
 You can find more instrumentation packages over at the [OpenTelemetry Registry](https://opentelemetry.io/registry/?language=js) and enable them manually as described above.
+
+**Note that many of the instrumentation libraries offered by OpenTelemetry are still experimental.**
 
 ## Troubleshooting
 
