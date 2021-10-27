@@ -15,5 +15,7 @@
  */
 
 import { startTracing } from './tracing';
+import { startMetrics } from './metrics';
 
 startTracing();
+startMetrics();

@@ -13,7 +13,10 @@
     "change:bump": "beachball bump",
     "clean": "tsc --build --clean",
     "codecov": "nyc report --reporter=json && codecov -f coverage/*.json -p .",
+    "prebuild": "prebuildify -t 16.10.0 --strip",
+    "rebuild-native": "node-gyp rebuild",
     "compile": "tsc --build",
+    "install": "node-gyp-build",
     "lint:fix": "eslint . --ext .ts --fix",
     "lint": "eslint . --ext .ts",
     "lint:commits": "commitlint",
@@ -40,6 +43,7 @@
   "files": [
     "index.js",
     "instrument.js",
+    "prebuilds",
     "bin/*.js",
     "lib/**/*.js",
     "lib/**/*.js.map",
@@ -64,6 +68,7 @@
     "@types/node": "^16.10.3",
     "@types/semver": "7.3.8",
     "@types/shimmer": "1.0.2",
+    "@types/signalfx": "7.0.2",
     "@types/sinon": "^10.0.2",
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.31.0",
@@ -87,7 +92,8 @@
     "ts-mocha": "8.0.0",
     "ts-node": "10.3.0",
     "typescript": "4.4.4",
-    "winston": "3.3.3"
+    "winston": "3.3.3",
+    "prebuildify": "4.2.1"
   },
   "dependencies": {
     "@opentelemetry/api": "^1.0.3",
@@ -103,7 +109,9 @@
     "@opentelemetry/semantic-conventions": "~1.0.0",
     "@types/sonic-boom": "^0.7.0",
     "jaeger-client": "^3.18.1",
-    "semver": "^7.3.5"
+    "semver": "^7.3.5",
+    "signalfx": "7.4.0",
+    "node-gyp-build": "^4.3.0"
   },
   "peerDependencies": {
     "@opentelemetry/instrumentation-bunyan": ">=0.25.0 <1",

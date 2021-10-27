@@ -24,7 +24,7 @@ struct Counters {
 
   int64_t Average() const { return count == 0 ? 0 : sum / count; }
 
-  void Reset() { min = max = sum = 0; }
+  void Reset() { min = max = sum = count = 0; }
 };
 int64_t GetNextPollTimeoutNs() {
   return int64_t(uv_backend_timeout(uv_default_loop())) * 1000LL * 1000LL;
@@ -50,6 +50,7 @@ struct GcCounters {
   Counters amount;
 };
 struct {
+  bool started = false;
   struct {
     int64_t loopStartTime = 0;
     int64_t loopEndTime = 0;
@@ -99,7 +100,6 @@ void EventLoopCheckCallback(uv_check_t* handle) {
                                   : 0;
 #endif
 }
-template <typename T>
 void WriteCounters(
   v8::Local<v8::Object>& parent, const std::string& key, const Counters& counters) {
   auto obj = Nan::New<v8::Object>();
@@ -107,10 +107,36 @@ void WriteCounters(
   Nan::Set(obj, Nan::New("max").ToLocalChecked(), Nan::New<v8::Number>(double(counters.max)));
   Nan::Set(
     obj, Nan::New("average").ToLocalChecked(), Nan::New<v8::Number>(double(counters.Average())));
+  Nan::Set(obj, Nan::New("sum").ToLocalChecked(), Nan::New<v8::Number>(double(counters.sum)));
   Nan::Set(obj, Nan::New("count").ToLocalChecked(), Nan::New<v8::Number>(double(counters.count)));
   Nan::Set(parent, Nan::New(key).ToLocalChecked(), obj);
 }
-} // namespace
+
+NAN_GC_CALLBACK(GcPrologue) {
+  state.gc.startTime = uv_hrtime();
+  v8::HeapStatistics heapStats;
+  Nan::GetHeapStatistics(&heapStats);
+  state.gc.heapUsedPreGc = int64_t(heapStats.used_heap_size());
+}
+
+NAN_GC_CALLBACK(GcEpilogue) {
+  int64_t duration = int64_t(uv_hrtime()) - state.gc.startTime;
+  v8::HeapStatistics heapStats;
+  Nan::GetHeapStatistics(&heapStats);
+  int64_t heapCleared = state.gc.heapUsedPreGc - int64_t(heapStats.used_heap_size());
+  state.gc.heapUsedPreGc = 0;
+
+  int32_t statsIndex = GetGcStatsIndex(type);
+  if (statsIndex != -1) {
+    auto& gcStats = stats.gcCounters[statsIndex];
+    gcStats.amount.Add(heapCleared);
+    gcStats.time.Add(duration);
+  }
+
+  const size_t allIndex = 0;
+  stats.gcCounters[allIndex].amount.Add(heapCleared);
+  stats.gcCounters[allIndex].time.Add(duration);
+}
 
 NAN_METHOD(CollectCounters) {
   auto obj = Nan::New<v8::Object>();
@@ -142,33 +168,11 @@ NAN_METHOD(ResetCounters) {
   }
 }
 
-NAN_GC_CALLBACK(GcPrologue) {
-  state.gc.startTime = uv_hrtime();
-  v8::HeapStatistics heapStats;
-  Nan::GetHeapStatistics(&heapStats);
-  state.gc.heapUsedPreGc = int64_t(heapStats.used_heap_size());
-}
-
-NAN_GC_CALLBACK(GcEpilogue) {
-  int64_t duration = int64_t(uv_hrtime()) - state.gc.startTime;
-  v8::HeapStatistics heapStats;
-  Nan::GetHeapStatistics(&heapStats);
-  int64_t heapCleared = state.gc.heapUsedPreGc - int64_t(heapStats.used_heap_size());
-  state.gc.heapUsedPreGc = 0;
-
-  int32_t statsIndex = GetGcStatsIndex(type);
-  if (statsIndex != -1) {
-    auto& gcStats = stats.gcCounters[statsIndex];
-    gcStats.amount.Add(heapCleared);
-    gcStats.time.Add(duration);
+NAN_METHOD(StartCounters) {
+  if (state.started) {
+    return;
   }
 
-  const size_t allIndex = 0;
-  stats.gcCounters[allIndex].amount.Add(heapCleared);
-  stats.gcCounters[allIndex].time.Add(duration);
-}
-
-NAN_MODULE_INIT(Init) {
   state.eventLoop.loopStartTime = uv_hrtime();
   state.eventLoop.pollTimeout = GetNextPollTimeoutNs();
 
@@ -179,6 +183,17 @@ NAN_MODULE_INIT(Init) {
   uv_check_start(&state.eventLoop.checkHandle, EventLoopCheckCallback);
   uv_prepare_start(&state.eventLoop.prepareHandle, EventLoopPrepareCallback);
 
+  Nan::AddGCPrologueCallback(GcPrologue);
+  Nan::AddGCEpilogueCallback(GcEpilogue);
+
+  state.started = true;
+}
+
+NAN_MODULE_INIT(Init) {
+  Nan::Set(
+    target, Nan::New("start").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<v8::FunctionTemplate>(StartCounters)).ToLocalChecked());
+
   Nan::Set(
     target, Nan::New("collect").ToLocalChecked(),
     Nan::GetFunction(Nan::New<v8::FunctionTemplate>(CollectCounters)).ToLocalChecked());
@@ -186,9 +201,7 @@ NAN_MODULE_INIT(Init) {
   Nan::Set(
     target, Nan::New("reset").ToLocalChecked(),
     Nan::GetFunction(Nan::New<v8::FunctionTemplate>(ResetCounters)).ToLocalChecked());
-
-  Nan::AddGCPrologueCallback(GcPrologue);
-  Nan::AddGCEpilogueCallback(GcEpilogue);
 }
+} // namespace
 
 NODE_MODULE(NODE_GYP_MODULE_NAME, Init);
