@@ -7,7 +7,7 @@ ENV TZ=UTC
 RUN mkdir /home/node/app
 WORKDIR /home/node/app
 
-COPY --chown=node:node ["package*.json", "*.lock", "./"]
+COPY --chown=node:node ["binding.gyp", "package*.json", "*.lock", "./"]
 RUN npm install
 
 COPY --chown=node:node ./ .
