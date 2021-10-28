@@ -113,32 +113,70 @@ export function getSignalFxClient(): signalfx.SignalClient | undefined {
   return _signalFxClient;
 }
 
-function gcSizeMetric(info: NativeCounters, type: GcType, timestamp: number) {
+interface CumulativeRegistry {
+  add(key: string, value: number): number;
+  reset(): void;
+}
+
+function newCumulativeRegistry(): CumulativeRegistry {
+  let metrics = new Map<string, number>();
   return {
-    metric: 'nodejs.memory.gc.size',
-    value: info.gc[type].collected.sum,
-    timestamp,
-    dimensions: { gctype: type },
+    add: (key: string, value: number): number => {
+      if (metrics.has(key)) {
+        const newValue = metrics.get(key)! + value;
+        metrics.set(key, newValue);
+        return newValue;
+      }
+
+      metrics.set(key, value);
+      return value;
+    },
+    reset: () => {
+      metrics = new Map<string, number>();
+    },
   };
 }
 
-function gcDurationMetric(
-  info: NativeCounters,
+function gcSizeMetric(
+  reg: CumulativeRegistry,
   type: GcType,
+  counters: NativeCounters,
   timestamp: number
 ) {
+  const key = `gc.size.${type}`;
   return {
-    metric: 'nodejs.memory.gc.pause',
-    value: info.gc[type].duration.sum,
+    metric: 'nodejs.memory.gc.size',
+    value: reg.add(key, counters.gc[type].collected.sum),
     timestamp,
     dimensions: { gctype: type },
   };
 }
 
-function gcCountMetric(info: NativeCounters, type: GcType, timestamp: number) {
+function gcPauseMetric(
+  reg: CumulativeRegistry,
+  type: GcType,
+  counters: NativeCounters,
+  timestamp: number
+) {
+  const key = `gc.pause.${type}`;
+  return {
+    metric: 'nodejs.memory.gc.pause',
+    value: reg.add(key, counters.gc[type].duration.sum),
+    timestamp,
+    dimensions: { gctype: type },
+  };
+}
+
+function gcCountMetric(
+  reg: CumulativeRegistry,
+  type: GcType,
+  counters: NativeCounters,
+  timestamp: number
+) {
+  const key = `gc.count.${type}`;
   return {
     metric: 'nodejs.memory.gc.count',
-    value: info.gc[type].duration.count,
+    value: reg.add(key, counters.gc[type].collected.count),
     timestamp,
     dimensions: { gctype: type },
   };
@@ -147,6 +185,7 @@ function gcCountMetric(info: NativeCounters, type: GcType, timestamp: number) {
 function _createSignalFxMetricsRegistry(
   client: signalfx.SignalClient
 ): MetricsRegistry {
+  const registry = newCumulativeRegistry();
   let gauges: signalfx.SignalMetric[] = [];
   let cumulativeCounters: signalfx.SignalMetric[] = [];
   return {
@@ -185,30 +224,29 @@ function _createSignalFxMetricsRegistry(
       });
 
       for (const metric of [
-        gcSizeMetric(info, 'all', timestamp),
-        gcSizeMetric(info, 'scavenge', timestamp),
-        gcSizeMetric(info, 'mark_sweep_compact', timestamp),
-        gcSizeMetric(info, 'incremental_marking', timestamp),
-        gcSizeMetric(info, 'process_weak_callbacks', timestamp),
+        gcSizeMetric(registry, 'all', info, timestamp),
+        gcSizeMetric(registry, 'scavenge', info, timestamp),
+        gcSizeMetric(registry, 'mark_sweep_compact', info, timestamp),
+        gcSizeMetric(registry, 'incremental_marking', info, timestamp),
+        gcSizeMetric(registry, 'process_weak_callbacks', info, timestamp),
 
-        gcDurationMetric(info, 'all', timestamp),
-        gcDurationMetric(info, 'scavenge', timestamp),
-        gcDurationMetric(info, 'mark_sweep_compact', timestamp),
-        gcDurationMetric(info, 'incremental_marking', timestamp),
-        gcDurationMetric(info, 'process_weak_callbacks', timestamp),
+        gcPauseMetric(registry, 'all', info, timestamp),
+        gcPauseMetric(registry, 'scavenge', info, timestamp),
+        gcPauseMetric(registry, 'mark_sweep_compact', info, timestamp),
+        gcPauseMetric(registry, 'incremental_marking', info, timestamp),
+        gcPauseMetric(registry, 'process_weak_callbacks', info, timestamp),
 
-        gcCountMetric(info, 'all', timestamp),
-        gcCountMetric(info, 'scavenge', timestamp),
-        gcCountMetric(info, 'mark_sweep_compact', timestamp),
-        gcCountMetric(info, 'incremental_marking', timestamp),
-        gcCountMetric(info, 'process_weak_callbacks', timestamp),
+        gcCountMetric(registry, 'all', info, timestamp),
+        gcCountMetric(registry, 'scavenge', info, timestamp),
+        gcCountMetric(registry, 'mark_sweep_compact', info, timestamp),
+        gcCountMetric(registry, 'incremental_marking', info, timestamp),
+        gcCountMetric(registry, 'process_weak_callbacks', info, timestamp),
       ]) {
         cumulativeCounters.push(metric);
       }
     },
     export: () => {
       context.with(suppressTracing(context.active()), () => {
-        console.log('CLIENT SEND');
         client.send({
           cumulative_counters: cumulativeCounters,
           gauges,
