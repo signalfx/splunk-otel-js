@@ -1,3 +1,19 @@
+/*
+ * Copyright Splunk Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { context, diag } from '@opentelemetry/api';
 import { suppressTracing } from '@opentelemetry/core';
 import { collectMemoryInfo, MemoryInfo } from './memory';
@@ -11,8 +27,8 @@ interface MetricsOptions {
 }
 
 interface SignalFxOptions {
-  client: signalfx.SignalClient,
-  dimensions: object,
+  client: signalfx.SignalClient;
+  dimensions: object;
 }
 
 interface Counters {
@@ -36,7 +52,7 @@ interface NativeCounters {
     mark_sweep_compact: GcCounters;
     incremental_marking: GcCounters;
     process_weak_callbacks: GcCounters;
-  }
+  };
 }
 
 type GcType = keyof NativeCounters['gc'];
@@ -53,7 +69,9 @@ interface MetricsRegistry {
   export(): void;
 }
 
-export type StartMetricsOptions = Partial<MetricsOptions> & { signalfx?: Partial<SignalFxOptions> };
+export type StartMetricsOptions = Partial<MetricsOptions> & {
+  signalfx?: Partial<SignalFxOptions>;
+};
 
 let _signalFxClient: signalfx.SignalClient | undefined;
 
@@ -87,7 +105,7 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
     stopMetrics: () => {
       _signalFxClient = undefined;
       clearInterval(interval);
-    }
+    },
   };
 }
 
@@ -100,16 +118,20 @@ function gcSizeMetric(info: NativeCounters, type: GcType, timestamp: number) {
     metric: 'nodejs.memory.gc.size',
     value: info.gc[type].collected.sum,
     timestamp,
-    dimensions: { gctype: type }
+    dimensions: { gctype: type },
   };
 }
 
-function gcDurationMetric(info: NativeCounters, type: GcType, timestamp: number) {
+function gcDurationMetric(
+  info: NativeCounters,
+  type: GcType,
+  timestamp: number
+) {
   return {
     metric: 'nodejs.memory.gc.pause',
     value: info.gc[type].duration.sum,
     timestamp,
-    dimensions: { gctype: type }
+    dimensions: { gctype: type },
   };
 }
 
@@ -118,11 +140,13 @@ function gcCountMetric(info: NativeCounters, type: GcType, timestamp: number) {
     metric: 'nodejs.memory.gc.count',
     value: info.gc[type].duration.count,
     timestamp,
-    dimensions: { gctype: type }
+    dimensions: { gctype: type },
   };
 }
 
-function _createSignalFxMetricsRegistry(client: signalfx.SignalClient): MetricsRegistry {
+function _createSignalFxMetricsRegistry(
+  client: signalfx.SignalClient
+): MetricsRegistry {
   let gauges: signalfx.SignalMetric[] = [];
   let cumulativeCounters: signalfx.SignalMetric[] = [];
   return {
@@ -193,39 +217,52 @@ function _createSignalFxMetricsRegistry(client: signalfx.SignalClient): MetricsR
 
       gauges = [];
       cumulativeCounters = [];
-    }
-  }
+    },
+  };
 }
 
 function _loadExtension(): CountersExtension | undefined {
   let extension;
   try {
-    extension = require("./native");
+    extension = require('./native');
   } catch (e) {
-    diag.error('Unable to load native metrics extension. Event loop and GC metrics will not be reported', e);
+    diag.error(
+      'Unable to load native metrics extension. Event loop and GC metrics will not be reported',
+      e
+    );
   }
 
   return extension;
 }
 
-export function _setDefaultOptions(options: StartMetricsOptions = {}): MetricsOptions & { sfxClient: signalfx.SignalClient } {
-  const accessToken = options.accessToken || process.env.SPLUNK_ACCESS_TOKEN || '';
-  const endpoint = options.endpoint || process.env.SPLUNK_METRICS_ENDPOINT || 'http://localhost:9943';
+export function _setDefaultOptions(
+  options: StartMetricsOptions = {}
+): MetricsOptions & { sfxClient: signalfx.SignalClient } {
+  const accessToken =
+    options.accessToken || process.env.SPLUNK_ACCESS_TOKEN || '';
+  const endpoint =
+    options.endpoint ||
+    process.env.SPLUNK_METRICS_ENDPOINT ||
+    'http://localhost:9943';
   const dimensions = Object.assign(options.signalfx?.dimensions || {}, {
     host: os.hostname(),
     metric_source: 'splunk-otel-js',
     node_version: process.versions.node,
   });
 
-  const sfxClient = options.signalfx?.client || new signalfx.Ingest(accessToken, {
-    ingestEndpoint: endpoint,
-    dimensions,
-  });
+  const sfxClient =
+    options.signalfx?.client ||
+    new signalfx.Ingest(accessToken, {
+      ingestEndpoint: endpoint,
+      dimensions,
+    });
 
   return {
     accessToken,
     endpoint,
-    exportInterval: options.exportInterval || _getEnvNumber('SPLUNK_METRICS_EXPORT_INTERVAL', 5000),
+    exportInterval:
+      options.exportInterval ||
+      _getEnvNumber('SPLUNK_METRICS_EXPORT_INTERVAL', 5000),
     sfxClient,
   };
 }

@@ -18,9 +18,12 @@ import * as assert from 'assert';
 import * as os from 'os';
 
 import * as utils from './utils';
-import * as signalfx from 'signalfx';
 import { hrtime } from 'process';
-import { startMetrics, _setDefaultOptions, getSignalFxClient } from '../src/metrics';
+import {
+  startMetrics,
+  _setDefaultOptions,
+  getSignalFxClient,
+} from '../src/metrics';
 
 function emptyCounter() {
   return {
@@ -28,10 +31,13 @@ function emptyCounter() {
     max: 0,
     average: 0,
     sum: 0,
-    count: 0
+    count: 0,
   };
 }
-const emptyGcCounter = () => ({ collected: emptyCounter(), duration: emptyCounter() });
+const emptyGcCounter = () => ({
+  collected: emptyCounter(),
+  duration: emptyCounter(),
+});
 const emptyStats = () => ({
   eventLoopLag: emptyCounter(),
   gc: {
@@ -39,9 +45,9 @@ const emptyStats = () => ({
     scavenge: emptyGcCounter(),
     mark_sweep_compact: emptyGcCounter(),
     incremental_marking: emptyGcCounter(),
-    process_weak_callbacks: emptyGcCounter()
-  }
-})
+    process_weak_callbacks: emptyGcCounter(),
+  },
+});
 
 describe('metrics', () => {
   describe('native counters collection', () => {
@@ -66,15 +72,15 @@ describe('metrics', () => {
 
     it('does not compute event loop lag to be less than the actual execution time', done => {
       nativeStats.reset();
-      const begin = hrtime.bigint();
+      const begin = hrtime();
       let sum = 0;
       for (let i = 0; i < 1_000_000; i++) {
         sum += i;
       }
-      const duration = hrtime.bigint() - begin;
+      const duration = hrtime(begin);
       setTimeout(() => {
         const stats = nativeStats.collect();
-        assert(stats.eventLoopLag.max >= duration);
+        assert(stats.eventLoopLag.max >= duration[1]);
         done();
       }, 0);
     });
@@ -95,7 +101,7 @@ describe('metrics', () => {
         host: os.hostname(),
         metric_source: 'splunk-otel-js',
         node_version: process.versions.node,
-      })
+      });
     });
 
     it('is possible to set options via env vars', () => {
@@ -108,31 +114,44 @@ describe('metrics', () => {
       assert.deepEqual(options.endpoint, 'http://localhost:9999');
       assert.deepEqual(options.exportInterval, 1000);
     });
-  })
+  });
 
   describe('startMetrics', () => {
     it('exports metrics', done => {
+      const metric =
+        (name: string) =>
+        ({ metric }) =>
+          metric === name;
+      const gcMetric = (name: string) => m =>
+        metric(name)(m) && m.dimensions['gctype'] === 'all';
       const { stopMetrics } = startMetrics({
         exportInterval: 100,
-        signalfx: { client: {
-          send: report => {
-            stopMetrics();
+        signalfx: {
+          client: {
+            send: report => {
+              stopMetrics();
+              const gauges = report.gauges;
+              const cumulativeCounters = report.cumulative_counters;
+              assert(gauges.find(metric('nodejs.memory.heap.total')));
+              assert(gauges.find(metric('nodejs.memory.heap.used')));
+              assert(gauges.find(metric('nodejs.memory.rss')));
+              assert(gauges.find(metric('nodejs.event_loop.lag.max')));
+              assert(gauges.find(metric('nodejs.event_loop.lag.min')));
 
-            const gauges = report.gauges;
-            const cumulativeCounters = report.cumulative_counters;
-            assert(gauges.find(m => m.metric == 'nodejs.memory.heap.total'));
-            assert(gauges.find(m => m.metric == 'nodejs.memory.heap.used'));
-            assert(gauges.find(m => m.metric == 'nodejs.memory.rss'));
-            assert(gauges.find(m => m.metric == 'nodejs.event_loop.lag.max'));
-            assert(gauges.find(m => m.metric == 'nodejs.event_loop.lag.min'));
+              assert(
+                cumulativeCounters.find(gcMetric('nodejs.memory.gc.size'))
+              );
+              assert(
+                cumulativeCounters.find(gcMetric('nodejs.memory.gc.pause'))
+              );
+              assert(
+                cumulativeCounters.find(gcMetric('nodejs.memory.gc.count'))
+              );
 
-            assert(cumulativeCounters.find(m => m.metric == 'nodejs.memory.gc.size' && m.dimensions['gctype'] == 'all'));
-            assert(cumulativeCounters.find(m => m.metric == 'nodejs.memory.gc.pause' && m.dimensions['gctype'] == 'all'));
-            assert(cumulativeCounters.find(m => m.metric == 'nodejs.memory.gc.count' && m.dimensions['gctype'] == 'all'));
-
-            done();
-          }
-        }}
+              done();
+            },
+          },
+        },
       });
     });
 
