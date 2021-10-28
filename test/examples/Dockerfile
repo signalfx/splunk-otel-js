@@ -3,6 +3,7 @@ FROM node:16-alpine as base
 
 USER node
 ENV TZ=UTC
+RUN g++ make python
 RUN mkdir /home/node/app
 WORKDIR /home/node/app
 
