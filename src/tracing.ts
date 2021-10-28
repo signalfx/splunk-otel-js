@@ -30,10 +30,6 @@ import {
 let unregisterInstrumentations: (() => void) | null = null;
 
 export function startTracing(opts: Partial<Options> = {}): void {
-  if (process.env.OTEL_TRACE_ENABLED === 'false') {
-    return;
-  }
-
   const options = _setDefaultOptions(opts);
 
   // propagator

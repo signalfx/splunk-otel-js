@@ -67,13 +67,6 @@ describe('tracing:otlp', () => {
     }
   }
 
-  it('does not setup tracing OTEL_TRACE_ENABLED=false', () => {
-    process.env.OTEL_TRACE_ENABLED = 'false';
-    startTracing();
-    sinon.assert.notCalled(addSpanProcessorMock);
-    stopTracing();
-  });
-
   it('setups tracing with defaults', () => {
     startTracing();
     assertTracingPipeline('localhost:4317', 'unnamed-node-service', '');
