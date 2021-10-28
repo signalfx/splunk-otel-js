@@ -1,9 +1,9 @@
 # Set up the environment, install deps
 FROM node:16-alpine as base
+RUN apk add g++ make python
 
 USER node
 ENV TZ=UTC
-RUN sudo apk add g++ make python
 RUN mkdir /home/node/app
 WORKDIR /home/node/app
 
