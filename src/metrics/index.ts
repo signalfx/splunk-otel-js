@@ -1,4 +1,5 @@
-import { diag } from '@opentelemetry/api';
+import { context, diag } from '@opentelemetry/api';
+import { suppressTracing } from '@opentelemetry/core';
 import { collectMemoryInfo, MemoryInfo } from './memory';
 import * as os from 'os';
 import * as signalfx from 'signalfx';
@@ -10,7 +11,7 @@ interface MetricsOptions {
 }
 
 interface SignalFxOptions {
-  client: signalfx.Ingest | signalfx.IngestJson,
+  client: signalfx.SignalClient,
   dimensions: object,
 }
 
@@ -54,26 +55,44 @@ interface MetricsRegistry {
 
 export type StartMetricsOptions = Partial<MetricsOptions> & { signalfx?: Partial<SignalFxOptions> };
 
-export function startMetrics(opts: StartMetricsOptions = {}): void {
+let _signalFxClient: signalfx.SignalClient | undefined;
+
+export function startMetrics(opts: StartMetricsOptions = {}) {
   const options = _setDefaultOptions(opts);
+
+  _signalFxClient = options.sfxClient;
   const registry = _createSignalFxMetricsRegistry(options.sfxClient);
 
   const extension = _loadExtension();
 
+  let interval: NodeJS.Timer;
   if (extension !== undefined) {
     extension.start();
-    setInterval(() => {
+    interval = setInterval(() => {
       registry.addMemoryInfo(collectMemoryInfo());
       registry.addNativeInfo(extension.collect());
       extension.reset();
       registry.export();
-    }, options.exportInterval).unref();
+    }, options.exportInterval);
   } else {
-    setInterval(() => {
+    interval = setInterval(() => {
       registry.addMemoryInfo(collectMemoryInfo());
       registry.export();
-    }, options.exportInterval).unref();
+    }, options.exportInterval);
   }
+
+  interval.unref();
+
+  return {
+    stopMetrics: () => {
+      _signalFxClient = undefined;
+      clearInterval(interval);
+    }
+  };
+}
+
+export function getSignalFxClient(): signalfx.SignalClient | undefined {
+  return _signalFxClient;
 }
 
 function gcSizeMetric(info: NativeCounters, type: GcType, timestamp: number) {
@@ -164,11 +183,12 @@ function _createSignalFxMetricsRegistry(client: signalfx.SignalClient): MetricsR
       }
     },
     export: () => {
-      console.log(cumulativeCounters);
-      console.log(gauges);
-      client.send({
-        cumulative_counters: cumulativeCounters,
-        gauges,
+      context.with(suppressTracing(context.active()), () => {
+        console.log('CLIENT SEND');
+        client.send({
+          cumulative_counters: cumulativeCounters,
+          gauges,
+        });
       });
 
       gauges = [];
@@ -188,7 +208,7 @@ function _loadExtension(): CountersExtension | undefined {
   return extension;
 }
 
-function _setDefaultOptions(options: StartMetricsOptions = {}): MetricsOptions & { sfxClient: signalfx.SignalClient } {
+export function _setDefaultOptions(options: StartMetricsOptions = {}): MetricsOptions & { sfxClient: signalfx.SignalClient } {
   const accessToken = options.accessToken || process.env.SPLUNK_ACCESS_TOKEN || '';
   const endpoint = options.endpoint || process.env.SPLUNK_METRICS_ENDPOINT || 'http://localhost:9943';
   const dimensions = Object.assign(options.signalfx?.dimensions || {}, {
@@ -197,7 +217,7 @@ function _setDefaultOptions(options: StartMetricsOptions = {}): MetricsOptions &
     node_version: process.versions.node,
   });
 
-  const sfxClient = options.signalfx?.client || new signalfx.IngestJson(accessToken, {
+  const sfxClient = options.signalfx?.client || new signalfx.Ingest(accessToken, {
     ingestEndpoint: endpoint,
     dimensions,
   });

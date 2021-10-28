@@ -19,7 +19,7 @@ import * as util from 'util';
 import { Writable } from 'stream';
 import { context, trace } from '@opentelemetry/api';
 import { startTracing, stopTracing } from '../src/tracing';
-import { defaultLogHook } from '../src/instrumentations/logging.ts';
+import { defaultLogHook } from '../src/instrumentations/logging';
 import type * as pino from 'pino';
 import type * as bunyan from 'bunyan';
 import type * as winston from 'winston';

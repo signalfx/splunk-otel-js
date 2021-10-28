@@ -16,17 +16,22 @@
 
 import * as sinon from 'sinon';
 import * as tracing from '../src/tracing';
+import * as metrics from '../src/metrics';
 
 describe('instrumentation', () => {
   let startTracingMock;
+  let startMetricsMock;
 
   beforeEach(() => {
     startTracingMock = sinon.stub(tracing, 'startTracing');
+    startMetricsMock = sinon.stub(metrics, 'startMetrics');
   });
 
   afterEach(() => {
     startTracingMock.reset();
     startTracingMock.restore();
+    startMetricsMock.reset();
+    startMetricsMock.restore();
   });
 
   it('importing auto calls startTracing', () => {

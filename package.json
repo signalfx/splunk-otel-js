@@ -13,8 +13,6 @@
     "change:bump": "beachball bump",
     "clean": "tsc --build --clean",
     "codecov": "nyc report --reporter=json && codecov -f coverage/*.json -p .",
-    "prebuild": "prebuildify -t 16.10.0 --strip",
-    "rebuild-native": "node-gyp rebuild",
     "compile": "tsc --build",
     "install": "node-gyp-build",
     "lint:fix": "eslint . --ext .ts --fix",
@@ -110,7 +108,7 @@
     "@types/sonic-boom": "^0.7.0",
     "jaeger-client": "^3.18.1",
     "semver": "^7.3.5",
-    "signalfx": "7.4.0",
+    "signalfx": "7.4.1",
     "node-gyp-build": "^4.3.0"
   },
   "peerDependencies": {
