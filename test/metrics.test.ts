@@ -94,6 +94,7 @@ describe('metrics', () => {
 
     it('has expected defaults', () => {
       const options = _setDefaultOptions();
+      assert.deepEqual(options.enabled, false);
       assert.deepEqual(options.accessToken, '');
       assert.deepEqual(options.endpoint, 'http://localhost:9943');
       assert.deepEqual(options.exportInterval, 5000);
@@ -108,10 +109,12 @@ describe('metrics', () => {
 
     it('is possible to set options via env vars', () => {
       process.env.SPLUNK_ACCESS_TOKEN = 'foo';
+      process.env.SPLUNK_METRICS_ENABLED = 'true';
       process.env.SPLUNK_METRICS_ENDPOINT = 'http://localhost:9999';
       process.env.SPLUNK_METRICS_EXPORT_INTERVAL = '1000';
 
       const options = _setDefaultOptions();
+      assert.deepEqual(options.enabled, true);
       assert.deepEqual(options.accessToken, 'foo');
       assert.deepEqual(options.endpoint, 'http://localhost:9999');
       assert.deepEqual(options.exportInterval, 1000);
@@ -127,6 +130,7 @@ describe('metrics', () => {
       const gcMetric = (name: string) => m =>
         metric(name)(m) && m.dimensions['gctype'] === 'all';
       const { stopMetrics } = startMetrics({
+        enabled: true,
         exportInterval: 100,
         signalfx: {
           client: {
@@ -157,8 +161,33 @@ describe('metrics', () => {
       });
     });
 
+    it('does not export metrics when disabled', done => {
+      startMetrics({
+        exportInterval: 1,
+        signalfx: {
+          client: {
+            send: () => {
+              assert(false, 'did not expect metric send to be called');
+            },
+          },
+        },
+      });
+
+      setTimeout(() => {
+        done();
+      }, 30);
+    });
+
+    it('returns an undefined SignalFx client when disabled', () => {
+      const { getSignalFxClient } = startMetrics();
+      const client = getSignalFxClient();
+      assert.equal(client, undefined);
+    });
+
     it('is possible to get the current signalfx client', () => {
-      const { stopMetrics, getSignalFxClient } = startMetrics();
+      const { stopMetrics, getSignalFxClient } = startMetrics({
+        enabled: true,
+      });
       const client = getSignalFxClient();
       stopMetrics();
       assert(client);

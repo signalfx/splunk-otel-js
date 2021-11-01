@@ -17,10 +17,12 @@
 import { context, diag } from '@opentelemetry/api';
 import { suppressTracing } from '@opentelemetry/core';
 import { collectMemoryInfo, MemoryInfo } from './memory';
+import { getEnvBoolean, getEnvNumber } from '../options';
 import * as os from 'os';
 import * as signalfx from 'signalfx';
 
 interface MetricsOptions {
+  enabled: boolean;
   accessToken: string;
   endpoint: string;
   exportInterval: number;
@@ -76,6 +78,13 @@ export type StartMetricsOptions = Partial<MetricsOptions> & {
 export function startMetrics(opts: StartMetricsOptions = {}) {
   const options = _setDefaultOptions(opts);
 
+  if (!options.enabled) {
+    return {
+      stopMetrics: () => {},
+      getSignalFxClient: () => undefined,
+    };
+  }
+
   const signalFxClient = options.sfxClient;
   const registry = _createSignalFxMetricsRegistry(options.sfxClient);
 
@@ -103,17 +112,16 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
     stopMetrics: () => {
       clearInterval(interval);
     },
-    getSignalFxClient: (): signalfx.SignalClient | undefined => signalFxClient,
+    getSignalFxClient: () => signalFxClient,
   };
 }
 
 interface CumulativeRegistry {
   add(key: string, value: number): number;
-  reset(): void;
 }
 
 function newCumulativeRegistry(): CumulativeRegistry {
-  let metrics = new Map<string, number>();
+  const metrics = new Map<string, number>();
   return {
     add: (key: string, value: number): number => {
       if (metrics.has(key)) {
@@ -124,9 +132,6 @@ function newCumulativeRegistry(): CumulativeRegistry {
 
       metrics.set(key, value);
       return value;
-    },
-    reset: () => {
-      metrics = new Map<string, number>();
     },
   };
 }
@@ -270,6 +275,8 @@ function _loadExtension(): CountersExtension | undefined {
 export function _setDefaultOptions(
   options: StartMetricsOptions = {}
 ): MetricsOptions & { sfxClient: signalfx.SignalClient } {
+  const enabled =
+    options.enabled ?? getEnvBoolean('SPLUNK_METRICS_ENABLED', false);
   const accessToken =
     options.accessToken || process.env.SPLUNK_ACCESS_TOKEN || '';
   const endpoint =
@@ -290,27 +297,12 @@ export function _setDefaultOptions(
     });
 
   return {
+    enabled,
     accessToken,
     endpoint,
     exportInterval:
       options.exportInterval ||
-      _getEnvNumber('SPLUNK_METRICS_EXPORT_INTERVAL', 5000),
+      getEnvNumber('SPLUNK_METRICS_EXPORT_INTERVAL', 5000),
     sfxClient,
   };
-}
-
-function _getEnvNumber(key: string, defaultValue: number): number {
-  const value = process.env[key];
-
-  if (value === undefined) {
-    return defaultValue;
-  }
-
-  const numberValue = parseInt(value);
-
-  if (isNaN(numberValue)) {
-    return defaultValue;
-  }
-
-  return numberValue;
 }
