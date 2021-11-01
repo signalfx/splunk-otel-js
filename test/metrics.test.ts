@@ -73,11 +73,14 @@ describe('metrics', () => {
     it('does not compute event loop lag to be less than the actual execution time', done => {
       nativeStats.reset();
       const begin = hrtime();
-      let sum = 0;
-      for (let i = 0; i < 1_000_000; i++) {
-        sum += i;
+
+      let duration = hrtime(begin);
+
+      // Spin for 10ms
+      while (duration[0] < 1 && duration[1] < 10_000_000) {
+        duration = hrtime(begin);
       }
-      const duration = hrtime(begin);
+
       setTimeout(() => {
         const stats = nativeStats.collect();
         assert(stats.eventLoopLag.max >= duration[1]);
