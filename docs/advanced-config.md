@@ -16,7 +16,9 @@ To configure the Splunk Distribution of OpenTelemetry JS, you can use a combinat
 
 ## List of settings
 
-This distribution supports all the configuration options supported by the components it uses with the defaults specified by the [OTel Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md):
+This distribution supports all the configuration options supported by the components it uses with the defaults specified by the [OTel Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md).
+
+### Tracing
 
 | Environment variable<br>``startTracing()`` argument             | Default value           | Support | Notes
 | --------------------------------------------------------------- | ----------------------- | ------- | ---
@@ -38,9 +40,7 @@ This distribution supports all the configuration options supported by the compon
 | `SPLUNK_ACCESS_TOKEN`<br>`accessToken`                          |                         | Stable  | The optional access token for exporting signal data directly to SignalFx API.
 | `SPLUNK_TRACE_RESPONSE_HEADER_ENABLED`<br>`serverTimingEnabled` | `true`                  | Stable  | Enable injection of `Server-Timing` header to HTTP responses.
 
-\*: Overwritten default value
-
-## Additional config options
+#### Additional `startTracing` config options
 
 The following config options can be set by passing them as arguments to `startTracing()`.
 
@@ -55,3 +55,22 @@ The following config options can be set by passing them as arguments to `startTr
 - `instrumentations`: Can be used to enable additional instrumentation packages.
 
 - `captureHttpRequestUriParams`: Either a list of keys (case-sensitive) of HTTP query parameters to capture or a function that gets invoked with the current span and query parameters to set a custom span attribute. When using the former, parameters are set as span attributes as `http.request.param.${key}`. Attribute keys are normalized at capture time, meaning `.` is replaced with `_` to avoid any attribute namespacing issues.
+
+### Metrics
+
+| Environment variable<br>``startMetrics()`` argument             | Default value           | Support | Notes
+| --------------------------------------------------------------- | ----------------------- | ------- | ---
+| `SPLUNK_METRICS_ENABLED`<br>`enabled`                           | `false`                 | Experimental | Enabled metrics export. See [metrics documentation](metrics.md) for more information.
+| `SPLUNK_METRICS_ENDPOINT`<br>`endpoint`                         | `http://localhost:9943` | Experimental | The SignalFx metrics endpoint to send to.
+| `SPLUNK_METRICS_EXPORT_INTERVAL`<br>`exportInterval`            | `5000`                  | Experimental | The interval, in milliseconds, of metrics collection and exporting.
+
+#### Additional `startMetrics` config options
+
+- `signalfx`: A JS object with optional `client` and `dimensions` fields. If you have already setup a SignalFx client with custom configuration, it is possible use this for sending instead of creating, configuring a new one. `dimensions` object adds a pre-defined dimension for each datapoint. The format for `dimensions` is `{key: value, ...}`.
+
+   The following is a list of dimensions added by default:
+   - `host`: `os.hostname()`
+   - `metric_source`: `splunk-otel-js`
+   - `node_version`: `process.versions.node`, e.g. `16.10.0`
+
+\*: Overwritten default value
