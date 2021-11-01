@@ -83,6 +83,8 @@ describe('metrics', () => {
 
       setTimeout(() => {
         const stats = nativeStats.collect();
+        console.log(duration);
+        console.log(stats.eventLoopLag.max);
         assert(stats.eventLoopLag.max >= duration[1]);
         done();
       }, 0);
