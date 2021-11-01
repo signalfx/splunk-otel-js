@@ -30,6 +30,8 @@ CMD ["npm", "run", "start"]
 # Compile the package and use it in examples
 FROM published as compiled
 
+# use a single prebuild for tests so we don't have to compile it each install 
+RUN npm run prebuild:current
 RUN npm run compile
 RUN mv `npm pack` /tmp/splunk-otel.tgz
 RUN cd examples/basic && npm i /tmp/splunk-otel.tgz

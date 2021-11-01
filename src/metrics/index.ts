@@ -73,12 +73,10 @@ export type StartMetricsOptions = Partial<MetricsOptions> & {
   signalfx?: Partial<SignalFxOptions>;
 };
 
-let _signalFxClient: signalfx.SignalClient | undefined;
-
 export function startMetrics(opts: StartMetricsOptions = {}) {
   const options = _setDefaultOptions(opts);
 
-  _signalFxClient = options.sfxClient;
+  const signalFxClient = options.sfxClient;
   const registry = _createSignalFxMetricsRegistry(options.sfxClient);
 
   const extension = _loadExtension();
@@ -103,14 +101,10 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
 
   return {
     stopMetrics: () => {
-      _signalFxClient = undefined;
       clearInterval(interval);
     },
+    getSignalFxClient: (): signalfx.SignalClient | undefined => signalFxClient,
   };
-}
-
-export function getSignalFxClient(): signalfx.SignalClient | undefined {
-  return _signalFxClient;
 }
 
 interface CumulativeRegistry {
