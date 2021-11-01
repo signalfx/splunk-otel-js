@@ -19,10 +19,7 @@ import * as os from 'os';
 
 import * as utils from './utils';
 import { hrtime } from 'process';
-import {
-  startMetrics,
-  _setDefaultOptions,
-} from '../src/metrics';
+import { startMetrics, _setDefaultOptions } from '../src/metrics';
 
 function emptyCounter() {
   return {
