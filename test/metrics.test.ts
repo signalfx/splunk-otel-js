@@ -84,7 +84,7 @@ describe('metrics', () => {
           `event loop max below actual execution duration max=${stats.eventLoopLag.max} exec=${duration}`
         );
         done();
-      }, 0);
+      }, 10);
     });
   });
 
