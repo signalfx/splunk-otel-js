@@ -22,7 +22,6 @@ import { hrtime } from 'process';
 import {
   startMetrics,
   _setDefaultOptions,
-  getSignalFxClient,
 } from '../src/metrics';
 
 function emptyCounter() {
@@ -162,7 +161,7 @@ describe('metrics', () => {
     });
 
     it('is possible to get the current signalfx client', () => {
-      const { stopMetrics } = startMetrics();
+      const { stopMetrics, getSignalFxClient } = startMetrics();
       const client = getSignalFxClient();
       stopMetrics();
       assert(client);
