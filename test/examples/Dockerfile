@@ -8,6 +8,7 @@ RUN mkdir /home/node/app
 WORKDIR /home/node/app
 
 COPY --chown=node:node ["binding.gyp", "package*.json", "*.lock", "./"]
+COPY --chown=node:node ["./src/metrics/native/module.cpp", "./src/metrics/native/module.cpp"]
 RUN npm install
 
 COPY --chown=node:node ./ .
