@@ -11,7 +11,7 @@ services:
   app:
     build:
       context:  ../../
-      dockerfile: test/examples/Dockerfile
+      dockerfile: test/examples/Dockerfile_app
     working_dir: /home/node/app/examples/basic
     env_file: ./basic/app.env
     depends_on:
@@ -19,7 +19,7 @@ services:
   test:
     build:
       context: .
-      target: base
+      dockerfile: Dockerfile_test
     command: node ./basic
     environment:
       REQ_URL: http://app/hello
