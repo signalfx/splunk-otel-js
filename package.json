@@ -52,7 +52,7 @@
     "access": "public"
   },
   "devDependencies": {
-    "@commitlint/cli": "^13.1.0",
+    "@commitlint/cli": "^14.1.0",
     "@commitlint/config-conventional": "^13.1.0",
     "@octokit/core": "^3.5.1",
     "@opentelemetry/instrumentation-bunyan": "~0.25.0",
