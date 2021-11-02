@@ -58,7 +58,7 @@ describe('metrics', () => {
       setTimeout(() => {
         assert.notDeepStrictEqual(nativeStats.collect(), stats);
         done();
-      }, 0);
+      }, 10);
     });
 
     it('is possible to reset native counters', () => {
