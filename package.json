@@ -70,7 +70,7 @@
     "beachball": "^2.10.2",
     "bunyan": "1.8.15",
     "codecov": "3.8.3",
-    "eslint": "^7.32.0",
+    "eslint": "^8.1.0",
     "eslint-plugin-header": "^3.1.1",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^4.0.0",
