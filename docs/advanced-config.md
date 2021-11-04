@@ -61,12 +61,12 @@ The following config options can be set by passing them as arguments to `startTr
 | Environment variable<br>``startMetrics()`` argument             | Default value           | Support | Notes
 | --------------------------------------------------------------- | ----------------------- | ------- | ---
 | `SPLUNK_METRICS_ENABLED`<br>`enabled`                           | `false`                 | Experimental | Enabled metrics export. See [metrics documentation](metrics.md) for more information.
-| `SPLUNK_METRICS_ENDPOINT`<br>`endpoint`                         | `http://localhost:9943` | Experimental | The SignalFx metrics endpoint to send to.
+| `SPLUNK_METRICS_ENDPOINT`<br>`endpoint`                         | `http://localhost:9943` | Experimental | The metrics endpoint to send to.
 | `SPLUNK_METRICS_EXPORT_INTERVAL`<br>`exportInterval`            | `5000`                  | Experimental | The interval, in milliseconds, of metrics collection and exporting.
 
 #### Additional `startMetrics` config options
 
-- `signalfx`: A JS object with optional `client` and `dimensions` fields. If you have already setup a SignalFx client with custom configuration, it is possible use this for sending instead of creating, configuring a new one. `dimensions` object adds a pre-defined dimension for each datapoint. The format for `dimensions` is `{key: value, ...}`.
+- `signalfx`: A JS object with optional `client` and `dimensions` fields. If you have already setup a [SignalFx client](https://github.com/signalfx/signalfx-nodejs) with custom configuration, you can use this for sending instead of creating, configuring a new one. `dimensions` object adds a pre-defined dimension for each datapoint. The format for `dimensions` is `{key: value, ...}`.
 
    The following is a list of dimensions added by default:
    - `host`: `os.hostname()`
