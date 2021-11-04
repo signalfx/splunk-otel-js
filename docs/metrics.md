@@ -1,7 +1,7 @@
 # Metrics
 
 > :construction: &nbsp;Status: Experimental - exported metric data and
-> configuration properties may change.
+> configuration properties will change once OpenTelemetry metrics become available.
 
 The Splunk Distribution for OpenTelemetry Node.js gathers runtime metrics and allows to send custom metrics via a [SignalFx client](https://github.com/signalfx/signalfx-nodejs).
 
