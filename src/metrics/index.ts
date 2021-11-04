@@ -222,7 +222,7 @@ function _createSignalFxMetricsRegistry(
         timestamp,
       });
 
-      for (const metric of [
+      cumulativeCounters.push(
         gcSizeMetric(registry, 'all', info, timestamp),
         gcSizeMetric(registry, 'scavenge', info, timestamp),
         gcSizeMetric(registry, 'mark_sweep_compact', info, timestamp),
@@ -239,10 +239,8 @@ function _createSignalFxMetricsRegistry(
         gcCountMetric(registry, 'scavenge', info, timestamp),
         gcCountMetric(registry, 'mark_sweep_compact', info, timestamp),
         gcCountMetric(registry, 'incremental_marking', info, timestamp),
-        gcCountMetric(registry, 'process_weak_callbacks', info, timestamp),
-      ]) {
-        cumulativeCounters.push(metric);
-      }
+        gcCountMetric(registry, 'process_weak_callbacks', info, timestamp)
+      );
     },
     export: () => {
       context.with(suppressTracing(context.active()), () => {
