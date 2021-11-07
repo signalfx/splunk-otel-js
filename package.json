@@ -20,6 +20,7 @@
     "lint:commits": "commitlint",
     "test": "nyc ts-mocha -p tsconfig.json 'test/**/*.test.ts'",
     "prebuild:current": "node scripts/prebuild-current.js",
+    "prebuild:os": "node scripts/prebuild-os.js",
     "release:github": "node scripts/release-github.js",
     "version:check": "node scripts/version-check.js",
     "version:generate": "node scripts/version-generate.js",
