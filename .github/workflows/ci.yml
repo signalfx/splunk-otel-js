@@ -60,13 +60,14 @@ jobs:
       - name: Build
         run: npm run compile
       - name: Pack
+        id: pack
         run: |
           echo "::set-output name=package_file::$(npm pack)"
       - name: Upload package
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ steps.vars.outputs.package_file }}
-          path: ${{ steps.vars.outputs.package_file }}
+          name: ${{ steps.pack.outputs.package_file }}
+          path: ${{ steps.pack.outputs.package_file }}
           
   unit-tests:
     runs-on: ${{ matrix.os }}
