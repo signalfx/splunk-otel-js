@@ -22,7 +22,7 @@ jobs:
       - name: Cache prebuilds
         uses: actions/cache@v2
         with:
-          path: prebuilds
+          path: ./prebuilds
           key: ${{ matrix.container }}-prebuilds-${{ github.sha }}
       - name: Checkout
         uses: actions/checkout@v2
@@ -31,6 +31,12 @@ jobs:
         run: npm ci
       - name: Prebuild
         run: npm run prebuild:os ${{ matrix.versions }}
+      - name: print info
+        run: |
+          pwd
+          echo $GITHUB_WORKSPACE
+      - name: Run tests
+        run: npm run test
   unit-tests:
     runs-on: ${{ matrix.os }}
     permissions: read-all
