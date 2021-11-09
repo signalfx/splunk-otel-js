@@ -32,11 +32,37 @@ lint:
     - npm run lint
     - npm run version:check
 
+build-linux-node10:
+  stage: build
+  image: node:10.12.0
+  script:
+    - npm install
+    - npm test
+    - npm run prebuild:os
+  artifacts:
+    name: linux-node10
+    paths:
+      - "prebuilds"
+  
+build-linux-node14:
+  stage: build
+  image: node:14
+  script:
+    - touch foobar.txt
+  artifacts:
+    name: linux-node14
+    paths:
+      - "foobar.txt"
+
 build:
+  needs:
+    - build-linux-node10
+    - build-linux-node14
   artifacts:
     paths:
       - dist/
   script:
+    - ls -la
     - npm run compile
     - npm pack
 
