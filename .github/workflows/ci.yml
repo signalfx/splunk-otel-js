@@ -44,10 +44,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - uses: actions/setup-node@v2
-      - name: Install npm dependencies
-        run: npm ci
-      - name: Build
-        run: npm run compile
       - name: download prebuilds
         uses: actions/download-artifact@v2
       - name: copy prebuilds
@@ -58,6 +54,19 @@ jobs:
           ls -lh prebuilds-linux-node14
           cp -r prebuilds-linux-node10/* prebuilds
           cp -r prebuilds-linux-node14/* prebuilds
+          find prebuilds
+      - name: Install npm dependencies
+        run: npm ci
+      - name: Build
+        run: npm run compile
+      - name: Pack
+        run: |
+          ::set-output name=package_file::$(npm pack)
+      - name: Upload package
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ steps.vars.outputs.package_file }}
+          path: ${{ steps.vars.outputs.package_file }}
           
   unit-tests:
     runs-on: ${{ matrix.os }}
