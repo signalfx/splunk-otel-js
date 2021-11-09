@@ -7,6 +7,30 @@ on:
 permissions: read-all
 
 jobs:
+  linux-prebuilds:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - container: node:10.13.0
+            versions '8.5.0 9.0.0 10.0.0 11.0.0 12.0.0 13.0.0'
+          - container: node:14.0.0
+            versions: '14.0.0 15.0.0 16.0.0'
+    container: ${{ matrix.container }}
+    steps:
+      - name: Cache prebuilds
+        uses: actions/cache@v2
+        with:
+          path: prebuilds
+          key: ${{ matrix.container }}-prebuilds-${{ github.sha }}
+      - name: Checkout
+        uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+      - name: Install npm dependencies
+        run: npm ci
+      - name: Prebuild
+        run: npm run prebuild:os ${{ matrix.versions }}
   unit-tests:
     runs-on: ${{ matrix.os }}
     permissions: read-all
