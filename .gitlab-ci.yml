@@ -52,9 +52,20 @@ build-linux-node14:
     - npm install
     - npm run prebuild:os 14.0.0 15.0.0 16.0.0
     - npm test
-    - touch foobar.txt
   artifacts:
     name: linux-node14
+    paths:
+      - "prebuilds"
+
+build-macos:
+  stage: build
+  image: macos-11-xcode-12
+  script:
+    - npm install
+    - npm run prebuild:os
+    - npm test
+  artifacts:
+    name: macos
     paths:
       - "prebuilds"
 
