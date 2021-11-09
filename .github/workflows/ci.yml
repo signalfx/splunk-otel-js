@@ -61,7 +61,7 @@ jobs:
         run: npm run compile
       - name: Pack
         run: |
-          ::set-output name=package_file::$(npm pack)
+          echo "::set-output name=package_file::$(npm pack)"
       - name: Upload package
         uses: actions/upload-artifact@v2
         with:
