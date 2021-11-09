@@ -11,7 +11,7 @@ cache:
 
 # tell npm to store cache in .npm so it can be cached by Gitlab
 before_script:
-  - npm ci --cache .npm --prefer-offline
+  - npm ci --ignore-scripts --cache .npm --prefer-offline
 
 stages:
   - setup
