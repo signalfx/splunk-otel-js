@@ -36,9 +36,36 @@ jobs:
           name: prebuilds-linux-${{ matrix.label }}
           path: prebuilds
 
+  prebuilds:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2019
+            label: windows
+          - os: macos-10.15
+            label: macos
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+      - name: Install npm dependencies
+        run: npm ci
+      - name: Prebuild
+        run: npm run prebuild:os
+      - name: Run tests
+        run: npm run test
+      - name: upload prebuilds
+        uses: actions/upload-artifact@v2
+        with:
+          name: prebuilds-${{ matrix.label }}
+          path: prebuilds
+
   create-package:
     needs:
       - linux-prebuilds
+      - prebuilds
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -48,12 +75,11 @@ jobs:
         uses: actions/download-artifact@v2
       - name: copy prebuilds
         run: |
-          ls -lh
           mkdir -p prebuilds
-          ls -lh prebuilds-linux-node10
-          ls -lh prebuilds-linux-node14
           cp -r prebuilds-linux-node10/* prebuilds
           cp -r prebuilds-linux-node14/* prebuilds
+          cp -r prebuilds-windows/* prebuilds
+          cp -r prebuilds-macos/* prebuilds
           find prebuilds
       - name: Install npm dependencies
         run: npm ci
