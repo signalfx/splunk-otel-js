@@ -1,17 +1,17 @@
 default:
   image: 'cimg/node:lts'
 
-cache:
-  key:
-    files:
-      - package-lock.json
-  paths:
-    - .npm/
-    - node_modules/
+#cache:
+#  key:
+#    files:
+#      - package-lock.json
+#  paths:
+#    - .npm/
+#    - node_modules/
 
 # tell npm to store cache in .npm so it can be cached by Gitlab
-before_script:
-  - npm ci --ignore-scripts --cache .npm --prefer-offline
+#before_script:
+#  - npm ci --ignore-scripts --cache .npm --prefer-offline
 
 stages:
   - setup
