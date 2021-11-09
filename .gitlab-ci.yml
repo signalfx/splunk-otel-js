@@ -65,8 +65,9 @@ build:
   artifacts:
     paths:
       - dist/
+      - "*.tgz"
   script:
-    - find prebuilds
+    - npm install
     - npm run compile
     - npm pack
 
