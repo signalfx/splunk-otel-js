@@ -15,6 +15,7 @@ before_script:
 
 stages:
   - setup
+  - build
   - test
   - release
 
@@ -43,7 +44,7 @@ build-linux-node10:
     name: linux-node10
     paths:
       - "prebuilds"
-  
+
 build-linux-node14:
   stage: build
   image: node:14
