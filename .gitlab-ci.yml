@@ -38,8 +38,8 @@ build-linux-node10:
   image: node:10.12.0
   script:
     - npm install
+    - npm run prebuild:os 8.5.0 9.0.0 10.0.0 11.0.0 12.0.0 13.0.0 14.0.0
     - npm test
-    - npm run prebuild:os
   artifacts:
     name: linux-node10
     paths:
@@ -47,12 +47,16 @@ build-linux-node10:
 
 build-linux-node14:
   stage: build
-  image: node:14
+  image: node:12
   script:
+    - npm install
+    - npm run prebuild:os 14.0.0 15.0.0 16.0.0
+    - npm test
     - touch foobar.txt
   artifacts:
     name: linux-node14
     paths:
+      - "prebuilds"
       - "foobar.txt"
 
 build:
