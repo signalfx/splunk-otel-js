@@ -1,3 +1,9 @@
+.shared_windows_runners:
+  tags:
+    - shared-windows
+    - windows
+    - windows-1809
+
 default:
   image: 'cimg/node:lts'
 
@@ -57,15 +63,16 @@ build-linux-node14:
     paths:
       - "prebuilds"
 
-build-macos:
+build-windows:
+  extends:
+    - .shared_windows_runners
   stage: build
-  image: macos-11-xcode-12
   script:
     - npm install
     - npm run prebuild:os
     - npm test
   artifacts:
-    name: macos
+    name: windows
     paths:
       - "prebuilds"
 
@@ -73,6 +80,7 @@ build:
   needs:
     - build-linux-node10
     - build-linux-node14
+    - build-windows
   artifacts:
     paths:
       - dist/
