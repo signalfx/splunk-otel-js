@@ -10,7 +10,9 @@ release-test:
   script:
     - npm install
     - npm run fetch-release-artifact
-    - ls -la
+    - mkdir -p dist
+    - mv splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz dist/
+    - shasum -a 256 dist/* > dist/checksums.txt
 
 release:
   stage: release

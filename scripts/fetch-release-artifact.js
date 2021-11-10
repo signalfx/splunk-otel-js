@@ -1,49 +1,109 @@
 const fs = require('fs');
+const { execSync } = require('child_process');
 const path = require('path');
 const { Octokit } = require('octokit');
 
 const { version } = require('../package.json');
-const { Console } = require('console');
 
-async function getBuildArtifact() {
-  const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
-  //const octokit = new Octokit();
+const WORKFLOW_TIMEOUT_MS = 5 * 60 * 1000;
 
-  const owner = process.env.GITHUB_OWNER ?? 'signalfx';
-  const repo = process.env.GITHUB_REPO ?? 'splunk-otel-js';
+async function sleep(ms) {
+  await new Promise(r => setTimeout(r, ms));
+}
 
-
-  const {data: workflows} = await octokit.rest.actions.listWorkflowRunsForRepo({
-    owner,
-    repo,
+async function fetchWorkflowRun(context) {
+  const { data: workflows } = await context.octokit.rest.actions.listWorkflowRunsForRepo({
+    owner: context.owner,
+    repo: context.repo,
     branch: process.env.CI_COMMIT_BRANCH ?? 'main',
   });
 
   const runs = workflows.workflow_runs;
 
-  console.log('workflows');
-  console.log(runs);
+  const commitSha = process.env.CI_COMMIT_SHA;
+  const run = runs.find(wf => wf.head_sha === commitSha);
 
-  const run = runs.find(wf => wf.head_sha === process.env.CI_COMMIT_SHA);
+  if (run === undefined) {
+    throw new Error(`Workflow not found for commit ${commitSha}`);
+  }
 
-  const {data: artifacts} = await octokit.rest.actions.listWorkflowRunArtifacts({
+  return run;
+}
+
+async function waitForWorkflowRun(context) {
+  const waitUntil = process.hrtime.bigint() + BigInt(WORKFLOW_TIMEOUT_MS) * 1_000_000n;
+
+  for (;;) {
+    let run = await fetchWorkflowRun(context);
+
+    if (run.status !== 'completed') {
+      if (process.hrtime.bigint() > waitUntil) {
+        throw new Error('Timed out waiting for workflow to finish');
+      }
+
+      console.log('run not yet completed, waiting...');
+      await sleep(10_000);
+
+      continue;
+    }
+
+    if (run.status === 'completed' && run.conclusion !== 'success') {
+      throw new Error('Workflow not successful', run);
+    }
+
+    return run;
+  }
+}
+
+async function getBuildArtifact() {
+  const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+  const owner = process.env.GITHUB_OWNER ?? 'signalfx';
+  const repo = process.env.GITHUB_REPO ?? 'splunk-otel-js';
+
+  console.log('waiting for workflow results');
+
+  const run = await waitForWorkflowRun({ octokit, owner, repo });
+
+  console.log('found finished workflow run', run);
+
+  const { data: artifacts } = await octokit.rest.actions.listWorkflowRunArtifacts({
     owner,
     repo,
     run_id: run.id,
   });
 
+  console.log('found artifacts for workflow', artifacts);
+
   const tgzName = `splunk-otel-${version}.tgz`
   const packageArtifact = artifacts.artifacts.find(artifact => artifact.name === tgzName);
 
-  console.log(packageArtifact);
+  if (packageArtifact === undefined) {
+    throw new Error(`unable to find artifact named ${tgzName}`);
+  }
 
   const dlArtifact = await octokit.rest.actions.downloadArtifact({
     owner,
     repo,
-    artifact_id: packageArtifact.id
+    artifact_id: packageArtifact.id,
+    archive_format: 'zip',
   });
 
-  console.log(dlArtifact);
+  console.log('downloaded', dlArtifact);
+
+  const tempFile = 'artifact-temp.zip';
+
+  console.log(`writing content to ${tempFile} and unzipping`);
+
+  fs.writeFileSync(tempFile, Buffer.from(dlArtifact.data));
+
+  execSync(`unzip -o ${tempFile}`);
+
+  const exists = fs.existsSync(packageArtifact.name);
+  console.log(`${packageArtifact.name} was extracted: ${exists}`);
+
+  if (!exists) {
+    throw new Error(`${packageArtifact.name} was not found after extraction`);
+  }
 }
 
 getBuildArtifact().catch(e => {
