@@ -8,6 +8,7 @@ stages:
 release-test:
   stage: release-test
   script:
+    - npm install
     - npm run fetch-release-artifact
     - ls -la
 
