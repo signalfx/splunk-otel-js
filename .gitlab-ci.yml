@@ -1,100 +1,18 @@
-.shared_windows_runners:
-  tags:
-    - shared-windows
-    - windows
-    - windows-1809
-
 default:
   image: 'cimg/node:lts'
 
-#cache:
-#  key:
-#    files:
-#      - package-lock.json
-#  paths:
-#    - .npm/
-#    - node_modules/
-
-# tell npm to store cache in .npm so it can be cached by Gitlab
-#before_script:
-#  - npm ci --ignore-scripts --cache .npm --prefer-offline
-
 stages:
-  - setup
-  - build
-  - test
+  - release-test
   - release
 
-install:
-  stage: setup
+release-test:
+  stage: release-test
   script:
-    - npm install
-
-test:
-  script:
-    - npm test
-
-lint:
-  script:
-    - npm run lint
-    - npm run version:check
-
-build-linux-node10:
-  stage: build
-  image: node:10.12.0
-  script:
-    - npm install
-    - npm run prebuild:os 8.5.0 9.0.0 10.0.0 11.0.0 12.0.0 13.0.0
-    - npm test
-  artifacts:
-    name: linux-node10
-    paths:
-      - "prebuilds"
-
-build-linux-node14:
-  stage: build
-  image: node:14.0.0
-  script:
-    - npm install
-    - npm run prebuild:os 14.0.0 15.0.0 16.0.0
-    - npm test
-  artifacts:
-    name: linux-node14
-    paths:
-      - "prebuilds"
-
-build-windows:
-  extends:
-    - .shared_windows_runners
-  stage: build
-  script:
-    - npm install
-    - npm run prebuild:os
-    - npm test
-  artifacts:
-    name: windows
-    paths:
-      - "prebuilds"
-
-build:
-  needs:
-    - build-linux-node10
-    - build-linux-node14
-    - build-windows
-  artifacts:
-    paths:
-      - dist/
-      - "*.tgz"
-  script:
-    - npm install
-    - npm run compile
-    - npm pack
+    - npm run fetch-artifact
+    - ls -la
 
 release:
   stage: release
-  artifacts:
-    paths:
-      - dist/
   only:
     - /^v[0-9]+\.[0-9]+\.[0-9]+.*/
   except:
