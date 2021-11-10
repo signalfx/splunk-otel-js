@@ -5,7 +5,7 @@ const { Octokit } = require('octokit');
 
 const { version } = require('../package.json');
 
-const WORKFLOW_TIMEOUT_MS = 5 * 60 * 1000;
+const WORKFLOW_TIMEOUT_MS = 15 * 60 * 1000;
 
 async function sleep(ms) {
   await new Promise(r => setTimeout(r, ms));
