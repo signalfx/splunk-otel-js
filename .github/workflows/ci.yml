@@ -7,7 +7,7 @@ on:
 permissions: read-all
 
 jobs:
-  linux-prebuilds:
+  prebuilds-linux:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -65,7 +65,7 @@ jobs:
           path: prebuilds
 
   create-package:
-    needs: [linux-prebuilds, prebuilds]
+    needs: [prebuilds-linux, prebuilds]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -95,7 +95,7 @@ jobs:
           path: ${{ steps.pack.outputs.package_file }}
           
   unit-tests:
-    needs: [prebuild-linux, prebuilds]
+    needs: [prebuilds-linux, prebuilds]
     runs-on: ${{ matrix.os }}
     permissions: read-all
     strategy:
