@@ -80,7 +80,6 @@ jobs:
           cp -r prebuilds-linux-node14/* prebuilds
           cp -r prebuilds-windows/* prebuilds
           cp -r prebuilds-macos/* prebuilds
-          find prebuilds
       - name: Install npm dependencies
         run: npm ci
       - name: Build
@@ -96,13 +95,14 @@ jobs:
           path: ${{ steps.pack.outputs.package_file }}
           
   unit-tests:
+    needs: [prebuilds-linux, prebuilds]
     runs-on: ${{ matrix.os }}
     permissions: read-all
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu-latest', 'windows-latest']
-        nodejs: ['10', '12', '14', '16']
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+        nodejs: ['8.5', '10', '12', '14', '16']
     steps:
       - name: Checkout
         uses: actions/checkout@v2
