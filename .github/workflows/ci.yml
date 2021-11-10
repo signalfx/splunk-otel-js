@@ -65,9 +65,7 @@ jobs:
           path: prebuilds
 
   create-package:
-    needs:
-      - linux-prebuilds
-      - prebuilds
+    needs: [linux-prebuilds, prebuilds]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
