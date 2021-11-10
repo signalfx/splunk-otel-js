@@ -95,7 +95,7 @@ jobs:
           path: ${{ steps.pack.outputs.package_file }}
           
   unit-tests:
-    needs: [prebuilds-linux, prebuilds]
+    needs: [prebuild-linux, prebuilds]
     runs-on: ${{ matrix.os }}
     permissions: read-all
     strategy:
