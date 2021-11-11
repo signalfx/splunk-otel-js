@@ -56,7 +56,7 @@ async function waitForWorkflowRun(context) {
 }
 
 async function getBuildArtifact() {
-  const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+  const octokit = new Octokit({ auth: process.env.PUBLIC_ARTIFACTS_TOKEN });
   const owner = process.env.GITHUB_OWNER ?? 'signalfx';
   const repo = process.env.GITHUB_REPO ?? 'splunk-otel-js';
 
