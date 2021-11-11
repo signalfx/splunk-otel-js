@@ -3,6 +3,17 @@ default:
 
 stages:
   - release
+  - release-test
+
+release-test:
+  stage: release-test
+  artifacts:
+    paths:
+      - dist/
+  script:
+    - npm install
+    - npm run prepare-release-artifact
+    - shasum -a 256 dist/* > dist/checksums.txt
 
 release:
   stage: release

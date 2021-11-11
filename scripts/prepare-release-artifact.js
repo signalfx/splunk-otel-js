@@ -7,8 +7,8 @@ const { version } = require('../package.json');
 
 const WORKFLOW_TIMEOUT_MS = 15 * 60 * 1000;
 
-async function sleep(ms) {
-  await new Promise(r => setTimeout(r, ms));
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
 }
 
 async function fetchWorkflowRun(context) {
@@ -31,13 +31,13 @@ async function fetchWorkflowRun(context) {
 }
 
 async function waitForWorkflowRun(context) {
-  const waitUntil = process.hrtime.bigint() + BigInt(WORKFLOW_TIMEOUT_MS) * 1_000_000n;
+  const waitUntil = Date.now() + WORKFLOW_TIMEOUT_MS;
 
   for (;;) {
     let run = await fetchWorkflowRun(context);
 
     if (run.status !== 'completed') {
-      if (process.hrtime.bigint() > waitUntil) {
+      if (Date.now() > waitUntil) {
         throw new Error('Timed out waiting for workflow to finish');
       }
 
