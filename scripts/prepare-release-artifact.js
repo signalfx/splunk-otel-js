@@ -104,9 +104,18 @@ async function getBuildArtifact() {
   if (!exists) {
     throw new Error(`${packageArtifact.name} was not found after extraction`);
   }
+
+  return packageArtifact.name;
 }
 
-getBuildArtifact().catch(e => {
+async function prepareReleaseArtifact() {
+  const artifactName = await getBuildArtifact();
+
+  fs.mkdirSync('dist', { recursive: true });
+  fs.renameSync(artifactName, path.join('dist', artifactName));
+}
+
+prepareReleaseArtifact().catch(e => {
   console.error(e);
   process.exit(1);
 });

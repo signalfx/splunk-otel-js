@@ -7,15 +7,20 @@ stages:
 
 release-test:
   stage: release-test
+  artifacts:
+    paths:
+      - dist/
   script:
     - npm install
-    - npm run fetch-release-artifact
-    - mkdir -p dist
-    - mv splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz dist/
+    - npm run prepare-release-artifact
     - shasum -a 256 dist/* > dist/checksums.txt
+    - ls -la dist
 
 release:
   stage: release
+  artifacts:
+    paths:
+      - dist/
   only:
     - /^v[0-9]+\.[0-9]+\.[0-9]+.*/
   except:
