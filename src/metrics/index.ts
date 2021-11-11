@@ -17,12 +17,14 @@
 import { context, diag } from '@opentelemetry/api';
 import { suppressTracing } from '@opentelemetry/core';
 import { collectMemoryInfo, MemoryInfo } from './memory';
-import { getEnvBoolean, getEnvNumber } from '../options';
-import * as os from 'os';
+import { defaultServiceName, getEnvBoolean, getEnvNumber } from '../options';
+import { EnvResourceDetector } from '../resource';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import * as signalfx from 'signalfx';
 
 interface MetricsOptions {
   enabled: boolean;
+  serviceName: string;
   accessToken: string;
   endpoint: string;
   exportInterval: number;
@@ -281,11 +283,24 @@ export function _setDefaultOptions(
     options.endpoint ||
     process.env.SPLUNK_METRICS_ENDPOINT ||
     'http://localhost:9943';
-  const dimensions = Object.assign(options.signalfx?.dimensions || {}, {
-    host: os.hostname(),
-    metric_source: 'splunk-otel-js',
-    node_version: process.versions.node,
-  });
+
+  const resource = new EnvResourceDetector().detect();
+
+  const serviceName = String(
+    options.serviceName ||
+      process.env.OTEL_SERVICE_NAME ||
+      resource.attributes[SemanticResourceAttributes.SERVICE_NAME] ||
+      defaultServiceName
+  );
+
+  const dimensions = Object.assign(
+    {
+      service: serviceName,
+      metric_source: 'splunk-otel-js',
+      node_version: process.versions.node,
+    },
+    options.signalfx?.dimensions || {}
+  );
 
   const sfxClient =
     options.signalfx?.client ||
@@ -296,6 +311,7 @@ export function _setDefaultOptions(
 
   return {
     enabled,
+    serviceName: serviceName,
     accessToken,
     endpoint,
     exportInterval:
