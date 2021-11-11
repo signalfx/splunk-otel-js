@@ -48,7 +48,7 @@ async function waitForWorkflowRun(context) {
     }
 
     if (run.status === 'completed' && run.conclusion !== 'success') {
-      throw new Error('Workflow not successful', run);
+      throw new Error(`Workflow not successful conclusion=${run.conclusion}`);
     }
 
     return run;
