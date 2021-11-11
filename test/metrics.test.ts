@@ -95,13 +95,14 @@ describe('metrics', () => {
     it('has expected defaults', () => {
       const options = _setDefaultOptions();
       assert.deepEqual(options.enabled, false);
+      assert.deepEqual(options.serviceName, 'unnamed-node-service');
       assert.deepEqual(options.accessToken, '');
       assert.deepEqual(options.endpoint, 'http://localhost:9943');
       assert.deepEqual(options.exportInterval, 5000);
 
       const sfxClient = options.sfxClient;
       assert.deepStrictEqual(sfxClient['globalDimensions'], {
-        host: os.hostname(),
+        service: 'unnamed-node-service',
         metric_source: 'splunk-otel-js',
         node_version: process.versions.node,
       });
@@ -109,15 +110,24 @@ describe('metrics', () => {
 
     it('is possible to set options via env vars', () => {
       process.env.SPLUNK_ACCESS_TOKEN = 'foo';
+      process.env.OTEL_SERVICE_NAME = 'bigmetric';
       process.env.SPLUNK_METRICS_ENABLED = 'true';
       process.env.SPLUNK_METRICS_ENDPOINT = 'http://localhost:9999';
       process.env.SPLUNK_METRICS_EXPORT_INTERVAL = '1000';
 
       const options = _setDefaultOptions();
       assert.deepEqual(options.enabled, true);
+      assert.deepEqual(options.serviceName, 'bigmetric');
       assert.deepEqual(options.accessToken, 'foo');
       assert.deepEqual(options.endpoint, 'http://localhost:9999');
       assert.deepEqual(options.exportInterval, 1000);
+
+      const sfxClient = options.sfxClient;
+      assert.deepStrictEqual(sfxClient['globalDimensions'], {
+        service: 'bigmetric',
+        metric_source: 'splunk-otel-js',
+        node_version: process.versions.node,
+      });
     });
   });
 

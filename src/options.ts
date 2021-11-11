@@ -37,7 +37,7 @@ import {
 import { SplunkBatchSpanProcessor } from './SplunkBatchSpanProcessor';
 import { Resource } from '@opentelemetry/resources';
 
-const defaultServiceName = 'unnamed-node-service';
+export const defaultServiceName = 'unnamed-node-service';
 
 type SpanExporterFactory = (options: Options) => SpanExporter;
 
