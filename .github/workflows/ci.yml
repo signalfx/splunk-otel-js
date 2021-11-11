@@ -7,14 +7,102 @@ on:
 permissions: read-all
 
 jobs:
+  prebuilds-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - container: node:10.13.0
+            versions: '8.5.0 9.0.0 10.0.0 11.0.0 12.0.0 13.0.0'
+            label: node10
+          - container: node:14.0.0
+            versions: '14.0.0 15.0.0 16.0.0 17.0.1'
+            label: node14
+    container: ${{ matrix.container }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+      - name: Install npm dependencies
+        run: npm ci
+      - name: Prebuild
+        run: npm run prebuild:os ${{ matrix.versions }}
+      - name: Run tests
+        run: npm run test
+      - name: upload prebuilds
+        uses: actions/upload-artifact@v2
+        with:
+          name: prebuilds-linux-${{ matrix.label }}
+          path: prebuilds
+
+  prebuilds:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2019
+            label: windows
+          - os: macos-10.15
+            label: macos
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - name: Install npm dependencies
+        run: npm ci
+      - name: Prebuild
+        run: npm run prebuild:os
+      - name: Run tests
+        run: npm run test
+      - name: upload prebuilds
+        uses: actions/upload-artifact@v2
+        with:
+          name: prebuilds-${{ matrix.label }}
+          path: prebuilds
+
+  create-package:
+    needs: [prebuilds-linux, prebuilds]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+      - name: download prebuilds
+        uses: actions/download-artifact@v2
+      - name: copy prebuilds
+        run: |
+          mkdir -p prebuilds
+          cp -r prebuilds-linux-node10/* prebuilds
+          cp -r prebuilds-linux-node14/* prebuilds
+          cp -r prebuilds-windows/* prebuilds
+          cp -r prebuilds-macos/* prebuilds
+      - name: Install npm dependencies
+        run: npm ci
+      - name: Build
+        run: npm run compile
+      - name: Pack
+        id: pack
+        run: |
+          echo "::set-output name=package_file::$(npm pack)"
+      - name: Upload package
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ steps.pack.outputs.package_file }}
+          path: ${{ steps.pack.outputs.package_file }}
+          
   unit-tests:
+    needs: [prebuilds-linux, prebuilds]
     runs-on: ${{ matrix.os }}
     permissions: read-all
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu-latest', 'windows-latest']
-        nodejs: ['10', '12', '14', '16']
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+        nodejs: ['10', '12', '14', '16', '17']
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -25,8 +113,6 @@ jobs:
         run: npm ci
       - name: Test
         run: npm run test
-      - name: Report coverage
-        run: npm run codecov
 
   lint:
     if: ${{ github.event_name == 'pull_request' }}

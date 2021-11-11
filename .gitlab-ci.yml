@@ -1,44 +1,8 @@
 default:
   image: 'cimg/node:lts'
 
-cache:
-  key:
-    files:
-      - package-lock.json
-  paths:
-    - .npm/
-    - node_modules/
-
-# tell npm to store cache in .npm so it can be cached by Gitlab
-before_script:
-  - npm ci --cache .npm --prefer-offline
-
 stages:
-  - setup
-  - test
   - release
-
-install:
-  stage: setup
-  script:
-    - npm install
-
-test:
-  script:
-    - npm test
-
-lint:
-  script:
-    - npm run lint
-    - npm run version:check
-
-build:
-  artifacts:
-    paths:
-      - dist/
-  script:
-    - npm run compile
-    - npm pack
 
 release:
   stage: release
@@ -51,10 +15,7 @@ release:
     - branches
   script:
     - npm install
-    - npm run compile
-    - npm pack
-    - mkdir -p dist
-    - mv splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz dist/
+    - npm run prepare-release-artifact
     - shasum -a 256 dist/* > dist/checksums.txt
 
     # release in Github
