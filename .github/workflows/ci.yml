@@ -19,9 +19,9 @@ jobs:
           - container: node:14.0.0
             versions: '14.0.0 15.0.0 16.0.0'
             label: node14
-          - container: node:16
+          - container: node:17
             versions: '17.0.0'
-            label: node16
+            label: node17
     container: ${{ matrix.container }}
     steps:
       - name: Checkout
