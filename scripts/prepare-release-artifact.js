@@ -113,6 +113,8 @@ async function prepareReleaseArtifact() {
 
   fs.mkdirSync('dist', { recursive: true });
   fs.renameSync(artifactName, path.join('dist', artifactName));
+
+  console.log('successfully prepared artifacts');
 }
 
 prepareReleaseArtifact().catch(e => {
