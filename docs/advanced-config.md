@@ -69,7 +69,7 @@ The following config options can be set by passing them as arguments to `startTr
 - `signalfx`: A JS object with optional `client` and `dimensions` fields. If you have already setup a [SignalFx client](https://github.com/signalfx/signalfx-nodejs) with custom configuration, you can use this for sending instead of creating, configuring a new one. `dimensions` object adds a pre-defined dimension for each datapoint. The format for `dimensions` is `{key: value, ...}`.
 
    The following is a list of dimensions added by default:
-   - `service`: see `serviceName` from the tracing section,
+   - `service`: see [`serviceName`](#tracing) from the tracing section
    - `metric_source`: `splunk-otel-js`
    - `node_version`: `process.versions.node`, e.g. `16.10.0`
 
