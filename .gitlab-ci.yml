@@ -2,19 +2,7 @@ default:
   image: 'cimg/node:lts'
 
 stages:
-  - release-test
   - release
-
-release-test:
-  stage: release-test
-  artifacts:
-    paths:
-      - dist/
-  script:
-    - npm install
-    - npm run prepare-release-artifact
-    - shasum -a 256 dist/* > dist/checksums.txt
-    - ls -la dist
 
 release:
   stage: release
@@ -27,10 +15,7 @@ release:
     - branches
   script:
     - npm install
-    - npm run compile
-    - npm pack
-    - mkdir -p dist
-    - mv splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz dist/
+    - npm run prepare-release-artifact
     - shasum -a 256 dist/* > dist/checksums.txt
 
     # release in Github
