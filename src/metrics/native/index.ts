@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { startTracing } from './tracing';
-import { startMetrics } from './metrics';
+import * as path from 'path';
 
-startTracing();
-startMetrics();
+module.exports = require('node-gyp-build')(path.join(__dirname, '../../..'));

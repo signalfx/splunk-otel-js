@@ -15,3 +15,4 @@
  */
 
 export { startTracing } from './tracing';
+export { startMetrics } from './metrics';

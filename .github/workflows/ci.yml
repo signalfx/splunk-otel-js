@@ -8,11 +8,12 @@ permissions: read-all
 
 jobs:
   unit-tests:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     permissions: read-all
     strategy:
       fail-fast: false
       matrix:
+        os: ['ubuntu-latest', 'windows-latest']
         nodejs: ['10', '12', '14', '16']
     steps:
       - name: Checkout

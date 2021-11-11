@@ -254,7 +254,7 @@ export function defaultPropagatorFactory(options: Options): TextMapPropagator {
   });
 }
 
-function getEnvBoolean(key: string, defaultValue = true) {
+export function getEnvBoolean(key: string, defaultValue = true) {
   const value = process.env[key];
 
   if (value === undefined) {
@@ -266,6 +266,22 @@ function getEnvBoolean(key: string, defaultValue = true) {
   }
 
   return true;
+}
+
+export function getEnvNumber(key: string, defaultValue: number): number {
+  const value = process.env[key];
+
+  if (value === undefined) {
+    return defaultValue;
+  }
+
+  const numberValue = parseInt(value);
+
+  if (isNaN(numberValue)) {
+    return defaultValue;
+  }
+
+  return numberValue;
 }
 
 function deduplicate(arr: string[]) {
