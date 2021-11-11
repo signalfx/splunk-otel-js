@@ -1,8 +1,17 @@
 # Change Log - @splunk/otel
 
-This log was last generated on Tue, 12 Oct 2021 06:38:40 GMT and should not be manually modified.
+This log was last generated on Thu, 11 Nov 2021 15:56:29 GMT and should not be manually modified.
 
 <!-- Start content -->
+
+## 0.15.0
+
+Thu, 11 Nov 2021 15:56:29 GMT
+
+### Minor changes
+
+- feat: add runtime metrics (siimkallas@gmail.com)
+- feat: remove OTEL_TRACE_ENABLED (rauno56@gmail.com)
 
 ## 0.14.0
 

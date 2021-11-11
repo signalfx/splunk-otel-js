@@ -2,6 +2,27 @@
   "name": "@splunk/otel",
   "entries": [
     {
+      "date": "Thu, 11 Nov 2021 15:56:29 GMT",
+      "tag": "@splunk/otel_v0.15.0",
+      "version": "0.15.0",
+      "comments": {
+        "minor": [
+          {
+            "author": "siimkallas@gmail.com",
+            "package": "@splunk/otel",
+            "comment": "feat: add runtime metrics",
+            "commit": "89233ca6880bb0cea97b727d00706e299e7a911e"
+          },
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "comment": "feat: remove OTEL_TRACE_ENABLED",
+            "commit": "89233ca6880bb0cea97b727d00706e299e7a911e"
+          }
+        ]
+      }
+    },
+    {
       "date": "Tue, 12 Oct 2021 06:38:40 GMT",
       "tag": "@splunk/otel_v0.14.0",
       "version": "0.14.0",
