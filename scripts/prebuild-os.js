@@ -7,7 +7,7 @@ if (targets.length == 0) {
 }
 
 prebuildify({
-  strip: false,
+  strip: true,
   targets: targets,
 }, err => {
   if (err) {
