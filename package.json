@@ -65,7 +65,7 @@
     "@opentelemetry/instrumentation-bunyan": "~0.25.0",
     "@opentelemetry/instrumentation-http": "^0.26.0",
     "@opentelemetry/instrumentation-pino": "~0.25.0",
-    "@opentelemetry/instrumentation-winston": "~0.25.0",
+    "@opentelemetry/instrumentation-winston": "~0.26.0",
     "@types/bunyan": "1.8.7",
     "@types/mocha": "9.0.0",
     "@types/node": "^16.10.3",
