@@ -47,27 +47,27 @@ const emptyStats = () => ({
 
 describe('metrics', () => {
   describe('native counters collection', () => {
-    const nativeStats = require('../src/metrics/native');
+    const { metrics } = require('../src/native_ext');
 
     it('is possible to get native counters', done => {
-      const stats = nativeStats.collect();
+      const stats = metrics.collect();
       assert.deepStrictEqual(stats, emptyStats());
 
-      nativeStats.start();
+      metrics.start();
 
       setTimeout(() => {
-        assert.notDeepStrictEqual(nativeStats.collect(), stats);
+        assert.notDeepStrictEqual(metrics.collect(), stats);
         done();
       }, 10);
     });
 
     it('is possible to reset native counters', () => {
-      nativeStats.reset();
-      assert.deepStrictEqual(nativeStats.collect(), emptyStats());
+      metrics.reset();
+      assert.deepStrictEqual(metrics.collect(), emptyStats());
     });
 
     it('does not compute event loop lag to be less than the actual execution time', done => {
-      nativeStats.reset();
+      metrics.reset();
       const begin = hrtime();
 
       let duration = hrtime(begin);
@@ -78,7 +78,7 @@ describe('metrics', () => {
       }
 
       setTimeout(() => {
-        const stats = nativeStats.collect();
+        const stats = metrics.collect();
         assert(
           stats.eventLoopLag.max >= duration[1],
           `event loop max below actual execution duration max=${stats.eventLoopLag.max} exec=${duration}`

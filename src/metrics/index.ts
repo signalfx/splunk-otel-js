@@ -261,7 +261,7 @@ function _createSignalFxMetricsRegistry(
 function _loadExtension(): CountersExtension | undefined {
   let extension;
   try {
-    extension = require('./native');
+    extension = require('../native_ext');
   } catch (e) {
     diag.error(
       'Unable to load native metrics extension. Event loop and GC metrics will not be reported',
@@ -269,7 +269,7 @@ function _loadExtension(): CountersExtension | undefined {
     );
   }
 
-  return extension;
+  return extension?.metrics;
 }
 
 export function _setDefaultOptions(
