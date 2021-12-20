@@ -3,7 +3,7 @@
 #include <node_version.h>
 #include <uv.h>
 
-namespace {
+namespace Metrics {
 struct Counters {
   int64_t min = 0;
   int64_t max = 0;
@@ -189,19 +189,20 @@ NAN_METHOD(StartCounters) {
   state.started = true;
 }
 
-NAN_MODULE_INIT(Init) {
+void Initialize(v8::Local<v8::Object> target) {
+  auto metricsModule = Nan::New<v8::Object>();
   Nan::Set(
-    target, Nan::New("start").ToLocalChecked(),
+    metricsModule, Nan::New("start").ToLocalChecked(),
     Nan::GetFunction(Nan::New<v8::FunctionTemplate>(StartCounters)).ToLocalChecked());
 
   Nan::Set(
-    target, Nan::New("collect").ToLocalChecked(),
+    metricsModule, Nan::New("collect").ToLocalChecked(),
     Nan::GetFunction(Nan::New<v8::FunctionTemplate>(CollectCounters)).ToLocalChecked());
 
   Nan::Set(
-    target, Nan::New("reset").ToLocalChecked(),
+    metricsModule, Nan::New("reset").ToLocalChecked(),
     Nan::GetFunction(Nan::New<v8::FunctionTemplate>(ResetCounters)).ToLocalChecked());
-}
-} // namespace
 
-NODE_MODULE(NODE_GYP_MODULE_NAME, Init);
+  Nan::Set(target, Nan::New("metrics").ToLocalChecked(), metricsModule);
+}
+} // namespace Metrics

@@ -2,7 +2,8 @@
   "targets": [{
     "target_name": "metrics",
     "sources": [
-      "src/metrics/native/module.cpp"
+      "src/native_ext/module.cpp",
+      "src/native_ext/metrics.cpp"
     ],
     "include_dirs": [
       "<!(node -e \"require('nan')\")"
