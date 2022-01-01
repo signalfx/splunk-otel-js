@@ -1,6 +1,5 @@
 #include "profiling.h"
 #include <algorithm>
-#include <chrono>
 #include <nan.h>
 #include <stack>
 #include <stdio.h>
@@ -8,7 +7,11 @@
 #include <uv.h>
 #include <v8-profiler.h>
 #include <vector>
+#include <chrono>
+#include <inttypes.h>
 #include "hex.h"
+
+#define PROFILER_DEBUG_EXPORT 0
 
 namespace Profiling {
 
@@ -17,7 +20,10 @@ struct SpanActivation {
   char spanId[16];
   int64_t startTime = 0;
   int64_t endTime = 0;
-  int64_t depth = 0;
+#if PROFILER_DEBUG_EXPORT
+  int32_t depth = 0;
+  bool is_intersected = false;
+#endif
 
   SpanActivation() {
     memset(traceId, '0', sizeof(traceId));
@@ -25,11 +31,13 @@ struct SpanActivation {
   }
 };
 
-const SpanActivation*
-FindClosestActivation(const std::vector<SpanActivation>& activations, int64_t ts) {
-  const SpanActivation* t = nullptr;
+static_assert(sizeof(SpanActivation) <= 64);
 
-  for (const SpanActivation& activation : activations) {
+SpanActivation*
+FindClosestActivation(std::vector<SpanActivation>& activations, int64_t ts) {
+  SpanActivation* t = nullptr;
+
+  for (SpanActivation& activation : activations) {
     if (activation.startTime <= ts && ts <= activation.endTime) {
       if (t) {
         if (activation.startTime > t->startTime) {
@@ -52,12 +60,16 @@ enum ProfilingFlags {
 struct Profiling {
   v8::CpuProfiler* profiler;
   int64_t wallStartTime = 0;
-  int64_t activationDepth = 0;
+  int64_t startTime = 0;
+  int32_t activationDepth = 0;
   int32_t flags = ProfilingFlags_None;
+  int64_t samplingIntervalNanos = 0;
   std::vector<SpanActivation> finishedActivations;
   std::unordered_map<int64_t, std::stack<SpanActivation>> spanActivations;
 
-  bool RecordDebugInfo() const { return (flags & ProfilingFlags_RecordDebugInfo) == 1; }
+  bool RecordDebugInfo() const {
+    return (flags & ProfilingFlags_RecordDebugInfo) == 1;
+  }
 };
 
 Profiling* profiling = nullptr;
@@ -66,6 +78,10 @@ int64_t MicroSecondsSinceEpoch() {
   return std::chrono::duration_cast<std::chrono::microseconds>(
            std::chrono::system_clock::now().time_since_epoch())
     .count();
+}
+
+int64_t HrTime() {
+  return uv_hrtime();
 }
 
 NAN_METHOD(StartProfiling) {
@@ -90,14 +106,17 @@ NAN_METHOD(StartProfiling) {
     }
   }
 
+  profiling->samplingIntervalNanos = int64_t(samplingIntervalMicros) * 1000L;
+
   printf("Sampling interval seconds %f\n", double(samplingIntervalMicros) / 1e6);
   profiling->profiler->SetSamplingInterval(samplingIntervalMicros);
   v8::Local<v8::String> title = Nan::New("splunk-otel-js").ToLocalChecked();
   const bool recordSamples = true;
+  profiling->activationDepth = 0;
   profiling->profiler->StartProfiling(
     title, v8::kLeafNodeLineNumbers, recordSamples, v8::CpuProfilingOptions::kNoSampleLimit);
-  profiling->wallStartTime = MicroSecondsSinceEpoch();
-  profiling->activationDepth = 0;
+  profiling->startTime = HrTime();
+  profiling->wallStartTime = MicroSecondsSinceEpoch() * 1000L;
 }
 
 const char* GetTraceLineFormatString(size_t fileNameLen) {
@@ -154,17 +173,14 @@ struct StackTraceBuilder {
   std::string trace = "\"main\" #0 prio=0 os_prio=0 cpu=0 elapsed=0 tid=0 nid=0\n\n";
 };
 
-NAN_METHOD(StopProfiling) {
-  auto stopStart = MicroSecondsSinceEpoch();
+int TimestampString(int64_t ts, char* out, size_t length) {
+  return snprintf(out, length, "%" PRId64, ts);
+}
 
+NAN_METHOD(StopProfiling) {
   auto profilingData = Nan::New<v8::Object>();
   auto jsTraces = Nan::New<v8::Array>();
   Nan::Set(profilingData, Nan::New("stacktraces").ToLocalChecked(), jsTraces);
-
-  char startTimeNanos[32] = {0};
-  snprintf(startTimeNanos, sizeof(startTimeNanos), "%lld", profiling->wallStartTime * 1000LL);
-
-  Nan::Set(profilingData, Nan::New("startTimeNanos").ToLocalChecked(), Nan::New(startTimeNanos).ToLocalChecked());
 
   info.GetReturnValue().Set(profilingData);
 
@@ -172,24 +188,40 @@ NAN_METHOD(StopProfiling) {
     return;
   }
 
+  char startTimeNanos[32] = {0};
+  TimestampString(profiling->wallStartTime, startTimeNanos, sizeof(startTimeNanos));
+
+  Nan::Set(profilingData, Nan::New("startTimeNanos").ToLocalChecked(), Nan::New(startTimeNanos).ToLocalChecked());
+
   v8::Local<v8::String> title = Nan::New("splunk-otel-js").ToLocalChecked();
 
-  auto v8StopStart = MicroSecondsSinceEpoch();
+  int64_t profileStop = HrTime();
   v8::CpuProfile* profile = profiling->profiler->StopProfiling(title);
-  auto v8StopEnd = MicroSecondsSinceEpoch();
+  int64_t profileStopEnd = HrTime();
 
+  int64_t beginTransform = HrTime();
   std::sort(
     profiling->finishedActivations.begin(), profiling->finishedActivations.end(),
     [](const auto& a, const auto& b) { return a.startTime < b.startTime; });
 
   int traceCounter = 0;
+
+  int64_t nextSampleTs = profiling->startTime;
   for (int i = 0; i < profile->GetSamplesCount(); i++) {
-    StackTraceBuilder builder;
+    int64_t monotonicTs = profile->GetSampleTimestamp(i) * 1000L;
+    int64_t monotonicDelta = monotonicTs - profiling->startTime;
+
+    if (monotonicTs < nextSampleTs) {
+      continue;
+    }
+
+    nextSampleTs += profiling->samplingIntervalNanos;
+
     const v8::CpuProfileNode* sample = profile->GetSample(i);
+    StackTraceBuilder builder;
     builder.Add(sample);
 
-    int64_t ts =
-      profiling->wallStartTime + (profile->GetSampleTimestamp(i) - profile->GetStartTime());
+    int64_t sampleTimestamp = profiling->wallStartTime + monotonicDelta;
 
     const v8::CpuProfileNode* parent = sample->GetParent();
     while (parent) {
@@ -198,18 +230,18 @@ NAN_METHOD(StopProfiling) {
     }
 
     char tsBuf[32];
-    int tsBufSize = snprintf(tsBuf, 32, "%lld", ts * 1000LL);
+    TimestampString(sampleTimestamp, tsBuf, sizeof(tsBuf));
 
     auto jsTrace = Nan::New<v8::Object>();
 
     Nan::Set(
       jsTrace, Nan::New<v8::String>("timestamp").ToLocalChecked(),
-      Nan::New<v8::String>(tsBuf, tsBufSize).ToLocalChecked());
+      Nan::New<v8::String>(tsBuf).ToLocalChecked());
     Nan::Set(
       jsTrace, Nan::New<v8::String>("stacktrace").ToLocalChecked(),
       Nan::New<v8::String>(builder.trace.c_str(), builder.trace.size()).ToLocalChecked());
 
-    const SpanActivation* match = FindClosestActivation(profiling->finishedActivations, ts);
+    SpanActivation* match = FindClosestActivation(profiling->finishedActivations, monotonicTs);
 
     if (match) {
       uint8_t spanId[8];
@@ -223,40 +255,49 @@ NAN_METHOD(StopProfiling) {
       Nan::Set(
         jsTrace, Nan::New<v8::String>("traceId").ToLocalChecked(),
         Nan::CopyBuffer((const char*)traceId, 16).ToLocalChecked());
+
+      //match->is_intersected = true;
     }
 
     Nan::Set(jsTraces, traceCounter++, jsTrace);
-
-    /*
-    json_samples.push_back(nlm::json::object(
-      {{"stack", builder.trace}, {"ts", ts}, {"script", sample->GetScriptResourceNameStr()}}));
-    */
   }
 
-  /*
-  for (const SpanActivation& activation : profiling->finishedActivations) {
-    json_activations.push_back(nlm::json::object({
-      {"start", activation.startTime},
-      {"end", activation.endTime},
-      {"traceId", std::string(activation.traceId, 32)},
-      {"spanId", std::string(activation.spanId, 16)},
-      {"depth", activation.depth},
-      {"name", activation.name},
-      {"index", activation.index},
-    }));
+  int64_t endTransform = HrTime();
+
+#if PROFILER_DEBUG_EXPORT
+  if (profiling->RecordDebugInfo()) {
+    auto jsActivations = Nan::New<v8::Array>();
+    int32_t activationIndex = 0;
+
+    for (const SpanActivation& activation : profiling->finishedActivations) {
+      auto jsActivation = Nan::New<v8::Object>();
+
+      char startTs[32];
+      char endTs[32];
+      TimestampString(profiling->wallStartTime + (activation.startTime - profiling->startTime), startTs, sizeof(startTs));
+      TimestampString(profiling->wallStartTime + (activation.endTime - profiling->startTime), endTs, sizeof(endTs));
+
+      Nan::Set(jsActivation, Nan::New<v8::String>("start").ToLocalChecked(), Nan::New<v8::String>(startTs).ToLocalChecked());
+      Nan::Set(jsActivation, Nan::New<v8::String>("end").ToLocalChecked(), Nan::New<v8::String>(endTs).ToLocalChecked());
+      Nan::Set(jsActivation, Nan::New<v8::String>("traceId").ToLocalChecked(), Nan::New<v8::String>(activation.traceId, sizeof(activation.traceId)).ToLocalChecked());
+      Nan::Set(jsActivation, Nan::New<v8::String>("spanId").ToLocalChecked(), Nan::New<v8::String>(activation.spanId, sizeof(activation.spanId)).ToLocalChecked());
+      Nan::Set(jsActivation, Nan::New<v8::String>("depth").ToLocalChecked(), Nan::New<v8::Int32>(activation.depth));
+      Nan::Set(jsActivation, Nan::New<v8::String>("hit").ToLocalChecked(), Nan::New<v8::Boolean>(activation.is_intersected));
+
+      Nan::Set(jsActivations, activationIndex++, jsActivation);
+    }
+
+    Nan::Set(profilingData, Nan::New<v8::String>("activations").ToLocalChecked(), jsActivations);
   }
-  */
-
-  size_t activations = profiling->finishedActivations.size();
-
-  auto delStart = MicroSecondsSinceEpoch();
+#endif
+  int64_t cleanupBegin = HrTime();
   profile->Delete();
-  auto delEnd = MicroSecondsSinceEpoch();
   profiling->spanActivations.clear();
+  size_t activationsCount = profiling->finishedActivations.size();
   profiling->finishedActivations.clear();
+  int64_t cleanupEnd = HrTime();
 
-  auto stopEnd = MicroSecondsSinceEpoch();
-  printf("stop: %ld us; activations %zu; v8Stop: %ld us; del: %ld us\n", stopEnd - stopStart, activations, v8StopEnd - v8StopStart, delEnd - delStart);
+  printf("Activations: %zu; Transform: %ld us; Stop: %ld us; Cleanup: %ld us\n", activationsCount, (endTransform - beginTransform) / 1000, (profileStopEnd - profileStop) / 1000, (cleanupEnd - cleanupBegin) / 1000);
 }
 
 bool IsValidId(const char* id, int32_t length) {
@@ -287,8 +328,8 @@ NAN_METHOD(EnterContext) {
   SpanActivation activation;
   memcpy(activation.traceId, *traceId, std::min(traceId.length(), 32));
   memcpy(activation.spanId, *spanId, std::min(spanId.length(), 16));
-  activation.startTime = MicroSecondsSinceEpoch();
-  activation.depth = profiling->activationDepth;
+  activation.startTime = HrTime();
+  //activation.depth = profiling->activationDepth;
 
   if (profiling->spanActivations.count(index) > 0) {
     std::stack<SpanActivation>* activationStack = &profiling->spanActivations[index];
@@ -312,7 +353,7 @@ NAN_METHOD(ExitContext) {
   std::stack<SpanActivation>* activationStack = &profiling->spanActivations[index];
 
   if (!activationStack->empty()) {
-    activationStack->top().endTime = MicroSecondsSinceEpoch();
+    activationStack->top().endTime = HrTime();
     profiling->finishedActivations.push_back(activationStack->top());
     activationStack->pop();
   }

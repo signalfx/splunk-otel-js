@@ -2,6 +2,7 @@ import { Resource } from '@opentelemetry/resources';
 
 export interface ProfilingStartOptions {
   samplingIntervalMicroseconds: number;
+  recordDebugInfo: boolean;
 }
 
 export interface ProfilingStackTrace {

@@ -88,7 +88,6 @@ export class OTLPProfilingExporter implements ProfilingExporter {
     const payload = {
       resourceLogs,
     };
-
     this._client.export(payload, new grpc.Metadata(), (err: any) => {
       console.log(err);
     });

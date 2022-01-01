@@ -66,6 +66,7 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
 
   const startOptions = {
     samplingIntervalMicroseconds: options.callstackInterval * 1_000,
+    recordDebugInfo: options.debugExport,
   };
 
   setImmediate(() => {
