@@ -18,16 +18,6 @@ constexpr int8_t kHexDigits[256] = {
 
 inline int8_t HexToInt(char c) { return kHexDigits[uint8_t(c)]; }
 
-inline bool IsValidHex(const char* buf, size_t len) {
-  for (size_t i = 0; i < len; i++) {
-    if (HexToInt(buf[i]) == -1) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
 inline bool HexToBinary(const char* hex, size_t hex_len, uint8_t* buffer, size_t buffer_size) {
   memset(buffer, 0, buffer_size);
 

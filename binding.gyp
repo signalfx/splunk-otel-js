@@ -4,7 +4,8 @@
     "sources": [
       "src/native_ext/module.cpp",
       "src/native_ext/metrics.cpp",
-      "src/native_ext/profiling.cpp"
+      "src/native_ext/profiling.cpp",
+      "src/native_ext/arena.cpp"
     ],
     "include_dirs": [
       "<!(node -e \"require('nan')\")"

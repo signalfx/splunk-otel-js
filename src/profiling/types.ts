@@ -23,8 +23,8 @@ export interface ProfilingData {
 export interface ProfilingExtension {
   start(options?: ProfilingStartOptions): void;
   stop(): ProfilingData;
-  enterContext(id: number, traceId: string, spanId: string): void;
-  exitContext(id: number): void;
+  enterContext(context: any, traceId: string, spanId: string): void;
+  exitContext(context: any): void;
 }
 
 export interface ProfilingOptions {

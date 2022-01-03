@@ -7,8 +7,6 @@ import type { ProfilingExtension } from './types';
 type ContextRecorder = Pick<ProfilingExtension, 'enterContext' | 'exitContext'>;
 
 export class ProfilingContextManager extends AsyncHooksContextManager {
-    protected _idMap: WeakMap<Context, number> = new WeakMap();
-    protected _idSeq: number = 0;
     protected _enterContextOriginal: (context: Context) => void;
     protected _recorder: ContextRecorder;
 
@@ -39,24 +37,14 @@ export class ProfilingContextManager extends AsyncHooksContextManager {
 
       if (!spanCtx) return;
 
-      if (!this._idMap.has(context)) {
-        this._idMap.set(context, this._idSeq++);
-      }
-
-      const index = this._idMap.get(context)!;
-
       const { traceId, spanId } = spanCtx;
-      this._recorder.enterContext(index, traceId, spanId);
+      this._recorder.enterContext(context, traceId, spanId);
     }
 
     _exitContextOverride() {
         let context = this['_stack'].pop();
         if (context) {
-          let index = this._idMap.get(context);
-
-          if (index !== undefined) {
-            this._recorder.exitContext(index);
-          }
+          this._recorder.exitContext(context);
         }
         return context;
     }
