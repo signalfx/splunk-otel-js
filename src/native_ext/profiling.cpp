@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <uv.h>
 #include <v8-profiler.h>
-#include <chrono>
 #include <inttypes.h>
 #include "arena.h"
 #include "hex.h"
@@ -48,16 +47,10 @@ enum ProfilingFlags {
   ProfilingFlags_RecordDebugInfo = 0x01
 };
 
-const size_t kProfilingMaxMem = 1024ULL * 1024ULL * 64ULL;
-
 KHASH_MAP_INIT_INT(32, SpanActivation*);
 
 struct Profiling {
-  Profiling() : cycleMem(calloc(1, kProfilingMaxMem)) {
-    MemArenaInit(&arena, cycleMem, kProfilingMaxMem);
-  }
-  MemArena arena;
-  void* cycleMem;
+  PagedArena arena;
   TimeSlice* timeSlice;
   v8::CpuProfiler* profiler;
   int64_t wallStartTime = 0;
@@ -72,8 +65,14 @@ struct Profiling {
   }
 };
 
+void ProfilingInit(Profiling* profiling) {
+  const size_t kArenaPageSize = 1024ULL * 1024ULL * 16ULL;
+  PagedArenaInit(&profiling->arena, kArenaPageSize);
+  profiling->spanActivations = kh_init(32);
+}
+
 void* ArenaAlloc(Profiling* profiling, size_t size) {
-  return MemArenaAlloc(&profiling->arena, size);
+  return PagedArenaAlloc(&profiling->arena, size);
 }
 
 TimeSlice* NewTimeSlice(Profiling* profiling) {
@@ -180,12 +179,19 @@ NAN_METHOD(StartProfiling) {
   int64_t startBegin = HrTime();
   if (!profiling) {
     profiling = new Profiling();
+    ProfilingInit(profiling);
     profiling->profiler = v8::CpuProfiler::New(info.GetIsolate());
-    profiling->spanActivations = kh_init(32);
   }
 
-  MemArenaReset(&profiling->arena);
+  PagedArenaReset(&profiling->arena);
   profiling->timeSlice = NewTimeSlice(profiling);
+
+  if (!profiling->timeSlice) {
+    auto status = Nan::New<v8::Object>();
+    Nan::Set(status, Nan::New("error").ToLocalChecked(), Nan::New("unable to allocate memory").ToLocalChecked());
+    info.GetReturnValue().Set(status);
+    return;
+  }
   
   int samplingIntervalMicros = 1'000'000;
   profiling->flags = 0;
@@ -419,6 +425,7 @@ NAN_METHOD(StopProfiling) {
   int64_t cleanupEnd = HrTime();
 
   int64_t stopDur = cleanupEnd - stopBegin;
+  printf("Used memory: %zu\n", PagedArenaUsedMemory(&profiling->arena));
   printf("Stop: %ld us (%.3f ms)Transform: %ld us; Stop: %ld us; Cleanup: %ld us\n", stopDur / 1000L, double(stopDur) / 1e6, (endTransform - beginTransform) / 1000, (profileStopEnd - profileStop) / 1000, (cleanupEnd - cleanupBegin) / 1000);
 }
 
