@@ -2,10 +2,12 @@
   "targets": [{
     "target_name": "metrics",
     "sources": [
+      "src/native_ext/util/arena.cpp",
+      "src/native_ext/util/hex.cpp",
       "src/native_ext/module.cpp",
       "src/native_ext/metrics.cpp",
       "src/native_ext/profiling.cpp",
-      "src/native_ext/arena.cpp"
+      "src/native_ext/util/modp_numtoa.cpp"
     ],
     "include_dirs": [
       "<!(node -e \"require('nan')\")"

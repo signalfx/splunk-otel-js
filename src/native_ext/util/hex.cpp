@@ -1,7 +1,7 @@
-#pragma once
-
+#include "hex.h"
 #include <string.h>
 
+namespace {
 constexpr int8_t kHexDigits[256] = {
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -18,7 +18,9 @@ constexpr int8_t kHexDigits[256] = {
 
 inline int8_t HexToInt(char c) { return kHexDigits[uint8_t(c)]; }
 
-inline bool HexToBinary(const char* hex, size_t hex_len, uint8_t* buffer, size_t buffer_size) {
+}
+
+bool HexToBinary(const char* hex, size_t hex_len, uint8_t* buffer, size_t buffer_size) {
   memset(buffer, 0, buffer_size);
 
   if (hex_len > buffer_size * 2) {

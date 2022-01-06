@@ -1,19 +1,26 @@
 #include "profiling.h"
 #include <nan.h>
-#include <stdio.h>
 #include <uv.h>
 #include <v8-profiler.h>
 #include <inttypes.h>
-#include "arena.h"
-#include "hex.h"
 #include "khash.h"
+#include "util/arena.h"
+#include "util/hex.h"
+#include "util/modp_numtoa.h"
 
 #define PROFILER_DEBUG_EXPORT 0
 
 namespace Profiling {
 
+/**
+ * Span activations are grouped into chains of bins,
+ * where each bin represents a small time period, e.g. 100ms.
+ * This is done to ease matching against stacktrace timestamps
+ * without requiring more complicated data structures (interval trees)
+ * or matching against the whole profiling period.
+ */
 constexpr int64_t kActivationsPerBin = 64;
-constexpr int64_t kBinsPerTimeSlice = 512;
+constexpr int64_t kBinsPerActivationPeriod = 512;
 
 struct SpanActivation {
   char traceId[32];
@@ -27,19 +34,19 @@ struct SpanActivation {
 #endif
 };
 
-struct TimeSlice;
+struct ActivationPeriod;
 
 struct ActivationBin {
   SpanActivation* activations[kActivationsPerBin];
   int64_t count;
   int32_t index;
-  TimeSlice* slice;
+  ActivationPeriod* period;
   ActivationBin* next;
 };
 
-struct TimeSlice {
-  ActivationBin activationBins[kBinsPerTimeSlice];
-  TimeSlice* next;
+struct ActivationPeriod {
+  ActivationBin activationBins[kBinsPerActivationPeriod];
+  ActivationPeriod* next;
 };
 
 enum ProfilingFlags {
@@ -47,11 +54,59 @@ enum ProfilingFlags {
   ProfilingFlags_RecordDebugInfo = 0x01
 };
 
+struct String {
+  const char* data = nullptr;
+  size_t length = 0;
+
+  String() = default;
+  String(const char* data, size_t length) : data(data), length(length) {}
+
+  bool IsEmpty() const { return data == nullptr; }
+};
+
 KHASH_MAP_INIT_INT(32, SpanActivation*);
+KHASH_MAP_INIT_INT(StackLine, String);
+
+struct StackLineCache {
+  StackLineCache() : processedLines(kh_init(StackLine)) {
+  }
+
+  ~StackLineCache() {
+    kh_destroy(StackLine, processedLines);
+  }
+
+  void Clear() {
+    kh_clear(StackLine, processedLines);
+  }
+
+  String Get(int32_t key) {
+    khiter_t it = kh_get(StackLine, processedLines, key);
+
+    if (it == kh_end(processedLines)) {
+      return String();
+    }
+
+    return kh_value(processedLines, it);
+  }
+
+  void Set(int32_t key, String line) {
+    int ret;
+    khiter_t it = kh_put(StackLine, processedLines, key, &ret);
+
+    if (ret == -1) {
+      return;
+    }
+
+    kh_value(processedLines, it) = line;
+  }
+
+  khash_t(StackLine)* processedLines;
+};
+
 
 struct Profiling {
   PagedArena arena;
-  TimeSlice* timeSlice;
+  ActivationPeriod* activationPeriod;
   v8::CpuProfiler* profiler;
   int64_t wallStartTime = 0;
   int64_t startTime = 0;
@@ -59,6 +114,7 @@ struct Profiling {
   int32_t flags = ProfilingFlags_None;
   int64_t samplingIntervalNanos = 0;
   khash_t(32)* spanActivations;
+  StackLineCache stacklineCache;
 
   bool RecordDebugInfo() const {
     return (flags & ProfilingFlags_RecordDebugInfo) == 1;
@@ -66,7 +122,7 @@ struct Profiling {
 };
 
 void ProfilingInit(Profiling* profiling) {
-  const size_t kArenaPageSize = 1024ULL * 1024ULL * 16ULL;
+  const size_t kArenaPageSize = 1024ULL * 1024ULL * 32ULL;
   PagedArenaInit(&profiling->arena, kArenaPageSize);
   profiling->spanActivations = kh_init(32);
 }
@@ -75,16 +131,20 @@ void* ArenaAlloc(Profiling* profiling, size_t size) {
   return PagedArenaAlloc(&profiling->arena, size);
 }
 
-TimeSlice* NewTimeSlice(Profiling* profiling) {
-  TimeSlice* slice = (TimeSlice*)ArenaAlloc(profiling, sizeof(TimeSlice));
+ActivationPeriod* NewActivationPeriod(Profiling* profiling) {
+  ActivationPeriod* period = (ActivationPeriod*)ArenaAlloc(profiling, sizeof(ActivationPeriod));
 
-  int32_t index = 0;
-  for (ActivationBin& bin : slice->activationBins) {
-    bin.index = index++;
-    bin.slice = slice;
+  if (!period) {
+    return nullptr;
   }
 
-  return slice;
+  int32_t index = 0;
+  for (ActivationBin& bin : period->activationBins) {
+    bin.index = index++;
+    bin.period = period;
+  }
+
+  return period;
 }
 
 ActivationBin* ProfilingGetActivationBin(Profiling* profiling, int64_t timestamp) {
@@ -94,25 +154,25 @@ ActivationBin* ProfilingGetActivationBin(Profiling* profiling, int64_t timestamp
   int64_t delta = timestamp - profiling->startTime;
   int64_t binIndex = delta / kActivationBinWidth;
 
-  int64_t sliceIndex = binIndex / kBinsPerTimeSlice;
+  int64_t periodIndex = binIndex / kBinsPerActivationPeriod;
 
-  int64_t currentSlice = 0;
+  int64_t currentPeriod = 0;
 
-  TimeSlice* slice = profiling->timeSlice;
-  while (currentSlice != sliceIndex) {
-    if (slice->next) {
-      slice = slice->next;
+  ActivationPeriod* period = profiling->activationPeriod;
+  while (currentPeriod != periodIndex) {
+    if (period->next) {
+      period = period->next;
     } else {
-      TimeSlice* newSlice = NewTimeSlice(profiling);
-      slice->next = newSlice;
-      slice = newSlice;
+      ActivationPeriod* newPeriod = NewActivationPeriod(profiling);
+      period->next = newPeriod;
+      period = newPeriod;
     }
-    currentSlice++;
+    currentPeriod++;
   }
 
-  int64_t binSliceIndex = binIndex - sliceIndex * kBinsPerTimeSlice;
+  int64_t index = binIndex - periodIndex * kBinsPerActivationPeriod;
 
-  return &slice->activationBins[binSliceIndex];
+  return &period->activationBins[index];
 }
 
 SpanActivation*
@@ -155,7 +215,7 @@ void InsertActivation(Profiling* profiling, SpanActivation* activation) {
   if (bin->count == kActivationsPerBin) {
     ActivationBin* newBin = (ActivationBin*)ArenaAlloc(profiling, sizeof(ActivationBin));
     newBin->index = bin->index;
-    newBin->slice = bin->slice;
+    newBin->period = bin->period;
     bin->next = newBin;
     bin = newBin;
   }
@@ -184,9 +244,9 @@ NAN_METHOD(StartProfiling) {
   }
 
   PagedArenaReset(&profiling->arena);
-  profiling->timeSlice = NewTimeSlice(profiling);
+  profiling->activationPeriod = NewActivationPeriod(profiling);
 
-  if (!profiling->timeSlice) {
+  if (!profiling->activationPeriod) {
     auto status = Nan::New<v8::Object>();
     Nan::Set(status, Nan::New("error").ToLocalChecked(), Nan::New("unable to allocate memory").ToLocalChecked());
     info.GetReturnValue().Set(status);
@@ -223,63 +283,190 @@ NAN_METHOD(StartProfiling) {
   printf("start: %ld us; %.3f ms\n", (startEnd - startBegin) / 1000L, double(startEnd - startBegin) / 1e6);
 }
 
-const char* GetTraceLineFormatString(size_t fileNameLen) {
-  if (fileNameLen) {
-    return "\tat %.*s(%.*s:%d)\n";
+struct StringBuilder {
+  StringBuilder(char* buffer, size_t length) : buffer(buffer), capacity(length) {}
+
+  size_t Add(const char* s, size_t length) {
+    if (offset + length > capacity) {
+      return offset;
+    }
+
+    memcpy(buffer + offset, s, length);
+    offset += length;
+
+    return offset;
   }
 
-  return "\tat %.*s(unknown:%d)\n";
-}
-
-struct StackTraceBuilder {
-  void Add(const v8::CpuProfileNode* sample) {
-    const char* rawFunction = sample->GetFunctionNameStr();
-
-    size_t functionLen = strlen(rawFunction);
-    std::string function;
-    function.reserve(functionLen);
-
-    for (size_t i = 0; i < functionLen; i++) {
-      char c = rawFunction[i];
-
-      if (c == '(' || c == ')') {
-        continue;
-      }
-
-      function += c;
+  size_t Add(int32_t value) {
+    if (offset + 16 > capacity) {
+      return offset;
     }
 
-    if (function.size() == 0) {
-      function = "anonymous";
-    }
+    size_t digitSize = modp_uitoa10(value, buffer + offset);
+    offset += digitSize;
 
-    char buf[1024] = {0};
-    int sampleLength;
-
-    std::string fileName = sample->GetScriptResourceNameStr();
-
-    for (size_t i = 0; i < fileName.size(); i++) {
-      if (fileName[i] == ':') {
-        fileName[i] = '_';
-      }
-    }
-
-    int line = sample->GetLineNumber();
-
-    if (fileName.size() > 0) {
-      sampleLength = snprintf(buf, sizeof(buf), "\tat %.*s(%.*s:%d)\n", int(function.size()), function.c_str(), int(fileName.size()), fileName.c_str(), line);
-    } else {
-      sampleLength = snprintf(buf, sizeof(buf), "\tat %.*s(unknown:%d)\n", int(function.size()), function.c_str(), line);
-    }
-
-    trace.append(buf, sampleLength);
+    return offset;
   }
 
-  std::string trace = "\"main\" #0 prio=0 os_prio=0 cpu=0 elapsed=0 tid=0 nid=0\n\n";
+  size_t Add(char c) {
+    if (offset + 1 > capacity) {
+      return offset;
+    }
+
+    buffer[offset++] = c;
+    return offset;
+  }
+
+  char* buffer;
+  size_t capacity;
+  size_t offset = 0;
 };
 
-int TimestampString(int64_t ts, char* out, size_t length) {
-  return snprintf(out, length, "%" PRId64, ts);
+size_t RemoveParen(char* content, size_t length) {
+  size_t size = 0;
+  for (size_t i = 0; i < length; i++) {
+    char c = content[i];
+
+    if (c == '(' || c == ')') {
+      continue;
+    }
+
+    content[size++] = c;
+  }
+
+  return size;
+}
+
+String NewStackLine(PagedArena* arena, const v8::CpuProfileNode* node) {
+  const char* rawFunction = node->GetFunctionNameStr();
+  const char* rawFileName = node->GetScriptResourceNameStr();
+  size_t functionLen = strlen(rawFunction);
+  size_t fileNameLen = strlen(rawFileName);
+
+  if (functionLen == 0) {
+    rawFunction = "anonymous";
+    functionLen = 9;
+  }
+
+  if (fileNameLen == 0) {
+    rawFileName = "unknown";
+    fileNameLen = 7;
+  }
+
+  const size_t extraLength = 8;
+  const size_t lineNoLength = 16;
+  const size_t bytesNeeded = functionLen + fileNameLen + extraLength + lineNoLength;
+
+  char* content = (char*)PagedArenaAlloc(arena, bytesNeeded);
+
+  if (!content) {
+    return String();
+  }
+
+  StringBuilder builder(content, bytesNeeded);
+
+  size_t offset = builder.Add("\tat ", 4);
+
+  builder.Add(rawFunction, functionLen);
+
+  builder.offset = offset + RemoveParen(content + offset, functionLen);
+  offset = builder.Add('(');
+  builder.Add(rawFileName, fileNameLen);
+
+  for (size_t i = 0; i < fileNameLen; i++) {
+    if (content[offset + i] == ':') {
+      content[offset + i] = '_';
+    }
+  }
+
+  builder.Add(':');
+  builder.Add(node->GetLineNumber());
+  builder.Add(')');
+  builder.Add('\n');
+
+  return String(content, builder.offset);
+}
+
+struct StacktraceBuilder {
+  struct StackLines {
+    static const int32_t kMaxLines = 32;
+    String lines[kMaxLines];
+    int32_t count = 0;
+    StackLines* next = nullptr;
+  };
+
+  StacktraceBuilder(PagedArena* arena, StackLineCache* cache) : arena(arena), cache(cache), lines(&entry) {
+  }
+
+  void Add(const v8::CpuProfileNode* node) {
+    String line = cache->Get(node->GetNodeId());
+
+    if (line.IsEmpty()) {
+      line = NewStackLine(arena, node);
+      cache->Set(node->GetNodeId(), line);
+    }
+
+    lines->lines[lines->count++] = line;
+
+    if (lines->count == StackLines::kMaxLines) {
+      StackLines* newBuffer = (StackLines*)PagedArenaAlloc(arena, sizeof(StackLines));
+
+      if (!newBuffer) {
+        return;
+      }
+
+      lines->next = newBuffer;
+      lines = newBuffer;
+    }
+  }
+
+  String Build() {
+    constexpr char prefix[] = "\"main\" #0 prio=0 os_prio=0 cpu=0 elapsed=0 tid=0 nid=0\n\n";
+
+    size_t bytesNeeded = sizeof(prefix) - 1;
+
+    {
+      StackLines* l = &entry;
+
+      while (l) {
+        for (int32_t i = 0; i < l->count; i++) {
+          String* line = &l->lines[i];
+          bytesNeeded += line->length;
+        }
+
+        l = l->next;
+      }
+    }
+
+    char* dest = (char*)PagedArenaAlloc(arena, bytesNeeded);
+
+    if (!dest) {
+      return String();
+    }
+
+    StringBuilder builder(dest, bytesNeeded);
+
+    StackLines* l = &entry;
+    while (l) {
+      for (int32_t i = 0; i < l->count; i++) {
+        String* line = &l->lines[i];
+        builder.Add(line->data, line->length);
+      }
+
+      l = l->next;
+    }
+
+    return String(dest, builder.offset);
+  }
+
+  PagedArena* arena;
+  StackLineCache* cache;
+  StackLines* lines;
+  StackLines entry;
+};
+
+size_t TimestampString(int64_t ts, char* out) {
+  return modp_litoa10(ts, out);
 }
 
 #if PROFILER_DEBUG_EXPORT
@@ -288,11 +475,11 @@ v8::Local<v8::Object> JsActivation(Profiling* profiling, const SpanActivation* a
 
   char startTs[32];
   char endTs[32];
-  TimestampString(profiling->wallStartTime + (activation->startTime - profiling->startTime), startTs, sizeof(startTs));
-  TimestampString(profiling->wallStartTime + (activation->endTime - profiling->startTime), endTs, sizeof(endTs));
+  size_t startTsLen = TimestampString(profiling->wallStartTime + (activation->startTime - profiling->startTime), startTs);
+  size_t endTsLen = TimestampString(profiling->wallStartTime + (activation->endTime - profiling->startTime), endTs);
 
-  Nan::Set(jsActivation, Nan::New<v8::String>("start").ToLocalChecked(), Nan::New<v8::String>(startTs).ToLocalChecked());
-  Nan::Set(jsActivation, Nan::New<v8::String>("end").ToLocalChecked(), Nan::New<v8::String>(endTs).ToLocalChecked());
+  Nan::Set(jsActivation, Nan::New<v8::String>("start").ToLocalChecked(), Nan::New<v8::String>(startTs, startTsLen).ToLocalChecked());
+  Nan::Set(jsActivation, Nan::New<v8::String>("end").ToLocalChecked(), Nan::New<v8::String>(endTs, endTsLen).ToLocalChecked());
   Nan::Set(jsActivation, Nan::New<v8::String>("traceId").ToLocalChecked(), Nan::New<v8::String>(activation->traceId, sizeof(activation->traceId)).ToLocalChecked());
   Nan::Set(jsActivation, Nan::New<v8::String>("spanId").ToLocalChecked(), Nan::New<v8::String>(activation->spanId, sizeof(activation->spanId)).ToLocalChecked());
   Nan::Set(jsActivation, Nan::New<v8::String>("depth").ToLocalChecked(), Nan::New<v8::Int32>(activation->depth));
@@ -313,10 +500,10 @@ NAN_METHOD(StopProfiling) {
     return;
   }
 
-  char startTimeNanos[32] = {0};
-  TimestampString(profiling->wallStartTime, startTimeNanos, sizeof(startTimeNanos));
+  char startTimeNanos[32];
+  size_t startTimeNanosLen = TimestampString(profiling->wallStartTime, startTimeNanos);
 
-  Nan::Set(profilingData, Nan::New("startTimeNanos").ToLocalChecked(), Nan::New(startTimeNanos).ToLocalChecked());
+  Nan::Set(profilingData, Nan::New("startTimeNanos").ToLocalChecked(), Nan::New(startTimeNanos, startTimeNanosLen).ToLocalChecked());
 
   v8::Local<v8::String> title = Nan::New("splunk-otel-js").ToLocalChecked();
 
@@ -339,7 +526,7 @@ NAN_METHOD(StopProfiling) {
     nextSampleTs += profiling->samplingIntervalNanos;
 
     const v8::CpuProfileNode* sample = profile->GetSample(i);
-    StackTraceBuilder builder;
+    StacktraceBuilder builder(&profiling->arena, &profiling->stacklineCache);
     builder.Add(sample);
 
     int64_t monotonicDelta = monotonicTs - profiling->startTime;
@@ -351,17 +538,23 @@ NAN_METHOD(StopProfiling) {
       parent = parent->GetParent();
     }
 
+    String stacktrace = builder.Build();
+
+    if (stacktrace.IsEmpty()) {
+      continue;
+    }
+
     char tsBuf[32];
-    TimestampString(sampleTimestamp, tsBuf, sizeof(tsBuf));
+    size_t tsLen = TimestampString(sampleTimestamp, tsBuf);
 
     auto jsTrace = Nan::New<v8::Object>();
 
     Nan::Set(
       jsTrace, Nan::New<v8::String>("timestamp").ToLocalChecked(),
-      Nan::New<v8::String>(tsBuf).ToLocalChecked());
+      Nan::New<v8::String>(tsBuf, tsLen).ToLocalChecked());
     Nan::Set(
       jsTrace, Nan::New<v8::String>("stacktrace").ToLocalChecked(),
-      Nan::New<v8::String>(builder.trace.c_str(), builder.trace.size()).ToLocalChecked());
+      Nan::New<v8::String>(stacktrace.data, stacktrace.length).ToLocalChecked());
 
     SpanActivation* match = FindClosestActivation(profiling, monotonicTs);
 
@@ -393,10 +586,10 @@ NAN_METHOD(StopProfiling) {
     int32_t activationIndex = 0;
     auto jsActivations = Nan::New<v8::Array>();
 
-    TimeSlice* slice = profiling->timeSlice;
+    ActivationPeriod* period = profiling->activationPeriod;
 
-    while (slice) {
-      for (const ActivationBin& bin : slice->activationBins) {
+    while (period) {
+      for (const ActivationBin& bin : period->activationBins) {
         for (int64_t i = 0; i < bin.count; i++) {
           SpanActivation* activation = bin.activations[i];
           Nan::Set(jsActivations, activationIndex++, JsActivation(profiling, activation));
@@ -412,7 +605,7 @@ NAN_METHOD(StopProfiling) {
           nextBin = nextBin->next;
         }
       }
-      slice = slice->next;
+      period = period->next;
     }
 
     Nan::Set(profilingData, Nan::New<v8::String>("activations").ToLocalChecked(), jsActivations);
@@ -421,11 +614,15 @@ NAN_METHOD(StopProfiling) {
   int64_t cleanupBegin = HrTime();
   profile->Delete();
   kh_clear(32, profiling->spanActivations);
+  profiling->stacklineCache.Clear();
 
   int64_t cleanupEnd = HrTime();
 
   int64_t stopDur = cleanupEnd - stopBegin;
-  printf("Used memory: %zu\n", PagedArenaUsedMemory(&profiling->arena));
+
+  size_t usedMem = PagedArenaUsedMemory(&profiling->arena);
+
+  printf("Used memory: %zu (%.4f mb)\n", usedMem, double(usedMem) / 1e6);
   printf("Stop: %ld us (%.3f ms)Transform: %ld us; Stop: %ld us; Cleanup: %ld us\n", stopDur / 1000L, double(stopDur) / 1e6, (endTransform - beginTransform) / 1000, (profileStopEnd - profileStop) / 1000, (cleanupEnd - cleanupBegin) / 1000);
 }
 
