@@ -3,6 +3,7 @@
 #include "util/arena.h"
 #include "util/hex.h"
 #include "util/modp_numtoa.h"
+#include <chrono>
 #include <inttypes.h>
 #include <nan.h>
 #include <uv.h>
@@ -288,9 +289,9 @@ Profiling* profiling = nullptr;
 int64_t HrTime() { return uv_hrtime(); }
 
 int64_t MicroSecondsSinceEpoch() {
-  uv_timeval64_t time;
-  uv_gettimeofday(&time);
-  return time.tv_sec * 1000000LL + int64_t(time.tv_usec);
+  return std::chrono::duration_cast<std::chrono::microseconds>(
+           std::chrono::system_clock::now().time_since_epoch())
+    .count();
 }
 
 NAN_METHOD(StartProfiling) {
@@ -589,11 +590,14 @@ NAN_METHOD(StopProfiling) {
     int64_t monotonicDelta = monotonicTs - profiling->startTime;
     int64_t sampleTimestamp = profiling->wallStartTime + monotonicDelta;
 
+    // TODO: Node <12 does not have GetParent, so we'd need to traverse the tree top down instead.
+#if NODE_MODULE_VERSION >= NODE_12_0_MODULE_VERSION
     const v8::CpuProfileNode* parent = sample->GetParent();
     while (parent) {
       builder.Add(parent);
       parent = parent->GetParent();
     }
+#endif
 
     String stacktrace = builder.Build();
 
