@@ -1,10 +1,10 @@
 #include "arena.h"
 #include <assert.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 namespace {
-constexpr uintptr_t kAlignment = 2*sizeof(void*);
+constexpr uintptr_t kAlignment = 2 * sizeof(void*);
 uintptr_t align(uintptr_t ptr, uintptr_t alignment) {
   uintptr_t m = ptr & (alignment - 1);
 
@@ -14,7 +14,7 @@ uintptr_t align(uintptr_t ptr, uintptr_t alignment) {
 
   return ptr + (alignment - m);
 }
-}
+} // namespace
 
 void MemArenaInit(MemArena* arena, void* mem, size_t capacity) {
   arena->memory = (uint8_t*)mem;

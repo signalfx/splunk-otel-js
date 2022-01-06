@@ -1,6 +1,6 @@
-#include <nan.h>
 #include "metrics.h"
 #include "profiling.h"
+#include <nan.h>
 
 namespace {
 

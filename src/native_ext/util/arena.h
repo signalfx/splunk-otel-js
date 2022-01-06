@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../ext.h"
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 struct MemArena {
   uint8_t* memory;

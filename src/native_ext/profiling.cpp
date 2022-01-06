@@ -1,17 +1,19 @@
 #include "profiling.h"
-#include <nan.h>
-#include <uv.h>
-#include <v8-profiler.h>
-#include <inttypes.h>
 #include "khash.h"
 #include "util/arena.h"
 #include "util/hex.h"
 #include "util/modp_numtoa.h"
+#include <inttypes.h>
+#include <nan.h>
+#include <uv.h>
+#include <v8-profiler.h>
 
 /* Collecting debug info is not compiled in by default to reduce memory usage. */
 #define PROFILER_DEBUG_EXPORT 0
 
 namespace Profiling {
+
+namespace {
 
 /**
  * Span activations are grouped into chains of bins,
@@ -49,10 +51,7 @@ struct ActivationPeriod {
   ActivationPeriod* next;
 };
 
-enum ProfilingFlags {
-  ProfilingFlags_None = 0x00,
-  ProfilingFlags_RecordDebugInfo = 0x01
-};
+enum ProfilingFlags { ProfilingFlags_None = 0x00, ProfilingFlags_RecordDebugInfo = 0x01 };
 
 struct String {
   const char* data = nullptr;
@@ -103,7 +102,8 @@ SpanActivation* ActivationStackPush(ActivationStack* stack, PagedArena* arena) {
   }
 
   int32_t newCapacity = stack->capacity * 1.5;
-  SpanActivation* extra = (SpanActivation*)PagedArenaAlloc(arena, sizeof(SpanActivation) * newCapacity);
+  SpanActivation* extra =
+    (SpanActivation*)PagedArenaAlloc(arena, sizeof(SpanActivation) * newCapacity);
 
   if (!extra) {
     return nullptr;
@@ -138,16 +138,11 @@ KHASH_MAP_INIT_INT(ActivationStack, ActivationStack);
 KHASH_MAP_INIT_INT(StackLine, String);
 
 struct StackLineCache {
-  StackLineCache() : processedLines(kh_init(StackLine)) {
-  }
+  StackLineCache() : processedLines(kh_init(StackLine)) {}
 
-  ~StackLineCache() {
-    kh_destroy(StackLine, processedLines);
-  }
+  ~StackLineCache() { kh_destroy(StackLine, processedLines); }
 
-  void Clear() {
-    kh_clear(StackLine, processedLines);
-  }
+  void Clear() { kh_clear(StackLine, processedLines); }
 
   String Get(int32_t key) {
     khiter_t it = kh_get(StackLine, processedLines, key);
@@ -170,9 +165,8 @@ struct StackLineCache {
     kh_value(processedLines, it) = line;
   }
 
-  khash_t(StackLine)* processedLines;
+  khash_t(StackLine) * processedLines;
 };
-
 
 struct Profiling {
   PagedArena arena;
@@ -183,12 +177,10 @@ struct Profiling {
   int32_t activationDepth = 0;
   int32_t flags = ProfilingFlags_None;
   int64_t samplingIntervalNanos = 0;
-  khash_t(ActivationStack)* spanActivations;
+  khash_t(ActivationStack) * spanActivations;
   StackLineCache stacklineCache;
 
-  bool RecordDebugInfo() const {
-    return (flags & ProfilingFlags_RecordDebugInfo) == 1;
-  }
+  bool RecordDebugInfo() const { return (flags & ProfilingFlags_RecordDebugInfo) == 1; }
 };
 
 void ProfilingInit(Profiling* profiling) {
@@ -245,8 +237,7 @@ ActivationBin* ProfilingGetActivationBin(Profiling* profiling, int64_t timestamp
   return &period->activationBins[index];
 }
 
-SpanActivation*
-FindClosestActivation(Profiling* profiling, int64_t ts) {
+SpanActivation* FindClosestActivation(Profiling* profiling, int64_t ts) {
   SpanActivation sentinel;
   sentinel.startTime = std::numeric_limits<int64_t>::min();
   sentinel.endTime = std::numeric_limits<int64_t>::max();
@@ -294,9 +285,7 @@ void InsertActivation(Profiling* profiling, SpanActivation* activation) {
 
 Profiling* profiling = nullptr;
 
-int64_t HrTime() {
-  return uv_hrtime();
-}
+int64_t HrTime() { return uv_hrtime(); }
 
 int64_t MicroSecondsSinceEpoch() {
   uv_timeval64_t time;
@@ -317,17 +306,20 @@ NAN_METHOD(StartProfiling) {
 
   if (!profiling->activationPeriod) {
     auto status = Nan::New<v8::Object>();
-    Nan::Set(status, Nan::New("error").ToLocalChecked(), Nan::New("unable to allocate memory").ToLocalChecked());
+    Nan::Set(
+      status, Nan::New("error").ToLocalChecked(),
+      Nan::New("unable to allocate memory").ToLocalChecked());
     info.GetReturnValue().Set(status);
     return;
   }
-  
+
   int samplingIntervalMicros = 1'000'000;
   profiling->flags = 0;
 
   if (info.Length() >= 1 && info[0]->IsObject()) {
     auto options = Nan::To<v8::Object>(info[0]).ToLocalChecked();
-    auto maybeInterval = Nan::Get(options, Nan::New("samplingIntervalMicroseconds").ToLocalChecked());
+    auto maybeInterval =
+      Nan::Get(options, Nan::New("samplingIntervalMicroseconds").ToLocalChecked());
     samplingIntervalMicros = Nan::To<int32_t>(maybeInterval.ToLocalChecked()).FromJust();
 
     auto maybeRecordDebugInfo = Nan::Get(options, Nan::New("recordDebugInfo").ToLocalChecked());
@@ -349,7 +341,9 @@ NAN_METHOD(StartProfiling) {
   profiling->profiler->StartProfiling(
     title, v8::kLeafNodeLineNumbers, recordSamples, v8::CpuProfilingOptions::kNoSampleLimit);
   int64_t startEnd = HrTime();
-  printf("start: %ld us; %.3f ms\n", (startEnd - startBegin) / 1000L, double(startEnd - startBegin) / 1e6);
+  printf(
+    "start: %ld us; %.3f ms\n", (startEnd - startBegin) / 1000L,
+    double(startEnd - startBegin) / 1e6);
 }
 
 struct StringBuilder {
@@ -450,8 +444,8 @@ struct StacktraceBuilder {
     StackLines* next = nullptr;
   };
 
-  StacktraceBuilder(PagedArena* arena, StackLineCache* cache) : arena(arena), cache(cache), lines(&entry) {
-  }
+  StacktraceBuilder(PagedArena* arena, StackLineCache* cache)
+    : arena(arena), cache(cache), lines(&entry) {}
 
   void Add(const v8::CpuProfileNode* node) {
     String line = cache->Get(node->GetNodeId());
@@ -521,9 +515,7 @@ struct StacktraceBuilder {
   StackLines entry;
 };
 
-size_t TimestampString(int64_t ts, char* out) {
-  return modp_litoa10(ts, out);
-}
+size_t TimestampString(int64_t ts, char* out) { return modp_litoa10(ts, out); }
 
 #if PROFILER_DEBUG_EXPORT
 v8::Local<v8::Object> JsActivation(Profiling* profiling, const SpanActivation* activation) {
@@ -531,15 +523,29 @@ v8::Local<v8::Object> JsActivation(Profiling* profiling, const SpanActivation* a
 
   char startTs[32];
   char endTs[32];
-  size_t startTsLen = TimestampString(profiling->wallStartTime + (activation->startTime - profiling->startTime), startTs);
-  size_t endTsLen = TimestampString(profiling->wallStartTime + (activation->endTime - profiling->startTime), endTs);
+  size_t startTsLen = TimestampString(
+    profiling->wallStartTime + (activation->startTime - profiling->startTime), startTs);
+  size_t endTsLen =
+    TimestampString(profiling->wallStartTime + (activation->endTime - profiling->startTime), endTs);
 
-  Nan::Set(jsActivation, Nan::New<v8::String>("start").ToLocalChecked(), Nan::New<v8::String>(startTs, startTsLen).ToLocalChecked());
-  Nan::Set(jsActivation, Nan::New<v8::String>("end").ToLocalChecked(), Nan::New<v8::String>(endTs, endTsLen).ToLocalChecked());
-  Nan::Set(jsActivation, Nan::New<v8::String>("traceId").ToLocalChecked(), Nan::New<v8::String>(activation->traceId, sizeof(activation->traceId)).ToLocalChecked());
-  Nan::Set(jsActivation, Nan::New<v8::String>("spanId").ToLocalChecked(), Nan::New<v8::String>(activation->spanId, sizeof(activation->spanId)).ToLocalChecked());
-  Nan::Set(jsActivation, Nan::New<v8::String>("depth").ToLocalChecked(), Nan::New<v8::Int32>(activation->depth));
-  Nan::Set(jsActivation, Nan::New<v8::String>("hit").ToLocalChecked(), Nan::New<v8::Boolean>(activation->is_intersected));
+  Nan::Set(
+    jsActivation, Nan::New<v8::String>("start").ToLocalChecked(),
+    Nan::New<v8::String>(startTs, startTsLen).ToLocalChecked());
+  Nan::Set(
+    jsActivation, Nan::New<v8::String>("end").ToLocalChecked(),
+    Nan::New<v8::String>(endTs, endTsLen).ToLocalChecked());
+  Nan::Set(
+    jsActivation, Nan::New<v8::String>("traceId").ToLocalChecked(),
+    Nan::New<v8::String>(activation->traceId, sizeof(activation->traceId)).ToLocalChecked());
+  Nan::Set(
+    jsActivation, Nan::New<v8::String>("spanId").ToLocalChecked(),
+    Nan::New<v8::String>(activation->spanId, sizeof(activation->spanId)).ToLocalChecked());
+  Nan::Set(
+    jsActivation, Nan::New<v8::String>("depth").ToLocalChecked(),
+    Nan::New<v8::Int32>(activation->depth));
+  Nan::Set(
+    jsActivation, Nan::New<v8::String>("hit").ToLocalChecked(),
+    Nan::New<v8::Boolean>(activation->is_intersected));
   return jsActivation;
 }
 #endif
@@ -559,7 +565,9 @@ NAN_METHOD(StopProfiling) {
   char startTimeNanos[32];
   size_t startTimeNanosLen = TimestampString(profiling->wallStartTime, startTimeNanos);
 
-  Nan::Set(profilingData, Nan::New("startTimeNanos").ToLocalChecked(), Nan::New(startTimeNanos, startTimeNanosLen).ToLocalChecked());
+  Nan::Set(
+    profilingData, Nan::New("startTimeNanos").ToLocalChecked(),
+    Nan::New(startTimeNanos, startTimeNanosLen).ToLocalChecked());
 
   v8::Local<v8::String> title = Nan::New("splunk-otel-js").ToLocalChecked();
 
@@ -679,7 +687,10 @@ NAN_METHOD(StopProfiling) {
   size_t usedMem = PagedArenaUsedMemory(&profiling->arena);
 
   printf("Used memory: %zu (%.4f mb)\n", usedMem, double(usedMem) / 1e6);
-  printf("Stop: %ld us (%.3f ms)Transform: %ld us; Stop: %ld us; Cleanup: %ld us\n", stopDur / 1000L, double(stopDur) / 1e6, (endTransform - beginTransform) / 1000, (profileStopEnd - profileStop) / 1000, (cleanupEnd - cleanupBegin) / 1000);
+  printf(
+    "Stop: %ld us (%.3f ms)Transform: %ld us; Stop: %ld us; Cleanup: %ld us\n", stopDur / 1000L,
+    double(stopDur) / 1e6, (endTransform - beginTransform) / 1000,
+    (profileStopEnd - profileStop) / 1000, (cleanupEnd - cleanupBegin) / 1000);
 }
 
 bool IsValidSpanId(const char* id, int32_t length) {
@@ -784,6 +795,8 @@ NAN_METHOD(ExitContext) {
   profiling->activationDepth--;
 }
 
+} // namespace
+
 void Initialize(v8::Local<v8::Object> target) {
   auto profilingModule = Nan::New<v8::Object>();
   Nan::Set(
@@ -805,4 +818,4 @@ void Initialize(v8::Local<v8::Object> target) {
   Nan::Set(target, Nan::New("profiling").ToLocalChecked(), profilingModule);
 }
 
-}
+} // namespace Profiling

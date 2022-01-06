@@ -18,7 +18,7 @@ constexpr int8_t kHexDigits[256] = {
 
 inline int8_t HexToInt(char c) { return kHexDigits[uint8_t(c)]; }
 
-}
+} // namespace
 
 bool HexToBinary(const char* hex, size_t hex_len, uint8_t* buffer, size_t buffer_size) {
   memset(buffer, 0, buffer_size);
