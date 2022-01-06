@@ -294,7 +294,6 @@ int64_t MicroSecondsSinceEpoch() {
 }
 
 NAN_METHOD(StartProfiling) {
-  int64_t startBegin = HrTime();
   if (!profiling) {
     profiling = new Profiling();
     ProfilingInit(profiling);
@@ -340,10 +339,6 @@ NAN_METHOD(StartProfiling) {
   profiling->wallStartTime = MicroSecondsSinceEpoch() * 1000L;
   profiling->profiler->StartProfiling(
     title, v8::kLeafNodeLineNumbers, recordSamples, v8::CpuProfilingOptions::kNoSampleLimit);
-  int64_t startEnd = HrTime();
-  printf(
-    "start: %ld us; %.3f ms\n", (startEnd - startBegin) / 1000L,
-    double(startEnd - startBegin) / 1e6);
 }
 
 struct StringBuilder {
@@ -551,7 +546,6 @@ v8::Local<v8::Object> JsActivation(Profiling* profiling, const SpanActivation* a
 #endif
 
 NAN_METHOD(StopProfiling) {
-  int64_t stopBegin = HrTime();
   auto profilingData = Nan::New<v8::Object>();
   auto jsTraces = Nan::New<v8::Array>();
   Nan::Set(profilingData, Nan::New("stacktraces").ToLocalChecked(), jsTraces);
@@ -571,14 +565,9 @@ NAN_METHOD(StopProfiling) {
 
   v8::Local<v8::String> title = Nan::New("splunk-otel-js").ToLocalChecked();
 
-  int64_t profileStop = HrTime();
   v8::CpuProfile* profile = profiling->profiler->StopProfiling(title);
-  int64_t profileStopEnd = HrTime();
 
-  int64_t beginTransform = HrTime();
-
-  int traceCounter = 0;
-
+  int32_t traceCount = 0;
   int64_t nextSampleTs = profile->GetStartTime() * 1000L;
   for (int i = 0; i < profile->GetSamplesCount(); i++) {
     int64_t monotonicTs = profile->GetSampleTimestamp(i) * 1000L;
@@ -640,10 +629,8 @@ NAN_METHOD(StopProfiling) {
 #endif
     }
 
-    Nan::Set(jsTraces, traceCounter++, jsTrace);
+    Nan::Set(jsTraces, traceCount++, jsTrace);
   }
-
-  int64_t endTransform = HrTime();
 
 #if PROFILER_DEBUG_EXPORT
   if (profiling->RecordDebugInfo()) {
@@ -675,22 +662,9 @@ NAN_METHOD(StopProfiling) {
     Nan::Set(profilingData, Nan::New<v8::String>("activations").ToLocalChecked(), jsActivations);
   }
 #endif
-  int64_t cleanupBegin = HrTime();
   profile->Delete();
   kh_clear(ActivationStack, profiling->spanActivations);
   profiling->stacklineCache.Clear();
-
-  int64_t cleanupEnd = HrTime();
-
-  int64_t stopDur = cleanupEnd - stopBegin;
-
-  size_t usedMem = PagedArenaUsedMemory(&profiling->arena);
-
-  printf("Used memory: %zu (%.4f mb)\n", usedMem, double(usedMem) / 1e6);
-  printf(
-    "Stop: %ld us (%.3f ms)Transform: %ld us; Stop: %ld us; Cleanup: %ld us\n", stopDur / 1000L,
-    double(stopDur) / 1e6, (endTransform - beginTransform) / 1000,
-    (profileStopEnd - profileStop) / 1000, (cleanupEnd - cleanupBegin) / 1000);
 }
 
 bool IsValidSpanId(const char* id, int32_t length) {
