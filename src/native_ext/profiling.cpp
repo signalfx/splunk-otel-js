@@ -211,7 +211,7 @@ ActivationPeriod* NewActivationPeriod(Profiling* profiling) {
 
 ActivationBin* ProfilingGetActivationBin(Profiling* profiling, int64_t timestamp) {
   /* Nanoseconds each activation bin represents. */
-  const int64_t kActivationBinWidth = 100L * 1'000'000L;
+  const int64_t kActivationBinWidth = 100L * 1000000L;
 
   int64_t delta = timestamp - profiling->startTime;
   int64_t binIndex = delta / kActivationBinWidth;
@@ -290,7 +290,7 @@ int64_t HrTime() { return uv_hrtime(); }
 int64_t MicroSecondsSinceEpoch() {
   uv_timeval64_t time;
   uv_gettimeofday(&time);
-  return time.tv_sec * 1'000'000LL + int64_t(time.tv_usec);
+  return time.tv_sec * 1000000LL + int64_t(time.tv_usec);
 }
 
 NAN_METHOD(StartProfiling) {
@@ -312,7 +312,7 @@ NAN_METHOD(StartProfiling) {
     return;
   }
 
-  int samplingIntervalMicros = 1'000'000;
+  int samplingIntervalMicros = 1000000;
   profiling->flags = 0;
 
   if (info.Length() >= 1 && info[0]->IsObject()) {
@@ -337,8 +337,12 @@ NAN_METHOD(StartProfiling) {
   profiling->activationDepth = 0;
   profiling->startTime = HrTime();
   profiling->wallStartTime = MicroSecondsSinceEpoch() * 1000L;
+#if NODE_MODULE_VERSION > NODE_10_0_MODULE_VERSION
   profiling->profiler->StartProfiling(
     title, v8::kLeafNodeLineNumbers, recordSamples, v8::CpuProfilingOptions::kNoSampleLimit);
+#else
+  profiling->profiler->StartProfiling(title, recordSamples);
+#endif
 }
 
 struct StringBuilder {
