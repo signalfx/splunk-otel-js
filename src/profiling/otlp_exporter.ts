@@ -2,6 +2,7 @@ import * as protoLoader from '@grpc/proto-loader';
 import * as grpc from '@grpc/grpc-js';
 import * as path from 'path';
 import { ProfilingData, ProfilingExporter } from './types';
+import { diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 
 export interface OTLPExporterOptions {
@@ -89,7 +90,9 @@ export class OTLPProfilingExporter implements ProfilingExporter {
       resourceLogs,
     };
     this._client.export(payload, new grpc.Metadata(), (err: any) => {
-      console.log(err);
+      if (err) {
+        diag.error('Error exporting profiling data', err);
+      }
     });
   }
 }

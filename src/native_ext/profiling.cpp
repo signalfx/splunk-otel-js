@@ -8,6 +8,7 @@
 #include "util/hex.h"
 #include "util/modp_numtoa.h"
 
+/* Collecting debug info is not compiled in by default to reduce memory usage. */
 #define PROFILER_DEBUG_EXPORT 0
 
 namespace Profiling {
@@ -25,19 +26,18 @@ constexpr int64_t kBinsPerActivationPeriod = 512;
 struct SpanActivation {
   char traceId[32];
   char spanId[16];
-  int64_t startTime = 0;
-  int64_t endTime = 0;
-  SpanActivation* next;
+  int64_t startTime;
+  int64_t endTime;
 #if PROFILER_DEBUG_EXPORT
-  int32_t depth = 0;
-  bool is_intersected = false;
+  int32_t depth;
+  bool is_intersected;
 #endif
 };
 
 struct ActivationPeriod;
 
 struct ActivationBin {
-  SpanActivation* activations[kActivationsPerBin];
+  SpanActivation activations[kActivationsPerBin];
   int64_t count;
   int32_t index;
   ActivationPeriod* period;
@@ -64,7 +64,77 @@ struct String {
   bool IsEmpty() const { return data == nullptr; }
 };
 
-KHASH_MAP_INIT_INT(32, SpanActivation*);
+/* Only used while tracking activations */
+struct ActivationStack {
+  static const int32_t kMaxActivations = 2;
+  int32_t count;
+  int32_t capacity;
+  SpanActivation activations[kMaxActivations];
+  SpanActivation* extra;
+};
+
+void ActivationStackInit(ActivationStack* stack) {
+  memset(stack, 0, sizeof(ActivationStack));
+  stack->capacity = ActivationStack::kMaxActivations;
+}
+
+SpanActivation* ActivationStackPush(ActivationStack* stack, PagedArena* arena) {
+  if (!stack->extra) {
+    if (stack->count < ActivationStack::kMaxActivations) {
+      return &stack->activations[stack->count++];
+    }
+
+    int32_t newCapacity = ActivationStack::kMaxActivations * 4;
+    stack->extra = (SpanActivation*)PagedArenaAlloc(arena, sizeof(SpanActivation) * newCapacity);
+
+    if (!stack->extra) {
+      return nullptr;
+    }
+
+    for (int32_t i = 0; i < stack->count; i++) {
+      stack->extra[i] = stack->activations[i];
+    }
+
+    stack->capacity = newCapacity;
+  }
+
+  if (stack->count < stack->capacity) {
+    return &stack->extra[stack->count++];
+  }
+
+  int32_t newCapacity = stack->capacity * 1.5;
+  SpanActivation* extra = (SpanActivation*)PagedArenaAlloc(arena, sizeof(SpanActivation) * newCapacity);
+
+  if (!extra) {
+    return nullptr;
+  }
+
+  for (int32_t i = 0; i < stack->count; i++) {
+    extra[i] = stack->extra[i];
+  }
+
+  stack->extra = extra;
+  stack->capacity = newCapacity;
+
+  return &stack->extra[stack->count++];
+}
+
+SpanActivation* ActivationStackPop(ActivationStack* stack) {
+  if (stack->count == 0) {
+    return nullptr;
+  }
+
+  int32_t index = stack->count - 1;
+  stack->count--;
+
+  if (!stack->extra) {
+    return &stack->activations[index];
+  }
+
+  return &stack->extra[index];
+}
+
+KHASH_MAP_INIT_INT(ActivationStack, ActivationStack);
 KHASH_MAP_INIT_INT(StackLine, String);
 
 struct StackLineCache {
@@ -113,7 +183,7 @@ struct Profiling {
   int32_t activationDepth = 0;
   int32_t flags = ProfilingFlags_None;
   int64_t samplingIntervalNanos = 0;
-  khash_t(32)* spanActivations;
+  khash_t(ActivationStack)* spanActivations;
   StackLineCache stacklineCache;
 
   bool RecordDebugInfo() const {
@@ -122,9 +192,9 @@ struct Profiling {
 };
 
 void ProfilingInit(Profiling* profiling) {
-  const size_t kArenaPageSize = 1024ULL * 1024ULL * 32ULL;
+  const size_t kArenaPageSize = 1024ULL * 1024ULL * 64ULL;
   PagedArenaInit(&profiling->arena, kArenaPageSize);
-  profiling->spanActivations = kh_init(32);
+  profiling->spanActivations = kh_init(ActivationStack);
 }
 
 void* ArenaAlloc(Profiling* profiling, size_t size) {
@@ -159,7 +229,7 @@ ActivationBin* ProfilingGetActivationBin(Profiling* profiling, int64_t timestamp
   int64_t currentPeriod = 0;
 
   ActivationPeriod* period = profiling->activationPeriod;
-  while (currentPeriod != periodIndex) {
+  while (currentPeriod < periodIndex) {
     if (period->next) {
       period = period->next;
     } else {
@@ -186,14 +256,13 @@ FindClosestActivation(Profiling* profiling, int64_t ts) {
 
   while (bin) {
     for (int64_t i = 0; i < bin->count; i++) {
-      SpanActivation* activation = bin->activations[i];
+      SpanActivation* activation = &bin->activations[i];
       if (activation->startTime <= ts && ts <= activation->endTime) {
         if (activation->startTime > t->startTime) {
           t = activation;
         }
       }
     }
-
     bin = bin->next;
   }
 
@@ -220,7 +289,7 @@ void InsertActivation(Profiling* profiling, SpanActivation* activation) {
     bin = newBin;
   }
 
-  bin->activations[bin->count++] = activation;
+  bin->activations[bin->count++] = *activation;
 }
 
 Profiling* profiling = nullptr;
@@ -287,32 +356,18 @@ struct StringBuilder {
   StringBuilder(char* buffer, size_t length) : buffer(buffer), capacity(length) {}
 
   size_t Add(const char* s, size_t length) {
-    if (offset + length > capacity) {
-      return offset;
-    }
-
     memcpy(buffer + offset, s, length);
     offset += length;
-
     return offset;
   }
 
   size_t Add(int32_t value) {
-    if (offset + 16 > capacity) {
-      return offset;
-    }
-
     size_t digitSize = modp_uitoa10(value, buffer + offset);
     offset += digitSize;
-
     return offset;
   }
 
   size_t Add(char c) {
-    if (offset + 1 > capacity) {
-      return offset;
-    }
-
     buffer[offset++] = c;
     return offset;
   }
@@ -445,6 +500,7 @@ struct StacktraceBuilder {
     }
 
     StringBuilder builder(dest, bytesNeeded);
+    builder.Add(prefix, sizeof(prefix) - 1);
 
     StackLines* l = &entry;
     while (l) {
@@ -591,7 +647,7 @@ NAN_METHOD(StopProfiling) {
     while (period) {
       for (const ActivationBin& bin : period->activationBins) {
         for (int64_t i = 0; i < bin.count; i++) {
-          SpanActivation* activation = bin.activations[i];
+          const SpanActivation* activation = &bin.activations[i];
           Nan::Set(jsActivations, activationIndex++, JsActivation(profiling, activation));
         }
 
@@ -599,7 +655,7 @@ NAN_METHOD(StopProfiling) {
 
         while (nextBin) {
           for (int64_t i = 0; i < nextBin->count; i++) {
-            SpanActivation* activation = nextBin->activations[i];
+            SpanActivation* activation = &nextBin->activations[i];
             Nan::Set(jsActivations, activationIndex++, JsActivation(profiling, activation));
           }
           nextBin = nextBin->next;
@@ -613,7 +669,7 @@ NAN_METHOD(StopProfiling) {
 #endif
   int64_t cleanupBegin = HrTime();
   profile->Delete();
-  kh_clear(32, profiling->spanActivations);
+  kh_clear(ActivationStack, profiling->spanActivations);
   profiling->stacklineCache.Clear();
 
   int64_t cleanupEnd = HrTime();
@@ -663,25 +719,36 @@ NAN_METHOD(EnterContext) {
 
   int64_t timestamp = HrTime();
 
-  SpanActivation* activation = (SpanActivation*)ArenaAlloc(profiling, sizeof(SpanActivation));
+  khiter_t it = kh_get(ActivationStack, profiling->spanActivations, hash);
+
+  ActivationStack* stack;
+
+  if (it == kh_end(profiling->spanActivations)) {
+    int ret;
+    it = kh_put(ActivationStack, profiling->spanActivations, hash, &ret);
+
+    if (ret == -1) {
+      return;
+    }
+
+    stack = &kh_value(profiling->spanActivations, it);
+    ActivationStackInit(stack);
+  } else {
+    stack = &kh_value(profiling->spanActivations, it);
+  }
+
+  SpanActivation* activation = ActivationStackPush(stack, &profiling->arena);
+
+  if (!activation) {
+    return;
+  }
+
   memcpy(activation->traceId, *traceId, 32);
   memcpy(activation->spanId, *spanId, 16);
   activation->startTime = timestamp;
 #if PROFILER_DEBUG_EXPORT
   activation->depth = profiling->activationDepth;
 #endif
-
-  khiter_t it = kh_get(32, profiling->spanActivations, hash);
-
-  if (it == kh_end(profiling->spanActivations)) {
-    int ret;
-    it = kh_put(32, profiling->spanActivations, hash, &ret);
-  } else {
-    SpanActivation* existing = kh_value(profiling->spanActivations, it);
-    activation->next = existing;
-  }
-
-  kh_value(profiling->spanActivations, it) = activation;
 
   profiling->activationDepth++;
 }
@@ -693,23 +760,26 @@ NAN_METHOD(ExitContext) {
 
   int hash = info[0].As<v8::Object>()->GetIdentityHash();
 
-  khiter_t it = kh_get(32, profiling->spanActivations, hash);
+  khiter_t it = kh_get(ActivationStack, profiling->spanActivations, hash);
 
   if (it == kh_end(profiling->spanActivations)) {
     return;
   }
 
-  SpanActivation* activation = kh_value(profiling->spanActivations, it);
-  activation->endTime = HrTime();
+  ActivationStack* stack = &kh_value(profiling->spanActivations, it);
+  SpanActivation* activation = ActivationStackPop(stack);
 
-  if (activation->next) {
-    kh_value(profiling->spanActivations, it) = activation->next;
-    activation->next = nullptr;
-  } else {
-    kh_del(32, profiling->spanActivations, it);
+  if (!activation) {
+    return;
   }
 
+  activation->endTime = HrTime();
+
   InsertActivation(profiling, activation);
+
+  if (stack->count == 0) {
+    kh_del(ActivationStack, profiling->spanActivations, it);
+  }
 
   profiling->activationDepth--;
 }
