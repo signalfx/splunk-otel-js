@@ -698,13 +698,19 @@ NAN_METHOD(EnterContext) {
     return;
   }
 
-  v8::Isolate* isolate = info.GetIsolate();
-
   int hash = info[0].As<v8::Object>()->GetIdentityHash();
+#if NODE_MODULE_VERSION >= NODE_10_0_MODULE_VERSION
+  v8::Isolate* isolate = info.GetIsolate();
   v8::String::Utf8Value traceId(
     isolate, Nan::MaybeLocal<v8::String>(info[1].As<v8::String>()).ToLocalChecked());
   v8::String::Utf8Value spanId(
     isolate, Nan::MaybeLocal<v8::String>(info[2].As<v8::String>()).ToLocalChecked());
+#else
+  v8::String::Utf8Value traceId(
+    Nan::MaybeLocal<v8::String>(info[1].As<v8::String>()).ToLocalChecked());
+  v8::String::Utf8Value spanId(
+    Nan::MaybeLocal<v8::String>(info[2].As<v8::String>()).ToLocalChecked());
+#endif
 
   if (!IsValidTraceId(*traceId, traceId.length()) || !IsValidSpanId(*spanId, spanId.length())) {
     return;
