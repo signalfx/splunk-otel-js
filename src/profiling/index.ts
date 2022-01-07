@@ -19,7 +19,12 @@ import { Resource } from '@opentelemetry/resources';
 import { defaultServiceName, getEnvBoolean, getEnvNumber } from '../options';
 import { EnvResourceDetector } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import { ProfilingExporter, ProfilingExtension, ProfilingOptions, ProfilingStartOptions } from './types';
+import {
+  ProfilingExporter,
+  ProfilingExtension,
+  ProfilingOptions,
+  ProfilingStartOptions,
+} from './types';
 import { ProfilingContextManager } from './profiling_contextmanager';
 import { OTLPProfilingExporter } from './otlp_exporter';
 import { DebugExporter } from './debug_exporter';
@@ -28,7 +33,10 @@ function extStopProfiling(extension: ProfilingExtension) {
   return extension.stop();
 }
 
-function extStartProfiling(extension: ProfilingExtension, opts: ProfilingStartOptions) {
+function extStartProfiling(
+  extension: ProfilingExtension,
+  opts: ProfilingStartOptions
+) {
   extension.start(opts);
 }
 
@@ -51,17 +59,17 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
   contextManager.enable();
   context.setGlobalContextManager(contextManager);
 
-  let exporters: ProfilingExporter[] = [
+  const exporters: ProfilingExporter[] = [
     new OTLPProfilingExporter({
       endpoint: options.endpoint,
       serviceName: options.serviceName,
       callstackInterval: options.callstackInterval,
       resource: options.resource,
-    })
+    }),
   ];
 
   if (options.debugExport) {
-    exporters.push(new DebugExporter({}));
+    exporters.push(new DebugExporter());
   }
 
   const startOptions = {
@@ -73,7 +81,7 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
     extStartProfiling(extension, startOptions);
   });
 
-  let interval = setInterval(function resetV8Profiling() {
+  const interval = setInterval(() => {
     const profilingData = extStopProfiling(extension);
     extStartProfiling(extension, startOptions);
 
@@ -111,16 +119,19 @@ export function _setDefaultOptions(
     process.env.SPLUNK_PROFILER_LOGS_ENDPOINT ||
     'localhost:4317';
 
-  let envResource = new EnvResourceDetector().detect();
+  const envResource = new EnvResourceDetector().detect();
 
   const serviceName = String(
     options.serviceName ||
-    process.env.OTEL_SERVICE_NAME ||
-    envResource.attributes[SemanticResourceAttributes.SERVICE_NAME] ||
-    defaultServiceName
+      process.env.OTEL_SERVICE_NAME ||
+      envResource.attributes[SemanticResourceAttributes.SERVICE_NAME] ||
+      defaultServiceName
   );
 
-  let resource = options.resource === undefined ? envResource : envResource.merge(options.resource);
+  let resource =
+    options.resource === undefined
+      ? envResource
+      : envResource.merge(options.resource);
 
   resource = resource.merge(
     new Resource({
