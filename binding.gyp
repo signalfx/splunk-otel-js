@@ -26,6 +26,9 @@
       ["OS == 'win'", {
         "cflags": [
           "/WX"
+        ],
+        "defines": [
+          "NOMINMAX"
         ]
       }],
       ["OS == 'mac'", {
