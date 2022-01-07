@@ -16,7 +16,6 @@
     "compile": "tsc --build",
     "prepare-release-artifact": "node scripts/prepare-release-artifact.js",
     "install": "node-gyp-build",
-    "postinstall": "npm run prebuild:current",
     "lint:fix": "eslint . --ext .ts --fix",
     "lint": "eslint . --ext .ts",
     "lint:commits": "commitlint",
