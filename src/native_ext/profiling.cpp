@@ -338,7 +338,7 @@ NAN_METHOD(StartProfiling) {
   profiling->activationDepth = 0;
   profiling->startTime = HrTime();
   profiling->wallStartTime = MicroSecondsSinceEpoch() * 1000L;
-#if NODE_MODULE_VERSION > NODE_10_0_MODULE_VERSION
+#if NODE_VERSION_AT_LEAST(12, 8, 0)
   profiling->profiler->StartProfiling(
     title, v8::kLeafNodeLineNumbers, recordSamples, v8::CpuProfilingOptions::kNoSampleLimit);
 #else
@@ -590,8 +590,8 @@ NAN_METHOD(StopProfiling) {
     int64_t monotonicDelta = monotonicTs - profiling->startTime;
     int64_t sampleTimestamp = profiling->wallStartTime + monotonicDelta;
 
-    // TODO: Node <12 does not have GetParent, so we'd need to traverse the tree top down instead.
-#if NODE_MODULE_VERSION >= NODE_12_0_MODULE_VERSION
+    // TODO: Node <12.5 does not have GetParent, so we'd need to traverse the tree top down instead.
+#if NODE_VERSION_AT_LEAST(12, 5, 0)
     const v8::CpuProfileNode* parent = sample->GetParent();
     while (parent) {
       builder.Add(parent);
