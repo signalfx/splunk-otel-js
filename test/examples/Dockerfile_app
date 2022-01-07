@@ -8,7 +8,7 @@ RUN mkdir /home/node/app
 WORKDIR /home/node/app
 
 COPY --chown=node:node ["binding.gyp", "package*.json", "*.lock", "./"]
-COPY --chown=node:node ["./src/native_ext/util/*", "./src/native_ext/*", "./src/native_ext/"]
+COPY --chown=node:node ["./src/native_ext/util/*.h", "./src/native_ext/util/*.cpp", "./src/native_ext/*.h", "./src/native_ext/*.cpp", "./src/native_ext/"]
 RUN npm install
 
 COPY --chown=node:node ./ .
