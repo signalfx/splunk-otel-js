@@ -62,7 +62,6 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
   const exporters: ProfilingExporter[] = [
     new OTLPProfilingExporter({
       endpoint: options.endpoint,
-      serviceName: options.serviceName,
       callstackInterval: options.callstackInterval,
       resource: options.resource,
     }),

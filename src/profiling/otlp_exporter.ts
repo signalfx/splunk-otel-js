@@ -19,10 +19,8 @@ import * as path from 'path';
 import { ProfilingData, ProfilingExporter } from './types';
 import { diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 export interface OTLPExporterOptions {
-  serviceName: string;
   callstackInterval: number;
   endpoint: string;
   resource: Resource;
@@ -35,6 +33,7 @@ interface LogsClient extends grpc.Client {
 export class OTLPProfilingExporter implements ProfilingExporter {
   protected _client: LogsClient;
   protected _options: OTLPExporterOptions;
+  protected _resourceAttributes;
 
   constructor(options: OTLPExporterOptions) {
     this._options = options;
@@ -61,11 +60,40 @@ export class OTLPProfilingExporter implements ProfilingExporter {
         options.endpoint,
         grpc.credentials.createInsecure()
       );
+
+    this._resourceAttributes = [];
+    for (const key in options.resource.attributes) {
+      const value = options.resource.attributes[key];
+
+      if (typeof value === 'string') {
+        this._resourceAttributes.push({
+          key,
+          value: { stringValue: value },
+        });
+      } else if (typeof value === 'number') {
+        if (Number.isInteger(value)) {
+          this._resourceAttributes.push({
+            key,
+            value: { intValue: value },
+          });
+        } else {
+          this._resourceAttributes.push({
+            key,
+            value: { doubleValue: value },
+          });
+        }
+      } else {
+        this._resourceAttributes.push({
+          key,
+          value: { boolValue: value },
+        });
+      }
+    }
   }
 
   send(profile: ProfilingData) {
     const { stacktraces } = profile;
-    const { callstackInterval, serviceName } = this._options;
+    const { callstackInterval } = this._options;
     const attributes = [
       {
         key: 'com.splunk.sourcetype',
@@ -102,14 +130,7 @@ export class OTLPProfilingExporter implements ProfilingExporter {
     const resourceLogs = [
       {
         resource: {
-          attributes: [
-            { key: 'environment', value: { stringValue: 'demo' } },
-            { key: 'otel.log.name', value: { stringValue: 'otel.profiling' } },
-            {
-              key: SemanticResourceAttributes,
-              value: { stringValue: serviceName },
-            },
-          ],
+          attributes: this._resourceAttributes,
         },
         instrumentationLibraryLogs: [ilLogs],
       },
