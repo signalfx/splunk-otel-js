@@ -21,7 +21,7 @@ import { InstrumentationOption } from '@opentelemetry/instrumentation';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
 import { getInstrumentations } from './instrumentations';
-import { CollectorTraceExporter } from '@opentelemetry/exporter-collector-grpc';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 // eslint-disable-next-line node/no-extraneous-import
 import { Metadata } from '@grpc/grpc-js';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
@@ -172,7 +172,7 @@ export function otlpSpanExporterFactory(options: Options): SpanExporter {
     // for forward compatibility, is not currently supported
     metadata.set('X-SF-TOKEN', options.accessToken);
   }
-  return new CollectorTraceExporter({
+  return new OTLPTraceExporter({
     url: options.endpoint,
     metadata,
   });
