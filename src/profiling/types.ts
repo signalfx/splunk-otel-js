@@ -38,6 +38,7 @@ export interface ProfilingData {
 export interface ProfilingExtension {
   start(options?: ProfilingStartOptions): void;
   stop(): ProfilingData;
+  collect(): ProfilingData;
   enterContext(context: unknown, traceId: string, spanId: string): void;
   exitContext(context: unknown): void;
 }

@@ -52,7 +52,11 @@ struct ActivationPeriod {
   ActivationPeriod* next;
 };
 
-enum ProfilingFlags { ProfilingFlags_None = 0x00, ProfilingFlags_RecordDebugInfo = 0x01 };
+enum ProfilingFlags {
+  ProfilingFlags_None = 0x00,
+  ProfilingFlags_IsProfiling = 0x01,
+  ProfilingFlags_RecordDebugInfo = 0x02
+};
 
 struct String {
   const char* data = nullptr;
@@ -178,10 +182,12 @@ struct Profiling {
   int32_t activationDepth = 0;
   int32_t flags = ProfilingFlags_None;
   int64_t samplingIntervalNanos = 0;
+  int64_t profilerSeq = 0;
   khash_t(ActivationStack) * spanActivations;
   StackLineCache stacklineCache;
 
-  bool RecordDebugInfo() const { return (flags & ProfilingFlags_RecordDebugInfo) == 1; }
+  bool ShouldRecordDebugInfo() const { return (flags & ProfilingFlags_RecordDebugInfo) != 0; }
+  bool IsStarted() const { return (flags & ProfilingFlags_IsProfiling) != 0; }
 };
 
 void ProfilingInit(Profiling* profiling) {
@@ -314,7 +320,7 @@ NAN_METHOD(StartProfiling) {
   }
 
   int samplingIntervalMicros = 1000000;
-  profiling->flags = 0;
+  profiling->flags = ProfilingFlags_IsProfiling;
 
   if (info.Length() >= 1 && info[0]->IsObject()) {
     auto options = Nan::To<v8::Object>(info[0]).ToLocalChecked();
@@ -331,18 +337,22 @@ NAN_METHOD(StartProfiling) {
   }
 
   profiling->samplingIntervalNanos = int64_t(samplingIntervalMicros) * 1000L;
-
   profiling->profiler->SetSamplingInterval(samplingIntervalMicros);
-  v8::Local<v8::String> title = Nan::New("splunk-otel-js").ToLocalChecked();
+
   const bool recordSamples = true;
+
+  char title[64];
+  snprintf(title, sizeof(title), "splunk-otel-js-%ld", profiling->profilerSeq);
+  v8::Local<v8::String> v8Title = Nan::New(title).ToLocalChecked();
+
   profiling->activationDepth = 0;
   profiling->startTime = HrTime();
   profiling->wallStartTime = MicroSecondsSinceEpoch() * 1000L;
 #if NODE_VERSION_AT_LEAST(12, 8, 0)
   profiling->profiler->StartProfiling(
-    title, v8::kLeafNodeLineNumbers, recordSamples, v8::CpuProfilingOptions::kNoSampleLimit);
+    v8Title, v8::kLeafNodeLineNumbers, recordSamples, v8::CpuProfilingOptions::kNoSampleLimit);
 #else
-  profiling->profiler->StartProfiling(title, recordSamples);
+  profiling->profiler->StartProfiling(v8Title, recordSamples);
 #endif
 }
 
@@ -550,16 +560,45 @@ v8::Local<v8::Object> JsActivation(Profiling* profiling, const SpanActivation* a
 }
 #endif
 
-NAN_METHOD(StopProfiling) {
-  auto profilingData = Nan::New<v8::Object>();
-  auto jsTraces = Nan::New<v8::Array>();
-  Nan::Set(profilingData, Nan::New("stacktraces").ToLocalChecked(), jsTraces);
-
-  info.GetReturnValue().Set(profilingData);
-
-  if (!profiling) {
+void ProfilingRecordDebugInfo(Profiling* profiling, v8::Local<v8::Object> profilingData) {
+#if PROFILER_DEBUG_EXPORT
+  if (!profiling->ShouldRecordDebugInfo()) {
     return;
   }
+
+  int32_t activationIndex = 0;
+  auto jsActivations = Nan::New<v8::Array>();
+
+  ActivationPeriod* period = profiling->activationPeriod;
+
+  while (period) {
+    for (const ActivationBin& bin : period->activationBins) {
+      for (int64_t i = 0; i < bin.count; i++) {
+        const SpanActivation* activation = &bin.activations[i];
+        Nan::Set(jsActivations, activationIndex++, JsActivation(profiling, activation));
+      }
+
+      ActivationBin* nextBin = bin.next;
+
+      while (nextBin) {
+        for (int64_t i = 0; i < nextBin->count; i++) {
+          SpanActivation* activation = &nextBin->activations[i];
+          Nan::Set(jsActivations, activationIndex++, JsActivation(profiling, activation));
+        }
+        nextBin = nextBin->next;
+      }
+    }
+    period = period->next;
+  }
+
+  Nan::Set(profilingData, Nan::New<v8::String>("activations").ToLocalChecked(), jsActivations);
+#endif
+}
+
+void ProfilingBuildStacktraces(
+  Profiling* profiling, v8::CpuProfile* profile, v8::Local<v8::Object> profilingData) {
+  auto jsTraces = Nan::New<v8::Array>();
+  Nan::Set(profilingData, Nan::New("stacktraces").ToLocalChecked(), jsTraces);
 
   char startTimeNanos[32];
   size_t startTimeNanosLen = TimestampString(profiling->wallStartTime, startTimeNanos);
@@ -567,10 +606,6 @@ NAN_METHOD(StopProfiling) {
   Nan::Set(
     profilingData, Nan::New("startTimeNanos").ToLocalChecked(),
     Nan::New(startTimeNanos, startTimeNanosLen).ToLocalChecked());
-
-  v8::Local<v8::String> title = Nan::New("splunk-otel-js").ToLocalChecked();
-
-  v8::CpuProfile* profile = profiling->profiler->StopProfiling(title);
 
   int32_t traceCount = 0;
   int64_t nextSampleTs = profile->GetStartTime() * 1000L;
@@ -639,40 +674,66 @@ NAN_METHOD(StopProfiling) {
 
     Nan::Set(jsTraces, traceCount++, jsTrace);
   }
+}
 
-#if PROFILER_DEBUG_EXPORT
-  if (profiling->RecordDebugInfo()) {
-    int32_t activationIndex = 0;
-    auto jsActivations = Nan::New<v8::Array>();
-
-    ActivationPeriod* period = profiling->activationPeriod;
-
-    while (period) {
-      for (const ActivationBin& bin : period->activationBins) {
-        for (int64_t i = 0; i < bin.count; i++) {
-          const SpanActivation* activation = &bin.activations[i];
-          Nan::Set(jsActivations, activationIndex++, JsActivation(profiling, activation));
-        }
-
-        ActivationBin* nextBin = bin.next;
-
-        while (nextBin) {
-          for (int64_t i = 0; i < nextBin->count; i++) {
-            SpanActivation* activation = &nextBin->activations[i];
-            Nan::Set(jsActivations, activationIndex++, JsActivation(profiling, activation));
-          }
-          nextBin = nextBin->next;
-        }
-      }
-      period = period->next;
-    }
-
-    Nan::Set(profilingData, Nan::New<v8::String>("activations").ToLocalChecked(), jsActivations);
-  }
-#endif
-  profile->Delete();
+void ProfilingReset(Profiling* profiling) {
   kh_clear(ActivationStack, profiling->spanActivations);
   profiling->stacklineCache.Clear();
+  PagedArenaReset(&profiling->arena);
+  profiling->activationPeriod = NewActivationPeriod(profiling);
+}
+
+NAN_METHOD(CollectProfilingData) {
+  auto jsProfilingData = Nan::New<v8::Object>();
+  info.GetReturnValue().Set(jsProfilingData);
+
+  if (!profiling) {
+    return;
+  }
+
+  char prevTitle[64];
+  snprintf(prevTitle, sizeof(prevTitle), "splunk-otel-js-%ld", profiling->profilerSeq);
+  profiling->profilerSeq++;
+  char nextTitle[64];
+  snprintf(nextTitle, sizeof(nextTitle), "splunk-otel-js-%ld", profiling->profilerSeq);
+
+  const bool recordSamples = true;
+  profiling->activationDepth = 0;
+  int64_t newStartTime = HrTime();
+  int64_t newWallStart = MicroSecondsSinceEpoch() * 1000L;
+
+  profiling->profiler->StartProfiling(
+    Nan::New(nextTitle).ToLocalChecked(), v8::kLeafNodeLineNumbers, recordSamples,
+    v8::CpuProfilingOptions::kNoSampleLimit);
+  v8::CpuProfile* profile =
+    profiling->profiler->StopProfiling(Nan::New(prevTitle).ToLocalChecked());
+
+  ProfilingRecordDebugInfo(profiling, jsProfilingData);
+  ProfilingBuildStacktraces(profiling, profile, jsProfilingData);
+  ProfilingReset(profiling);
+  profile->Delete();
+
+  profiling->startTime = newStartTime;
+  profiling->wallStartTime = newWallStart;
+}
+
+NAN_METHOD(StopProfiling) {
+  auto jsProfilingData = Nan::New<v8::Object>();
+  info.GetReturnValue().Set(jsProfilingData);
+
+  if (!profiling) {
+    return;
+  }
+
+  char title[64];
+  snprintf(title, sizeof(title), "splunk-otel-js-%ld", profiling->profilerSeq);
+
+  v8::CpuProfile* profile = profiling->profiler->StopProfiling(Nan::New(title).ToLocalChecked());
+
+  ProfilingRecordDebugInfo(profiling, jsProfilingData);
+  ProfilingBuildStacktraces(profiling, profile, jsProfilingData);
+  ProfilingReset(profiling);
+  profile->Delete();
 }
 
 bool IsValidSpanId(const char* id, int32_t length) {
@@ -794,6 +855,10 @@ void Initialize(v8::Local<v8::Object> target) {
   Nan::Set(
     profilingModule, Nan::New("stop").ToLocalChecked(),
     Nan::GetFunction(Nan::New<v8::FunctionTemplate>(StopProfiling)).ToLocalChecked());
+
+  Nan::Set(
+    profilingModule, Nan::New("collect").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<v8::FunctionTemplate>(CollectProfilingData)).ToLocalChecked());
 
   Nan::Set(
     profilingModule, Nan::New("enterContext").ToLocalChecked(),

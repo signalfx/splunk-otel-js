@@ -29,6 +29,7 @@ import { ProfilingContextManager } from './profiling_contextmanager';
 import { OTLPProfilingExporter } from './otlp_exporter';
 import { DebugExporter } from './debug_exporter';
 
+/* The following are wrappers around native functions to give more context to profiling samples. */
 function extStopProfiling(extension: ProfilingExtension) {
   return extension.stop();
 }
@@ -40,19 +41,25 @@ function extStartProfiling(
   extension.start(opts);
 }
 
+function extCollectSamples(extension: ProfilingExtension) {
+  return extension.collect();
+}
+
 export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
   const options = _setDefaultOptions(opts);
 
   if (!options.enabled) {
     return {
-      stop: () => [],
+      stop: () => {},
     };
   }
 
   const extension = loadExtension();
 
   if (extension === undefined) {
-    return {};
+    return {
+      stop: () => {},
+    };
   }
 
   const contextManager = new ProfilingContextManager();
@@ -81,8 +88,7 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
   });
 
   const interval = setInterval(() => {
-    const profilingData = extStopProfiling(extension);
-    extStartProfiling(extension, startOptions);
+    const profilingData = extCollectSamples(extension);
 
     for (const exporter of exporters) {
       exporter.send(profilingData);
@@ -91,7 +97,16 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
 
   interval.unref();
 
-  return {};
+  return {
+    stop: () => {
+      clearInterval(interval);
+      const profilingData = extStopProfiling(extension);
+
+      for (const exporter of exporters) {
+        exporter.send(profilingData);
+      }
+    },
+  };
 }
 
 export function loadExtension(): ProfilingExtension | undefined {
