@@ -311,6 +311,10 @@ void V8StartProfiling(v8::CpuProfiler* profiler, const char* title) {
 #endif
 }
 
+void ProfileTitle(Profiling* profiling, char* buffer, size_t length) {
+  snprintf(buffer, length, "splunk-otel-js-%" PRId64, profiling->profilerSeq);
+}
+
 NAN_METHOD(StartProfiling) {
   if (!profiling) {
     profiling = new Profiling();
@@ -351,7 +355,7 @@ NAN_METHOD(StartProfiling) {
   profiling->profiler->SetSamplingInterval(samplingIntervalMicros);
 
   char title[64];
-  snprintf(title, sizeof(title), "splunk-otel-js-%ld", profiling->profilerSeq);
+  ProfileTitle(profiling, title, sizeof(title));
 
   profiling->activationDepth = 0;
   profiling->startTime = HrTime();
@@ -695,10 +699,10 @@ NAN_METHOD(CollectProfilingData) {
   }
 
   char prevTitle[64];
-  snprintf(prevTitle, sizeof(prevTitle), "splunk-otel-js-%ld", profiling->profilerSeq);
+  ProfileTitle(profiling, prevTitle, sizeof(prevTitle));
   profiling->profilerSeq++;
   char nextTitle[64];
-  snprintf(nextTitle, sizeof(nextTitle), "splunk-otel-js-%ld", profiling->profilerSeq);
+  ProfileTitle(profiling, nextTitle, sizeof(nextTitle));
 
   profiling->activationDepth = 0;
   int64_t newStartTime = HrTime();
@@ -727,7 +731,7 @@ NAN_METHOD(StopProfiling) {
   }
 
   char title[64];
-  snprintf(title, sizeof(title), "splunk-otel-js-%ld", profiling->profilerSeq);
+  ProfileTitle(profiling, title, sizeof(title));
 
   v8::CpuProfile* profile = profiling->profiler->StopProfiling(Nan::New(title).ToLocalChecked());
 
