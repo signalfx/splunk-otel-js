@@ -16,6 +16,11 @@
 
 import { startTracing } from './tracing';
 import { startMetrics } from './metrics';
+import { startProfiling } from './profiling';
+import { getEnvBoolean } from './options';
 
 startTracing();
 startMetrics();
+startProfiling({
+  enabled: getEnvBoolean('SPLUNK_PROFILER_ENABLED', false),
+});

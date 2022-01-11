@@ -16,7 +16,7 @@
 
 import { context, diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
-import { defaultServiceName, getEnvBoolean, getEnvNumber } from '../options';
+import { defaultServiceName, getEnvNumber } from '../options';
 import { EnvResourceDetector } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import {
@@ -126,8 +126,7 @@ export function loadExtension(): ProfilingExtension | undefined {
 export function _setDefaultOptions(
   options: Partial<ProfilingOptions> = {}
 ): ProfilingOptions {
-  const enabled =
-    options.enabled ?? getEnvBoolean('SPLUNK_PROFILER_ENABLED', false);
+  const enabled = options.enabled ?? true;
   const endpoint =
     options.endpoint ||
     process.env.SPLUNK_PROFILER_LOGS_ENDPOINT ||
