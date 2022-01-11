@@ -300,6 +300,17 @@ int64_t MicroSecondsSinceEpoch() {
     .count();
 }
 
+void V8StartProfiling(v8::CpuProfiler* profiler, const char* title) {
+  v8::Local<v8::String> v8Title = Nan::New(title).ToLocalChecked();
+  const bool recordSamples = true;
+#if NODE_VERSION_AT_LEAST(12, 8, 0)
+  profiling->profiler->StartProfiling(
+    v8Title, v8::kLeafNodeLineNumbers, recordSamples, v8::CpuProfilingOptions::kNoSampleLimit);
+#else
+  profiling->profiler->StartProfiling(v8Title, recordSamples);
+#endif
+}
+
 NAN_METHOD(StartProfiling) {
   if (!profiling) {
     profiling = new Profiling();
@@ -339,21 +350,13 @@ NAN_METHOD(StartProfiling) {
   profiling->samplingIntervalNanos = int64_t(samplingIntervalMicros) * 1000L;
   profiling->profiler->SetSamplingInterval(samplingIntervalMicros);
 
-  const bool recordSamples = true;
-
   char title[64];
   snprintf(title, sizeof(title), "splunk-otel-js-%ld", profiling->profilerSeq);
-  v8::Local<v8::String> v8Title = Nan::New(title).ToLocalChecked();
 
   profiling->activationDepth = 0;
   profiling->startTime = HrTime();
   profiling->wallStartTime = MicroSecondsSinceEpoch() * 1000L;
-#if NODE_VERSION_AT_LEAST(12, 8, 0)
-  profiling->profiler->StartProfiling(
-    v8Title, v8::kLeafNodeLineNumbers, recordSamples, v8::CpuProfilingOptions::kNoSampleLimit);
-#else
-  profiling->profiler->StartProfiling(v8Title, recordSamples);
-#endif
+  V8StartProfiling(profiling->profiler, title);
 }
 
 struct StringBuilder {
@@ -697,14 +700,12 @@ NAN_METHOD(CollectProfilingData) {
   char nextTitle[64];
   snprintf(nextTitle, sizeof(nextTitle), "splunk-otel-js-%ld", profiling->profilerSeq);
 
-  const bool recordSamples = true;
   profiling->activationDepth = 0;
   int64_t newStartTime = HrTime();
   int64_t newWallStart = MicroSecondsSinceEpoch() * 1000L;
 
-  profiling->profiler->StartProfiling(
-    Nan::New(nextTitle).ToLocalChecked(), v8::kLeafNodeLineNumbers, recordSamples,
-    v8::CpuProfilingOptions::kNoSampleLimit);
+  V8StartProfiling(profiling->profiler, nextTitle);
+
   v8::CpuProfile* profile =
     profiling->profiler->StopProfiling(Nan::New(prevTitle).ToLocalChecked());
 
