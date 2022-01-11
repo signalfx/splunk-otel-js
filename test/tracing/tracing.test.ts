@@ -23,7 +23,7 @@ import {
   InMemorySpanExporter,
 } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
-import { CollectorTraceExporter } from '@opentelemetry/exporter-collector-grpc';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 
 import { startTracing, stopTracing } from '../../src/tracing';
 import * as utils from '../utils';
@@ -57,7 +57,7 @@ describe('tracing:otlp', () => {
 
     assert(processor instanceof BatchSpanProcessor);
     const exporter = processor['_exporter'];
-    assert(exporter instanceof CollectorTraceExporter);
+    assert(exporter instanceof OTLPTraceExporter);
 
     assert.deepEqual(exporter.url, exportURL);
 
