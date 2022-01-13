@@ -104,9 +104,8 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
 }
 
 export function loadExtension(): ProfilingExtension | undefined {
-  let extension;
   try {
-    extension = require('../native_ext');
+    return require('../native_ext').profiling;
   } catch (e) {
     diag.error(
       'Unable to load profiling extension. Profiling data will not be reported',
@@ -114,7 +113,7 @@ export function loadExtension(): ProfilingExtension | undefined {
     );
   }
 
-  return extension?.profiling;
+  return undefined;
 }
 
 export function _setDefaultOptions(
