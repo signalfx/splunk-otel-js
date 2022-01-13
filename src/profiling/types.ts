@@ -20,7 +20,7 @@ export interface ProfilingStartOptions {
   recordDebugInfo: boolean;
 }
 
-export interface ProfilingStackTrace {
+export interface ProfilingStacktrace {
   /** Timestamp of the sample (nanoseconds since Unix epoch). */
   timestamp: string;
   /** Formatted stacktrace. */
@@ -32,7 +32,7 @@ export interface ProfilingStackTrace {
 export interface ProfilingData {
   /** Timestamp when profiling was started (nanoseconds since Unix epoch). */
   startTimeNanos: string;
-  stacktraces: ProfilingStackTrace[];
+  stacktraces: ProfilingStacktrace[];
 }
 
 export interface ProfilingExtension {
