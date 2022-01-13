@@ -48,12 +48,6 @@ function extCollectSamples(extension: ProfilingExtension) {
 export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
   const options = _setDefaultOptions(opts);
 
-  if (!options.enabled) {
-    return {
-      stop: () => {},
-    };
-  }
-
   const extension = loadExtension();
 
   if (extension === undefined) {
@@ -126,7 +120,6 @@ export function loadExtension(): ProfilingExtension | undefined {
 export function _setDefaultOptions(
   options: Partial<ProfilingOptions> = {}
 ): ProfilingOptions {
-  const enabled = options.enabled ?? true;
   const endpoint =
     options.endpoint ||
     process.env.SPLUNK_PROFILER_LOGS_ENDPOINT ||
@@ -154,7 +147,6 @@ export function _setDefaultOptions(
   );
 
   return {
-    enabled,
     serviceName: serviceName,
     endpoint,
     callstackInterval:

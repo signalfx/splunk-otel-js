@@ -44,7 +44,6 @@ export interface ProfilingExtension {
 }
 
 export interface ProfilingOptions {
-  enabled: boolean;
   serviceName: string;
   endpoint: string;
   callstackInterval: number;
