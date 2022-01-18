@@ -25,8 +25,8 @@ export interface ProfilingStacktrace {
   timestamp: string;
   /** Formatted stacktrace. */
   stacktrace: string;
-  traceId: string;
-  spanId: string;
+  traceId: Buffer;
+  spanId: Buffer;
 }
 
 export interface ProfilingData {
