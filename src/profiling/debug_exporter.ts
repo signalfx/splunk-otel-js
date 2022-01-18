@@ -13,14 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { diag } from '@opentelemetry/api';
+import { ProfilingData, ProfilingExporter } from './types';
+import * as fs from 'fs';
 
-import { startTracing } from './tracing';
-import { startMetrics } from './metrics';
-import { startProfiling } from './profiling';
-import { getEnvBoolean } from './options';
+export class DebugExporter implements ProfilingExporter {
+  runTimestamp = Date.now();
+  profileIndex = 0;
 
-if (getEnvBoolean('SPLUNK_PROFILER_ENABLED', false)) {
-  startProfiling();
+  send(data: ProfilingData) {
+    const baseName = `profile-${this.runTimestamp}-${this.profileIndex++}.json`;
+    fs.writeFile(baseName, JSON.stringify(data), err => {
+      if (err) {
+        diag.error(`error writing to ${baseName}`, err);
+      }
+    });
+  }
 }
-startTracing();
-startMetrics();
