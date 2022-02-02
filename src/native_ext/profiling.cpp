@@ -430,23 +430,14 @@ String NewStackLine(PagedArena* arena, const v8::CpuProfileNode* node) {
   }
 
   StringBuilder builder(content, bytesNeeded);
-
-  size_t offset = builder.Add("\tat ", 4);
-
   builder.Add(rawFunction, functionLen);
-
-  builder.offset = offset + RemoveParen(content + offset, functionLen);
-  offset = builder.Add('(');
+  builder.offset = RemoveParen(content, functionLen);
+  builder.Add('(');
   builder.Add(rawFileName, fileNameLen);
-
-  for (size_t i = 0; i < fileNameLen; i++) {
-    if (content[offset + i] == ':') {
-      content[offset + i] = '_';
-    }
-  }
-
   builder.Add(':');
   builder.Add(node->GetLineNumber());
+  builder.Add(':');
+  builder.Add(node->GetColumnNumber());
   builder.Add(')');
   builder.Add('\n');
 
@@ -487,7 +478,7 @@ struct StacktraceBuilder {
   }
 
   String Build() {
-    constexpr char prefix[] = "\"main\" #0 prio=0 os_prio=0 cpu=0 elapsed=0 tid=0 nid=0\n\n";
+    constexpr char prefix[] = "\n\n";
 
     size_t bytesNeeded = sizeof(prefix) - 1;
 
@@ -636,8 +627,14 @@ void ProfilingBuildStacktraces(
 #if NODE_VERSION_AT_LEAST(12, 5, 0)
     const v8::CpuProfileNode* parent = sample->GetParent();
     while (parent) {
-      builder.Add(parent);
-      parent = parent->GetParent();
+      const v8::CpuProfileNode* next = parent->GetParent();
+
+      // Skip the root node as it does not contain useful information.
+      if (next) {
+        builder.Add(parent);
+      }
+
+      parent = next;
     }
 #endif
 
