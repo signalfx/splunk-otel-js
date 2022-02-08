@@ -547,8 +547,7 @@ v8::Local<v8::Object> JsActivation(Profiling* profiling, const SpanActivation* a
   char startTs[32];
   char endTs[32];
   size_t startTsLen = TimestampString(activation->startTime, startTs);
-  size_t endTsLen =
-    TimestampString(activation->endTime, endTs);
+  size_t endTsLen = TimestampString(activation->endTime, endTs);
 
   Nan::Set(
     jsActivation, Nan::New<v8::String>("start").ToLocalChecked(),
@@ -620,13 +619,13 @@ void ProfilingBuildStacktraces(
     Nan::New(startTimeNanos, startTimeNanosLen).ToLocalChecked());
 
 #if PROFILER_DEBUG_EXPORT
-    {
-      char tpBuf[32];
-      size_t tpLen = TimestampString(profiling->startTime, tpBuf);
-      Nan::Set(
-        profilingData, Nan::New<v8::String>("startTimepoint").ToLocalChecked(),
-        Nan::New<v8::String>(tpBuf, tpLen).ToLocalChecked());
-    }
+  {
+    char tpBuf[32];
+    size_t tpLen = TimestampString(profiling->startTime, tpBuf);
+    Nan::Set(
+      profilingData, Nan::New<v8::String>("startTimepoint").ToLocalChecked(),
+      Nan::New<v8::String>(tpBuf, tpLen).ToLocalChecked());
+  }
 #endif
 
   int32_t traceCount = 0;
@@ -704,7 +703,7 @@ void ProfilingBuildStacktraces(
         Nan::CopyBuffer((const char*)traceId, 16).ToLocalChecked());
 
 #if PROFILER_DEBUG_EXPORT
-    match->is_intersected = true;
+      match->is_intersected = true;
 #endif
     }
 
@@ -906,4 +905,4 @@ void Initialize(v8::Local<v8::Object> target) {
 }
 
 } // namespace Profiling
-}
+} // namespace Splunk

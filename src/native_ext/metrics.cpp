@@ -207,4 +207,4 @@ void Initialize(v8::Local<v8::Object> target) {
   Nan::Set(target, Nan::New("metrics").ToLocalChecked(), metricsModule);
 }
 } // namespace Metrics
-}
+} // namespace Splunk

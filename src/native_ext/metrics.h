@@ -8,4 +8,4 @@ namespace Metrics {
 void Initialize(v8::Local<v8::Object> target);
 
 } // namespace Metrics
-}
+} // namespace Splunk

@@ -17,8 +17,6 @@ int64_t HrTime() {
   return int64_t(mach_absolute_time() * timebase.numer / timebase.denom);
 }
 #else
-int64_t HrTime() {
-  return uv_hrtime();
-}
+int64_t HrTime() { return uv_hrtime(); }
 #endif
-}
+} // namespace Splunk
