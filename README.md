@@ -116,6 +116,8 @@ By default the following instrumentations will automatically be enabled if insta
 any of these instrumentations, you'll need to install them with npm and then run your app with `-r @splunk/otel/instrument` flag as described above.
 
 ```
+@opentelemetry/instrumentation-bunyan
+@opentelemetry/instrumentation-cassandra-driver
 @opentelemetry/instrumentation-dns
 @opentelemetry/instrumentation-express
 @opentelemetry/instrumentation-graphql
@@ -123,11 +125,18 @@ any of these instrumentations, you'll need to install them with npm and then run
 @opentelemetry/instrumentation-hapi
 @opentelemetry/instrumentation-http
 @opentelemetry/instrumentation-ioredis
+@opentelemetry/instrumentation-knex
 @opentelemetry/instrumentation-koa
+@opentelemetry/instrumentation-memcached
 @opentelemetry/instrumentation-mongodb
 @opentelemetry/instrumentation-mysql
+@opentelemetry/instrumentation-mysql2
 @opentelemetry/instrumentation-net
 @opentelemetry/instrumentation-pg
+@opentelemetry/instrumentation-pino
+@opentelemetry/instrumentation-redis
+@opentelemetry/instrumentation-restify
+@opentelemetry/instrumentation-winston
 opentelemetry-instrumentation-amqplib
 opentelemetry-instrumentation-aws-sdk
 opentelemetry-instrumentation-elasticsearch
@@ -135,14 +144,6 @@ opentelemetry-instrumentation-kafkajs
 opentelemetry-instrumentation-mongoose
 opentelemetry-instrumentation-sequelize
 opentelemetry-instrumentation-typeorm
-```
-
-The following logging library instrumentations are supported:
-
-```
-@opentelemetry/instrumentation-bunyan
-@opentelemetry/instrumentation-pino
-@opentelemetry/instrumentation-winston
 ```
 
 You can find more instrumentation packages over at the [OpenTelemetry Registry](https://opentelemetry.io/registry/?language=js) and enable them manually as described above.
