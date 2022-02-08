@@ -5,8 +5,8 @@
 namespace {
 
 NAN_MODULE_INIT(Init) {
-  Metrics::Initialize(target);
-  Profiling::Initialize(target);
+  Splunk::Metrics::Initialize(target);
+  Splunk::Profiling::Initialize(target);
 }
 
 } // namespace

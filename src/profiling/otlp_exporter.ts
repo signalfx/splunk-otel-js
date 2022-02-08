@@ -19,6 +19,7 @@ import * as path from 'path';
 import { ProfilingData, ProfilingExporter } from './types';
 import { diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 export interface OTLPExporterOptions {
   callstackInterval: number;
@@ -61,9 +62,13 @@ export class OTLPProfilingExporter implements ProfilingExporter {
         grpc.credentials.createInsecure()
       );
 
+    const resource = new Resource({
+      [SemanticResourceAttributes.TELEMETRY_SDK_LANGUAGE]: 'node',
+    }).merge(options.resource);
+
     this._resourceAttributes = [];
-    for (const key in options.resource.attributes) {
-      const value = options.resource.attributes[key];
+    for (const key in resource.attributes) {
+      const value = resource.attributes[key];
 
       if (typeof value === 'string') {
         this._resourceAttributes.push({

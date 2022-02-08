@@ -3,6 +3,7 @@
 #include <node_version.h>
 #include <uv.h>
 
+namespace Splunk {
 namespace Metrics {
 struct Counters {
   int64_t min = 0;
@@ -206,3 +207,4 @@ void Initialize(v8::Local<v8::Object> target) {
   Nan::Set(target, Nan::New("metrics").ToLocalChecked(), metricsModule);
 }
 } // namespace Metrics
+} // namespace Splunk

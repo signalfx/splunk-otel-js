@@ -3,19 +3,22 @@
 #include "util/arena.h"
 #include "util/hex.h"
 #include "util/modp_numtoa.h"
+#include "util/platform.h"
 #include <chrono>
 #include <inttypes.h>
 #include <nan.h>
-#include <uv.h>
 #include <v8-profiler.h>
 
 /* Collecting debug info is not compiled in by default to reduce memory usage. */
 #define PROFILER_DEBUG_EXPORT 0
 
+namespace Splunk {
 namespace Profiling {
 
 namespace {
 
+/* Nanoseconds each activation bin represents. */
+const int64_t kActivationBinWidth = 100L * 1000000L;
 /**
  * Span activations are grouped into chains of bins,
  * where each bin represents a small time period, e.g. 100ms.
@@ -23,8 +26,8 @@ namespace {
  * without requiring more complicated data structures (interval trees)
  * or matching against the whole profiling period.
  */
-constexpr int64_t kActivationsPerBin = 64;
-constexpr int64_t kBinsPerActivationPeriod = 512;
+const int64_t kActivationsPerBin = 64;
+const int64_t kBinsPerActivationPeriod = 512;
 
 struct SpanActivation {
   char traceId[32];
@@ -216,13 +219,12 @@ ActivationPeriod* NewActivationPeriod(Profiling* profiling) {
   return period;
 }
 
-ActivationBin* ProfilingGetActivationBin(Profiling* profiling, int64_t timestamp) {
-  /* Nanoseconds each activation bin represents. */
-  const int64_t kActivationBinWidth = 100L * 1000000L;
-
+int64_t ActivationBinIndex(Profiling* profiling, int64_t timestamp) {
   int64_t delta = timestamp - profiling->startTime;
-  int64_t binIndex = delta / kActivationBinWidth;
+  return delta / kActivationBinWidth;
+}
 
+ActivationBin* ProfilingGetActivationBin(Profiling* profiling, int64_t binIndex) {
   int64_t periodIndex = binIndex / kBinsPerActivationPeriod;
 
   int64_t currentPeriod = 0;
@@ -250,7 +252,7 @@ SpanActivation* FindClosestActivation(Profiling* profiling, int64_t ts) {
   sentinel.endTime = std::numeric_limits<int64_t>::max();
   SpanActivation* t = &sentinel;
 
-  ActivationBin* bin = ProfilingGetActivationBin(profiling, ts);
+  ActivationBin* bin = ProfilingGetActivationBin(profiling, ActivationBinIndex(profiling, ts));
 
   while (bin) {
     for (int64_t i = 0; i < bin->count; i++) {
@@ -270,9 +272,8 @@ SpanActivation* FindClosestActivation(Profiling* profiling, int64_t ts) {
 
   return t;
 }
-void InsertActivation(Profiling* profiling, SpanActivation* activation) {
-  ActivationBin* bin = ProfilingGetActivationBin(profiling, activation->startTime);
 
+void BinInsertActivation(Profiling* profiling, ActivationBin* bin, SpanActivation* activation) {
   // Iterate until last bin
   while (bin->next) {
     bin = bin->next;
@@ -290,9 +291,23 @@ void InsertActivation(Profiling* profiling, SpanActivation* activation) {
   bin->activations[bin->count++] = *activation;
 }
 
-Profiling* profiling = nullptr;
+void InsertActivation(Profiling* profiling, SpanActivation* activation) {
+  int64_t startBinIndex = ActivationBinIndex(profiling, activation->startTime);
+  int64_t endBinIndex = ActivationBinIndex(profiling, activation->endTime);
 
-int64_t HrTime() { return uv_hrtime(); }
+  {
+    ActivationBin* startBin = ProfilingGetActivationBin(profiling, startBinIndex);
+    BinInsertActivation(profiling, startBin, activation);
+  }
+
+  // Spread the activation into overlapping bins
+  for (int64_t i = startBinIndex + 1; i <= endBinIndex; i++) {
+    ActivationBin* bin = ProfilingGetActivationBin(profiling, i);
+    BinInsertActivation(profiling, bin, activation);
+  }
+}
+
+Profiling* profiling = nullptr;
 
 int64_t MicroSecondsSinceEpoch() {
   return std::chrono::duration_cast<std::chrono::microseconds>(
@@ -430,23 +445,14 @@ String NewStackLine(PagedArena* arena, const v8::CpuProfileNode* node) {
   }
 
   StringBuilder builder(content, bytesNeeded);
-
-  size_t offset = builder.Add("\tat ", 4);
-
   builder.Add(rawFunction, functionLen);
-
-  builder.offset = offset + RemoveParen(content + offset, functionLen);
-  offset = builder.Add('(');
+  builder.offset = RemoveParen(content, functionLen);
+  builder.Add('(');
   builder.Add(rawFileName, fileNameLen);
-
-  for (size_t i = 0; i < fileNameLen; i++) {
-    if (content[offset + i] == ':') {
-      content[offset + i] = '_';
-    }
-  }
-
   builder.Add(':');
   builder.Add(node->GetLineNumber());
+  builder.Add(':');
+  builder.Add(node->GetColumnNumber());
   builder.Add(')');
   builder.Add('\n');
 
@@ -487,7 +493,7 @@ struct StacktraceBuilder {
   }
 
   String Build() {
-    constexpr char prefix[] = "\"main\" #0 prio=0 os_prio=0 cpu=0 elapsed=0 tid=0 nid=0\n\n";
+    constexpr char prefix[] = "\n\n";
 
     size_t bytesNeeded = sizeof(prefix) - 1;
 
@@ -540,10 +546,8 @@ v8::Local<v8::Object> JsActivation(Profiling* profiling, const SpanActivation* a
 
   char startTs[32];
   char endTs[32];
-  size_t startTsLen = TimestampString(
-    profiling->wallStartTime + (activation->startTime - profiling->startTime), startTs);
-  size_t endTsLen =
-    TimestampString(profiling->wallStartTime + (activation->endTime - profiling->startTime), endTs);
+  size_t startTsLen = TimestampString(activation->startTime, startTs);
+  size_t endTsLen = TimestampString(activation->endTime, endTs);
 
   Nan::Set(
     jsActivation, Nan::New<v8::String>("start").ToLocalChecked(),
@@ -614,6 +618,16 @@ void ProfilingBuildStacktraces(
     profilingData, Nan::New("startTimeNanos").ToLocalChecked(),
     Nan::New(startTimeNanos, startTimeNanosLen).ToLocalChecked());
 
+#if PROFILER_DEBUG_EXPORT
+  {
+    char tpBuf[32];
+    size_t tpLen = TimestampString(profiling->startTime, tpBuf);
+    Nan::Set(
+      profilingData, Nan::New<v8::String>("startTimepoint").ToLocalChecked(),
+      Nan::New<v8::String>(tpBuf, tpLen).ToLocalChecked());
+  }
+#endif
+
   int32_t traceCount = 0;
   int64_t nextSampleTs = profile->GetStartTime() * 1000L;
   for (int i = 0; i < profile->GetSamplesCount(); i++) {
@@ -636,8 +650,14 @@ void ProfilingBuildStacktraces(
 #if NODE_VERSION_AT_LEAST(12, 5, 0)
     const v8::CpuProfileNode* parent = sample->GetParent();
     while (parent) {
-      builder.Add(parent);
-      parent = parent->GetParent();
+      const v8::CpuProfileNode* next = parent->GetParent();
+
+      // Skip the root node as it does not contain useful information.
+      if (next) {
+        builder.Add(parent);
+      }
+
+      parent = next;
     }
 #endif
 
@@ -658,6 +678,14 @@ void ProfilingBuildStacktraces(
     Nan::Set(
       jsTrace, Nan::New<v8::String>("stacktrace").ToLocalChecked(),
       Nan::New<v8::String>(stacktrace.data, stacktrace.length).ToLocalChecked());
+
+#if PROFILER_DEBUG_EXPORT
+    char tpBuf[32];
+    size_t tpLen = TimestampString(monotonicTs, tpBuf);
+    Nan::Set(
+      jsTrace, Nan::New<v8::String>("timepoint").ToLocalChecked(),
+      Nan::New<v8::String>(tpBuf, tpLen).ToLocalChecked());
+#endif
 
     SpanActivation* match = FindClosestActivation(profiling, monotonicTs);
 
@@ -713,8 +741,8 @@ NAN_METHOD(CollectProfilingData) {
   v8::CpuProfile* profile =
     profiling->profiler->StopProfiling(Nan::New(prevTitle).ToLocalChecked());
 
-  ProfilingRecordDebugInfo(profiling, jsProfilingData);
   ProfilingBuildStacktraces(profiling, profile, jsProfilingData);
+  ProfilingRecordDebugInfo(profiling, jsProfilingData);
   ProfilingReset(profiling);
   profile->Delete();
 
@@ -735,8 +763,8 @@ NAN_METHOD(StopProfiling) {
 
   v8::CpuProfile* profile = profiling->profiler->StopProfiling(Nan::New(title).ToLocalChecked());
 
-  ProfilingRecordDebugInfo(profiling, jsProfilingData);
   ProfilingBuildStacktraces(profiling, profile, jsProfilingData);
+  ProfilingRecordDebugInfo(profiling, jsProfilingData);
   ProfilingReset(profiling);
   profile->Delete();
 }
@@ -877,3 +905,4 @@ void Initialize(v8::Local<v8::Object> target) {
 }
 
 } // namespace Profiling
+} // namespace Splunk
