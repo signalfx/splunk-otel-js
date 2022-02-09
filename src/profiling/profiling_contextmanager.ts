@@ -60,6 +60,5 @@ export class ProfilingContextManager extends AsyncHooksContextManager {
     if (context) {
       this._recorder.exitContext(context);
     }
-    return context;
   }
 }

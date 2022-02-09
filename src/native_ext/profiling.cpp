@@ -27,7 +27,7 @@ const int64_t kActivationBinWidth = 100L * 1000000L;
  * or matching against the whole profiling period.
  */
 const int64_t kActivationsPerBin = 64;
-const int64_t kBinsPerActivationPeriod = 512;
+const int64_t kBinsPerActivationPeriod = 384;
 
 struct SpanActivation {
   char traceId[32];
@@ -282,6 +282,11 @@ void BinInsertActivation(Profiling* profiling, ActivationBin* bin, SpanActivatio
   // If the last bin is empty, expand
   if (bin->count == kActivationsPerBin) {
     ActivationBin* newBin = (ActivationBin*)ArenaAlloc(profiling, sizeof(ActivationBin));
+
+    if (!newBin) {
+      return;
+    }
+
     newBin->index = bin->index;
     newBin->period = bin->period;
     bin->next = newBin;
@@ -493,7 +498,7 @@ struct StacktraceBuilder {
   }
 
   String Build() {
-    constexpr char prefix[] = "\n\n";
+    static const char prefix[] = "\n\n";
 
     size_t bytesNeeded = sizeof(prefix) - 1;
 
