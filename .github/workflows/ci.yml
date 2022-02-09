@@ -132,8 +132,6 @@ jobs:
         run: npm run version:check
       - name: Lint commits
         run: npm run lint:commits -- --from origin/${{ github.base_ref }}
-      - name: Verify changes
-        run: npm run change:check
 
   build:
     runs-on: ubuntu-latest
