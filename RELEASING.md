@@ -17,7 +17,7 @@ So if you intend to release `1.2.0`, create a branch named `release/v1.2.0`
 
 ## 2. Generate changelog and version <a href="step-2"></a>
 
-Run `npm run change:bump`. Entries in `CHANGELOG.md` and `CHANGELOG.json` will be generated automatically.
+Update `CHANGELOG.md`.
 
 ## 3. Submit changes for review <a href="step-3"></a>
 
