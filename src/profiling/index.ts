@@ -151,7 +151,7 @@ export function _setDefaultOptions(
     callstackInterval:
       options.callstackInterval ||
       getEnvNumber('SPLUNK_PROFILER_CALL_STACK_INTERVAL', 1000),
-    collectionDuration: options.collectionDuration || 60_000,
+    collectionDuration: options.collectionDuration || 30_000,
     resource,
     debugExport: options.debugExport ?? false,
   };
