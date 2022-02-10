@@ -1,0 +1,7 @@
+{
+  "type": "minor",
+  "comment": "feat: implement the alpha version of profiling support",
+  "packageName": "@splunk/otel",
+  "email": "siimkallas@gmail.com",
+  "dependentChangeType": "minor"
+}
