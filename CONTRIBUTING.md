@@ -64,7 +64,6 @@ To send us a pull request, please:
 1. Modify the source; please ensure a single change per PR. If you also
    reformat all the code, it will be hard for us to focus on your change.
 1. Ensure local tests pass and add new tests related to the contribution.
-1. Add a change object using `npm run change:new`.
 1. Commit to your fork using clear commit messages compatible with
    [Conventional Commits v1.0](https://www.conventionalcommits.org/en/v1.0.0/).
 1. Send us a pull request, answering any default questions in the pull request
