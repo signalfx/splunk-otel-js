@@ -2,6 +2,29 @@
   "name": "@splunk/otel",
   "entries": [
     {
+      "date": "Thu, 10 Feb 2022 13:37:02 GMT",
+      "tag": "@splunk/otel_v0.16.0",
+      "version": "0.16.0",
+      "comments": {
+        "minor": [
+          {
+            "author": "siimkallas@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "b09aa56e03e5edfa8420e47e077d52f6877c253e",
+            "comment": "feat: implement the alpha version of profiling support"
+          }
+        ],
+        "patch": [
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "ce3df27108153f534802af9d27197df16e488f81",
+            "comment": "chore: update dependencies"
+          }
+        ]
+      }
+    },
+    {
       "date": "Thu, 11 Nov 2021 15:56:29 GMT",
       "tag": "@splunk/otel_v0.15.0",
       "version": "0.15.0",
