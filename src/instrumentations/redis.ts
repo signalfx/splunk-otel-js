@@ -26,7 +26,7 @@ export function configureRedisInstrumentation(
   _options: Options
 ) {
   const redisInstrumentation = instrumentation as RedisInstrumentation;
-  if (getEnvBoolean('SPLUNK_REDIS_INCLUDE_COMMAND_ARGS')) {
+  if (getEnvBoolean('SPLUNK_REDIS_INCLUDE_COMMAND_ARGS', false)) {
     const config =
       redisInstrumentation.getConfig() as RedisInstrumentationConfig;
     redisInstrumentation.setConfig({
