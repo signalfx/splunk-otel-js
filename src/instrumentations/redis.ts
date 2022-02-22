@@ -33,7 +33,16 @@ export function configureRedisInstrumentation(
       ...config,
       dbStatementSerializer: (cmd, args) => {
         if (args.length === 0) return cmd;
-        return `${cmd} ${args.join(' ')}`;
+
+        const sanitizedArgs = args.map(arg => {
+          if (Buffer.isBuffer(arg)) {
+            return `buffer(${arg.length})`;
+          }
+
+          return arg;
+        });
+
+        return `${cmd} ${sanitizedArgs.join(' ')}`;
       },
     });
   }
