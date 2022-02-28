@@ -39,6 +39,7 @@ This distribution supports all the configuration options supported by the compon
 | `OTEL_TRACES_SAMPLER_ARG`                                       |                         | Stable  | String value to be used as the sampler argument. Only be used if OTEL_TRACES_SAMPLER is set.
 | `SPLUNK_ACCESS_TOKEN`<br>`accessToken`                          |                         | Stable  | The optional access token for exporting signal data directly to SignalFx API.
 | `SPLUNK_TRACE_RESPONSE_HEADER_ENABLED`<br>`serverTimingEnabled` | `true`                  | Stable  | Enable injection of `Server-Timing` header to HTTP responses.
+| `SPLUNK_REDIS_INCLUDE_COMMAND_ARGS` | `false`                  | Stable  | Will include the full redis query in `db.statement` span attribute when using `redis` instrumentation.
 
 #### Additional `startTracing` config options
 
