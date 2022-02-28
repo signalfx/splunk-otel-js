@@ -69,6 +69,7 @@ describe('Redis instrumentation', () => {
     client.hget('foo', 'bar', async () => {
       await spanProcessor.forceFlush();
       const [span] = await exporter.getFinishedSpans();
+      client.end(false);
       assert.deepStrictEqual(span.attributes['db.statement'], 'hget');
       done();
     });
@@ -83,6 +84,7 @@ describe('Redis instrumentation', () => {
     client.hget('foo', 'bar', async () => {
       await spanProcessor.forceFlush();
       const [span] = await exporter.getFinishedSpans();
+      client.end(false);
       assert.deepStrictEqual(span.attributes['db.statement'], 'hget foo bar');
       done();
     });
