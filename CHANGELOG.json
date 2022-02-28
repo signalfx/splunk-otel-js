@@ -2,6 +2,21 @@
   "name": "@splunk/otel",
   "entries": [
     {
+      "date": "Mon, 28 Feb 2022 12:54:34 GMT",
+      "tag": "@splunk/otel_v0.17.0",
+      "version": "0.17.0",
+      "comments": {
+        "minor": [
+          {
+            "author": "siimkallas@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "591b6a1b14940a66166b2e8dd24ad721a67bb85f",
+            "comment": "add SPLUNK_REDIS_INCLUDE_COMMAND_ARGS env var to include redis command args in span's db.statement"
+          }
+        ]
+      }
+    },
+    {
       "date": "Thu, 10 Feb 2022 13:37:02 GMT",
       "tag": "@splunk/otel_v0.16.0",
       "version": "0.16.0",
