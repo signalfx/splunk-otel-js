@@ -21,8 +21,10 @@ import {
   SpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
 import { defaultSpanProcessorFactory } from '../../src/options';
+import * as utils from '../utils';
 import * as net from 'net';
 import type * as Redis from 'redis';
+import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
 
 describe('Redis instrumentation', () => {
   let redisServer;
@@ -49,10 +51,19 @@ describe('Redis instrumentation', () => {
   });
 
   beforeEach(() => {
+    utils.cleanEnvironment();
     exporter = new InMemorySpanExporter();
   });
 
+  afterEach(() => {
+    utils.cleanEnvironment();
+  });
+
   const testOpts = () => ({
+    serviceName: 'test-service',
+    instrumentations: [
+      new RedisInstrumentation(),
+    ],
     spanExporterFactory: () => exporter,
     spanProcessorFactory: options => {
       return (spanProcessor = defaultSpanProcessorFactory(options));
