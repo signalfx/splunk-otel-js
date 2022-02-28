@@ -16,7 +16,6 @@
 
 import * as assert from 'assert';
 import { startTracing } from '../../src/tracing';
-import * as utils from '../utils';
 import {
   InMemorySpanExporter,
   SpanProcessor,
@@ -50,7 +49,6 @@ describe('Redis instrumentation', () => {
   });
 
   beforeEach(() => {
-    utils.cleanEnvironment();
     exporter = new InMemorySpanExporter();
   });
 
@@ -62,6 +60,21 @@ describe('Redis instrumentation', () => {
   });
 
   it('db statement is not added by default', done => {
+    startTracing(testOpts());
+    const client = require('redis').createClient({
+      no_ready_check: true,
+    });
+    client.hget('foo', 'bar', async () => {
+      await spanProcessor.forceFlush();
+      const [span] = await exporter.getFinishedSpans();
+      client.end(false);
+      assert.deepStrictEqual(span.attributes['db.statement'], 'hget');
+      done();
+    });
+  });
+
+  it('db statement is not added when SPLUNK_REDIS_INCLUDE_COMMAND_ARGS is false', done => {
+    process.env.SPLUNK_REDIS_INCLUDE_COMMAND_ARGS = 'false';
     startTracing(testOpts());
     const client = require('redis').createClient({
       no_ready_check: true,
