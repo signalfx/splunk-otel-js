@@ -26,6 +26,7 @@ import {
   AsyncHooksContextManager,
   AsyncLocalStorageContextManager,
 } from '@opentelemetry/context-async-hooks';
+import { configureRedisInstrumentation } from './instrumentations/redis';
 
 let unregisterInstrumentations: (() => void) | null = null;
 
@@ -85,6 +86,9 @@ function configureInstrumentations(options: Options) {
     switch (instr['instrumentationName']) {
       case '@opentelemetry/instrumentation-http':
         configureHttpInstrumentation(instr, options);
+        break;
+      case '@opentelemetry/instrumentation-redis':
+        configureRedisInstrumentation(instr, options);
         break;
       case '@opentelemetry/instrumentation-bunyan':
       case '@opentelemetry/instrumentation-pino':

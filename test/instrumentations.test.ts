@@ -62,7 +62,7 @@ describe('instrumentations', () => {
   it('does not load if packages are not installed', () => {
     const inst = instrumentations.getInstrumentations();
     // Note: the number here is the devDependencies instrumentation count.
-    assert.strictEqual(inst.length, 4);
+    assert.strictEqual(inst.length, 5);
   });
 
   it('load instrumentations if they are not installed', () => {

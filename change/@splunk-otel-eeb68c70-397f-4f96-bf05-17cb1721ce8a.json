@@ -1,0 +1,7 @@
+{
+  "type": "minor",
+  "comment": "add SPLUNK_REDIS_INCLUDE_COMMAND_ARGS env var to include redis command args in span's db.statement",
+  "packageName": "@splunk/otel",
+  "email": "siimkallas@gmail.com",
+  "dependentChangeType": "patch"
+}
