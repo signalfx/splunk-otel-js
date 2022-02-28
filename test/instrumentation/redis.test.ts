@@ -61,9 +61,7 @@ describe('Redis instrumentation', () => {
 
   const testOpts = () => ({
     serviceName: 'test-service',
-    instrumentations: [
-      new RedisInstrumentation(),
-    ],
+    instrumentations: [new RedisInstrumentation()],
     spanExporterFactory: () => exporter,
     spanProcessorFactory: options => {
       return (spanProcessor = defaultSpanProcessorFactory(options));
