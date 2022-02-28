@@ -123,6 +123,9 @@
     "semver": "^7.3.5",
     "signalfx": "7.4.1"
   },
+  "optionalDependencies": {
+    "fsevents": "^2.3.2"
+  },
   "peerDependencies": {
     "@opentelemetry/instrumentation-bunyan": ">=0.25.0 <1",
     "@opentelemetry/instrumentation-cassandra-driver": ">=0.25.0 <1",
