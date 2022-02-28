@@ -74,7 +74,7 @@ describe('Redis instrumentation', () => {
     });
   });
 
-  it('db statement is added when setting SPLUNK_REDIS_INCLUDE_COMMAND_ARGS env var ', done => {
+  it('db statement is added when setting SPLUNK_REDIS_INCLUDE_COMMAND_ARGS env var', done => {
     process.env.SPLUNK_REDIS_INCLUDE_COMMAND_ARGS = 'true';
     startTracing(testOpts());
     const client = require('redis').createClient({
