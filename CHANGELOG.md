@@ -1,8 +1,16 @@
 # Change Log - @splunk/otel
 
-This log was last generated on Thu, 10 Feb 2022 13:37:02 GMT and should not be manually modified.
+This log was last generated on Mon, 28 Feb 2022 12:54:34 GMT and should not be manually modified.
 
 <!-- Start content -->
+
+## 0.17.0
+
+Mon, 28 Feb 2022 12:54:34 GMT
+
+### Minor changes
+
+- add SPLUNK_REDIS_INCLUDE_COMMAND_ARGS env var to include redis command args in span's db.statement (siimkallas@gmail.com)
 
 ## 0.16.0
 
