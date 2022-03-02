@@ -22,5 +22,6 @@ import { getEnvBoolean } from './options';
 if (getEnvBoolean('SPLUNK_PROFILER_ENABLED', false)) {
   startProfiling();
 }
+
 startTracing();
 startMetrics();

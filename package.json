@@ -74,7 +74,6 @@
     "@types/node": "^16.10.3",
     "@types/semver": "7.3.9",
     "@types/shimmer": "1.0.2",
-    "@types/signalfx": "7.0.2",
     "@types/sinon": "^10.0.2",
     "@typescript-eslint/eslint-plugin": "^5.3.0",
     "@typescript-eslint/parser": "^5.3.0",
@@ -105,13 +104,16 @@
   },
   "dependencies": {
     "@opentelemetry/api": "^1.0.3",
+    "@opentelemetry/api-metrics": "~0.27.0",
     "@opentelemetry/context-async-hooks": "~1.0.0",
     "@opentelemetry/core": "~1.0.0",
     "@opentelemetry/exporter-jaeger": "~1.0.0",
     "@opentelemetry/exporter-trace-otlp-grpc": "^0.27.0",
+    "@opentelemetry/exporter-metrics-otlp-grpc": "~0.27.0",
     "@opentelemetry/instrumentation": "^0.27.0",
     "@opentelemetry/propagator-b3": "~1.0.0",
     "@opentelemetry/resources": "~1.0.0",
+    "@opentelemetry/sdk-metrics-base": "~0.27.0",
     "@opentelemetry/sdk-trace-base": "~1.0.0",
     "@opentelemetry/sdk-trace-node": "~1.0.0",
     "@opentelemetry/semantic-conventions": "~1.0.0",
@@ -120,8 +122,7 @@
     "jaeger-client": "^3.18.1",
     "nan": "2.15.0",
     "node-gyp-build": "^4.3.0",
-    "semver": "^7.3.5",
-    "signalfx": "7.4.1"
+    "semver": "^7.3.5"
   },
   "peerDependencies": {
     "@opentelemetry/instrumentation-bunyan": ">=0.25.0 <1",

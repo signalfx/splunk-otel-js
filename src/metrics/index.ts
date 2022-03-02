@@ -14,27 +14,28 @@
  * limitations under the License.
  */
 
-import { context, diag } from '@opentelemetry/api';
-import { suppressTracing } from '@opentelemetry/core';
-import { collectMemoryInfo, MemoryInfo } from './memory';
+import { metrics, ValueType } from '@opentelemetry/api-metrics';
+import { Resource } from '@opentelemetry/resources';
+import { MeterProvider, MetricExporter } from '@opentelemetry/sdk-metrics-base';
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
+import { Metadata } from '@grpc/grpc-js';
 import { defaultServiceName, getEnvBoolean, getEnvNumber } from '../options';
 import { EnvResourceDetector } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import * as signalfx from 'signalfx';
+
+export type MetricExporterFactory = (options: MetricsOptions) => MetricExporter;
 
 interface MetricsOptions {
-  enabled: boolean;
   serviceName: string;
   accessToken: string;
-  endpoint: string;
+  endpoint?: string;
+  resource?: Resource;
   exportInterval: number;
+  exporterFactory: MetricExporterFactory;
+  enableRuntimeMetrics: boolean;
 }
 
-interface SignalFxOptions {
-  client: signalfx.SignalClient;
-  dimensions: object;
-}
-
+/* TODO: Native API might need a new API for OTel metrics. Types commented out until then.
 interface Counters {
   min: number;
   max: number;
@@ -58,265 +59,102 @@ interface NativeCounters {
     process_weak_callbacks: GcCounters;
   };
 }
+*/
 
-type GcType = keyof NativeCounters['gc'];
+export type StartMetricsOptions = Partial<MetricsOptions>;
 
-interface CountersExtension {
-  start(): void;
-  reset(): void;
-  collect(): NativeCounters;
+export function otlpMetricsExporterFactory(
+  options: StartMetricsOptions
+): MetricExporter {
+  const metadata = new Metadata();
+  if (options.accessToken) {
+    metadata.set('X-SF-TOKEN', options.accessToken);
+  }
+  return new OTLPMetricExporter({
+    url: options.endpoint,
+    metadata,
+  });
 }
-
-interface MetricsRegistry {
-  addNativeInfo(counters: NativeCounters): void;
-  addMemoryInfo(counters: MemoryInfo): void;
-  export(): void;
-}
-
-export type StartMetricsOptions = Partial<MetricsOptions> & {
-  signalfx?: Partial<SignalFxOptions>;
-};
 
 export function startMetrics(opts: StartMetricsOptions = {}) {
   const options = _setDefaultOptions(opts);
 
-  if (!options.enabled) {
-    return {
-      stopMetrics: () => {},
-      getSignalFxClient: () => undefined,
-    };
-  }
+  const provider = new MeterProvider({
+    exporter: options.exporterFactory(options),
+    interval: options.exportInterval,
+    resource: options.resource,
+  });
 
-  const signalFxClient = options.sfxClient;
-  const registry = _createSignalFxMetricsRegistry(options.sfxClient);
+  metrics.setGlobalMeterProvider(provider);
 
-  const extension = _loadExtension();
+  if (options.enableRuntimeMetrics) {
+    const meter = metrics.getMeter('splunk-otel-js');
 
-  let interval: NodeJS.Timer;
-  if (extension !== undefined) {
-    extension.start();
-    interval = setInterval(() => {
-      registry.addMemoryInfo(collectMemoryInfo());
-      registry.addNativeInfo(extension.collect());
-      extension.reset();
-      registry.export();
-    }, options.exportInterval);
-  } else {
-    interval = setInterval(() => {
-      registry.addMemoryInfo(collectMemoryInfo());
-      registry.export();
-    }, options.exportInterval);
-  }
-
-  interval.unref();
-
-  return {
-    stopMetrics: () => {
-      clearInterval(interval);
-    },
-    getSignalFxClient: () => signalFxClient,
-  };
-}
-
-interface CumulativeRegistry {
-  add(key: string, value: number): number;
-}
-
-function newCumulativeRegistry(): CumulativeRegistry {
-  const metrics = new Map<string, number>();
-  return {
-    add: (key: string, value: number): number => {
-      if (metrics.has(key)) {
-        const newValue = metrics.get(key)! + value;
-        metrics.set(key, newValue);
-        return newValue;
+    meter.createObservableGauge(
+      'process.runtime.nodejs.memory.heap.total',
+      {
+        unit: 'By',
+        valueType: ValueType.INT,
+      },
+      result => {
+        result.observe(process.memoryUsage().heapTotal, {});
       }
+    );
 
-      metrics.set(key, value);
-      return value;
-    },
-  };
-}
+    meter.createObservableGauge(
+      'process.runtime.nodejs.memory.heap.used',
+      {
+        unit: 'By',
+        valueType: ValueType.INT,
+      },
+      result => {
+        result.observe(process.memoryUsage().heapUsed, {});
+      }
+    );
 
-function gcSizeMetric(
-  reg: CumulativeRegistry,
-  type: GcType,
-  counters: NativeCounters,
-  timestamp: number
-) {
-  const key = `gc.size.${type}`;
-  return {
-    metric: 'nodejs.memory.gc.size',
-    value: reg.add(key, counters.gc[type].collected.sum),
-    timestamp,
-    dimensions: { gctype: type },
-  };
-}
-
-function gcPauseMetric(
-  reg: CumulativeRegistry,
-  type: GcType,
-  counters: NativeCounters,
-  timestamp: number
-) {
-  const key = `gc.pause.${type}`;
-  return {
-    metric: 'nodejs.memory.gc.pause',
-    value: reg.add(key, counters.gc[type].duration.sum),
-    timestamp,
-    dimensions: { gctype: type },
-  };
-}
-
-function gcCountMetric(
-  reg: CumulativeRegistry,
-  type: GcType,
-  counters: NativeCounters,
-  timestamp: number
-) {
-  const key = `gc.count.${type}`;
-  return {
-    metric: 'nodejs.memory.gc.count',
-    value: reg.add(key, counters.gc[type].collected.count),
-    timestamp,
-    dimensions: { gctype: type },
-  };
-}
-
-function _createSignalFxMetricsRegistry(
-  client: signalfx.SignalClient
-): MetricsRegistry {
-  const registry = newCumulativeRegistry();
-  let gauges: signalfx.SignalMetric[] = [];
-  let cumulativeCounters: signalfx.SignalMetric[] = [];
-  return {
-    addMemoryInfo: (info: MemoryInfo) => {
-      const timestamp = Date.now();
-      gauges.push({
-        metric: 'nodejs.memory.heap.total',
-        value: info.heapTotal,
-        timestamp,
-      });
-
-      gauges.push({
-        metric: 'nodejs.memory.heap.used',
-        value: info.heapUsed,
-        timestamp,
-      });
-
-      gauges.push({
-        metric: 'nodejs.memory.rss',
-        value: info.rss,
-        timestamp,
-      });
-    },
-    addNativeInfo: (info: NativeCounters) => {
-      const timestamp = Date.now();
-      gauges.push({
-        metric: 'nodejs.event_loop.lag.max',
-        value: info.eventLoopLag.max,
-        timestamp,
-      });
-
-      gauges.push({
-        metric: 'nodejs.event_loop.lag.min',
-        value: info.eventLoopLag.min,
-        timestamp,
-      });
-
-      cumulativeCounters.push(
-        gcSizeMetric(registry, 'all', info, timestamp),
-        gcSizeMetric(registry, 'scavenge', info, timestamp),
-        gcSizeMetric(registry, 'mark_sweep_compact', info, timestamp),
-        gcSizeMetric(registry, 'incremental_marking', info, timestamp),
-        gcSizeMetric(registry, 'process_weak_callbacks', info, timestamp),
-
-        gcPauseMetric(registry, 'all', info, timestamp),
-        gcPauseMetric(registry, 'scavenge', info, timestamp),
-        gcPauseMetric(registry, 'mark_sweep_compact', info, timestamp),
-        gcPauseMetric(registry, 'incremental_marking', info, timestamp),
-        gcPauseMetric(registry, 'process_weak_callbacks', info, timestamp),
-
-        gcCountMetric(registry, 'all', info, timestamp),
-        gcCountMetric(registry, 'scavenge', info, timestamp),
-        gcCountMetric(registry, 'mark_sweep_compact', info, timestamp),
-        gcCountMetric(registry, 'incremental_marking', info, timestamp),
-        gcCountMetric(registry, 'process_weak_callbacks', info, timestamp)
-      );
-    },
-    export: () => {
-      context.with(suppressTracing(context.active()), () => {
-        client.send({
-          cumulative_counters: cumulativeCounters,
-          gauges,
-        });
-      });
-
-      gauges = [];
-      cumulativeCounters = [];
-    },
-  };
-}
-
-function _loadExtension(): CountersExtension | undefined {
-  let extension;
-  try {
-    extension = require('../native_ext');
-  } catch (e) {
-    diag.error(
-      'Unable to load native metrics extension. Event loop and GC metrics will not be reported',
-      e
+    meter.createObservableGauge(
+      'process.runtime.nodejs.memory.rss',
+      {
+        unit: 'By',
+        valueType: ValueType.INT,
+      },
+      result => {
+        result.observe(process.memoryUsage().rss, {});
+      }
     );
   }
-
-  return extension?.metrics;
 }
 
 export function _setDefaultOptions(
   options: StartMetricsOptions = {}
-): MetricsOptions & { sfxClient: signalfx.SignalClient } {
-  const enabled =
-    options.enabled ?? getEnvBoolean('SPLUNK_METRICS_ENABLED', false);
+): MetricsOptions {
   const accessToken =
     options.accessToken || process.env.SPLUNK_ACCESS_TOKEN || '';
-  const endpoint =
-    options.endpoint ||
-    process.env.SPLUNK_METRICS_ENDPOINT ||
-    'http://localhost:9943';
 
-  const resource = new EnvResourceDetector().detect();
+  const envResource = new EnvResourceDetector().detect();
 
   const serviceName = String(
     options.serviceName ||
       process.env.OTEL_SERVICE_NAME ||
-      resource.attributes[SemanticResourceAttributes.SERVICE_NAME] ||
+      envResource.attributes[SemanticResourceAttributes.SERVICE_NAME] ||
       defaultServiceName
   );
 
-  const dimensions = Object.assign(
-    {
-      service: serviceName,
-      metric_source: 'splunk-otel-js',
-      node_version: process.versions.node,
-    },
-    options.signalfx?.dimensions || {}
+  const resource = envResource.merge(
+    new Resource({ [SemanticResourceAttributes.SERVICE_NAME]: serviceName })
   );
 
-  const sfxClient =
-    options.signalfx?.client ||
-    new signalfx.Ingest(accessToken, {
-      ingestEndpoint: endpoint,
-      dimensions,
-    });
-
   return {
-    enabled,
-    serviceName: serviceName,
+    serviceName,
     accessToken,
-    endpoint,
+    resource,
+    endpoint: options.endpoint,
+    exporterFactory: otlpMetricsExporterFactory,
     exportInterval:
       options.exportInterval ||
-      getEnvNumber('SPLUNK_METRICS_EXPORT_INTERVAL', 5000),
-    sfxClient,
+      getEnvNumber('OTEL_METRIC_EXPORT_INTERVAL', 5000),
+    enableRuntimeMetrics:
+      options.enableRuntimeMetrics ||
+      getEnvBoolean('SPLUNK_RUNTIME_METRICS_ENABLED', false),
   };
 }

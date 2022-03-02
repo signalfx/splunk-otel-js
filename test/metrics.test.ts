@@ -94,113 +94,21 @@ describe('metrics', () => {
 
     it('has expected defaults', () => {
       const options = _setDefaultOptions();
-      assert.deepEqual(options.enabled, false);
       assert.deepEqual(options.serviceName, 'unnamed-node-service');
       assert.deepEqual(options.accessToken, '');
-      assert.deepEqual(options.endpoint, 'http://localhost:9943');
       assert.deepEqual(options.exportInterval, 5000);
-
-      const sfxClient = options.sfxClient;
-      assert.deepStrictEqual(sfxClient['globalDimensions'], {
-        service: 'unnamed-node-service',
-        metric_source: 'splunk-otel-js',
-        node_version: process.versions.node,
-      });
     });
 
     it('is possible to set options via env vars', () => {
       process.env.SPLUNK_ACCESS_TOKEN = 'foo';
       process.env.OTEL_SERVICE_NAME = 'bigmetric';
       process.env.SPLUNK_METRICS_ENABLED = 'true';
-      process.env.SPLUNK_METRICS_ENDPOINT = 'http://localhost:9999';
-      process.env.SPLUNK_METRICS_EXPORT_INTERVAL = '1000';
+      process.env.OTEL_METRIC_EXPORT_INTERVAL = '1000';
 
       const options = _setDefaultOptions();
-      assert.deepEqual(options.enabled, true);
       assert.deepEqual(options.serviceName, 'bigmetric');
       assert.deepEqual(options.accessToken, 'foo');
-      assert.deepEqual(options.endpoint, 'http://localhost:9999');
       assert.deepEqual(options.exportInterval, 1000);
-
-      const sfxClient = options.sfxClient;
-      assert.deepStrictEqual(sfxClient['globalDimensions'], {
-        service: 'bigmetric',
-        metric_source: 'splunk-otel-js',
-        node_version: process.versions.node,
-      });
-    });
-  });
-
-  describe('startMetrics', () => {
-    it('exports metrics', done => {
-      const metric =
-        (name: string) =>
-        ({ metric }) =>
-          metric === name;
-      const gcMetric = (name: string) => m =>
-        metric(name)(m) && m.dimensions['gctype'] === 'all';
-      const { stopMetrics } = startMetrics({
-        enabled: true,
-        exportInterval: 100,
-        signalfx: {
-          client: {
-            send: report => {
-              stopMetrics();
-              const gauges = report.gauges;
-              const cumulativeCounters = report.cumulative_counters;
-              assert(gauges.find(metric('nodejs.memory.heap.total')));
-              assert(gauges.find(metric('nodejs.memory.heap.used')));
-              assert(gauges.find(metric('nodejs.memory.rss')));
-              assert(gauges.find(metric('nodejs.event_loop.lag.max')));
-              assert(gauges.find(metric('nodejs.event_loop.lag.min')));
-
-              assert(
-                cumulativeCounters.find(gcMetric('nodejs.memory.gc.size'))
-              );
-              assert(
-                cumulativeCounters.find(gcMetric('nodejs.memory.gc.pause'))
-              );
-              assert(
-                cumulativeCounters.find(gcMetric('nodejs.memory.gc.count'))
-              );
-
-              done();
-            },
-          },
-        },
-      });
-    });
-
-    it('does not export metrics when disabled', done => {
-      startMetrics({
-        exportInterval: 1,
-        signalfx: {
-          client: {
-            send: () => {
-              assert(false, 'did not expect metric send to be called');
-            },
-          },
-        },
-      });
-
-      setTimeout(() => {
-        done();
-      }, 30);
-    });
-
-    it('returns an undefined SignalFx client when disabled', () => {
-      const { getSignalFxClient } = startMetrics();
-      const client = getSignalFxClient();
-      assert.equal(client, undefined);
-    });
-
-    it('is possible to get the current signalfx client', () => {
-      const { stopMetrics, getSignalFxClient } = startMetrics({
-        enabled: true,
-      });
-      const client = getSignalFxClient();
-      stopMetrics();
-      assert(client);
     });
   });
 });
