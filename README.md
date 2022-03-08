@@ -1,7 +1,10 @@
 <p align="center">
   <img alt="Beta" src="https://img.shields.io/badge/status-beta-informational?style=for-the-badge">
- <a href="https://github.com/signalfx/splunk-otel-js/releases">
+  <a href="https://github.com/signalfx/splunk-otel-js/releases">
     <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/signalfx/splunk-otel-js?include_prereleases&style=for-the-badge">
+  </a>
+  <a href="https://github.com/signalfx/gdi-specification/releases/tag/v1.2.0">
+    <img alt="Splunk GDI specification" src="https://img.shields.io/badge/GDI-1.2.0-blueviolet?style=for-the-badge">
   </a>
   <img alt="npm" src="https://img.shields.io/npm/v/@splunk/otel?style=for-the-badge">
   <img alt="node-current" src="https://img.shields.io/node/v/@splunk/otel?style=for-the-badge">
