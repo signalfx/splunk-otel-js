@@ -2,6 +2,7 @@
   "extension": [
     ".ts"
   ],
+  "reporter": ["text", "json"],
   "include": [
     "src/**"
   ],

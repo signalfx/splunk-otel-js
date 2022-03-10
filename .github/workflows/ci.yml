@@ -113,6 +113,11 @@ jobs:
         run: npm ci
       - name: Test
         run: npm run test
+      - name: Report Coverage
+        if: ${{matrix.nodejs == '14' && matrix.os == 'ubuntu-latest'}}
+        uses: codecov/codecov-action@v2
+        with:
+          verbose: true
 
   lint:
     if: ${{ github.event_name == 'pull_request' }}
