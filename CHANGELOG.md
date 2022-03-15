@@ -1,8 +1,16 @@
 # Change Log - @splunk/otel
 
-This log was last generated on Mon, 28 Feb 2022 12:54:34 GMT and should not be manually modified.
+This log was last generated on Tue, 15 Mar 2022 14:54:53 GMT and should not be manually modified.
 
 <!-- Start content -->
+
+## 0.18.0
+
+Tue, 15 Mar 2022 14:54:53 GMT
+
+### Minor changes
+
+- remove enabled flag from startMetrics options (siimkallas@gmail.com)
 
 ## 0.17.0
 
