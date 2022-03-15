@@ -1,9 +1,6 @@
 {
   "type": "minor",
-  "comment": {
-    "title": "",
-    "value": ""
-  },
+  "comment": "remove enabled flag from startMetrics options",
   "packageName": "@splunk/otel",
   "email": "siimkallas@gmail.com",
   "dependentChangeType": "patch"
