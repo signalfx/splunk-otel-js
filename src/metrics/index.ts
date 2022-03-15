@@ -17,13 +17,12 @@
 import { context, diag } from '@opentelemetry/api';
 import { suppressTracing } from '@opentelemetry/core';
 import { collectMemoryInfo, MemoryInfo } from './memory';
-import { defaultServiceName, getEnvBoolean, getEnvNumber } from '../options';
+import { defaultServiceName, getEnvNumber } from '../options';
 import { EnvResourceDetector } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import * as signalfx from 'signalfx';
 
 interface MetricsOptions {
-  enabled: boolean;
   serviceName: string;
   accessToken: string;
   endpoint: string;
@@ -79,13 +78,6 @@ export type StartMetricsOptions = Partial<MetricsOptions> & {
 
 export function startMetrics(opts: StartMetricsOptions = {}) {
   const options = _setDefaultOptions(opts);
-
-  if (!options.enabled) {
-    return {
-      stopMetrics: () => {},
-      getSignalFxClient: () => undefined,
-    };
-  }
 
   const signalFxClient = options.sfxClient;
   const registry = _createSignalFxMetricsRegistry(options.sfxClient);
@@ -275,8 +267,6 @@ function _loadExtension(): CountersExtension | undefined {
 export function _setDefaultOptions(
   options: StartMetricsOptions = {}
 ): MetricsOptions & { sfxClient: signalfx.SignalClient } {
-  const enabled =
-    options.enabled ?? getEnvBoolean('SPLUNK_METRICS_ENABLED', false);
   const accessToken =
     options.accessToken || process.env.SPLUNK_ACCESS_TOKEN || '';
   const endpoint =
@@ -310,7 +300,6 @@ export function _setDefaultOptions(
     });
 
   return {
-    enabled,
     serviceName: serviceName,
     accessToken,
     endpoint,

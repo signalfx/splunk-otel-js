@@ -61,7 +61,7 @@ The following config options can be set by passing them as arguments to `startTr
 
 | Environment variable<br>``startMetrics()`` argument             | Default value           | Support | Notes
 | --------------------------------------------------------------- | ----------------------- | ------- | ---
-| `SPLUNK_METRICS_ENABLED`<br>`enabled`                           | `false`                 | Experimental | Enabled metrics export. See [metrics documentation](metrics.md) for more information.
+| `SPLUNK_METRICS_ENABLED`                                        | `false`                 | Experimental | Enabled metrics export. See [metrics documentation](metrics.md) for more information.
 | `SPLUNK_METRICS_ENDPOINT`<br>`endpoint`                         | `http://localhost:9943` | Experimental | The metrics endpoint to send to.
 | `SPLUNK_METRICS_EXPORT_INTERVAL`<br>`exportInterval`            | `5000`                  | Experimental | The interval, in milliseconds, of metrics collection and exporting.
 
