@@ -138,7 +138,7 @@ const assertSpans = (actualSpans, expectedSpans) => {
       assert.strictEqual(span.attributes['http.route'], expected.attributes['http.route']);
       assert.strictEqual(span.attributes['otel.library.name'], expected.attributes['otel.library.name']);
 
-      // TODO: Check for status. Polling endpoint on the collector doesn't return status correctly.
+      // TODO: Check for status. HTTP Sink endpoint on the collector doesn't return status correctly.
       if (expected.parentSpanId == undefined) {
         assert.strictEqual(expected.parentSpanId, span.parentSpanId, 'Expected no parent span, but got one');
       } else {
