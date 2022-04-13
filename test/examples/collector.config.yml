@@ -9,11 +9,11 @@ receivers:
 
 exporters:
   logging:
-  polling:
+  httpsink:
     endpoint: 0.0.0.0:8378
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
-      exporters: [polling]
+      exporters: [httpsink]
