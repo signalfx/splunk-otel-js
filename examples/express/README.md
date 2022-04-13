@@ -105,4 +105,4 @@ These commands require a configuration in the `.env` file compatible with the [S
 
 The Splunk distribution of OpenTelemetry JS Instrumentation is a
 distribution of the [OpenTelemetry JS project](https://github.com/open-telemetry/opentelemetry-js).
-It is released under the terms of the [Apache Software License version 2.0](https://github.com/signalfx/splunk-otel-js/LICENSE).
+It is released under the terms of the [Apache Software License version 2.0](../../../LICENSE).
