@@ -2,7 +2,7 @@
 
 # Using custom or third-party instrumentations
 
-If you set up tracing manually by calling the `startTracing()` method, you can use custom or third-party instrumentations as long as they implement the [OpenTelemetry JS Instrumentation interface](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-instrumentation). Custom instrumentations can be enabled by passing them to the `startTracing()` method as follows:
+If you set up tracing manually by calling the `startTracing()` method, you can use custom or third-party instrumentations as long as they implement the [OpenTelemetry JS Instrumentation interface](https://github.com/open-telemetry/opentelemetry-js/tree/main/experimental/packages/opentelemetry-instrumentation). Custom instrumentations can be enabled by passing them to the `startTracing()` method as follows:
 
 ```js
 const { startTracing } = require('@splunk/otel');

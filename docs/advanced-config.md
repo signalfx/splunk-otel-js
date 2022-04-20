@@ -61,9 +61,9 @@ The following config options can be set by passing them as arguments to `startTr
 
 | Environment variable<br>``startMetrics()`` argument             | Default value           | Support | Notes
 | --------------------------------------------------------------- | ----------------------- | ------- | ---
-| `SPLUNK_RUNTIME_METRICS_ENABLED`<br>`enableRuntimeMetrics`      | `false`                 | Experimental | Enable runtime metrics. See [metrics documentation](metrics.md) for more information.
-| `OTEL_METRIC_EXPORT_INTERVAL`<br>`exportInterval`               | `5000`                  | Experimental | The interval, in milliseconds, of metrics collection and exporting.
+| `SPLUNK_METRICS_ENABLED`                                        | `false`                 | Experimental | Enabled metrics export. See [metrics documentation](metrics.md) for more information.
 | `OTEL_EXPORTER_OTLP_ENDPOINT`<br>`endpoint`                     | `localhost:4317`        | Stable | The OTLP endpoint to export to. Only OTLP over gRPC is supported.
+| `OTEL_METRIC_EXPORT_INTERVAL`<br>`exportInterval`               | `5000`                  | Experimental | The interval, in milliseconds, of metrics collection and exporting.
 
 #### Additional `startMetrics` config options
 

@@ -67,7 +67,7 @@ See the exact commands in [package.json](./package.json).
 
 ### Instrumented via OTel SDK, Jaeger Exporter
 
-The [tracer setup file](./tracer.jaeger.js) showcases how to replace the default OTLP/gRPC Exporter with a Jaeger exporter. The configuration is similar to the default OTel SDK setup, but the exporter (`OTEL_TRACES_EXPORTER`) has to be replaced by the default Jaeger Exporter which is bundled with the SDK: `jaeger-thrift-http`.
+The [env file `.env.jaeger`](./.env.jaeger) showcases how to replace the default OTLP/gRPC Exporter with a Jaeger exporter. The configuration is similar to the default OTel SDK setup, but the exporter (`OTEL_TRACES_EXPORTER`) has to be replaced by the default Jaeger Exporter which is bundled with the SDK: `jaeger-thrift-http`.
 
 That's it! To run the example with the Jaeger Exporter:
 
@@ -105,4 +105,4 @@ These commands require a configuration in the `.env` file compatible with the [S
 
 The Splunk distribution of OpenTelemetry JS Instrumentation is a
 distribution of the [OpenTelemetry JS project](https://github.com/open-telemetry/opentelemetry-js).
-It is released under the terms of the [Apache Software License version 2.0](https://github.com/signalfx/splunk-otel-js/LICENSE).
+It is released under the terms of the [Apache Software License version 2.0](../../LICENSE).
