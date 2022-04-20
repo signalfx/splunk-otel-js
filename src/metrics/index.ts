@@ -16,14 +16,13 @@
 
 import { metrics, ValueType } from '@opentelemetry/api-metrics';
 import { Resource } from '@opentelemetry/resources';
-import { MeterProvider, MetricExporter } from '@opentelemetry/sdk-metrics-base';
+import { MeterProvider, PeriodicExportingMetricReader, PushMetricExporter } from '@opentelemetry/sdk-metrics-base';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
-import { Metadata } from '@grpc/grpc-js';
 import { defaultServiceName, getEnvBoolean, getEnvNumber } from '../options';
 import { EnvResourceDetector } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
-export type MetricExporterFactory = (options: MetricsOptions) => MetricExporter;
+export type MetricExporterFactory = (options: MetricsOptions) => PushMetricExporter;
 
 interface MetricsOptions {
   serviceName: string;
@@ -65,14 +64,16 @@ export type StartMetricsOptions = Partial<MetricsOptions>;
 
 export function otlpMetricsExporterFactory(
   options: StartMetricsOptions
-): MetricExporter {
-  const metadata = new Metadata();
+): PushMetricExporter {
+  // TODO: Re-add once the grpc package conflict does not happen due to bundledDeps
+  /*
+  const metadata = new grpc.Metadata();
   if (options.accessToken) {
     metadata.set('X-SF-TOKEN', options.accessToken);
   }
+  */
   return new OTLPMetricExporter({
     url: options.endpoint,
-    metadata,
   });
 }
 
@@ -80,10 +81,13 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
   const options = _setDefaultOptions(opts);
 
   const provider = new MeterProvider({
-    exporter: options.exporterFactory(options),
-    interval: options.exportInterval,
     resource: options.resource,
   });
+
+  provider.addMetricReader(new PeriodicExportingMetricReader({
+    exportIntervalMillis: options.exportInterval,
+    exporter: options.exporterFactory(options),
+  }));
 
   metrics.setGlobalMeterProvider(provider);
 
@@ -92,35 +96,35 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
 
     meter.createObservableGauge(
       'process.runtime.nodejs.memory.heap.total',
+      result => {
+        result.observe(process.memoryUsage().heapTotal, {});
+      },
       {
         unit: 'By',
         valueType: ValueType.INT,
       },
-      result => {
-        result.observe(process.memoryUsage().heapTotal, {});
-      }
     );
 
     meter.createObservableGauge(
       'process.runtime.nodejs.memory.heap.used',
+      result => {
+        result.observe(process.memoryUsage().heapUsed, {});
+      },
       {
         unit: 'By',
         valueType: ValueType.INT,
       },
-      result => {
-        result.observe(process.memoryUsage().heapUsed, {});
-      }
     );
 
     meter.createObservableGauge(
       'process.runtime.nodejs.memory.rss',
+      result => {
+        result.observe(process.memoryUsage().rss, {});
+      },
       {
         unit: 'By',
         valueType: ValueType.INT,
       },
-      result => {
-        result.observe(process.memoryUsage().rss, {});
-      }
     );
   }
 }
