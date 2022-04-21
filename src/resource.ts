@@ -79,7 +79,7 @@ export class EnvDetector {
         const parsedAttributes = this._parseResourceAttributes(rawAttributes);
         Object.assign(attributes, parsedAttributes);
       } catch (e) {
-        diag.debug(`EnvDetector failed: ${e.message}`);
+        diag.debug(`EnvDetector failed: ${e instanceof Error ? e.message : e}`);
       }
     } else {
       diag.debug(
