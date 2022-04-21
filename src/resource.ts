@@ -17,8 +17,8 @@
 import { diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 
-import { envDetector } from './detectors/EnvDetector.ts';
-import { processDetector } from './detectors/ProcessDetector.ts';
+import { envDetector } from './detectors/EnvDetector';
+import { processDetector } from './detectors/ProcessDetector';
 
 const detectors = [envDetector, processDetector];
 
