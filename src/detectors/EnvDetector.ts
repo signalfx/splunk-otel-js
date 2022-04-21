@@ -38,7 +38,11 @@
 import { diag } from '@opentelemetry/api';
 import { getEnv } from '@opentelemetry/core';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import { Resource, ResourceAttributes, ResourceDetectionConfig } from '@opentelemetry/resources';
+import {
+  Resource,
+  ResourceAttributes,
+  ResourceDetectionConfig,
+} from '@opentelemetry/resources';
 
 export class EnvDetector {
   // Type, attribute keys, and attribute values should not exceed 256 characters.

@@ -75,6 +75,17 @@ describe('options', () => {
       .stub(instrumentations, 'getInstrumentations')
       .returns([]);
     const options = _setDefaultOptions();
+
+    // resource attributes for process are different at each run, iterate through them, make sure they exist and then delete
+    Object.keys(options.tracerConfig.resource.attributes)
+      .filter(attribute => {
+        return attribute.startsWith('process.');
+      })
+      .forEach(processAttribute => {
+        assert(options.tracerConfig.resource.attributes[processAttribute]);
+        delete options.tracerConfig.resource.attributes[processAttribute];
+      });
+
     assert.deepStrictEqual(options, {
       /*
         let the OTel exporter package itself
@@ -170,11 +181,12 @@ describe('options', () => {
     const options = _setDefaultOptions();
     delete process.env.OTEL_RESOURCE_ATTRIBUTES;
 
-    assert.deepStrictEqual(options.tracerConfig, {
-      resource: new Resource({
-        [SemanticResourceAttributes.SERVICE_NAME]: 'foobar',
-      }),
-    });
+    assert.deepStrictEqual(
+      options.tracerConfig.resource.attributes[
+        SemanticResourceAttributes.SERVICE_NAME
+      ],
+      'foobar'
+    );
   });
 });
 

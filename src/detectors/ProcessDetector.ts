@@ -37,7 +37,11 @@
 
 import { diag } from '@opentelemetry/api';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import { Resource, ResourceAttributes, ResourceDetectionConfig } from '@opentelemetry/resources';
+import {
+  Resource,
+  ResourceAttributes,
+  ResourceDetectionConfig,
+} from '@opentelemetry/resources';
 
 /**
  * ProcessDetector will be used to detect the resources related current process running
@@ -55,7 +59,8 @@ class ProcessDetector {
       [SemanticResourceAttributes.PROCESS_COMMAND]: process.argv[1] || '',
       [SemanticResourceAttributes.PROCESS_COMMAND_LINE]:
         process.argv.join(' ') || '',
-      [SemanticResourceAttributes.PROCESS_RUNTIME_VERSION]: process.versions.node,
+      [SemanticResourceAttributes.PROCESS_RUNTIME_VERSION]:
+        process.versions.node,
       [SemanticResourceAttributes.PROCESS_RUNTIME_NAME]: 'nodejs',
       [SemanticResourceAttributes.PROCESS_RUNTIME_DESCRIPTION]: 'Node.js',
     };
