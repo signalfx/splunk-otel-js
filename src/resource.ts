@@ -40,7 +40,7 @@ import { getEnv } from '@opentelemetry/core';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { Resource, ResourceAttributes } from '@opentelemetry/resources';
 
-export class EnvResourceDetector {
+export class EnvDetector {
   // Type, attribute keys, and attribute values should not exceed 256 characters.
   private readonly _MAX_LENGTH = 255;
 
@@ -174,4 +174,5 @@ export class EnvResourceDetector {
   }
 }
 
-export const envDetector = new EnvResourceDetector();
+export const envDetector = new EnvDetector();
+export { EnvDetector as EnvResourceDetector };
