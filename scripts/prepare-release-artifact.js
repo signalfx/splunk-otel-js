@@ -21,7 +21,7 @@ async function fetchWorkflowRun(context) {
   const runs = workflows.workflow_runs;
 
   const commitSha = process.env.CI_COMMIT_SHA;
-  const run = runs.find(wf => wf.head_sha === commitSha);
+  const run = runs.find(wf => wf.head_sha === commitSha && wf.name.toLowerCase() === 'continuous integration');
 
   if (run === undefined) {
     throw new Error(`Workflow not found for commit ${commitSha}`);
