@@ -18,7 +18,7 @@ import * as assert from 'assert';
 import * as sinon from 'sinon';
 
 import * as otel from '@opentelemetry/api';
-import { EnvResourceDetector } from '../src/resource';
+import { EnvDetector } from '../src/resource';
 import * as utils from './utils';
 
 describe('resource detector', () => {
@@ -27,32 +27,32 @@ describe('resource detector', () => {
   });
 
   it('ignores missing attributes', () => {
-    const resource = new EnvResourceDetector().detect();
+    const resource = new EnvDetector().detect();
     assert.deepStrictEqual(resource.attributes, {});
   });
 
   it('ignores wrongly formatted env string', () => {
     process.env.OTEL_RESOURCE_ATTRIBUTES = 'kkkkkkkkkkk';
-    const resource = new EnvResourceDetector().detect();
+    const resource = new EnvDetector().detect();
     assert.deepStrictEqual(resource.attributes, {});
   });
 
   it('ignores missing attr keys', () => {
     process.env.OTEL_RESOURCE_ATTRIBUTES = '=v';
-    const resource = new EnvResourceDetector().detect();
+    const resource = new EnvDetector().detect();
     assert.deepStrictEqual(resource.attributes, {});
   });
 
   it('ignores unsupported value chars', () => {
     process.env.OTEL_RESOURCE_ATTRIBUTES = 'k2=␟';
-    const resource = new EnvResourceDetector().detect();
+    const resource = new EnvDetector().detect();
     assert.deepStrictEqual(resource.attributes, {});
   });
 
   it('parses properly formatted attributes', () => {
     process.env.OTEL_RESOURCE_ATTRIBUTES =
       'k=v,key1=val1,service.name=node-svc';
-    const resource = new EnvResourceDetector().detect();
+    const resource = new EnvDetector().detect();
     assert.deepStrictEqual(resource.attributes, {
       k: 'v',
       key1: 'val1',

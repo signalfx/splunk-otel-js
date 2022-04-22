@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+/* This is based on https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-resources/src/platform/node/detectors/EnvDetector.ts
+ We're copying this code and changing the implementation to a synchronous one from async. This is required for our distribution to not incur ~1 second of overhead
+ when setting up the tracing pipeline. This is a temporary solution until we can agree upon and implement a solution upstream.
+*/
+
 /*
  * Copyright The OpenTelemetry Authors
  *
@@ -32,17 +37,17 @@
 
 import { diag } from '@opentelemetry/api';
 import { getEnv } from '@opentelemetry/core';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { Resource, ResourceAttributes } from '@opentelemetry/resources';
 
-/* This is based on https://github.com/open-telemetry/opentelemetry-js/blob/main/packages/opentelemetry-resources/src/platform/node/detectors/EnvDetector.ts
- We're copying this code and changing the implementation to a synchronous one from async. This is required for our distribution to not incur ~1 second of overhead
- when setting up the tracing pipeline. This is a temporary solution until we can agree upon and implement a solution upstream.
-*/
-export class EnvResourceDetector {
+export class EnvDetector {
+  // Type, attribute keys, and attribute values should not exceed 256 characters.
   private readonly _MAX_LENGTH = 255;
 
+  // OTEL_RESOURCE_ATTRIBUTES is a comma-separated list of attributes.
   private readonly _COMMA_SEPARATOR = ',';
 
+  // OTEL_RESOURCE_ATTRIBUTES contains key value pair separated by '='.
   private readonly _LABEL_KEY_VALUE_SPLITTER = '=';
 
   private readonly _ERROR_MESSAGE_INVALID_CHARS =
@@ -55,29 +60,61 @@ export class EnvResourceDetector {
     this._MAX_LENGTH +
     ' characters.';
 
+  /**
+   * Returns a {@link Resource} populated with attributes from the
+   * OTEL_RESOURCE_ATTRIBUTES environment variable. Note this is an async
+   * function to conform to the Detector interface.
+   *
+   * @param config The resource detection config
+   */
   public detect(): Resource {
-    try {
-      const rawAttributes = getEnv().OTEL_RESOURCE_ATTRIBUTES;
-      if (!rawAttributes) {
-        diag.debug(
-          'EnvDetector failed: Environment variable "OTEL_RESOURCE_ATTRIBUTES" is missing.'
-        );
-        return Resource.empty();
+    const attributes: ResourceAttributes = {};
+    const env = getEnv();
+
+    const rawAttributes = env.OTEL_RESOURCE_ATTRIBUTES;
+    const serviceName = env.OTEL_SERVICE_NAME;
+
+    if (rawAttributes) {
+      try {
+        const parsedAttributes = this._parseResourceAttributes(rawAttributes);
+        Object.assign(attributes, parsedAttributes);
+      } catch (e) {
+        diag.debug(`EnvDetector failed: ${e instanceof Error ? e.message : e}`);
       }
-      const attributes = this._parseResourceAttributes(rawAttributes);
-      return new Resource(attributes);
-    } catch (e) {
-      const message = e instanceof Error ? e.message : e;
-      diag.debug(`EnvDetector failed: ${message}`);
-      return Resource.empty();
+    } else {
+      diag.debug(
+        'EnvDetector failed: Environment variable "OTEL_RESOURCE_ATTRIBUTES" is missing.'
+      );
     }
+
+    if (serviceName) {
+      attributes[SemanticResourceAttributes.SERVICE_NAME] = serviceName;
+    }
+
+    return new Resource(attributes);
   }
 
+  /**
+   * Creates an attribute map from the OTEL_RESOURCE_ATTRIBUTES environment
+   * variable.
+   *
+   * OTEL_RESOURCE_ATTRIBUTES: A comma-separated list of attributes describing
+   * the source in more detail, e.g. “key1=val1,key2=val2”. Domain names and
+   * paths are accepted as attribute keys. Values may be quoted or unquoted in
+   * general. If a value contains whitespaces, =, or " characters, it must
+   * always be quoted.
+   *
+   * @param rawEnvAttributes The resource attributes as a comma-seperated list
+   * of key/value pairs.
+   * @returns The sanitized resource attributes.
+   */
   private _parseResourceAttributes(
     rawEnvAttributes?: string
   ): ResourceAttributes {
+    if (!rawEnvAttributes) return {};
+
     const attributes: ResourceAttributes = {};
-    const rawAttributes: string[] = (rawEnvAttributes || '').split(
+    const rawAttributes: string[] = rawEnvAttributes.split(
       this._COMMA_SEPARATOR,
       -1
     );
@@ -104,6 +141,13 @@ export class EnvResourceDetector {
     return attributes;
   }
 
+  /**
+   * Determines whether the given String is a valid printable ASCII string with
+   * a length not exceed _MAX_LENGTH characters.
+   *
+   * @param str The String to be validated.
+   * @returns Whether the String is valid.
+   */
   private _isValid(name: string): boolean {
     return name.length <= this._MAX_LENGTH && this._isPrintableString(name);
   }
@@ -118,7 +162,17 @@ export class EnvResourceDetector {
     return true;
   }
 
+  /**
+   * Determines whether the given String is a valid printable ASCII string with
+   * a length greater than 0 and not exceed _MAX_LENGTH characters.
+   *
+   * @param str The String to be validated.
+   * @returns Whether the String is valid and not empty.
+   */
   private _isValidAndNotEmpty(str: string): boolean {
     return str.length > 0 && this._isValid(str);
   }
 }
+
+export const envDetector = new EnvDetector();
+export { EnvDetector as EnvResourceDetector };

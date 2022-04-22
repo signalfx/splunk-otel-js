@@ -18,7 +18,7 @@ import { context, diag } from '@opentelemetry/api';
 import { suppressTracing } from '@opentelemetry/core';
 import { collectMemoryInfo, MemoryInfo } from './memory';
 import { defaultServiceName, getEnvNumber } from '../options';
-import { EnvResourceDetector } from '../resource';
+import { EnvDetector } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import * as signalfx from 'signalfx';
 
@@ -274,7 +274,7 @@ export function _setDefaultOptions(
     process.env.SPLUNK_METRICS_ENDPOINT ||
     'http://localhost:9943';
 
-  const resource = new EnvResourceDetector().detect();
+  const resource = new EnvDetector().detect();
 
   const serviceName = String(
     options.serviceName ||

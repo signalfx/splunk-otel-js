@@ -17,7 +17,7 @@
 import { context, diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import { defaultServiceName, getEnvNumber } from '../options';
-import { EnvResourceDetector } from '../resource';
+import { EnvDetector } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import {
   ProfilingExporter,
@@ -124,7 +124,7 @@ export function _setDefaultOptions(
     process.env.SPLUNK_PROFILER_LOGS_ENDPOINT ||
     'localhost:4317';
 
-  const envResource = new EnvResourceDetector().detect();
+  const envResource = new EnvDetector().detect();
 
   const serviceName = String(
     options.serviceName ||
