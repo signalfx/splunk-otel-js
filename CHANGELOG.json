@@ -2,6 +2,21 @@
   "name": "@splunk/otel",
   "entries": [
     {
+      "date": "Thu, 21 Apr 2022 17:01:07 GMT",
+      "tag": "@splunk/otel_v0.18.0",
+      "version": "0.18.0",
+      "comments": {
+        "minor": [
+          {
+            "author": "siimkallas@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "5b4212652929672e174dc63f8eef879538eb0aad",
+            "comment": "remove enabled flag from startMetrics options"
+          }
+        ]
+      }
+    },
+    {
       "date": "Mon, 28 Feb 2022 12:54:34 GMT",
       "tag": "@splunk/otel_v0.17.0",
       "version": "0.17.0",

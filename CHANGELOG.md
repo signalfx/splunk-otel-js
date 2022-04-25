@@ -1,8 +1,18 @@
 # Change Log - @splunk/otel
 
-This log was last generated on Mon, 28 Feb 2022 12:54:34 GMT and should not be manually modified.
+This log was last generated on Thu, 21 Apr 2022 17:01:07 GMT and should not be manually modified.
 
 <!-- Start content -->
+
+## 0.18.0
+
+Thu, 21 Apr 2022 17:01:07 GMT
+
+### Minor changes
+
+- refactor: remove enabled flag from startMetrics options [#429](https://github.com/signalfx/splunk-otel-js/pull/429)
+- chore: [update minimist to 1.2.6](https://security.snyk.io/vuln/SNYK-JS-MINIMIST-2429795) [#435](https://github.com/signalfx/splunk-otel-js/pull/435)
+- chore: remove unnecessary dependency on jaeger-client [#445](https://github.com/signalfx/splunk-otel-js/pull/445)
 
 ## 0.17.0
 

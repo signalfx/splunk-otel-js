@@ -61,8 +61,17 @@ describe('instrumentations', () => {
 
   it('does not load if packages are not installed', () => {
     const inst = instrumentations.getInstrumentations();
-    // Note: the number here is the devDependencies instrumentation count.
-    assert.strictEqual(inst.length, 5);
+    // Note: the list here is the instrumentations among devDependencies
+    assert.deepEqual(
+      inst.map(i => i.instrumentationName),
+      [
+        '@opentelemetry/instrumentation-bunyan',
+        '@opentelemetry/instrumentation-http',
+        '@opentelemetry/instrumentation-pino',
+        '@opentelemetry/instrumentation-redis',
+        '@opentelemetry/instrumentation-winston',
+      ]
+    );
   });
 
   it('load instrumentations if they are not installed', () => {

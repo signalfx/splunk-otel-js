@@ -20,7 +20,7 @@ import { MeterProvider, MetricExporter } from '@opentelemetry/sdk-metrics-base';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
 import { Metadata } from '@grpc/grpc-js';
 import { defaultServiceName, getEnvBoolean, getEnvNumber } from '../options';
-import { EnvResourceDetector } from '../resource';
+import { EnvDetector } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 export type MetricExporterFactory = (options: MetricsOptions) => MetricExporter;
@@ -131,17 +131,13 @@ export function _setDefaultOptions(
   const accessToken =
     options.accessToken || process.env.SPLUNK_ACCESS_TOKEN || '';
 
-  const envResource = new EnvResourceDetector().detect();
+  const resource = new EnvDetector().detect();
 
   const serviceName = String(
     options.serviceName ||
       process.env.OTEL_SERVICE_NAME ||
-      envResource.attributes[SemanticResourceAttributes.SERVICE_NAME] ||
+      resource.attributes[SemanticResourceAttributes.SERVICE_NAME] ||
       defaultServiceName
-  );
-
-  const resource = envResource.merge(
-    new Resource({ [SemanticResourceAttributes.SERVICE_NAME]: serviceName })
   );
 
   return {
