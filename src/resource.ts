@@ -18,9 +18,16 @@ import { diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 
 import { envDetector } from './detectors/EnvDetector';
+import { hostDetector } from './detectors/HostDetector';
+import { osDetector } from './detectors/OSDetector';
 import { processDetector } from './detectors/ProcessDetector';
 
-const detectors = [envDetector, processDetector];
+const detectors = [
+  envDetector,
+  hostDetector,
+  osDetector,
+  processDetector,
+];
 
 export const detect = (): Resource => {
   return detectors
