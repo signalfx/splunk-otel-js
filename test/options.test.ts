@@ -50,6 +50,21 @@ const MATCH_SERVICE_NAME_WARNING = sinon.match(/service\.name.*not.*set/i);
 const MATCH_NO_INSTRUMENTATIONS_WARNING = sinon.match(
   /no.*instrumentation.*install.*package/i
 );
+// List of resource attributes we expect to see detected
+const expectedAttributes = new Set([
+  SemanticResourceAttributes.HOST_ARCH,
+  SemanticResourceAttributes.HOST_NAME,
+  SemanticResourceAttributes.OS_TYPE,
+  SemanticResourceAttributes.OS_VERSION,
+  SemanticResourceAttributes.PROCESS_COMMAND,
+  SemanticResourceAttributes.PROCESS_COMMAND_LINE,
+  SemanticResourceAttributes.PROCESS_EXECUTABLE_NAME,
+  SemanticResourceAttributes.PROCESS_EXECUTABLE_PATH,
+  SemanticResourceAttributes.PROCESS_PID,
+  SemanticResourceAttributes.PROCESS_RUNTIME_DESCRIPTION,
+  SemanticResourceAttributes.PROCESS_RUNTIME_NAME,
+  SemanticResourceAttributes.PROCESS_RUNTIME_VERSION,
+]);
 
 describe('options', () => {
   let logger;
@@ -76,10 +91,10 @@ describe('options', () => {
       .returns([]);
     const options = _setDefaultOptions();
 
-    // resource attributes for process are different at each run, iterate through them, make sure they exist and then delete
+    // resource attributes for process, host and os are different at each run, iterate through them, make sure they exist and then delete
     Object.keys(options.tracerConfig.resource.attributes)
       .filter(attribute => {
-        return attribute.startsWith('process.');
+        return expectedAttributes.has(attribute);
       })
       .forEach(processAttribute => {
         assert(options.tracerConfig.resource.attributes[processAttribute]);
