@@ -25,7 +25,7 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 // eslint-disable-next-line node/no-extraneous-import
 import { Metadata } from '@grpc/grpc-js';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
-import { EnvDetector } from './resource';
+import { detect as detectResource } from './resource';
 import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { diag, Span, TextMapPropagator } from '@opentelemetry/api';
@@ -83,7 +83,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   const extraTracerConfig = options.tracerConfig || {};
 
-  let resource = new EnvDetector().detect();
+  let resource = detectResource();
 
   const serviceName =
     options.serviceName ||
