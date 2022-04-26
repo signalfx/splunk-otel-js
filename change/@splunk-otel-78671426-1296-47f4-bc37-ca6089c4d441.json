@@ -1,0 +1,7 @@
+{
+  "type": "minor",
+  "comment": "feat: bring in detectors for os.* and host.* attributes",
+  "packageName": "@splunk/otel",
+  "email": "rauno56@gmail.com",
+  "dependentChangeType": "patch"
+}
