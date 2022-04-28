@@ -96,19 +96,18 @@ describe('metrics', () => {
       const options = _setDefaultOptions();
       assert.deepEqual(options.serviceName, 'unnamed-node-service');
       assert.deepEqual(options.accessToken, '');
-      assert.deepEqual(options.exportInterval, 5000);
+      assert.deepEqual(options.exportIntervalMillis, 5000);
     });
 
     it('is possible to set options via env vars', () => {
       process.env.SPLUNK_ACCESS_TOKEN = 'foo';
       process.env.OTEL_SERVICE_NAME = 'bigmetric';
-      process.env.SPLUNK_METRICS_ENABLED = 'true';
       process.env.OTEL_METRIC_EXPORT_INTERVAL = '1000';
 
       const options = _setDefaultOptions();
       assert.deepEqual(options.serviceName, 'bigmetric');
       assert.deepEqual(options.accessToken, 'foo');
-      assert.deepEqual(options.exportInterval, 1000);
+      assert.deepEqual(options.exportIntervalMillis, 1000);
     });
   });
 });

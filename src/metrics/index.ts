@@ -34,7 +34,7 @@ interface MetricsOptions {
   accessToken: string;
   endpoint?: string;
   resource?: Resource;
-  exportInterval: number;
+  exportIntervalMillis: number;
   metricReaderFactory: MetricReaderFactory;
   enableRuntimeMetrics: boolean;
 }
@@ -76,7 +76,7 @@ export function defaultMetricReaderFactory(
   }
 
   const reader = new PeriodicExportingMetricReader({
-    exportIntervalMillis: options.exportInterval,
+    exportIntervalMillis: options.exportIntervalMillis,
     exporter: new OTLPMetricExporter({
       url: options.endpoint,
       metadata,
@@ -160,8 +160,8 @@ export function _setDefaultOptions(
     resource,
     endpoint: options.endpoint,
     metricReaderFactory: defaultMetricReaderFactory,
-    exportInterval:
-      options.exportInterval ||
+    exportIntervalMillis:
+      options.exportIntervalMillis ||
       getEnvNumber('OTEL_METRIC_EXPORT_INTERVAL', 5000),
     enableRuntimeMetrics:
       options.enableRuntimeMetrics ||
