@@ -61,17 +61,8 @@ The following config options can be set by passing them as arguments to `startTr
 
 | Environment variable<br>``startMetrics()`` argument             | Default value           | Support | Notes
 | --------------------------------------------------------------- | ----------------------- | ------- | ---
-| `SPLUNK_METRICS_ENABLED`                                        | `false`                 | Experimental | Enabled metrics export. See [metrics documentation](metrics.md) for more information.
-| `OTEL_EXPORTER_OTLP_ENDPOINT`<br>`endpoint`                     | `localhost:4317`        | Stable | The OTLP endpoint to export to. Only OTLP over gRPC is supported.
-| `OTEL_METRIC_EXPORT_INTERVAL`<br>`exportInterval`               | `5000`                  | Experimental | The interval, in milliseconds, of metrics collection and exporting.
-
-#### Additional `startMetrics` config options
-
-- `signalfx`: A JS object with optional `client` and `dimensions` fields. If you have already setup a [SignalFx client](https://github.com/signalfx/signalfx-nodejs) with custom configuration, you can use this for sending instead of creating, configuring a new one. `dimensions` object adds a pre-defined dimension for each datapoint. The format for `dimensions` is `{key: value, ...}`.
-
-   The following is a list of dimensions added by default:
-   - `service`: see [`serviceName`](#tracing) from the tracing section
-   - `metric_source`: `splunk-otel-js`
-   - `node_version`: `process.versions.node`, e.g. `16.10.0`
+| `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`<br>`endpoint`             | `localhost:4317`        | Stable | The OTLP endpoint to export to.
+| `OTEL_METRIC_EXPORT_INTERVAL`<br>`exportIntervalMillis`         | `5000`                  | Stable | The interval, in milliseconds, of metrics collection and exporting.
+| `SPLUNK_RUNTIME_METRICS_ENABLED`                                | `false`                 | Experimental | Enable collecting and exporting of runtime metrics. See [metrics documentation](metrics.md) for more information.
 
 \*: Overwritten default value

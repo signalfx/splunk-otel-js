@@ -1,7 +1,6 @@
 # Metrics
 
-> :construction: &nbsp;Status: Experimental - exported metric data and
-> configuration properties will change once OpenTelemetry metrics become available.
+> :construction: &nbsp;Status: Experimental
 
 The Splunk Distribution for OpenTelemetry Node.js configures the default OpenTelemetry meter provider and can collect
 runtime metrics.
@@ -12,19 +11,86 @@ For configuration options, see [advanced configuration](advanced-config.md#metri
 
 ## Usage (custom metrics)
 
-[Documentation](https://open-telemetry.github.io/opentelemetry-js/modules/_opentelemetry_api_metrics.html) for OpenTelemetry metrics API.
+[OpenTelemetry metrics API documentation](https://open-telemetry.github.io/opentelemetry-js/modules/_opentelemetry_api_metrics.html)
 
 Add `@opentelemetry/api-metrics` to your dependencies.
 
 ```javascript
 const { startMetrics } = require('@splunk/otel');
+const { Resource } = require('@opentelemetry/resources');
 const { metrics } = require('@opentelemetry/api-metrics');
 
-startMetrics();
+// All fields are optional.
+startMetrics({
+  // Takes preference over OTEL_SERVICE_NAME environment variable
+  serviceName: 'my-service',
+  // Can also be set with OTEL_RESOURCE_ATTRIBUTES
+  resource: new Resource({
+    'my.property': 'xyz',
+    'build': 42
+  }),
+  exportInterval: 1000, // default: 5000
+  // The default exporter used is OTLP over gRPC
+  endpoint: 'collector:4317',
+});
 
-const meter = metrics.getMeter('my-app');
-const counter = meter.createCounter('foo');
+const meter = metrics.getMeter('my-meter');
+const counter = meter.createCounter('clicks');
 counter.add(3);
+```
+
+## Using custom metric readers and exporters
+
+Custom exporters and/or readers can be provided via the `metricReaderFactory` option.
+
+:warning: Setting `metricReaderFactory` will invalidate `exportInterval` and `endpoint` options.
+
+```javascript
+const { startMetrics } = require('@splunk/otel');
+const { PrometheusExporter } = require('@opentelemetry/exporter-prometheus');
+const { OTLPMetricExporter } = require('@opentelemetry/exporter-metrics-otlp-http');
+const { PeriodicExportingMetricReader } = require('@opentelemetry/sdk-metrics-base');
+
+startMetrics({
+  serviceName: 'my-service',
+  metricReaderFactory: () => {
+    return [
+      new PrometheusExporter(),
+      new PeriodicExportingMetricReader({
+        exportIntervalMillis: 1000,
+        exporter: new OTLPMetricExporter({ url: 'http://localhost:4318' })
+      })
+    ]
+  }
+});
+```
+
+## Migrating from SignalFx metrics
+
+The SignalFx client is no longer available.
+
+```javascript
+// Before
+const { startMetrics } = require('@splunk/otel');
+const { getSignalFxClient } = startMetrics({ serviceName: 'my-service' });
+
+getSignalFxClient().send({
+  gauges: [{ metric: 'cpu', value: 42, timestamp: 1442960607000}],
+  cumulative_counters: [{ metric: 'clicks', value: 99, timestamp: 1442960607000}],
+})
+
+// After
+const { startMetrics } = require('@splunk/otel');
+const { metrics } = require('@opentelemetry/api-metrics');
+
+startMetrics({ serviceName: 'my-service' });
+
+const meter = metrics.getMeter('my-meter');
+meter.createObservableGauge('cpu', result => {
+  result.observe(42);
+});
+const counter = meter.createCounter('clicks');
+counter.add(99);
 ```
 
 ## Runtime metrics
