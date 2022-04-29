@@ -112,7 +112,7 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
       {
         unit: 'By',
         valueType: ValueType.INT,
-      },
+      }
     );
 
     meter.createObservableGauge(
@@ -123,7 +123,7 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
       {
         unit: 'By',
         valueType: ValueType.INT,
-      },
+      }
     );
 
     meter.createObservableGauge(
@@ -134,7 +134,7 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
       {
         unit: 'By',
         valueType: ValueType.INT,
-      },
+      }
     );
   }
 }
@@ -159,7 +159,8 @@ export function _setDefaultOptions(
     accessToken,
     resource,
     endpoint: options.endpoint,
-    metricReaderFactory: defaultMetricReaderFactory,
+    metricReaderFactory:
+      options.metricReaderFactory ?? defaultMetricReaderFactory,
     exportIntervalMillis:
       options.exportIntervalMillis ||
       getEnvNumber('OTEL_METRIC_EXPORT_INTERVAL', 5000),
