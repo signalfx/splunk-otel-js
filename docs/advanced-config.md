@@ -59,10 +59,15 @@ The following config options can be set by passing them as arguments to `startTr
 
 ### Metrics
 
+Configuration examples can be seen [here](metrics.md).
+
 | Environment variable<br>``startMetrics()`` argument             | Default value           | Support | Notes
 | --------------------------------------------------------------- | ----------------------- | ------- | ---
+| `OTEL_SERVICE_NAME`<br>`serviceName`                            | `unnamed-node-service`  | Stable  | The service name of this Node service.
 | `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`<br>`endpoint`             | `localhost:4317`        | Stable | The OTLP endpoint to export to.
-| `OTEL_METRIC_EXPORT_INTERVAL`<br>`exportIntervalMillis`         | `5000`                  | Stable | The interval, in milliseconds, of metrics collection and exporting.
-| `SPLUNK_RUNTIME_METRICS_ENABLED`                                | `false`                 | Experimental | Enable collecting and exporting of runtime metrics. See [metrics documentation](metrics.md) for more information.
+| `OTEL_METRIC_EXPORT_INTERVAL`<br>`exportIntervalMillis`         | `30000`                 | Stable | The interval, in milliseconds, of metrics collection and exporting.
+| `OTEL_RESOURCE_ATTRIBUTES`<br>`resource`                        |                         | Stable  | The resource attributes to metric data. <details><summary>Environment variable example</summary>`key1=val1,key2=val2`</details>
+| `SPLUNK_RUNTIME_METRICS_ENABLED`<br>`runtimeMetricsEnabled`     | `false`                 | Experimental | Enable collecting and exporting of runtime metrics. See [metrics documentation](metrics.md) for more information.
+| `SPLUNK_RUNTIME_METRICS_COLLECTION_INTERVAL`                    | `5000`                 | Experimental | The interval, in milliseconds, during which GC and event loop statistics are collected. After the collection is done, the values become available to the metric exporter.
 
 \*: Overwritten default value

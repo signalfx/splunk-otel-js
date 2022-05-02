@@ -123,8 +123,6 @@ The following is a list of metrics automatically collected and exported:
 - `process.runtime.nodejs.memory.heap.total` (gauge, bytes) - Heap total via `process.memoryUsage().heapTotal`.
 - `process.runtime.nodejs.memory.heap.used` (gauge, bytes) - Heap used via `process.memoryUsage().heapUsed`.
 - `process.runtime.nodejs.memory.rss` (gauge, bytes) - Resident set size via `process.memoryUsage().rss`.
-
-Coming soon:
 - `process.nodejs.memory.gc.size` (counter, bytes) - Total collected by the garbage collector.
 - `process.nodejs.memory.gc.pause` (counter, nanoseconds) - Time spent doing GC.
 - `process.nodejs.memory.gc.count` (counter, count) - Number of times GC ran.
