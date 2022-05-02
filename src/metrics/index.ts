@@ -145,9 +145,9 @@ export function _setDefaultOptions(
   const accessToken =
     options.accessToken || process.env.SPLUNK_ACCESS_TOKEN || '';
 
-  const resource = (options.resource || Resource.empty()).merge(
-    new EnvDetector().detect()
-  );
+  const resource = new EnvDetector()
+    .detect()
+    .merge(options.resource || Resource.empty());
 
   const serviceName = String(
     options.serviceName ||
