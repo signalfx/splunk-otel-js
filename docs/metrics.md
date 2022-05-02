@@ -65,6 +65,27 @@ startMetrics({
 });
 ```
 
+## Choosing temporality aggregation type
+
+```javascript
+const { startMetrics } = require('@splunk/otel');
+const { OTLPMetricExporter } = require('@opentelemetry/exporter-metrics-otlp-grpc');
+const { AggregationTemporality, PeriodicExportingMetricReader } = require('@opentelemetry/sdk-metrics-base');
+
+startMetrics({
+  serviceName: 'my-service',
+  metricReaderFactory: () => {
+    return [
+      new PeriodicExportingMetricReader({
+        exporter: new OTLPMetricExporter({
+          aggregationTemporality: AggregationTemporality.DELTA
+        })
+      })
+    ]
+  }
+});
+```
+
 ## Migrating from SignalFx metrics
 
 The SignalFx client is no longer available.
