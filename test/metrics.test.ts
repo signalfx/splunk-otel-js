@@ -229,15 +229,15 @@ describe('metrics', () => {
           { unit: 'ns', type: InstrumentType.OBSERVABLE_GAUGE },
         ],
         [
-          'process.nodejs.memory.gc.size',
+          'process.runtime.nodejs.memory.gc.size',
           { unit: 'By', type: InstrumentType.COUNTER },
         ],
         [
-          'process.nodejs.memory.gc.pause',
+          'process.runtime.nodejs.memory.gc.pause',
           { unit: 'By', type: InstrumentType.COUNTER },
         ],
         [
-          'process.nodejs.memory.gc.count',
+          'process.runtime.nodejs.memory.gc.count',
           { unit: '1', type: InstrumentType.COUNTER },
         ],
       ]);

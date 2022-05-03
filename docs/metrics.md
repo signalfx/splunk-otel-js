@@ -116,15 +116,25 @@ counter.add(99);
 
 ## Runtime metrics
 
-Runtime metrics are disabled by default and need to be explicitly [enabled](advanced-config.md#metrics).
+Runtime metrics are disabled by default and need to be explicitly enabled ([advanced configuration](advanced-config.md#metrics)):
+
+
+```javascript
+const { startMetrics } = require('@splunk/otel');
+
+startMetrics({
+  serviceName: 'my-service',
+  runtimeMetricsEnabled: true,
+});
+```
 
 The following is a list of metrics automatically collected and exported:
 
 - `process.runtime.nodejs.memory.heap.total` (gauge, bytes) - Heap total via `process.memoryUsage().heapTotal`.
 - `process.runtime.nodejs.memory.heap.used` (gauge, bytes) - Heap used via `process.memoryUsage().heapUsed`.
 - `process.runtime.nodejs.memory.rss` (gauge, bytes) - Resident set size via `process.memoryUsage().rss`.
-- `process.nodejs.memory.gc.size` (counter, bytes) - Total collected by the garbage collector.
-- `process.nodejs.memory.gc.pause` (counter, nanoseconds) - Time spent doing GC.
-- `process.nodejs.memory.gc.count` (counter, count) - Number of times GC ran.
-- `process.nodejs.event_loop.lag.max` (gauge, nanoseconds) - Max event loop lag within the collection interval.
-- `process.nodejs.event_loop.lag.min` (gauge, nanoseconds) - Min event loop lag within the collection interval.
+- `process.runtime.nodejs.memory.gc.size` (counter, bytes) - Total collected by the garbage collector.
+- `process.runtime.nodejs.memory.gc.pause` (counter, nanoseconds) - Time spent doing GC.
+- `process.runtime.nodejs.memory.gc.count` (counter, count) - Number of times GC ran.
+- `process.runtime.nodejs.event_loop.lag.max` (gauge, nanoseconds) - Max event loop lag within the collection interval.
+- `process.runtime.nodejs.event_loop.lag.min` (gauge, nanoseconds) - Min event loop lag within the collection interval.
