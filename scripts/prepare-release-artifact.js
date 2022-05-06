@@ -15,7 +15,6 @@ async function fetchWorkflowRun(context) {
   const { data: workflows } = await context.octokit.rest.actions.listWorkflowRunsForRepo({
     owner: context.owner,
     repo: context.repo,
-    branch: process.env.CI_COMMIT_BRANCH ?? 'main',
   });
 
   const runs = workflows.workflow_runs;
