@@ -4,25 +4,27 @@ default:
 stages:
   - release
 
+.prepare_dist: &prepare_dist
+  - npm install
+  - npm run prepare-release-artifact
+  - shasum -a 256 dist/* > dist/checksums.txt
+
+.release_npm: &release_npm
+  - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
+  - npm publish ./dist/splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz
+  - rm -f ~/.npmrc
+
 release:
   stage: release
   artifacts:
     paths:
       - dist/
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" && $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+.*/
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+.*/
   script:
-    - npm install
-    - npm run prepare-release-artifact
-    - shasum -a 256 dist/* > dist/checksums.txt
-
-    # release in Github
+    - *prepare_dist
     - npm run release:github
-
-    # release in NPM
-    - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
-    - npm publish ./dist/splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz
-    - rm -f ~/.npmrc
+    - *release_npm
 
 prerelease:
   stage: release
@@ -30,13 +32,7 @@ prerelease:
     paths:
       - dist/
   rules:
-    - if: $CI_COMMIT_BRANCH =~ /^prerelease-.+/ && $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+-.+/
+    - if: $CI_COMMIT_TAG =~ /^prerelease-v[0-9]+\.[0-9]+\.[0-9]+(?:-.+)?$/
   script:
-    - npm install
-    - npm run prepare-release-artifact
-    - shasum -a 256 dist/* > dist/checksums.txt
-
-    # release in NPM
-    - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
-    - npm publish --tag prerelease ./dist/splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz
-    - rm -f ~/.npmrc
+    - *prepare_dist
+    - *release_npm
