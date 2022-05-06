@@ -115,10 +115,8 @@ describe('metrics', () => {
       assert.deepEqual(options.accessToken, '');
       assert.deepEqual(options.exportIntervalMillis, 30000);
       assert.deepEqual(
-        options.resource,
-        new Resource({
-          [SemanticResourceAttributes.SERVICE_NAME]: 'unnamed-node-service',
-        })
+        options.resource.attributes[SemanticResourceAttributes.SERVICE_NAME],
+        'unnamed-node-service'
       );
       assert.deepEqual(options.runtimeMetricsEnabled, false);
       assert.deepEqual(options.runtimeMetricsCollectionIntervalMillis, 5000);
@@ -136,13 +134,11 @@ describe('metrics', () => {
       assert.deepEqual(options.serviceName, 'bigmetric');
       assert.deepEqual(options.accessToken, 'foo');
       assert.deepEqual(options.exportIntervalMillis, 1000);
+      assert.deepEqual(options.resource.attributes['key1'], 'val1');
+      assert.deepEqual(options.resource.attributes['key2'], 'val2');
       assert.deepEqual(
-        options.resource,
-        new Resource({
-          key1: 'val1',
-          key2: 'val2',
-          [SemanticResourceAttributes.SERVICE_NAME]: 'bigmetric',
-        })
+        options.resource.attributes[SemanticResourceAttributes.SERVICE_NAME],
+        'bigmetric'
       );
       assert.deepEqual(options.runtimeMetricsEnabled, true);
       assert.deepEqual(options.runtimeMetricsCollectionIntervalMillis, 1200);
@@ -183,11 +179,15 @@ describe('metrics', () => {
       const metricData = await reader.collect();
 
       assert.deepEqual(
-        metricData.resource,
-        new Resource({
-          [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: 'test',
-          [SemanticResourceAttributes.SERVICE_NAME]: 'foo',
-        })
+        metricData.resource.attributes[
+          SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT
+        ],
+        'test'
+      );
+
+      assert.deepEqual(
+        metricData.resource.attributes[SemanticResourceAttributes.SERVICE_NAME],
+        'foo'
       );
 
       // One is the 'custom' meter, the other one is runtime metrics meter

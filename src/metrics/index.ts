@@ -214,19 +214,28 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
     }
   );
 
-  const gcSizeCounter = meter.createCounter('process.runtime.nodejs.memory.gc.size', {
-    unit: 'By',
-    valueType: ValueType.INT,
-  });
+  const gcSizeCounter = meter.createCounter(
+    'process.runtime.nodejs.memory.gc.size',
+    {
+      unit: 'By',
+      valueType: ValueType.INT,
+    }
+  );
 
-  const gcPauseCounter = meter.createCounter('process.runtime.nodejs.memory.gc.pause', {
-    unit: 'By',
-    valueType: ValueType.INT,
-  });
+  const gcPauseCounter = meter.createCounter(
+    'process.runtime.nodejs.memory.gc.pause',
+    {
+      unit: 'By',
+      valueType: ValueType.INT,
+    }
+  );
 
-  const gcCountCounter = meter.createCounter('process.runtime.nodejs.memory.gc.count', {
-    valueType: ValueType.INT,
-  });
+  const gcCountCounter = meter.createCounter(
+    'process.runtime.nodejs.memory.gc.count',
+    {
+      valueType: ValueType.INT,
+    }
+  );
 
   const interval = setInterval(() => {
     runtimeCounters = extension.collect();
