@@ -9,11 +9,6 @@ stages:
   - npm run prepare-release-artifact
   - shasum -a 256 dist/* > dist/checksums.txt
 
-.release_npm: &release_npm
-  - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
-  - npm publish ./dist/splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz
-  - rm -f ~/.npmrc
-
 release:
   stage: release
   artifacts:
@@ -24,7 +19,9 @@ release:
   script:
     - *prepare_dist
     - npm run release:github
-    - *release_npm
+    - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
+    - npm publish ./dist/splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz
+    - rm -f ~/.npmrc
 
 prerelease:
   stage: release
@@ -35,4 +32,6 @@ prerelease:
     - if: $CI_COMMIT_TAG =~ /^prerelease-v[0-9]+\.[0-9]+\.[0-9]+(?:-.+)?$/
   script:
     - *prepare_dist
-    - *release_npm
+    - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
+    - npm publish --tag prerelease ./dist/splunk-otel-${CI_COMMIT_REF_NAME:11}.tgz
+    - rm -f ~/.npmrc
