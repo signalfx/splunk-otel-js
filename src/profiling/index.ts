@@ -17,7 +17,7 @@
 import { context, diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import { defaultServiceName, getEnvNumber } from '../options';
-import { EnvDetector } from '../resource';
+import { detect as detectResource } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import {
   ProfilingExporter,
@@ -124,19 +124,19 @@ export function _setDefaultOptions(
     process.env.SPLUNK_PROFILER_LOGS_ENDPOINT ||
     'localhost:4317';
 
-  const envResource = new EnvDetector().detect();
+  const combinedResource = detectResource();
 
   const serviceName = String(
     options.serviceName ||
       process.env.OTEL_SERVICE_NAME ||
-      envResource.attributes[SemanticResourceAttributes.SERVICE_NAME] ||
+      combinedResource.attributes[SemanticResourceAttributes.SERVICE_NAME] ||
       defaultServiceName
   );
 
   let resource =
     options.resource === undefined
-      ? envResource
-      : envResource.merge(options.resource);
+      ? combinedResource
+      : combinedResource.merge(options.resource);
 
   resource = resource.merge(
     new Resource({
