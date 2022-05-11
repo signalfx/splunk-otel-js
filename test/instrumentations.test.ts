@@ -41,7 +41,7 @@ describe('instrumentations', () => {
     const loadStub = sinon.stub(loader, 'load');
     try {
       const inst = instrumentations.getInstrumentations();
-      sinon.assert.callCount(loadStub, 28);
+      sinon.assert.callCount(loadStub, 38);
     } finally {
       loadStub.reset();
       loadStub.restore();
