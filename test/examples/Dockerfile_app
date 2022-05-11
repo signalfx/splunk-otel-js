@@ -9,7 +9,7 @@ WORKDIR /home/node/app
 
 COPY --chown=node:node ["binding.gyp", "package*.json", "*.lock", "./"]
 COPY --chown=node:node ["./src/native_ext", "./src/native_ext"]
-RUN npm install
+RUN npm install --omit peer
 
 COPY --chown=node:node ./ .
 
@@ -30,7 +30,7 @@ CMD ["npm", "run", "start"]
 # Compile the package and use it in examples
 FROM published as compiled
 
-# use a single prebuild for tests so we don't have to compile it each install 
+# use a single prebuild for tests so we don't have to compile it each install
 RUN npm run prebuild:current
 RUN npm run compile
 RUN mv `npm pack` /tmp/splunk-otel.tgz
