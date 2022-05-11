@@ -22,43 +22,6 @@ import * as instrumentations from '../src/instrumentations';
 import * as loader from '../src/instrumentations/loader';
 
 describe('instrumentations', () => {
-  const supportedInstrumentations = [
-    ['@opentelemetry/instrumentation-bunyan', 'BunyanInstrumentation'],
-    [
-      '@opentelemetry/instrumentation-cassandra-driver',
-      'CassandraDriverInstrumentation',
-    ],
-    ['@opentelemetry/instrumentation-dns', 'DnsInstrumentation'],
-    ['@opentelemetry/instrumentation-express', 'ExpressInstrumentation'],
-    ['@opentelemetry/instrumentation-graphql', 'GraphQLInstrumentation'],
-    ['@opentelemetry/instrumentation-grpc', 'GrpcInstrumentation'],
-    ['@opentelemetry/instrumentation-hapi', 'HapiInstrumentation'],
-    ['@opentelemetry/instrumentation-http', 'HttpInstrumentation'],
-    ['@opentelemetry/instrumentation-ioredis', 'IORedisInstrumentation'],
-    ['@opentelemetry/instrumentation-knex', 'KnexInstrumentation'],
-    ['@opentelemetry/instrumentation-koa', 'KoaInstrumentation'],
-    ['@opentelemetry/instrumentation-memcached', 'MemcachedInstrumentation'],
-    ['@opentelemetry/instrumentation-mongodb', 'MongoDBInstrumentation'],
-    ['@opentelemetry/instrumentation-mysql', 'MySQLInstrumentation'],
-    ['@opentelemetry/instrumentation-mysql2', 'MySQL2Instrumentation'],
-    ['@opentelemetry/instrumentation-net', 'NetInstrumentation'],
-    ['@opentelemetry/instrumentation-pg', 'PgInstrumentation'],
-    ['@opentelemetry/instrumentation-pino', 'PinoInstrumentation'],
-    ['@opentelemetry/instrumentation-redis', 'RedisInstrumentation'],
-    ['@opentelemetry/instrumentation-restify', 'RestifyInstrumentation'],
-    ['@opentelemetry/instrumentation-winston', 'WinstonInstrumentation'],
-    ['opentelemetry-instrumentation-amqplib', 'AmqplibInstrumentation'],
-    ['opentelemetry-instrumentation-aws-sdk', 'AwsInstrumentation'],
-    [
-      'opentelemetry-instrumentation-elasticsearch',
-      'ElasticsearchInstrumentation',
-    ],
-    ['opentelemetry-instrumentation-kafkajs', 'KafkaJsInstrumentation'],
-    ['opentelemetry-instrumentation-mongoose', 'MongooseInstrumentation'],
-    ['opentelemetry-instrumentation-sequelize', 'SequelizeInstrumentation'],
-    ['opentelemetry-instrumentation-typeorm', 'TypeormInstrumentation'],
-  ];
-
   it('does not load if packages are not installed', () => {
     const inst = instrumentations.getInstrumentations();
     // Note: the list here is the instrumentations among devDependencies
@@ -76,18 +39,13 @@ describe('instrumentations', () => {
 
   it('load instrumentations if they are not installed', () => {
     const loadStub = sinon.stub(loader, 'load');
-    const inst = instrumentations.getInstrumentations();
-    sinon.assert.callCount(loadStub, supportedInstrumentations.length);
-    for (let i = 0; i < supportedInstrumentations.length; i++) {
-      sinon.assert.calledWith(
-        loader.load,
-        supportedInstrumentations[i][0],
-        supportedInstrumentations[i][1]
-      );
+    try {
+      const inst = instrumentations.getInstrumentations();
+      sinon.assert.callCount(loadStub, 28);
+    } finally {
+      loadStub.reset();
+      loadStub.restore();
     }
-
-    loadStub.reset();
-    loadStub.restore();
   });
 
   it('loader silently fails when package is not installed', () => {
