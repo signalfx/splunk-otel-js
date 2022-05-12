@@ -21,6 +21,8 @@ import * as rewire from 'rewire';
 import * as instrumentations from '../src/instrumentations';
 import * as loader from '../src/instrumentations/loader';
 
+import { HttpInstrumentation } from '@opentelemetry/instrumentation-http'
+
 describe('instrumentations', () => {
   it('does not load if packages are not installed', () => {
     const inst = instrumentations.getInstrumentations();
@@ -58,18 +60,13 @@ describe('instrumentations', () => {
   });
 
   it('loader imports and returns object when package is available', () => {
-    const HttpInstrumentation = function () {};
-    const loader = rewire('../src/instrumentations/loader');
-    const revert = loader.__set__('require', module => {
-      return { HttpInstrumentation };
-    });
+    const loader = require('../src/instrumentations/loader');
 
     const got = loader.load(
       '@opentelemetry/instrumentation-http',
       'HttpInstrumentation'
     );
-    assert.strictEqual(got, HttpInstrumentation);
 
-    revert();
+    assert.strictEqual(got, HttpInstrumentation);
   });
 });
