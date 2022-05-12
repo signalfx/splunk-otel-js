@@ -1,0 +1,7 @@
+{
+  "type": "minor",
+  "comment": "feat: make loading instrumentations npm-link-safe",
+  "packageName": "@splunk/otel",
+  "email": "rauno56@gmail.com",
+  "dependentChangeType": "patch"
+}
