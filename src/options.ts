@@ -213,7 +213,7 @@ export const splunkSpanExporterFactory = genericJaegerSpanExporterFactory.bind(
   'http://localhost:9080/v1/trace'
 );
 
-export function consoleSpanExporterFactory(options: Options): SpanExporter {
+export function consoleSpanExporterFactory(): SpanExporter {
   return new ConsoleSpanExporter();
 }
 
