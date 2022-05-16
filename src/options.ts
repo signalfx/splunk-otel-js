@@ -15,8 +15,11 @@
  */
 import * as assert from 'assert';
 import * as util from 'util';
-
-import { SpanExporter, SpanProcessor } from '@opentelemetry/sdk-trace-base';
+import {
+  ConsoleSpanExporter,
+  SpanExporter,
+  SpanProcessor,
+} from '@opentelemetry/sdk-trace-base';
 import { InstrumentationOption } from '@opentelemetry/instrumentation';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
@@ -210,8 +213,13 @@ export const splunkSpanExporterFactory = genericJaegerSpanExporterFactory.bind(
   'http://localhost:9080/v1/trace'
 );
 
+export function consoleSpanExporterFactory(): SpanExporter {
+  return new ConsoleSpanExporter();
+}
+
 const SpanExporterMap: Record<string, SpanExporterFactory> = {
   default: otlpSpanExporterFactory,
+  'console-splunk': consoleSpanExporterFactory,
   'jaeger-thrift-http': jaegerSpanExporterFactory,
   'jaeger-thrift-splunk': splunkSpanExporterFactory,
   otlp: otlpSpanExporterFactory,
