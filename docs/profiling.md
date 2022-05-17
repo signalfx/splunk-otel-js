@@ -18,7 +18,10 @@ Or when using [advanced configuration](advanced-config.md):
 ```javascript
 const { startProfiling } = require('@splunk/otel');
 
+// NOTE: profiling needs to be started before tracing. This will be fixed in future versions.
 startProfiling({
   serviceName: 'my-service',
 });
+
+startTracing({ ... });
 ```
