@@ -22,7 +22,7 @@ import { detect as detectResource } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import * as signalfx from 'signalfx';
 
-interface MetricsOptions {
+export interface MetricsOptions {
   serviceName: string;
   accessToken: string;
   endpoint: string;

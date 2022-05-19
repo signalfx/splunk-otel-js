@@ -30,6 +30,7 @@ import { configureRedisInstrumentation } from './instrumentations/redis';
 
 let unregisterInstrumentations: (() => void) | null = null;
 
+export { Options as TracingOptions };
 export function startTracing(opts: Partial<Options> = {}): void {
   const options = _setDefaultOptions(opts);
 

@@ -29,6 +29,8 @@ import { ProfilingContextManager } from './profiling_contextmanager';
 import { OTLPProfilingExporter } from './otlp_exporter';
 import { DebugExporter } from './debug_exporter';
 
+export { ProfilingOptions };
+
 /* The following are wrappers around native functions to give more context to profiling samples. */
 function extStopProfiling(extension: ProfilingExtension) {
   return extension.stop();
