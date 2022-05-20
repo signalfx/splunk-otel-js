@@ -17,7 +17,7 @@
 import { context, diag } from '@opentelemetry/api';
 import { suppressTracing } from '@opentelemetry/core';
 import { collectMemoryInfo, MemoryInfo } from './memory';
-import { defaultServiceName, getEnvNumber } from '../options';
+import { defaultServiceName, getEnvNumber } from '../utils';
 import { detect as detectResource } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import * as signalfx from 'signalfx';

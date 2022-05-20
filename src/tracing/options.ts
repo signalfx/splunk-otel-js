@@ -23,12 +23,13 @@ import {
 import { InstrumentationOption } from '@opentelemetry/instrumentation';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
-import { getInstrumentations } from './instrumentations';
+import { getInstrumentations } from '../instrumentations';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 // eslint-disable-next-line node/no-extraneous-import
 import { Metadata } from '@grpc/grpc-js';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
-import { detect as detectResource } from './resource';
+import { detect as detectResource } from '../resource';
+import { defaultServiceName, getEnvBoolean } from '../utils';
 import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { diag, Span, TextMapPropagator } from '@opentelemetry/api';
@@ -39,8 +40,6 @@ import {
 } from '@opentelemetry/core';
 import { SplunkBatchSpanProcessor } from './SplunkBatchSpanProcessor';
 import { Resource } from '@opentelemetry/resources';
-
-export const defaultServiceName = 'unnamed-node-service';
 
 type SpanExporterFactory = (options: Options) => SpanExporter;
 
@@ -260,36 +259,6 @@ export function defaultPropagatorFactory(options: Options): TextMapPropagator {
   return new CompositePropagator({
     propagators,
   });
-}
-
-export function getEnvBoolean(key: string, defaultValue = true) {
-  const value = process.env[key];
-
-  if (value === undefined) {
-    return defaultValue;
-  }
-
-  if (['false', 'no', '0'].indexOf(value.trim().toLowerCase()) >= 0) {
-    return false;
-  }
-
-  return true;
-}
-
-export function getEnvNumber(key: string, defaultValue: number): number {
-  const value = process.env[key];
-
-  if (value === undefined) {
-    return defaultValue;
-  }
-
-  const numberValue = parseInt(value);
-
-  if (isNaN(numberValue)) {
-    return defaultValue;
-  }
-
-  return numberValue;
 }
 
 function deduplicate(arr: string[]) {

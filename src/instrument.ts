@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { getEnvBoolean } from './options';
+import { getEnvBoolean } from './utils';
 
 import { startMetrics } from './metrics';
 import { startProfiling } from './profiling';

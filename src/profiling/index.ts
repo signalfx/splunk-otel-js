@@ -16,7 +16,7 @@
 
 import { context, diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
-import { defaultServiceName, getEnvNumber } from '../options';
+import { defaultServiceName, getEnvNumber } from '../utils';
 import { detect as detectResource } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import {

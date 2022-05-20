@@ -15,7 +15,7 @@
  */
 
 import * as api from '@opentelemetry/api';
-import { HttpBaggagePropagator } from '@opentelemetry/core';
+import { W3CBaggagePropagator } from '@opentelemetry/core';
 import { InstrumentationBase } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
@@ -37,7 +37,7 @@ import {
   splunkSpanExporterFactory,
   defaultSpanProcessorFactory,
   Options,
-} from '../src/options';
+} from '../src/tracing/options';
 import * as utils from './utils';
 
 /*

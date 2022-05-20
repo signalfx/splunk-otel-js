@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { getEnvBoolean } from './options';
+import { getEnvBoolean } from './utils';
 import { startMetrics, MetricsOptions } from './metrics';
 import { startProfiling, ProfilingOptions } from './profiling';
 import { startTracing, TracingOptions } from './tracing';
 
 interface GeneralOptions {
+  /**
+   * This is intentionally optional so that the exporters would be able to enforce
+   * their own default.
+   */
   endpoint?: string;
   serviceName: string;
   accessToken: string;
@@ -28,7 +32,7 @@ interface Options extends GeneralOptions {
   metrics: MetricsOptions;
   profiling: ProfilingOptions;
   tracing: TracingOptions;
-};
+}
 
 export const start = (options: Partial<Options>) => {
   const { metrics, profiling, tracing, ...restOptions } = options;
