@@ -64,6 +64,7 @@ const expectedAttributes = new Set([
   SemanticResourceAttributes.PROCESS_RUNTIME_DESCRIPTION,
   SemanticResourceAttributes.PROCESS_RUNTIME_NAME,
   SemanticResourceAttributes.PROCESS_RUNTIME_VERSION,
+  'splunk.distro.version',
 ]);
 
 describe('options', () => {
@@ -99,6 +100,8 @@ describe('options', () => {
 
     it('has expected defaults', () => {
       const options = _setDefaultOptions();
+
+      assert(/[0-9]+\.[0-9]+\.[0-9]+/.test(options.tracerConfig.resource.attributes['splunk.distro.version']));
 
       // resource attributes for process, host and os are different at each run, iterate through them, make sure they exist and then delete
       Object.keys(options.tracerConfig.resource.attributes)
