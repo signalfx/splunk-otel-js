@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="Beta" src="https://img.shields.io/badge/status-beta-informational?style=for-the-badge">
+  <img alt="Stable" src="https://img.shields.io/badge/status-stable-informational?style=for-the-badge">
   <a href="https://github.com/signalfx/splunk-otel-js/releases">
     <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/signalfx/splunk-otel-js?include_prereleases&style=for-the-badge">
   </a>
