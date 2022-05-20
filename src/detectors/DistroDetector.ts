@@ -26,7 +26,7 @@ import { VERSION } from '../version';
  * distro-related resource information.
  */
 class DistroDetector {
-  detect(config?: ResourceDetectionConfig): Resource {
+  detect(_config?: ResourceDetectionConfig): Resource {
     const distroAttributes: ResourceAttributes = {
       'splunk.distro.version': VERSION,
     };
