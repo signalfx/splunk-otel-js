@@ -16,7 +16,11 @@
 
 import { context, diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
-import { defaultServiceName, getEnvNumber } from '../utils';
+import {
+  assertNoExtraneousProperties,
+  defaultServiceName,
+  getEnvNumber,
+} from '../utils';
 import { detect as detectResource } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import {
@@ -24,6 +28,7 @@ import {
   ProfilingExtension,
   ProfilingOptions,
   ProfilingStartOptions,
+  allowedProfilingOptions,
 } from './types';
 import { ProfilingContextManager } from './profiling_contextmanager';
 import { OTLPProfilingExporter } from './otlp_exporter';
@@ -48,6 +53,13 @@ function extCollectSamples(extension: ProfilingExtension) {
 }
 
 export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
+  try {
+    assertNoExtraneousProperties(opts, allowedProfilingOptions);
+  } catch (e) {
+    console.warn(e);
+    console.warn('This will turn into a thrown exception in @splunk/otel@1.0');
+  }
+
   const options = _setDefaultOptions(opts);
 
   const extension = loadExtension();

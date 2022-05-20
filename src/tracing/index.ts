@@ -18,9 +18,10 @@ import { context, propagation, trace } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 
+import { assertNoExtraneousProperties } from '../utils';
 import { configureHttpInstrumentation } from '../instrumentations/http';
 import { configureLogInjection } from '../instrumentations/logging';
-import { Options, _setDefaultOptions } from './options';
+import { allowedTracingOptions, Options, _setDefaultOptions } from './options';
 import { gte } from 'semver';
 import {
   AsyncHooksContextManager,
@@ -32,6 +33,12 @@ let unregisterInstrumentations: (() => void) | null = null;
 
 export { Options as TracingOptions };
 export function startTracing(opts: Partial<Options> = {}): boolean {
+  try {
+    assertNoExtraneousProperties(opts, allowedTracingOptions);
+  } catch (e) {
+    console.warn(e);
+    console.warn('This will turn into a thrown exception in @splunk/otel@1.0');
+  }
   const options = _setDefaultOptions(opts);
 
   // propagator
