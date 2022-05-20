@@ -75,3 +75,30 @@ The following config options can be set by passing them as arguments to `startTr
    - `node_version`: `process.versions.node`, e.g. `16.10.0`
 
 \*: Overwritten default value
+
+### Start all
+
+To control all signals with one call `start()` API can be used:
+
+```js
+const { start } = require('@splunk/otel');
+
+start({
+  // accessToken,
+  // endpoint,
+  // serviceName,
+  tracing: {
+    // tracing-specific options here.
+  },
+  // profiling: true, // enable experimental profiling signal
+  /*
+  metrics: { // enable experimental metrics signal with specific configuration
+    // exportInterval,
+  },
+  */
+});
+```
+
+By default `start()` API enables all stable signals, which means the list will change over time. Shared configuration(`accessToken`, `endpoint`, `serviceName`) can be provided on the root level of the configuration object.
+
+Signal specific options must be provided under specific properties: `tracing`, `profiling`, `metrics`. `true` can be provided for default configuration.
