@@ -40,9 +40,8 @@ open an issue in GitHub. Any and all ideas for improvements are also welcome.
 
 ## Requirements
 
-This Splunk Distribution of OpenTelemetry requires Node.js 8.5 or higher,
+This Splunk Distribution of OpenTelemetry requires Node.js v12.13 or higher,
 [see more information here](https://github.com/open-telemetry/opentelemetry-js#node-support)
-If you're still using an earlier version of Node.js, continue using the SignalFx Tracing Library for Node.js.
 
 Current effective required Node.js version is: ![node-current](https://img.shields.io/node/v/@splunk/otel?style=flat-square)
 
