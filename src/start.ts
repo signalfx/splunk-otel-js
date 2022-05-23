@@ -29,9 +29,9 @@ interface GeneralOptions {
 }
 
 interface Options extends GeneralOptions {
-  metrics: MetricsOptions;
-  profiling: ProfilingOptions;
-  tracing: TracingOptions;
+  metrics: boolean | MetricsOptions;
+  profiling: boolean | ProfilingOptions;
+  tracing: boolean | TracingOptions;
 }
 
 export const start = (options: Partial<Options>) => {
