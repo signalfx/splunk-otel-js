@@ -78,7 +78,7 @@ The following config options can be set by passing them as arguments to `startTr
 
 ### Start all
 
-To control all signals with one call `start()` API can be used:
+To control all [signals](https://github.com/open-telemetry/opentelemetry-specification/blob/70fecd2dcba505b3ac3a7cb1851f947047743d24/specification/glossary.md#signals) with one call `start()` API can be used:
 
 ```js
 const { start } = require('@splunk/otel');
