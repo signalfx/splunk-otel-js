@@ -20,11 +20,7 @@ import { startTracing, TracingOptions } from './tracing';
 
 interface GeneralOptions {
   accessToken: string;
-  /**
-   * This is intentionally optional so that the exporters would be able to enforce
-   * their own default.
-   */
-  endpoint?: string;
+  endpoint: string;
   serviceName: string;
 }
 
