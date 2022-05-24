@@ -78,9 +78,9 @@ describe('start', () => {
 
   it('should allow toggling signals via boolean', () => {
     start({
-      tracing: false,
-      profiling: true,
       metrics: true,
+      profiling: true,
+      tracing: false,
     });
     assertCalled(signals.start, true, true, false);
 
@@ -89,9 +89,9 @@ describe('start', () => {
   });
 
   it('should allow toggling signals via env', () => {
+    process.env.SPLUNK_METRICS_ENABLED = 'y';
     process.env.SPLUNK_PROFILER_ENABLED = '1';
     process.env.SPLUNK_TRACING_ENABLED = 'no';
-    process.env.SPLUNK_METRICS_ENABLED = 'y';
 
     start();
     assertCalled(signals.start, true, true, false);
