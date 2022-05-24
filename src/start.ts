@@ -18,13 +18,11 @@ import { startMetrics, MetricsOptions } from './metrics';
 import { startProfiling, ProfilingOptions } from './profiling';
 import { startTracing, stopTracing, TracingOptions } from './tracing';
 
-interface GeneralOptions {
+interface Options {
   accessToken: string;
   endpoint: string;
   serviceName: string;
-}
-
-interface Options extends GeneralOptions {
+  // Signal specific configuration options:
   metrics: boolean | MetricsOptions;
   profiling: boolean | ProfilingOptions;
   tracing: boolean | TracingOptions;
