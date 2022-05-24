@@ -34,7 +34,7 @@ This distribution supports all the configuration options supported by the compon
 | `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT`                        |                         | Stable  | Maximum allowed attribute value size. Empty value is treated as infinity
 | `OTEL_SPAN_EVENT_COUNT_LIMIT`                                   | `128`                   | Stable  | 
 | `OTEL_SPAN_LINK_COUNT_LIMIT`                                    | `1000`\*                | Stable  | 
-| `OTEL_TRACES_EXPORTER`<br>`tracesExporter`                      | `otlp`                  | Stable  | Chooses the exporter. Shortcut for setting `spanExporterFactory`. One of [`otlp`, `jaeger-thrift-http`, `jaeger-thrift-splunk`, `console-splunk`]. See [`SpanExporterMap`](../src/options.ts).
+| `OTEL_TRACES_EXPORTER`<br>`tracesExporter`                      | `otlp`                  | Stable  | Chooses the exporter. Shortcut for setting `spanExporterFactory`. One of [`otlp`, `jaeger-thrift-http`, `jaeger-thrift-splunk`, `console-splunk`]. See [`SpanExporterMap`](../src/tracing/options.ts).
 | `OTEL_TRACES_SAMPLER`                                           | `parentbased_always_on` | Stable  | Sampler to be used for traces. See [Sampling](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling)
 | `OTEL_TRACES_SAMPLER_ARG`                                       |                         | Stable  | String value to be used as the sampler argument. Only be used if OTEL_TRACES_SAMPLER is set.
 | `SPLUNK_ACCESS_TOKEN`<br>`accessToken`                          |                         | Stable  | The optional access token for exporting signal data directly to SignalFx API.
@@ -75,3 +75,30 @@ The following config options can be set by passing them as arguments to `startTr
    - `node_version`: `process.versions.node`, e.g. `16.10.0`
 
 \*: Overwritten default value
+
+### Start all
+
+To control all [signals](https://github.com/open-telemetry/opentelemetry-specification/blob/70fecd2dcba505b3ac3a7cb1851f947047743d24/specification/glossary.md#signals) with one call `start()` API can be used:
+
+```js
+const { start } = require('@splunk/otel');
+
+start({
+  // accessToken,
+  // endpoint,
+  // serviceName,
+  tracing: {
+    // tracing-specific options here.
+  },
+  // profiling: true, // enable experimental profiling signal
+  /*
+  metrics: { // enable experimental metrics signal with specific configuration
+    // exportInterval,
+  },
+  */
+});
+```
+
+By default `start()` API enables all stable signals, which means the list will change over time. Shared configuration(`accessToken`, `endpoint`, `serviceName`) can be provided on the root level of the configuration object.
+
+Signal specific options must be provided under specific properties: `tracing`, `profiling`, `metrics`. `true` can be provided for default configuration.

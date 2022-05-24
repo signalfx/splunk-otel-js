@@ -16,13 +16,13 @@
 
 import * as assert from 'assert';
 import { startTracing } from '../src/tracing';
+import { defaultSpanProcessorFactory } from '../src/tracing/options';
 import * as utils from './utils';
 import {
   InMemorySpanExporter,
   ReadableSpan,
   SpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
-import { defaultSpanProcessorFactory } from '../src/options';
 
 const PORT = 9111;
 const SERVER_URL = `http://localhost:${PORT}`;

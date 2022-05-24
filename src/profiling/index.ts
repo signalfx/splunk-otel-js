@@ -16,7 +16,7 @@
 
 import { context, diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
-import { defaultServiceName, getEnvNumber } from '../options';
+import { defaultServiceName, getEnvNumber } from '../utils';
 import { detect as detectResource } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import {
@@ -28,6 +28,8 @@ import {
 import { ProfilingContextManager } from './profiling_contextmanager';
 import { OTLPProfilingExporter } from './otlp_exporter';
 import { DebugExporter } from './debug_exporter';
+
+export { ProfilingOptions };
 
 /* The following are wrappers around native functions to give more context to profiling samples. */
 function extStopProfiling(extension: ProfilingExtension) {

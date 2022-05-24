@@ -18,7 +18,8 @@ import type {
   RedisInstrumentation,
   RedisInstrumentationConfig,
 } from '@opentelemetry/instrumentation-redis';
-import { getEnvBoolean, Options } from '../options';
+import { getEnvBoolean } from '../utils';
+import { Options } from '../tracing/options';
 
 export function configureRedisInstrumentation(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

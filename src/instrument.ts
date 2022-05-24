@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-import { startTracing } from './tracing';
+import { getEnvBoolean } from './utils';
+
 import { startMetrics } from './metrics';
 import { startProfiling } from './profiling';
-import { getEnvBoolean } from './options';
+import { startTracing } from './tracing';
 
 if (getEnvBoolean('SPLUNK_PROFILER_ENABLED', false)) {
   startProfiling();

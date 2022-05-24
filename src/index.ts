@@ -17,3 +17,4 @@
 export { startTracing } from './tracing';
 export { startMetrics } from './metrics';
 export { startProfiling } from './profiling';
+export { start, stop } from './start';

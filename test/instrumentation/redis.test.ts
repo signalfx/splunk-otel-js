@@ -16,11 +16,11 @@
 
 import * as assert from 'assert';
 import { startTracing } from '../../src/tracing';
+import { defaultSpanProcessorFactory } from '../../src/tracing/options';
 import {
   InMemorySpanExporter,
   SpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
-import { defaultSpanProcessorFactory } from '../../src/options';
 import * as utils from '../utils';
 import * as net from 'net';
 import type * as Redis from 'redis';
