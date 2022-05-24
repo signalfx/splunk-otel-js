@@ -34,7 +34,7 @@ let runningMetrics: ReturnType<typeof startMetrics> | null = null;
 let runningProfiling: ReturnType<typeof startProfiling> | null = null;
 let runningTracing: ReturnType<typeof startTracing> | null = null;
 
-export const start = (options: Partial<Options>) => {
+export const start = (options: Partial<Options> = {}) => {
   if (runningMetrics || runningProfiling || runningTracing) {
     console.warn('Splunk APM already started');
     return;
