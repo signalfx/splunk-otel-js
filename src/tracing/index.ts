@@ -31,7 +31,7 @@ import { configureRedisInstrumentation } from '../instrumentations/redis';
 let unregisterInstrumentations: (() => void) | null = null;
 
 export { Options as TracingOptions };
-export function startTracing(opts: Partial<Options> = {}): void {
+export function startTracing(opts: Partial<Options> = {}): boolean {
   const options = _setDefaultOptions(opts);
 
   // propagator
@@ -68,6 +68,8 @@ export function startTracing(opts: Partial<Options> = {}): void {
 
   // register global provider
   trace.setGlobalTracerProvider(provider);
+
+  return true;
 }
 
 export function stopTracing() {

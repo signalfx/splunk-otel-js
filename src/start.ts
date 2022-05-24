@@ -16,7 +16,7 @@
 import { getEnvBoolean } from './utils';
 import { startMetrics, MetricsOptions } from './metrics';
 import { startProfiling, ProfilingOptions } from './profiling';
-import { startTracing, TracingOptions } from './tracing';
+import { startTracing, stopTracing, TracingOptions } from './tracing';
 
 interface GeneralOptions {
   accessToken: string;
@@ -30,7 +30,15 @@ interface Options extends GeneralOptions {
   tracing: boolean | TracingOptions;
 }
 
+let runningMetrics: ReturnType<typeof startMetrics> | null = null;
+let runningProfiling: ReturnType<typeof startProfiling> | null = null;
+let runningTracing: ReturnType<typeof startTracing> | null = null;
+
 export const start = (options: Partial<Options>) => {
+  if (runningMetrics || runningProfiling || runningTracing) {
+    console.warn('Splunk APM already started');
+    return;
+  }
   const { metrics, profiling, tracing, ...restOptions } = options;
 
   if (
@@ -38,7 +46,7 @@ export const start = (options: Partial<Options>) => {
     getEnvBoolean('SPLUNK_PROFILER_ENABLED', undefined) ??
     false
   ) {
-    startProfiling(Object.assign({}, restOptions, profiling));
+    runningProfiling = startProfiling(Object.assign({}, restOptions, profiling));
   }
 
   if (
@@ -46,7 +54,7 @@ export const start = (options: Partial<Options>) => {
     getEnvBoolean('SPLUNK_TRACING_ENABLED', undefined) ??
     true
   ) {
-    startTracing(Object.assign({}, restOptions, tracing));
+    runningTracing = startTracing(Object.assign({}, restOptions, tracing));
   }
 
   if (
@@ -54,6 +62,23 @@ export const start = (options: Partial<Options>) => {
     getEnvBoolean('SPLUNK_METRICS_ENABLED', undefined) ??
     false
   ) {
-    startMetrics(Object.assign({}, restOptions, metrics));
+    runningMetrics = startMetrics(Object.assign({}, restOptions, metrics));
+  }
+};
+
+export const stop = () => {
+  if (runningMetrics) {
+    runningMetrics.stopMetrics();
+    runningMetrics = null;
+  }
+
+  if (runningTracing) {
+    stopTracing();
+    runningTracing = null;
+  }
+
+  if (runningProfiling) {
+    runningProfiling.stop();
+    runningProfiling = null;
   }
 };
