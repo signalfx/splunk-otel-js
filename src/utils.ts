@@ -15,6 +15,24 @@
  */
 export const defaultServiceName = 'unnamed-node-service';
 
+export function parseEnvBooleanString(value?: string) {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  value = value.trim().toLowerCase();
+
+  if (!value || ['false', 'no', 'n', '0'].indexOf(value) >= 0) {
+    return false;
+  }
+
+  if (['true', 'yes', 'y', '1'].indexOf(value) >= 0) {
+    return true;
+  }
+
+  throw new Error(`Invalid string representing boolean: ${value}`);
+}
+
 export function getEnvBoolean(key: string, defaultValue = true) {
   const value = process.env[key];
 

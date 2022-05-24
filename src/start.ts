@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { getEnvBoolean } from './utils';
+import { parseEnvBooleanString } from './utils';
 import { startMetrics, MetricsOptions } from './metrics';
 import { startProfiling, ProfilingOptions } from './profiling';
 import { startTracing, stopTracing, TracingOptions } from './tracing';
@@ -34,34 +34,27 @@ let runningMetrics: ReturnType<typeof startMetrics> | null = null;
 let runningProfiling: ReturnType<typeof startProfiling> | null = null;
 let runningTracing: ReturnType<typeof startTracing> | null = null;
 
+const isSignalEnabled = (option: any, envVar: string, def: boolean) => {
+  return option ?? parseEnvBooleanString(process.env[envVar]) ?? def;
+};
+
 export const start = (options: Partial<Options> = {}) => {
   if (runningMetrics || runningProfiling || runningTracing) {
-    console.warn('Splunk APM already started');
-    return;
+    throw new Error('Splunk APM already started');
   }
   const { metrics, profiling, tracing, ...restOptions } = options;
 
-  if (
-    options.profiling ??
-    getEnvBoolean('SPLUNK_PROFILER_ENABLED', undefined) ??
-    false
-  ) {
-    runningProfiling = startProfiling(Object.assign({}, restOptions, profiling));
+  if (isSignalEnabled(options.profiling, 'SPLUNK_PROFILER_ENABLED', false)) {
+    runningProfiling = startProfiling(
+      Object.assign({}, restOptions, profiling)
+    );
   }
 
-  if (
-    options.tracing ??
-    getEnvBoolean('SPLUNK_TRACING_ENABLED', undefined) ??
-    true
-  ) {
+  if (isSignalEnabled(options.tracing, 'SPLUNK_TRACING_ENABLED', true)) {
     runningTracing = startTracing(Object.assign({}, restOptions, tracing));
   }
 
-  if (
-    options.metrics ??
-    getEnvBoolean('SPLUNK_METRICS_ENABLED', undefined) ??
-    false
-  ) {
+  if (isSignalEnabled(options.metrics, 'SPLUNK_METRICS_ENABLED', false)) {
     runningMetrics = startMetrics(Object.assign({}, restOptions, metrics));
   }
 };
