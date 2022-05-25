@@ -179,9 +179,13 @@ describe('start', () => {
     });
 
     it('works if all the configuration options are passed', () => {
-      assert.throws(() => start({
-        extraneous: 'extraneous',
-      }), /extraneous/);
+      assert.throws(
+        () =>
+          start({
+            extraneous: 'extraneous',
+          }),
+        /extraneous/
+      );
 
       assertCalled(signals.start, false, false, false);
     });
