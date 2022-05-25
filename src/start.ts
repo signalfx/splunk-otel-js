@@ -43,9 +43,9 @@ export const start = (options: Partial<Options> = {}) => {
   const { metrics, profiling, tracing, ...restOptions } = options;
 
   assertNoExtraneousProperties(restOptions, [
+    'accessToken',
     'endpoint',
     'serviceName',
-    'accessToken',
   ]);
 
   if (isSignalEnabled(options.profiling, 'SPLUNK_PROFILER_ENABLED', false)) {
