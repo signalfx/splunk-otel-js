@@ -116,7 +116,7 @@
     "@opentelemetry/sdk-trace-base": "~1.0.0",
     "@opentelemetry/sdk-trace-node": "~1.0.0",
     "@opentelemetry/semantic-conventions": "~1.0.0",
-    "nan": "2.15.0",
+    "nan": "^2.16.0",
     "node-gyp-build": "^4.3.0",
     "semver": "^7.3.5",
     "signalfx": "7.4.1"
