@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-import { context, propagation, trace } from '@opentelemetry/api';
+import { inspect } from 'util';
+
+import { context, propagation, trace, diag } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 
@@ -36,8 +38,8 @@ export function startTracing(opts: Partial<Options> = {}): boolean {
   try {
     assertNoExtraneousProperties(opts, allowedTracingOptions);
   } catch (e) {
-    console.warn(e);
-    console.warn('This will turn into a thrown exception in @splunk/otel@1.0');
+    diag.error(inspect(e));
+    diag.warn('This will turn into a thrown exception in @splunk/otel@1.0');
   }
   const options = _setDefaultOptions(opts);
 
