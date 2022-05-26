@@ -21,7 +21,7 @@ export const SYNTHETIC_RUN_ID_FIELD = 'Synthetics-RunId';
 
 export class SplunkBatchSpanProcessor extends BatchSpanProcessor {
   onStart(_span: Span, parentContext: Context = context.active()) {
-    super.onStart(_span);
+    super.onStart(_span, parentContext);
 
     const syntheticsId = propagation
       .getBaggage(parentContext)
