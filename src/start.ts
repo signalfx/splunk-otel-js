@@ -23,12 +23,11 @@ interface Options {
   endpoint: string;
   serviceName: string;
   // Signal specific configuration options:
-  metrics: boolean | MetricsOptions;
+  metrics: MetricsOptions;
   profiling: boolean | ProfilingOptions;
   tracing: boolean | TracingOptions;
 }
 
-let runningMetrics: ReturnType<typeof startMetrics> | null = null;
 let runningProfiling: ReturnType<typeof startProfiling> | null = null;
 let runningTracing: ReturnType<typeof startTracing> | null = null;
 
@@ -37,7 +36,7 @@ const isSignalEnabled = (option: any, envVar: string, def: boolean) => {
 };
 
 export const start = (options: Partial<Options> = {}) => {
-  if (runningMetrics || runningProfiling || runningTracing) {
+  if (runningProfiling || runningTracing) {
     throw new Error('Splunk APM already started');
   }
   const { metrics, profiling, tracing, ...restOptions } = options;
@@ -52,17 +51,10 @@ export const start = (options: Partial<Options> = {}) => {
     runningTracing = startTracing(Object.assign({}, restOptions, tracing));
   }
 
-  if (isSignalEnabled(options.metrics, 'SPLUNK_METRICS_ENABLED', false)) {
-    runningMetrics = startMetrics(Object.assign({}, restOptions, metrics));
-  }
+  startMetrics(Object.assign({}, restOptions, metrics));
 };
 
 export const stop = () => {
-  if (runningMetrics) {
-    runningMetrics.stopMetrics();
-    runningMetrics = null;
-  }
-
   if (runningTracing) {
     stopTracing();
     runningTracing = null;

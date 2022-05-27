@@ -54,9 +54,7 @@ describe('start', () => {
     };
 
     signals.start = {
-      metrics: sinon.stub(metrics, 'startMetrics').callsFake(() => {
-        return { stopMetrics: signals.stop.metrics };
-      }),
+      metrics: sinon.stub(metrics, 'startMetrics').callsFake(() => {}),
       profiling: sinon.stub(profiling, 'startProfiling').callsFake(() => {
         return { stop: signals.stop.profiling };
       }),
@@ -70,7 +68,7 @@ describe('start', () => {
 
   it('should run only enable tracing by default', () => {
     start();
-    assertCalled(signals.start, false, false, true);
+    assertCalled(signals.start, true, false, true);
 
     stop();
     assertCalled(signals.stop, false, false, true);
@@ -78,18 +76,16 @@ describe('start', () => {
 
   it('should allow toggling signals via boolean', () => {
     start({
-      metrics: true,
       profiling: true,
       tracing: false,
     });
     assertCalled(signals.start, true, true, false);
 
     stop();
-    assertCalled(signals.stop, true, true, false);
+    assertCalled(signals.stop, false, true, false);
   });
 
   it('should allow toggling signals via env', () => {
-    process.env.SPLUNK_METRICS_ENABLED = 'y';
     process.env.SPLUNK_PROFILER_ENABLED = '1';
     process.env.SPLUNK_TRACING_ENABLED = 'no';
 
@@ -97,14 +93,14 @@ describe('start', () => {
     assertCalled(signals.start, true, true, false);
 
     stop();
-    assertCalled(signals.stop, true, true, false);
+    assertCalled(signals.stop, false, true, false);
   });
 
   it('should throw if start called multiple times', () => {
     start();
     assert.throws(() => start());
 
-    assertCalled(signals.start, false, false, true);
+    assertCalled(signals.start, true, false, true);
 
     stop();
     assertCalled(signals.stop, false, false, true);

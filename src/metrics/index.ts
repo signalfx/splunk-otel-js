@@ -24,7 +24,7 @@ import {
 } from '@opentelemetry/sdk-metrics-base';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
 import { Metadata } from '@grpc/grpc-js';
-import { defaultServiceName, getEnvBoolean, getEnvNumber } from '../options';
+import { defaultServiceName, getEnvBoolean, getEnvNumber } from '../utils';
 import { detect as detectResource } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
