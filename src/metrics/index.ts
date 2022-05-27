@@ -30,7 +30,7 @@ import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
 
 export type MetricReaderFactory = (options: MetricsOptions) => MetricReader[];
 
-interface MetricsOptions {
+export interface MetricsOptions {
   serviceName: string;
   accessToken: string;
   endpoint?: string;

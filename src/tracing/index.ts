@@ -18,19 +18,20 @@ import { context, propagation, trace } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 
-import { configureHttpInstrumentation } from './instrumentations/http';
-import { configureLogInjection } from './instrumentations/logging';
+import { configureHttpInstrumentation } from '../instrumentations/http';
+import { configureLogInjection } from '../instrumentations/logging';
 import { Options, _setDefaultOptions } from './options';
 import { gte } from 'semver';
 import {
   AsyncHooksContextManager,
   AsyncLocalStorageContextManager,
 } from '@opentelemetry/context-async-hooks';
-import { configureRedisInstrumentation } from './instrumentations/redis';
+import { configureRedisInstrumentation } from '../instrumentations/redis';
 
 let unregisterInstrumentations: (() => void) | null = null;
 
-export function startTracing(opts: Partial<Options> = {}): void {
+export { Options as TracingOptions };
+export function startTracing(opts: Partial<Options> = {}): boolean {
   const options = _setDefaultOptions(opts);
 
   // propagator
@@ -67,6 +68,8 @@ export function startTracing(opts: Partial<Options> = {}): void {
 
   // register global provider
   trace.setGlobalTracerProvider(provider);
+
+  return true;
 }
 
 export function stopTracing() {

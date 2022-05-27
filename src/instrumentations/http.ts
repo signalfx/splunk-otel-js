@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Options, CaptureHttpUriParameters } from '../options';
+import { Options, CaptureHttpUriParameters } from '../tracing/options';
 import { IncomingMessage, ServerResponse } from 'http';
 import {
   HttpInstrumentationConfig,

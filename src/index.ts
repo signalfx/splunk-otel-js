@@ -18,3 +18,4 @@ export { startTracing } from './tracing';
 export { startMetrics } from './metrics';
 export { ConsoleMetricExporter } from './metrics/console_exporter';
 export { startProfiling } from './profiling';
+export { start, stop } from './start';
