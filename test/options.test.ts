@@ -64,6 +64,7 @@ const expectedAttributes = new Set([
   SemanticResourceAttributes.PROCESS_RUNTIME_DESCRIPTION,
   SemanticResourceAttributes.PROCESS_RUNTIME_NAME,
   SemanticResourceAttributes.PROCESS_RUNTIME_VERSION,
+  'splunk.distro.version',
 ]);
 
 describe('options', () => {
@@ -84,51 +85,65 @@ describe('options', () => {
     api.diag.disable();
   });
 
-  it('has expected defaults', () => {
-    // Mock the default `getInstrumentations` in case some instrumentations (e.g. http) are part of dev dependencies.
-    const getInstrumentationsStub = sinon
-      .stub(instrumentations, 'getInstrumentations')
-      .returns([]);
-    const options = _setDefaultOptions();
-
-    // resource attributes for process, host and os are different at each run, iterate through them, make sure they exist and then delete
-    Object.keys(options.tracerConfig.resource.attributes)
-      .filter(attribute => {
-        return expectedAttributes.has(attribute);
-      })
-      .forEach(processAttribute => {
-        assert(options.tracerConfig.resource.attributes[processAttribute]);
-        delete options.tracerConfig.resource.attributes[processAttribute];
-      });
-
-    assert.deepStrictEqual(options, {
-      /*
-        let the OTel exporter package itself
-        resolve the default for endpoint.
-      */
-      endpoint: undefined,
-      serviceName: 'unnamed-node-service',
-      accessToken: '',
-      serverTimingEnabled: true,
-      instrumentations: [],
-      tracerConfig: {
-        resource: new Resource({
-          [SemanticResourceAttributes.SERVICE_NAME]: 'unnamed-node-service',
-        }),
-      },
-      spanExporterFactory: otlpSpanExporterFactory,
-      spanProcessorFactory: defaultSpanProcessorFactory,
-      propagatorFactory: defaultPropagatorFactory,
-      captureHttpRequestUriParams: [],
+  describe('defaults', () => {
+    let getInstrumentationsStub;
+    beforeEach(() => {
+      // Mock the default `getInstrumentations` in case some instrumentations (e.g. http) are part of dev dependencies.
+      getInstrumentationsStub = sinon
+        .stub(instrumentations, 'getInstrumentations')
+        .returns([]);
     });
 
-    sinon.assert.calledWithMatch(logger.warn, MATCH_SERVICE_NAME_WARNING);
-    sinon.assert.calledWithMatch(
-      logger.warn,
-      MATCH_NO_INSTRUMENTATIONS_WARNING
-    );
+    afterEach(() => {
+      getInstrumentationsStub.restore();
+    });
 
-    getInstrumentationsStub.restore();
+    it('has expected defaults', () => {
+      const options = _setDefaultOptions();
+
+      assert(
+        /[0-9]+\.[0-9]+\.[0-9]+/.test(
+          options.tracerConfig.resource.attributes['splunk.distro.version']
+        )
+      );
+
+      // resource attributes for process, host and os are different at each run, iterate through them, make sure they exist and then delete
+      Object.keys(options.tracerConfig.resource.attributes)
+        .filter(attribute => {
+          return expectedAttributes.has(attribute);
+        })
+        .forEach(processAttribute => {
+          assert(options.tracerConfig.resource.attributes[processAttribute]);
+          delete options.tracerConfig.resource.attributes[processAttribute];
+        });
+
+      assert.deepStrictEqual(options, {
+        /*
+          let the OTel exporter package itself
+          resolve the default for endpoint.
+        */
+        endpoint: undefined,
+        serviceName: 'unnamed-node-service',
+        accessToken: '',
+        serverTimingEnabled: true,
+        instrumentations: [],
+        tracerConfig: {
+          resource: new Resource({
+            [SemanticResourceAttributes.SERVICE_NAME]: 'unnamed-node-service',
+          }),
+        },
+        spanExporterFactory: otlpSpanExporterFactory,
+        spanProcessorFactory: defaultSpanProcessorFactory,
+        propagatorFactory: defaultPropagatorFactory,
+        captureHttpRequestUriParams: [],
+      });
+
+      sinon.assert.calledWithMatch(logger.warn, MATCH_SERVICE_NAME_WARNING);
+      sinon.assert.calledWithMatch(
+        logger.warn,
+        MATCH_NO_INSTRUMENTATIONS_WARNING
+      );
+    });
   });
 
   it('accepts and applies configuration', () => {

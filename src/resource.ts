@@ -17,12 +17,19 @@
 import { diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 
+import { distroDetector } from './detectors/DistroDetector';
 import { envDetector } from './detectors/EnvDetector';
 import { hostDetector } from './detectors/HostDetector';
 import { osDetector } from './detectors/OSDetector';
 import { processDetector } from './detectors/ProcessDetector';
 
-const detectors = [envDetector, hostDetector, osDetector, processDetector];
+const detectors = [
+  distroDetector,
+  envDetector,
+  hostDetector,
+  osDetector,
+  processDetector,
+];
 
 export const detect = (): Resource => {
   return detectors
