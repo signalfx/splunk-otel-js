@@ -15,7 +15,7 @@
  */
 
 import * as assert from 'assert';
-import { startTracing } from '../src/tracing';
+import { startTracing, stopTracing } from '../src/tracing';
 import { defaultSpanProcessorFactory } from '../src/tracing/options';
 import * as utils from './utils';
 import {
@@ -39,7 +39,8 @@ describe('Capturing URI parameters', () => {
   });
 
   afterEach(() => {
-    server.close();
+    server?.close();
+    stopTracing();
   });
 
   const setupServer = () => {

@@ -32,9 +32,9 @@ import {
   ProfilingStartOptions,
   allowedProfilingOptions,
 } from './types';
-import { ProfilingContextManager } from './profiling_contextmanager';
-import { OTLPProfilingExporter } from './otlp_exporter';
-import { DebugExporter } from './debug_exporter';
+import { ProfilingContextManager } from './ProfilingContextManager';
+import { OTLPProfilingExporter } from './OTLPProfilingExporter';
+import { DebugExporter } from './DebugExporter';
 
 export { ProfilingOptions };
 
