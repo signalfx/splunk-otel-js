@@ -32,7 +32,7 @@ import { configureRedisInstrumentation } from '../instrumentations/redis';
 import { parseEnvBooleanString } from '../utils';
 
 /**
- * We disallow calling `start` twice because:
+ * We disallow calling `startTracing` twice because:
  * 1. This is very rarely the user intention;
  * 2. Causes unexpected applied configuration to OTel libs;
  * 3. There's no way to reliably clean up before applying new configuration.
