@@ -39,7 +39,7 @@ describe('Capturing URI parameters', () => {
   });
 
   afterEach(() => {
-    server.close();
+    server?.close();
   });
 
   const setupServer = () => {
