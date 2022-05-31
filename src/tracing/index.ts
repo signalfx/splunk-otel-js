@@ -39,7 +39,9 @@ import { parseEnvBooleanString } from '../utils';
  * However, having a mechanism to allow that in tests is useful even if it
  * leaks and is inperfect in terms of the end result.
  */
-const allowDoubleStart = parseEnvBooleanString(process.env.TEST_ALLOW_DOUBLE_START);
+const allowDoubleStart = parseEnvBooleanString(
+  process.env.TEST_ALLOW_DOUBLE_START
+);
 let isStarted = false;
 
 let unregisterInstrumentations: (() => void) | null = null;
