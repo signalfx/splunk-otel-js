@@ -153,7 +153,6 @@
     "@opentelemetry/instrumentation-tedious": ">=0.1.0 <1",
     "@opentelemetry/instrumentation-winston": ">=0.25.0 <1",
     "opentelemetry-instrumentation-amqplib": ">=0.25.0 <1",
-    "opentelemetry-instrumentation-aws-sdk": ">=0.25.0 <1",
     "opentelemetry-instrumentation-elasticsearch": ">=0.25.0 <1",
     "opentelemetry-instrumentation-kafkajs": ">=0.25.0 <1",
     "opentelemetry-instrumentation-mongoose": ">=0.25.0 <1",
@@ -252,9 +251,6 @@
       "optional": true
     },
     "opentelemetry-instrumentation-amqplib": {
-      "optional": true
-    },
-    "opentelemetry-instrumentation-aws-sdk": {
       "optional": true
     },
     "opentelemetry-instrumentation-elasticsearch": {
