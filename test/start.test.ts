@@ -23,6 +23,50 @@ import { start, stop } from '../src';
 
 import * as utils from './utils';
 
+const CONFIG = {};
+
+const accessToken = 'accessToken';
+const endpoint = 'endpoint';
+const serviceName = 'serviceName';
+CONFIG.general = {
+  accessToken,
+  endpoint,
+  serviceName,
+};
+
+const exportInterval = 'exportInterval';
+CONFIG.metrics = {
+  exportInterval,
+};
+
+const callstackInterval = 'callstackInterval';
+const collectionDuration = 'collectionDuration';
+const debugExport = 'debugExport';
+const resource = 'resource';
+CONFIG.profiling = {
+  callstackInterval,
+  collectionDuration,
+  debugExport,
+  resource,
+};
+
+const captureHttpRequestUriParams = 'captureHttpRequestUriParams';
+const instrumentations = 'instrumentations';
+const propagatorFactory = 'propagatorFactory';
+const serverTimingEnabled = 'serverTimingEnabled';
+const spanExporterFactory = 'spanExporterFactory';
+const spanProcessorFactory = 'spanProcessorFactory';
+const tracerConfig = 'tracerConfig';
+CONFIG.tracing = {
+  captureHttpRequestUriParams,
+  instrumentations,
+  propagatorFactory,
+  serverTimingEnabled,
+  spanExporterFactory,
+  spanProcessorFactory,
+  tracerConfig,
+};
+
 describe('start', () => {
   const signals = {};
 
@@ -65,48 +109,85 @@ describe('start', () => {
   });
 
   afterEach(() => {
+    stop();
     sinon.restore();
   });
 
-  it('should run only enable tracing by default', () => {
-    start();
-    assertCalled(signals.start, false, false, true);
+  describe('toggling signals', () => {
+    it('should run only enable tracing by default', () => {
+      start();
+      assertCalled(signals.start, false, false, true);
 
-    stop();
-    assertCalled(signals.stop, false, false, true);
-  });
-
-  it('should allow toggling signals via boolean', () => {
-    start({
-      metrics: true,
-      profiling: true,
-      tracing: false,
+      stop();
+      assertCalled(signals.stop, false, false, true);
     });
-    assertCalled(signals.start, true, true, false);
 
-    stop();
-    assertCalled(signals.stop, true, true, false);
+    it('should allow toggling signals via boolean', () => {
+      start({
+        metrics: true,
+        profiling: true,
+        tracing: false,
+      });
+      assertCalled(signals.start, true, true, false);
+
+      stop();
+      assertCalled(signals.stop, true, true, false);
+    });
+
+    it('should allow toggling signals via env', () => {
+      process.env.SPLUNK_METRICS_ENABLED = 'y';
+      process.env.SPLUNK_PROFILER_ENABLED = '1';
+      process.env.SPLUNK_TRACING_ENABLED = 'no';
+
+      start();
+      assertCalled(signals.start, true, true, false);
+
+      stop();
+      assertCalled(signals.stop, true, true, false);
+    });
+
+    it('should throw if start called multiple times', () => {
+      start();
+      assert.throws(() => start());
+
+      assertCalled(signals.start, false, false, true);
+
+      stop();
+      assertCalled(signals.stop, false, false, true);
+    });
   });
 
-  it('should allow toggling signals via env', () => {
-    process.env.SPLUNK_METRICS_ENABLED = 'y';
-    process.env.SPLUNK_PROFILER_ENABLED = '1';
-    process.env.SPLUNK_TRACING_ENABLED = 'no';
+  describe('configuration', () => {
+    it('works if all the configuration options are passed', () => {
+      start({
+        ...CONFIG.general,
+        profiling: {
+          ...CONFIG.general,
+          ...CONFIG.profiling,
+        },
+        tracing: {
+          ...CONFIG.general,
+          ...CONFIG.tracing,
+        },
+        metrics: {
+          ...CONFIG.general,
+          ...CONFIG.metrics,
+        },
+      });
 
-    start();
-    assertCalled(signals.start, true, true, false);
+      assertCalled(signals.start, true, true, true);
+    });
 
-    stop();
-    assertCalled(signals.stop, true, true, false);
-  });
+    it('works if all the configuration options are passed', () => {
+      assert.throws(
+        () =>
+          start({
+            extraneous: 'extraneous',
+          }),
+        /extraneous/
+      );
 
-  it('should throw if start called multiple times', () => {
-    start();
-    assert.throws(() => start());
-
-    assertCalled(signals.start, false, false, true);
-
-    stop();
-    assertCalled(signals.stop, false, false, true);
+      assertCalled(signals.start, false, false, false);
+    });
   });
 });

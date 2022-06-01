@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+// TODO: use assert.strict once we deprecate node@8
+import * as assert from 'assert';
+
 export const defaultServiceName = 'unnamed-node-service';
 
 export function parseEnvBooleanString(value?: string) {
@@ -61,4 +65,30 @@ export function getEnvNumber(key: string, defaultValue: number): number {
   }
 
   return numberValue;
+}
+
+export function deduplicate(arr: string[]) {
+  return [...new Set(arr)];
+}
+
+const formatStringSet = (set: Set<string> | string[]) => {
+  return [...set.values()].map(item => `"${item}"`).join(', ');
+};
+
+export function assertNoExtraneousProperties(
+  obj: Record<string, any>,
+  expectedProps: string[]
+) {
+  const keys = new Set(Object.keys(obj));
+  for (const p of expectedProps) {
+    keys.delete(p);
+  }
+
+  assert.equal(
+    keys.size,
+    0,
+    `Unexpected configuration options: ${formatStringSet(
+      keys
+    )}. Allowed: ${formatStringSet(expectedProps)}`
+  );
 }

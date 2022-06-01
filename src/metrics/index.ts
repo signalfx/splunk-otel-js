@@ -14,18 +14,25 @@
  * limitations under the License.
  */
 
+import { inspect } from 'util';
+
 import { context, diag } from '@opentelemetry/api';
 import { suppressTracing } from '@opentelemetry/core';
 import { collectMemoryInfo, MemoryInfo } from './memory';
-import { defaultServiceName, getEnvNumber } from '../utils';
+import {
+  assertNoExtraneousProperties,
+  defaultServiceName,
+  getEnvNumber,
+} from '../utils';
 import { detect as detectResource } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import * as signalfx from 'signalfx';
 
 export interface MetricsOptions {
-  serviceName: string;
   accessToken: string;
   endpoint: string;
+  serviceName: string;
+  // Metrics-specific configuration options:
   exportInterval: number;
 }
 
@@ -76,7 +83,22 @@ export type StartMetricsOptions = Partial<MetricsOptions> & {
   signalfx?: Partial<SignalFxOptions>;
 };
 
+export const allowedMetricsOptions = [
+  'accessToken',
+  'endpoint',
+  'exportInterval',
+  'serviceName',
+  'signalfx',
+];
+
 export function startMetrics(opts: StartMetricsOptions = {}) {
+  try {
+    assertNoExtraneousProperties(opts, allowedMetricsOptions);
+  } catch (e) {
+    diag.error(inspect(e));
+    diag.warn('This will turn into a thrown exception in @splunk/otel@1.0');
+  }
+
   const options = _setDefaultOptions(opts);
 
   const signalFxClient = options.sfxClient;

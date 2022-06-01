@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+import { inspect } from 'util';
 import { strict as assert } from 'assert';
 import { gte } from 'semver';
 
-import { context, propagation, trace } from '@opentelemetry/api';
+import { context, propagation, trace, diag } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import {
@@ -27,9 +28,9 @@ import {
 
 import { configureHttpInstrumentation } from '../instrumentations/http';
 import { configureLogInjection } from '../instrumentations/logging';
-import { Options, _setDefaultOptions } from './options';
+import { allowedTracingOptions, Options, _setDefaultOptions } from './options';
 import { configureRedisInstrumentation } from '../instrumentations/redis';
-import { parseEnvBooleanString } from '../utils';
+import { assertNoExtraneousProperties, parseEnvBooleanString } from '../utils';
 
 /**
  * We disallow calling `startTracing` twice because:
@@ -50,7 +51,12 @@ export { Options as TracingOptions };
 export function startTracing(opts: Partial<Options> = {}): boolean {
   assert(!isStarted || allowDoubleStart, 'Splunk APM already started');
   isStarted = true;
-
+  try {
+    assertNoExtraneousProperties(opts, allowedTracingOptions);
+  } catch (e) {
+    diag.error(inspect(e));
+    diag.warn('This will turn into a thrown exception in @splunk/otel@1.0');
+  }
   const options = _setDefaultOptions(opts);
 
   // propagator
