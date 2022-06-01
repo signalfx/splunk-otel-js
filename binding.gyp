@@ -18,7 +18,7 @@
         "cflags": [
           "-std=c++11",
           "-Wall",
-          "-Wno-deprecated"
+          "-Werror"
         ],
         "cflags_cc": [
           "-Wno-cast-function-type"
