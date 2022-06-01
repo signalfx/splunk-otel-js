@@ -149,7 +149,6 @@ any of these instrumentations, you'll need to install them with npm and then run
 * `@opentelemetry/instrumentation-tedious`
 * `@opentelemetry/instrumentation-winston`
 * `opentelemetry-instrumentation-amqplib`
-* `opentelemetry-instrumentation-aws-sdk`
 * `opentelemetry-instrumentation-elasticsearch`
 * `opentelemetry-instrumentation-kafkajs`
 * `opentelemetry-instrumentation-mongoose`
