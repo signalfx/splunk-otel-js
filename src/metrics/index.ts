@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { inspect } from 'util';
-
 import { context, diag } from '@opentelemetry/api';
 import { suppressTracing } from '@opentelemetry/core';
 import { collectMemoryInfo, MemoryInfo } from './memory';
@@ -92,12 +90,7 @@ export const allowedMetricsOptions = [
 ];
 
 export function startMetrics(opts: StartMetricsOptions = {}) {
-  try {
-    assertNoExtraneousProperties(opts, allowedMetricsOptions);
-  } catch (e) {
-    diag.error(inspect(e));
-    diag.warn('This will turn into a thrown exception in @splunk/otel@1.0');
-  }
+  assertNoExtraneousProperties(opts, allowedMetricsOptions);
 
   const options = _setDefaultOptions(opts);
 
