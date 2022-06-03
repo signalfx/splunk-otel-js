@@ -1,6 +1,6 @@
 {
   "type": "major",
-  "comment": "feat: upgrade OTel deps",
+  "comment": "feat: upgrade OTel deps and bump min instrumentation versions",
   "packageName": "@splunk/otel",
   "email": "rauno56@gmail.com",
   "dependentChangeType": "patch"
