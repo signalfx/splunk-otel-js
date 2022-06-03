@@ -113,6 +113,11 @@ const request = (url) => {
 };
 
 const assertSpans = (actualSpans, expectedSpans) => {
+  if (process.env.LOG_NEW_SNAPSHOTS === 'true') {
+    console.error(actualSpans);
+    console.error('skipping checking asserting spans');
+    return 0;
+  }
   assert(Array.isArray(actualSpans), 'Expected `actualSpans` to be an array');
   assert(
     Array.isArray(expectedSpans),
@@ -136,6 +141,7 @@ const assertSpans = (actualSpans, expectedSpans) => {
       assert.strictEqual(span.attributes['http.method'], expected.attributes['http.method']);
       assert.strictEqual(span.attributes['http.url'], expected.attributes['http.url']);
       assert.strictEqual(span.attributes['http.route'], expected.attributes['http.route']);
+      assert.strictEqual(span.attributes['http.target'], expected.attributes['http.target']);
       assert.strictEqual(span.attributes['otel.library.name'], expected.attributes['otel.library.name']);
 
       // TODO: Check for status. HTTP Sink endpoint on the collector doesn't return status correctly.
@@ -154,6 +160,8 @@ const assertSpans = (actualSpans, expectedSpans) => {
       throw e;
     }
   });
+
+  return expectedSpans.length;
 };
 
 module.exports = {
