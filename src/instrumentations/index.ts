@@ -56,7 +56,6 @@ const supportedInstrumentations: [string, string][] = [
   ['@opentelemetry/instrumentation-restify', 'RestifyInstrumentation'],
   ['@opentelemetry/instrumentation-tedious', 'TediousInstrumentation'],
   ['@opentelemetry/instrumentation-winston', 'WinstonInstrumentation'],
-  ['opentelemetry-instrumentation-amqplib', 'AmqplibInstrumentation'],
   [
     'opentelemetry-instrumentation-elasticsearch',
     'ElasticsearchInstrumentation',
