@@ -1,6 +1,6 @@
 {
   "type": "major",
-  "comment": "fix: remove opentelemetry-instrumentation-aws-sdk from autoloaded instrumentations",
+  "comment": "chore: remove support for deprecated `opentelemetry-instrumentation-aws-sdk`",
   "packageName": "@splunk/otel",
   "email": "rauno56@gmail.com",
   "dependentChangeType": "patch"
