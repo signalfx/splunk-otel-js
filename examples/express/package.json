@@ -14,8 +14,8 @@
     "server:opentracing": "env-cmd --silent nodemon -r ./tracer.opentracing.js server.js"
   },
   "dependencies": {
-    "@opentelemetry/instrumentation-express": "^0.25.0",
-    "@opentelemetry/instrumentation-http": "^0.25.0",
+    "@opentelemetry/instrumentation-express": "^0.29.0",
+    "@opentelemetry/instrumentation-http": "^0.28.0",
     "@splunk/otel": "^0.17.0",
     "axios": "^0.21.1",
     "env-cmd": "^10.1.0",
