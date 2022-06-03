@@ -57,7 +57,6 @@ const supportedInstrumentations: [string, string][] = [
   ['@opentelemetry/instrumentation-tedious', 'TediousInstrumentation'],
   ['@opentelemetry/instrumentation-winston', 'WinstonInstrumentation'],
   ['opentelemetry-instrumentation-amqplib', 'AmqplibInstrumentation'],
-  ['opentelemetry-instrumentation-aws-sdk', 'AwsInstrumentation'],
   [
     'opentelemetry-instrumentation-elasticsearch',
     'ElasticsearchInstrumentation',

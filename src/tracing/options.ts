@@ -29,7 +29,7 @@ import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 import { Metadata } from '@grpc/grpc-js';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { detect as detectResource } from '../resource';
-import { defaultServiceName, getEnvBoolean } from '../utils';
+import { deduplicate, defaultServiceName, getEnvBoolean } from '../utils';
 import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { diag, Span, TextMapPropagator } from '@opentelemetry/api';
@@ -55,17 +55,31 @@ export type CaptureHttpUriParameters = (
 ) => void;
 
 export interface Options {
+  accessToken: string;
   endpoint?: string;
   serviceName: string;
-  accessToken: string;
-  serverTimingEnabled: boolean;
+  // Tracing-specific configuration options:
+  captureHttpRequestUriParams: string[] | CaptureHttpUriParameters;
   instrumentations: InstrumentationOption[];
-  tracerConfig: NodeTracerConfig;
+  propagatorFactory: PropagatorFactory;
+  serverTimingEnabled: boolean;
   spanExporterFactory: SpanExporterFactory;
   spanProcessorFactory: SpanProcessorFactory;
-  propagatorFactory: PropagatorFactory;
-  captureHttpRequestUriParams: string[] | CaptureHttpUriParameters;
+  tracerConfig: NodeTracerConfig;
 }
+
+export const allowedTracingOptions = [
+  'accessToken',
+  'captureHttpRequestUriParams',
+  'endpoint',
+  'instrumentations',
+  'propagatorFactory',
+  'serverTimingEnabled',
+  'serviceName',
+  'spanExporterFactory',
+  'spanProcessorFactory',
+  'tracerConfig',
+];
 
 export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   process.env.OTEL_SPAN_LINK_COUNT_LIMIT =
@@ -259,8 +273,4 @@ export function defaultPropagatorFactory(options: Options): TextMapPropagator {
   return new CompositePropagator({
     propagators,
   });
-}
-
-function deduplicate(arr: string[]) {
-  return [...new Set(arr)];
 }

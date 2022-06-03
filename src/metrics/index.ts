@@ -24,17 +24,23 @@ import {
 } from '@opentelemetry/sdk-metrics-base';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
 import { Metadata } from '@grpc/grpc-js';
-import { defaultServiceName, getEnvBoolean, getEnvNumber } from '../utils';
+import {
+  assertNoExtraneousProperties,
+  defaultServiceName,
+  getEnvBoolean,
+  getEnvNumber,
+} from '../utils';
+import { inspect } from 'util';
 import { detect as detectResource } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 export type MetricReaderFactory = (options: MetricsOptions) => MetricReader[];
 
 export interface MetricsOptions {
-  serviceName: string;
   accessToken: string;
+  serviceName: string;
   endpoint?: string;
-  resource?: Resource;
+  resource: Resource;
   exportIntervalMillis: number;
   metricReaderFactory: MetricReaderFactory;
   runtimeMetricsEnabled: boolean;
@@ -128,7 +134,26 @@ export function defaultMetricReaderFactory(
   return [reader];
 }
 
+export const allowedMetricsOptions = [
+  'accessToken',
+  'endpoint',
+  'exportInterval',
+  'exportIntervalMillis',
+  'metricReaderFactory',
+  'resource',
+  'runtimeMetricsEnabled',
+  'runtimeMetricsCollectionIntervalMillis',
+  'serviceName',
+];
+
 export function startMetrics(opts: StartMetricsOptions = {}) {
+  try {
+    assertNoExtraneousProperties(opts, allowedMetricsOptions);
+  } catch (e) {
+    diag.error(inspect(e));
+    diag.warn('This will turn into a thrown exception in @splunk/otel@1.0');
+  }
+
   const options = _setDefaultOptions(opts);
 
   const provider = new MeterProvider({

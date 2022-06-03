@@ -14,24 +14,49 @@
  * limitations under the License.
  */
 
-import { context, propagation, trace } from '@opentelemetry/api';
+import { inspect } from 'util';
+import { strict as assert } from 'assert';
+import { gte } from 'semver';
+
+import { context, propagation, trace, diag } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
-
-import { configureHttpInstrumentation } from '../instrumentations/http';
-import { configureLogInjection } from '../instrumentations/logging';
-import { Options, _setDefaultOptions } from './options';
-import { gte } from 'semver';
 import {
   AsyncHooksContextManager,
   AsyncLocalStorageContextManager,
 } from '@opentelemetry/context-async-hooks';
+
+import { configureHttpInstrumentation } from '../instrumentations/http';
+import { configureLogInjection } from '../instrumentations/logging';
+import { allowedTracingOptions, Options, _setDefaultOptions } from './options';
 import { configureRedisInstrumentation } from '../instrumentations/redis';
+import { assertNoExtraneousProperties, parseEnvBooleanString } from '../utils';
+
+/**
+ * We disallow calling `startTracing` twice because:
+ * 1. This is very rarely the user intention;
+ * 2. Causes unexpected applied configuration to OTel libs;
+ * 3. There's no way to reliably clean up before applying new configuration.
+ * However, having a mechanism to allow that in tests is useful even if it
+ * leaks and is inperfect in terms of the end result.
+ */
+const allowDoubleStart = parseEnvBooleanString(
+  process.env.TEST_ALLOW_DOUBLE_START
+);
+let isStarted = false;
 
 let unregisterInstrumentations: (() => void) | null = null;
 
 export { Options as TracingOptions };
 export function startTracing(opts: Partial<Options> = {}): boolean {
+  assert(!isStarted || allowDoubleStart, 'Splunk APM already started');
+  isStarted = true;
+  try {
+    assertNoExtraneousProperties(opts, allowedTracingOptions);
+  } catch (e) {
+    diag.error(inspect(e));
+    diag.warn('This will turn into a thrown exception in @splunk/otel@1.0');
+  }
   const options = _setDefaultOptions(opts);
 
   // propagator

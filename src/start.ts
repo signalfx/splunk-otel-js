@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { parseEnvBooleanString } from './utils';
+import { assertNoExtraneousProperties, parseEnvBooleanString } from './utils';
 import { startMetrics, MetricsOptions } from './metrics';
 import { startProfiling, ProfilingOptions } from './profiling';
 import { startTracing, stopTracing, TracingOptions } from './tracing';
@@ -22,24 +22,34 @@ interface Options {
   accessToken: string;
   endpoint: string;
   serviceName: string;
-  // Signal specific configuration options:
-  metrics: MetricsOptions;
-  profiling: boolean | ProfilingOptions;
+  // Signal-specific configuration options:
+  metrics: boolean | MetricsOptions;
+  profiling: ProfilingOptions;
   tracing: boolean | TracingOptions;
 }
 
 let runningProfiling: ReturnType<typeof startProfiling> | null = null;
 let runningTracing: ReturnType<typeof startTracing> | null = null;
 
-const isSignalEnabled = (option: any, envVar: string, def: boolean) => {
+function isSignalEnabled<T>(
+  option: T | undefined | null,
+  envVar: string,
+  def: boolean
+) {
   return option ?? parseEnvBooleanString(process.env[envVar]) ?? def;
-};
+}
 
 export const start = (options: Partial<Options> = {}) => {
   if (runningProfiling || runningTracing) {
     throw new Error('Splunk APM already started');
   }
   const { metrics, profiling, tracing, ...restOptions } = options;
+
+  assertNoExtraneousProperties(restOptions, [
+    'accessToken',
+    'endpoint',
+    'serviceName',
+  ]);
 
   if (isSignalEnabled(options.profiling, 'SPLUNK_PROFILER_ENABLED', false)) {
     runningProfiling = startProfiling(

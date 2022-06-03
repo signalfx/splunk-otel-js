@@ -18,7 +18,7 @@
     "lint:fix": "eslint . --ext .ts --fix",
     "lint": "eslint . --ext .ts",
     "lint:commits": "commitlint",
-    "test": "nyc ts-mocha -p tsconfig.json 'test/**/*.test.ts'",
+    "test": "cross-env TEST_ALLOW_DOUBLE_START=y nyc ts-mocha -p tsconfig.json 'test/**/*.test.ts'",
     "prebuild:current": "node scripts/prebuild-current.js",
     "prebuild:os": "node scripts/prebuild-os.js",
     "release:github": "node scripts/release-github.js",
@@ -38,7 +38,7 @@
     "stats"
   ],
   "engines": {
-    "node": ">=8.5.0 <18"
+    "node": ">=12.13"
   },
   "files": [
     "binding.gyp",
@@ -78,6 +78,7 @@
     "@typescript-eslint/parser": "^5.20.0",
     "beachball": "^2.10.2",
     "bunyan": "1.8.15",
+    "cross-env": "^7.0.3",
     "eslint": "^8.13.0",
     "eslint-config-prettier": "^7.0.0",
     "eslint-plugin-header": "^3.1.1",
@@ -88,7 +89,7 @@
     "nyc": "15.1.0",
     "octokit": "^1.7.0",
     "pino": "^6.13.2",
-    "prebuildify": "5.0.0",
+    "prebuildify": "^5.0.0",
     "prettier": ">=2.3.2",
     "redis": "^3.1.2",
     "rewire": "^5.0.0",
@@ -117,7 +118,7 @@
     "@opentelemetry/sdk-trace-base": "~1.2.0",
     "@opentelemetry/sdk-trace-node": "~1.2.0",
     "@opentelemetry/semantic-conventions": "~1.2.0",
-    "nan": "2.15.0",
+    "nan": "^2.16.0",
     "node-gyp-build": "^4.3.0",
     "semver": "^7.3.5"
   },
@@ -153,7 +154,6 @@
     "@opentelemetry/instrumentation-tedious": ">=0.1.0 <1",
     "@opentelemetry/instrumentation-winston": ">=0.25.0 <1",
     "opentelemetry-instrumentation-amqplib": ">=0.25.0 <1",
-    "opentelemetry-instrumentation-aws-sdk": ">=0.25.0 <1",
     "opentelemetry-instrumentation-elasticsearch": ">=0.25.0 <1",
     "opentelemetry-instrumentation-kafkajs": ">=0.25.0 <1",
     "opentelemetry-instrumentation-mongoose": ">=0.25.0 <1",
@@ -252,9 +252,6 @@
       "optional": true
     },
     "opentelemetry-instrumentation-amqplib": {
-      "optional": true
-    },
-    "opentelemetry-instrumentation-aws-sdk": {
       "optional": true
     },
     "opentelemetry-instrumentation-elasticsearch": {

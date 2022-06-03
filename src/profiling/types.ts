@@ -44,14 +44,24 @@ export interface ProfilingExtension {
 }
 
 export interface ProfilingOptions {
-  serviceName: string;
   endpoint: string;
+  serviceName: string;
+  // Profiling-specific configuration options:
   callstackInterval: number;
   collectionDuration: number;
-  resource: Resource;
   debugExport: boolean;
+  resource: Resource;
 }
 
 export interface ProfilingExporter {
   send(profile: ProfilingData): void;
 }
+
+export const allowedProfilingOptions = [
+  'callstackInterval',
+  'collectionDuration',
+  'debugExport',
+  'endpoint',
+  'resource',
+  'serviceName',
+];
