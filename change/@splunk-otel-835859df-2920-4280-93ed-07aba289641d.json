@@ -1,0 +1,7 @@
+{
+  "type": "major",
+  "comment": "chore: remove support for `opentelemetry-instrumentation-amqplib`",
+  "packageName": "@splunk/otel",
+  "email": "rauno56@gmail.com",
+  "dependentChangeType": "patch"
+}
