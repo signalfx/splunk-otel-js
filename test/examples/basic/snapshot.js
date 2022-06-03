@@ -16,7 +16,6 @@ module.exports = [{
     'http.host': 'app',
     'net.host.name': 'app',
     'http.method': 'GET',
-    'http.route': '/hello',
     'http.target': '/hello',
     'http.user_agent': 'got (https://github.com/sindresorhus/got)',
     'http.flavor': '1.1',
