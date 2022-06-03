@@ -1,9 +1,9 @@
 // a console.log from a previous run
 module.exports = [
   {
-    traceId: 'jCTyhwnMjMDFpLaAn05Qpg==',
-    id: 'KhZoHOXKy/c=',
-    startTime: '2021-09-21T09:14:06.403828992Z',
+    traceId: '0Iqbr5g8SjiaX3WlJBQyTA==',
+    id: 'U9O4F1SzkzY=',
+    startTime: '2022-06-03T13:06:01.752053248Z',
     name: 'HTTP GET',
     kind: 'server',
     parentSpanId: undefined,
@@ -12,33 +12,32 @@ module.exports = [
     status: { code: undefined },
     attributes: {
       'otel.library.name': '@opentelemetry/instrumentation-http',
-      'otel.library.version': '0.23.0',
+      'otel.library.version': '0.28.0',
       'http.url': 'http://app/',
       'http.host': 'app',
       'net.host.name': 'app',
       'http.method': 'GET',
-      'http.route': '/',
       'http.target': '/',
       'http.user_agent': 'got (https://github.com/sindresorhus/got)',
       'http.flavor': '1.1',
       'net.transport': 'ip_tcp',
-      'net.host.ip': '::ffff:172.20.0.3',
+      'net.host.ip': '::ffff:172.18.0.3',
       'net.host.port': undefined,
-      'net.peer.ip': '::ffff:172.20.0.4',
+      'net.peer.ip': '::ffff:172.18.0.4',
       'net.peer.port': undefined,
       'http.status_code': undefined,
       'http.status_text': 'OK',
-      'span.kind': 'server',
-      'status.code': undefined
+      'span.kind': 'server'
     }
-  }, {
-    traceId: 'jCTyhwnMjMDFpLaAn05Qpg==',
-    id: 'D5DaqpNonAc=',
-    startTime: '2021-09-21T09:14:06.412206080Z',
+  },
+  {
+    traceId: '0Iqbr5g8SjiaX3WlJBQyTA==',
+    id: 'CnIjaAfhsFM=',
+    startTime: '2022-06-03T13:06:01.755319040Z',
     name: 'work',
     kind: 'internal',
-    parentSpanId: 'KhZoHOXKy/c=',
-    parent: { id: 'KhZoHOXKy/c=', traceId: 'jCTyhwnMjMDFpLaAn05Qpg==' },
+    parentSpanId: 'U9O4F1SzkzY=',
+    parent: { id: 'U9O4F1SzkzY=', traceId: '0Iqbr5g8SjiaX3WlJBQyTA==' },
     references: [],
     status: { code: undefined },
     attributes: {
@@ -46,8 +45,7 @@ module.exports = [
       'work.expected_duration': undefined,
       'work.my_parameter': undefined,
       'work.result': undefined,
-      'span.kind': 'internal',
-      'status.code': undefined
+      'span.kind': 'internal'
     }
   }
 ];
