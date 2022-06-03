@@ -1,8 +1,8 @@
 // a console.log from a previous run
 module.exports = [{
-  traceId: 'eH5wrxGD/9lH3X5c/nj5UA==',
-  id: 'qqOPnIVYJuE=',
-  startTime: '2021-09-16T12:31:55.016052992Z',
+  traceId: '1unWMDRTxRjt1RAej3swrQ==',
+  id: 'oHaqp2656b8=',
+  startTime: '2022-06-03T12:53:51.105606912Z',
   name: 'HTTP GET',
   kind: 'server',
   parentSpanId: undefined,
@@ -11,38 +11,35 @@ module.exports = [{
   status: { code: undefined },
   attributes: {
     'otel.library.name': '@opentelemetry/instrumentation-http',
-    'otel.library.version': '0.24.0',
+    'otel.library.version': '0.28.0',
     'http.url': 'http://app/hello',
     'http.host': 'app',
     'net.host.name': 'app',
     'http.method': 'GET',
-    'http.route': '/hello',
     'http.target': '/hello',
     'http.user_agent': 'got (https://github.com/sindresorhus/got)',
     'http.flavor': '1.1',
     'net.transport': 'ip_tcp',
-    'net.host.ip': '::ffff:172.20.0.3',
+    'net.host.ip': '::ffff:172.18.0.3',
     'net.host.port': undefined,
-    'net.peer.ip': '::ffff:172.20.0.4',
+    'net.peer.ip': '::ffff:172.18.0.4',
     'net.peer.port': undefined,
     'http.status_code': undefined,
     'http.status_text': 'CREATED',
-    'span.kind': 'server',
-    'status.code': undefined
+    'span.kind': 'server'
   }
 }, {
-  traceId: 'eH5wrxGD/9lH3X5c/nj5UA==',
-  id: '7m4qr+paz/Q=',
-  startTime: '2021-09-16T12:31:55.019908608Z',
+  traceId: '1unWMDRTxRjt1RAej3swrQ==',
+  id: '7y49G1AMtmA=',
+  startTime: '2022-06-03T12:53:51.108744192Z',
   name: 'hello',
   kind: 'internal',
-  parentSpanId: 'qqOPnIVYJuE=',
-  parent: { id: 'qqOPnIVYJuE=', traceId: 'eH5wrxGD/9lH3X5c/nj5UA==' },
+  parentSpanId: 'oHaqp2656b8=',
+  parent: { id: 'oHaqp2656b8=', traceId: '1unWMDRTxRjt1RAej3swrQ==' },
   references: [],
   status: { code: undefined },
   attributes: {
     'otel.library.name': 'splunk-otel-example-basic',
-    'span.kind': 'internal',
-    'status.code': undefined
+    'span.kind': 'internal'
   }
 }];
