@@ -1,7 +1,0 @@
-{
-  "type": "major",
-  "comment": "feat: throw when extraneous properties are provided",
-  "packageName": "@splunk/otel",
-  "email": "rauno56@gmail.com",
-  "dependentChangeType": "patch"
-}

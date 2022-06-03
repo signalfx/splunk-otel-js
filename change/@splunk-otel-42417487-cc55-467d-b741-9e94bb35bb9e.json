@@ -1,7 +1,0 @@
-{
-  "type": "minor",
-  "comment": "feat: implement setting up ConsoleSpanExporter via env var",
-  "packageName": "@splunk/otel",
-  "email": "rauno56@gmail.com",
-  "dependentChangeType": "patch"
-}

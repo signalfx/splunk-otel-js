@@ -1,7 +1,0 @@
-{
-  "type": "none",
-  "comment": "feat: change the `readme.md` badge to stable",
-  "packageName": "@splunk/otel",
-  "email": "rauno56@gmail.com",
-  "dependentChangeType": "none"
-}

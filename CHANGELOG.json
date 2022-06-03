@@ -2,6 +2,103 @@
   "name": "@splunk/otel",
   "entries": [
     {
+      "date": "Fri, 03 Jun 2022 13:48:20 GMT",
+      "tag": "@splunk/otel_v1.0.0",
+      "version": "1.0.0",
+      "comments": {
+        "major": [
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "f2ed1b9497e8eb30a4192e1c6d1b631f4564b5b6",
+            "comment": "chore: remove support for deprecated `opentelemetry-instrumentation-amqplib`"
+          },
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "fc7b002cdb61cf4ace5b73449c1ef69124ec0b44",
+            "comment": "chore: remove support for deprecated `opentelemetry-instrumentation-aws-sdk`"
+          },
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "2df2a1e4ae1d36c7f02a2d79f3210fd70e6db52b",
+            "comment": "feat: throw when `startTracing` is called twice"
+          },
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "070c6d658321e064e0bddcdc9611002537af1f35",
+            "comment": "feat: throw when extraneous properties are provided"
+          },
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "5b4322d1e5c63c98be116a9ddc2d9f1b741fab24",
+            "comment": "chore: remove support for Node versions before LTS 12"
+          },
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "c01f78af6dfa2fced801c128bad7dbf58ed58b1a",
+            "comment": "feat: upgrade OTel deps and bump min instrumentation versions"
+          }
+        ],
+        "minor": [
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "25a24ac055e479ddd330d15820ab800293df94e9",
+            "comment": "feat: prebuild for node@18"
+          },
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "d5ae0644a042424324c30188986324306af0cd0f",
+            "comment": "feat: add splunk.distro.version resource attribute"
+          },
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "57b3dd05bc93b054f023bf828786d5319da91961",
+            "comment": "feat: bring in detectors for os.* and host.* attributes"
+          },
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "499f54f65ffa601bbcd955f3d212c9e4763cda57",
+            "comment": "feat: add a generic start API"
+          },
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "638b774ac52d8d5475359d1d036b24fa38726749",
+            "comment": "feat: detect resource from process"
+          },
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "7a7ef91e2ff7a1aaa8184608b900cb9e16f63598",
+            "comment": "feat: throw when unexpected configuration provided"
+          },
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "4fd1655b8373fe052116a72ab15b96b8852ba8bd",
+            "comment": "feat: implement setting up ConsoleSpanExporter via env var"
+          }
+        ],
+        "none": [
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "11df6ddb01885b0c60d9eab8ed5671a8d29a3ab6",
+            "comment": "feat: change the `readme.md` badge to stable"
+          }
+        ]
+      }
+    },
+    {
       "date": "Thu, 21 Apr 2022 17:01:07 GMT",
       "tag": "@splunk/otel_v0.18.0",
       "version": "0.18.0",
