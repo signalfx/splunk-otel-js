@@ -1,0 +1,7 @@
+{
+  "type": "major",
+  "comment": "feat: upgrade OTel deps",
+  "packageName": "@splunk/otel",
+  "email": "rauno56@gmail.com",
+  "dependentChangeType": "patch"
+}
