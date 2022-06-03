@@ -137,7 +137,6 @@ export function defaultMetricReaderFactory(
 export const allowedMetricsOptions = [
   'accessToken',
   'endpoint',
-  'exportInterval',
   'exportIntervalMillis',
   'metricReaderFactory',
   'resource',

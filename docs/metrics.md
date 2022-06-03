@@ -29,7 +29,7 @@ startMetrics({
     'my.property': 'xyz',
     'build': 42
   }),
-  exportInterval: 1000, // default: 5000
+  exportIntervalMillis: 1000, // default: 5000
   // The default exporter used is OTLP over gRPC
   endpoint: 'collector:4317',
 });

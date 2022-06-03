@@ -61,7 +61,9 @@ export const start = (options: Partial<Options> = {}) => {
     runningTracing = startTracing(Object.assign({}, restOptions, tracing));
   }
 
-  startMetrics(Object.assign({}, restOptions, metrics));
+  if (isSignalEnabled(options.metrics, 'SPLUNK_METRICS_ENABLED', true)) {
+    startMetrics(Object.assign({}, restOptions, metrics));
+  }
 };
 
 export const stop = () => {
