@@ -23,7 +23,7 @@ import {
   PeriodicExportingMetricReader,
 } from '@opentelemetry/sdk-metrics-base';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
-import { Metadata } from '@grpc/grpc-js';
+import { ChannelCredentials, Metadata } from '@grpc/grpc-js';
 import {
   assertNoExtraneousProperties,
   defaultServiceName,
@@ -39,7 +39,7 @@ export type MetricReaderFactory = (options: MetricsOptions) => MetricReader[];
 export interface MetricsOptions {
   accessToken: string;
   serviceName: string;
-  endpoint?: string;
+  endpoint: string;
   resource: Resource;
   exportIntervalMillis: number;
   metricReaderFactory: MetricReaderFactory;
@@ -116,16 +116,22 @@ function recordGcCountMetric(counter: Counter, counters: NativeCounters) {
 export type StartMetricsOptions = Partial<MetricsOptions>;
 
 export function defaultMetricReaderFactory(
-  options: StartMetricsOptions
+  options: MetricsOptions
 ): MetricReader[] {
   const metadata = new Metadata();
   if (options.accessToken) {
     metadata.set('X-SF-TOKEN', options.accessToken);
   }
 
+  // TODO: Remove once https://github.com/open-telemetry/opentelemetry-js/pull/3019 is published
+  const credentials = options.endpoint.startsWith('http://')
+    ? ChannelCredentials.createInsecure()
+    : undefined;
+
   const reader = new PeriodicExportingMetricReader({
     exportIntervalMillis: options.exportIntervalMillis,
     exporter: new OTLPMetricExporter({
+      credentials,
       url: options.endpoint,
       metadata,
     }),
@@ -289,7 +295,7 @@ export function _setDefaultOptions(
     serviceName,
     accessToken,
     resource,
-    endpoint: options.endpoint,
+    endpoint: options.endpoint ?? 'http://localhost:4317',
     metricReaderFactory:
       options.metricReaderFactory ?? defaultMetricReaderFactory,
     exportIntervalMillis:
