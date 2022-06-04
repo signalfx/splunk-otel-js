@@ -15,12 +15,10 @@
  */
 
 import * as assert from 'assert';
-import * as os from 'os';
 import { Resource } from '@opentelemetry/resources';
 import { metrics } from '@opentelemetry/api-metrics';
 import {
   AggregationTemporality,
-  DataPoint,
   DataPointType,
   InstrumentType,
   MetricReader,
@@ -58,6 +56,14 @@ const emptyStats = () => ({
 });
 
 class TestMetricReader extends MetricReader {
+  constructor(public temporality: AggregationTemporality) {
+    super();
+  }
+  selectAggregationTemporality(
+    instrumentType: InstrumentType
+  ): AggregationTemporality {
+    return this.temporality;
+  }
   protected async onForceFlush() {}
   protected async onShutdown() {}
 }
@@ -179,26 +185,25 @@ describe('metrics', () => {
       const metricData = await reader.collect();
 
       assert.deepEqual(
-        metricData.resource.attributes[
+        metricData.resourceMetrics.resource.attributes[
           SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT
         ],
         'test'
       );
 
       assert.deepEqual(
-        metricData.resource.attributes[SemanticResourceAttributes.SERVICE_NAME],
+        metricData.resourceMetrics.resource.attributes[
+          SemanticResourceAttributes.SERVICE_NAME
+        ],
         'foo'
       );
 
       // One is the 'custom' meter, the other one is runtime metrics meter
-      assert.deepEqual(metricData.instrumentationLibraryMetrics.length, 2);
+      assert.deepEqual(metricData.resourceMetrics.scopeMetrics.length, 2);
 
-      const runtimeIlMetrics = metricData.instrumentationLibraryMetrics.find(
-        ilMetrics => {
-          return (
-            ilMetrics.instrumentationLibrary.name ===
-            'splunk-otel-js-runtime-metrics'
-          );
+      const runtimeIlMetrics = metricData.resourceMetrics.scopeMetrics.find(
+        scopeMetrics => {
+          return scopeMetrics.scope.name === 'splunk-otel-js-runtime-metrics';
         }
       );
 
@@ -261,7 +266,7 @@ describe('metrics', () => {
 
         assert.deepEqual(runtimeMetric.descriptor.unit, expected.unit);
 
-        assert(runtimeMetric.dataPointType === DataPointType.SINGULAR);
+        assert.deepEqual(runtimeMetric.dataPointType, DataPointType.SINGULAR);
 
         if (runtimeMetric.descriptor.name.includes('memory.gc')) {
           assert(

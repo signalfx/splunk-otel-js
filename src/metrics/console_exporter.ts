@@ -19,9 +19,10 @@ import {
   DataPointType,
   Histogram,
   InstrumentDescriptor,
-  InstrumentationLibraryMetrics,
+  ScopeMetrics,
   PushMetricExporter,
   ResourceMetrics,
+  InstrumentType,
 } from '@opentelemetry/sdk-metrics-base';
 import { ValueType } from '@opentelemetry/api-metrics';
 import {
@@ -35,11 +36,8 @@ function logDescriptor(descriptor: InstrumentDescriptor) {
   console.dir({ ...descriptor, valueType });
 }
 
-function logScopeMetrics(
-  ilMetrics: InstrumentationLibraryMetrics,
-  index: number
-) {
-  const { instrumentationLibrary: scope, metrics } = ilMetrics;
+function logScopeMetrics(scopeMetrics: ScopeMetrics, index: number) {
+  const { scope, metrics } = scopeMetrics;
 
   console.log(`ScopeMetrics #${index}`);
   console.log(
@@ -99,8 +97,8 @@ export class ConsoleMetricExporter implements PushMetricExporter {
     console.log('Resource metrics:');
     console.dir(metrics.resource);
 
-    for (let i = 0; i < metrics.instrumentationLibraryMetrics.length; i++) {
-      logScopeMetrics(metrics.instrumentationLibraryMetrics[i], i);
+    for (let i = 0; i < metrics.scopeMetrics.length; i++) {
+      logScopeMetrics(metrics.scopeMetrics[i], i);
     }
 
     resultCallback({
@@ -108,7 +106,9 @@ export class ConsoleMetricExporter implements PushMetricExporter {
     });
   }
 
-  getPreferredAggregationTemporality() {
+  selectAggregationTemporality(
+    _instrumentType: InstrumentType
+  ): AggregationTemporality {
     return this._aggregationTemporality;
   }
 

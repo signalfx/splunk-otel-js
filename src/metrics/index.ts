@@ -173,38 +173,32 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
 
   const meter = metrics.getMeter('splunk-otel-js-runtime-metrics');
 
-  meter.createObservableGauge(
-    'process.runtime.nodejs.memory.heap.total',
-    result => {
+  meter
+    .createObservableGauge('process.runtime.nodejs.memory.heap.total', {
+      unit: 'By',
+      valueType: ValueType.INT,
+    })
+    .addCallback(result => {
       result.observe(process.memoryUsage().heapTotal);
-    },
-    {
+    });
+
+  meter
+    .createObservableGauge('process.runtime.nodejs.memory.heap.used', {
       unit: 'By',
       valueType: ValueType.INT,
-    }
-  );
-
-  meter.createObservableGauge(
-    'process.runtime.nodejs.memory.heap.used',
-    result => {
+    })
+    .addCallback(result => {
       result.observe(process.memoryUsage().heapUsed);
-    },
-    {
-      unit: 'By',
-      valueType: ValueType.INT,
-    }
-  );
+    });
 
-  meter.createObservableGauge(
-    'process.runtime.nodejs.memory.rss',
-    result => {
-      result.observe(process.memoryUsage().rss);
-    },
-    {
+  meter
+    .createObservableGauge('process.runtime.nodejs.memory.rss', {
       unit: 'By',
       valueType: ValueType.INT,
-    }
-  );
+    })
+    .addCallback(result => {
+      result.observe(process.memoryUsage().rss);
+    });
 
   const extension = _loadExtension();
 
@@ -216,27 +210,23 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
 
   let runtimeCounters = extension.collect();
 
-  meter.createObservableGauge(
-    'process.runtime.nodejs.event_loop.lag.max',
-    result => {
+  meter
+    .createObservableGauge('process.runtime.nodejs.event_loop.lag.max', {
+      unit: 'ns',
+      valueType: ValueType.INT,
+    })
+    .addCallback(result => {
       result.observe(runtimeCounters.eventLoopLag.max);
-    },
-    {
-      unit: 'ns',
-      valueType: ValueType.INT,
-    }
-  );
+    });
 
-  meter.createObservableGauge(
-    'process.runtime.nodejs.event_loop.lag.min',
-    result => {
-      result.observe(runtimeCounters.eventLoopLag.min);
-    },
-    {
+  meter
+    .createObservableGauge('process.runtime.nodejs.event_loop.lag.min', {
       unit: 'ns',
       valueType: ValueType.INT,
-    }
-  );
+    })
+    .addCallback(result => {
+      result.observe(runtimeCounters.eventLoopLag.min);
+    });
 
   const gcSizeCounter = meter.createCounter(
     'process.runtime.nodejs.memory.gc.size',
@@ -257,6 +247,7 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
   const gcCountCounter = meter.createCounter(
     'process.runtime.nodejs.memory.gc.count',
     {
+      unit: '1',
       valueType: ValueType.INT,
     }
   );
