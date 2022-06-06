@@ -9,7 +9,7 @@
   <img alt="npm" src="https://img.shields.io/npm/v/@splunk/otel?style=for-the-badge">
   <img alt="node-current" src="https://img.shields.io/node/v/@splunk/otel?style=for-the-badge">
   <img alt="Codecov" src="https://img.shields.io/codecov/c/github/signalfx/splunk-otel-js?style=for-the-badge&token=XKXjEQKGaK">
-  <img alt="GitHub branch checks state" src="https://img.shields.io/github/checks-status/signalfx/splunk-otel-js/main?style=for-the-badge">
+  <img alt="GitHub branch checks state" src="https://img.shields.io/github/workflow/status/signalfx/splunk-otel-js/Continuous%20Integration/main?style=for-the-badge">
 </p>
 
 # Splunk Distribution of OpenTelemetry for Node.js
@@ -111,7 +111,7 @@ startTracing({
 });
 ```
 
-> `startTracing` is destructive to Open Telemetry API globals. We provide the `stopTracing` method, but it won't revert to OTel API globals set before `startTracing` was run, it will only disable globals, which `startTracing` set.
+> `startTracing` is destructive to Open Telemetry API globals. Any globals set before running `startTracing` are overwritten.
 
 ## Default Instrumentation Packages<a name="default-instrumentation-packages"></a>
 
