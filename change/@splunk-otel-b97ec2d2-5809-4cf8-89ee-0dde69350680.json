@@ -1,7 +1,0 @@
-{
-  "type": "major",
-  "comment": "fix: remove opentelemetry-instrumentation-aws-sdk from autoloaded instrumentations",
-  "packageName": "@splunk/otel",
-  "email": "rauno56@gmail.com",
-  "dependentChangeType": "patch"
-}

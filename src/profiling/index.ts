@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { inspect } from 'util';
-
 import { context, diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import {
@@ -55,12 +53,7 @@ function extCollectSamples(extension: ProfilingExtension) {
 }
 
 export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
-  try {
-    assertNoExtraneousProperties(opts, allowedProfilingOptions);
-  } catch (e) {
-    diag.error(inspect(e));
-    diag.warn('This will turn into a thrown exception in @splunk/otel@1.0');
-  }
+  assertNoExtraneousProperties(opts, allowedProfilingOptions);
 
   const options = _setDefaultOptions(opts);
 
