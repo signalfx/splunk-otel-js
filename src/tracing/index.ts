@@ -93,13 +93,21 @@ export function startTracing(opts: Partial<Options> = {}): boolean {
   return true;
 }
 
-export function stopTracing() {
+export async function stopTracing() {
+  // in reality unregistering is not reliable because of the function pointers
+  // floating around everywhere in the user code already and will lead to
+  // unexpected consequences should it be done more than once. We enable it
+  // mostly for tests.
   unregisterInstrumentations?.();
   unregisterInstrumentations = null;
+
+  const provider = trace.getTracerProvider().getDelegate();
 
   propagation.disable();
   context.disable();
   trace.disable();
+
+  return provider.shutdown?.();
 }
 
 function configureInstrumentations(options: Options) {
