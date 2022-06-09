@@ -48,7 +48,7 @@ let unregisterInstrumentations: (() => void) | null = null;
 
 export { Options as TracingOptions };
 export function startTracing(opts: Partial<Options> = {}): boolean {
-  assert(!isStarted || allowDoubleStart, 'Splunk APM already started');
+  assert(!isStarted, 'Splunk APM already started');
   isStarted = true;
 
   assertNoExtraneousProperties(opts, allowedTracingOptions);
@@ -94,6 +94,9 @@ export function startTracing(opts: Partial<Options> = {}): boolean {
 }
 
 export async function stopTracing() {
+  if (allowDoubleStart) {
+    isStarted = false;
+  }
   // in reality unregistering is not reliable because of the function pointers
   // floating around everywhere in the user code already and will lead to
   // unexpected consequences should it be done more than once. We enable it

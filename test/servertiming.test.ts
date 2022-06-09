@@ -18,7 +18,7 @@ import * as assert from 'assert';
 import * as sinon from 'sinon';
 import { context, trace } from '@opentelemetry/api';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
-import { startTracing } from '../src/tracing';
+import { startTracing, stopTracing } from '../src/tracing';
 import * as utils from './utils';
 
 const PORT = 9111;
@@ -42,6 +42,7 @@ describe('servertiming', () => {
   beforeEach(utils.cleanEnvironment);
   afterEach(() => {
     server.close();
+    stopTracing();
   });
 
   function testHeadersAdded(done) {
