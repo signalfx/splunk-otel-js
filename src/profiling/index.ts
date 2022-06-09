@@ -24,7 +24,6 @@ import {
 import { detect as detectResource } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import {
-  ProfilingExporter,
   ProfilingExtension,
   ProfilingOptions,
   ProfilingStartOptions,
@@ -69,7 +68,7 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
   contextManager.enable();
   context.setGlobalContextManager(contextManager);
 
-  const exporters: ProfilingExporter[] = [
+  const exporters = options.exporters ?? [
     new OTLPProfilingExporter({
       endpoint: options.endpoint,
       callstackInterval: options.callstackInterval,
@@ -163,5 +162,6 @@ export function _setDefaultOptions(
     collectionDuration: options.collectionDuration || 30_000,
     resource,
     debugExport: options.debugExport ?? false,
+    exporters: options.exporters,
   };
 }

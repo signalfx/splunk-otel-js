@@ -51,6 +51,7 @@ export interface ProfilingOptions {
   collectionDuration: number;
   debugExport: boolean;
   resource: Resource;
+  exporters?: ProfilingExporter[];
 }
 
 export interface ProfilingExporter {
@@ -64,4 +65,5 @@ export const allowedProfilingOptions = [
   'endpoint',
   'resource',
   'serviceName',
+  'exporters',
 ];
