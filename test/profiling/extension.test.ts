@@ -69,7 +69,7 @@ describe('profiling native extension', () => {
       const stacklines = lines.slice(2, -1);
 
       for (const stackline of stacklines) {
-        assert.match(stackline, /.+\(.+:\d+:\d+\)/);
+        assert.match(stackline, /.+\(.+:\d+:\d+\)/, stackline);
       }
     }
   });
