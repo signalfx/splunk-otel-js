@@ -19,9 +19,10 @@ import { gte } from 'semver';
 
 import {
   context,
+  diag,
   propagation,
-  trace,
   ProxyTracerProvider,
+  trace,
   TracerProvider,
 } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
@@ -110,11 +111,13 @@ export async function stopTracing() {
   unregisterInstrumentations?.();
   unregisterInstrumentations = null;
 
+  const shutdownPromise = shutdownGlobalTracerProvider();
+
   propagation.disable();
   context.disable();
   trace.disable();
 
-  return shutdownGlobalTracerProvider();
+  return shutdownPromise;
 }
 
 interface ShutDownableTracerProvider extends TracerProvider {
@@ -131,14 +134,21 @@ async function shutdownGlobalTracerProvider() {
   // `shutdown` is not in the interface of TracerProvider - not always implemented
   // Global TracerProvider isn't actually the set TracerProvider, but a proxy
   const globalProvider = trace.getTracerProvider();
+  let reportedConstructor = globalProvider?.constructor;
 
   if (globalProvider instanceof ProxyTracerProvider) {
     const delegate = globalProvider.getDelegate();
+    reportedConstructor = delegate?.constructor;
 
     if (isShutDownable(delegate)) {
       return delegate.shutdown();
     }
   }
+  diag.warn(
+    `Enabled TracerProvider(${
+      reportedConstructor?.name ?? reportedConstructor
+    }) does not implement shutdown()`
+  );
 }
 
 function configureInstrumentations(options: Options) {
