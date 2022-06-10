@@ -20,6 +20,19 @@ import { ProfilingExtension } from '../../src/profiling/types';
 
 const extension: ProfilingExtension = require('../../src/native_ext').profiling;
 
+function spinMs(ms: number) {
+  const start = Date.now();
+  while (Date.now() - start < ms) {}
+}
+
+function assertNanoSecondString(timestamp: any) {
+  assert.equal(typeof timestamp, 'string');
+  assert(
+    /\d{19,}/.test(timestamp),
+    `expected timestamp as a nanosecond string, got ${timestamp}`
+  );
+}
+
 describe('profiling native extension', () => {
   afterEach(() => {
     extension.stop();
@@ -32,36 +45,24 @@ describe('profiling native extension', () => {
       recordDebugInfo: false,
     });
 
-    function spin() {
-      let v = 0.0;
-
-      for (let i = 0; i < 10_000_000; i++) {
-        v += Math.random();
-      }
-
-      return v;
-    }
-
-    let durationNanos = 0;
-
-    // Spin for at least 10ms
-    while (durationNanos < 10 * 1e6) {
-      const begin = hrtime.bigint();
-      spin();
-      durationNanos += Number(hrtime.bigint() - begin);
-    }
+    spinMs(10);
 
     const result = extension.collect();
     // The types might not be what is declared in typescript, a sanity check.
     assert.equal(typeof result, 'object');
     const { stacktraces, startTimeNanos } = result;
+    assertNanoSecondString(startTimeNanos);
 
-    assert(stacktraces.length >= 10);
+    const expectedStacktraceCount = 9;
+    assert(
+      stacktraces.length >= expectedStacktraceCount,
+      `expected ${expectedStacktraceCount} stacktraces, got ${stacktraces.length}`
+    );
 
     for (const { stacktrace, timestamp } of stacktraces) {
       // Don't bother checking for span and trace ID here.
-      assert.equal(typeof timestamp, 'string');
       assert.equal(typeof stacktrace, 'string');
+      assertNanoSecondString(timestamp);
 
       const lines = stacktrace.split('\n');
       assert.deepStrictEqual(lines[0], '');

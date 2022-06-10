@@ -16,7 +16,11 @@
 
 import * as assert from 'assert';
 import { hrtime } from 'process';
-import { startProfiling, _setDefaultOptions } from '../../src/profiling';
+import {
+  defaultExporterFactory,
+  startProfiling,
+  _setDefaultOptions,
+} from '../../src/profiling';
 import { ProfilingExporter, ProfilingData } from '../../src/profiling/types';
 import { detect as detectResource } from '../../src/resource';
 import { Resource } from '@opentelemetry/resources';
@@ -40,7 +44,7 @@ describe('profiling', () => {
         resource: new Resource({
           [SemanticResourceAttributes.SERVICE_NAME]: 'unnamed-node-service',
         }).merge(detectResource()),
-        exporters: undefined,
+        exporterFactory: defaultExporterFactory,
       });
     });
 
@@ -87,7 +91,7 @@ describe('profiling', () => {
         serviceName: 'slow-service',
         callstackInterval: 50,
         collectionDuration: 1_000,
-        exporters: [exporter],
+        exporterFactory: () => [exporter],
       });
 
       setTimeout(() => {

@@ -43,6 +43,10 @@ export interface ProfilingExtension {
   exitContext(context: unknown): void;
 }
 
+export type ProfilingExporterFactory = (
+  options: ProfilingOptions
+) => ProfilingExporter[];
+
 export interface ProfilingOptions {
   endpoint: string;
   serviceName: string;
@@ -51,7 +55,7 @@ export interface ProfilingOptions {
   collectionDuration: number;
   debugExport: boolean;
   resource: Resource;
-  exporters?: ProfilingExporter[];
+  exporterFactory: ProfilingExporterFactory;
 }
 
 export interface ProfilingExporter {
@@ -65,5 +69,5 @@ export const allowedProfilingOptions = [
   'endpoint',
   'resource',
   'serviceName',
-  'exporters',
+  'exporterFactory',
 ];
