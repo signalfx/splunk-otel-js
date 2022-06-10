@@ -45,7 +45,7 @@ describe('profiling native extension', () => {
       recordDebugInfo: false,
     });
 
-    spinMs(10);
+    spinMs(100);
 
     const result = extension.collect();
     // The types might not be what is declared in typescript, a sanity check.
