@@ -16,6 +16,8 @@
 
 import * as assert from 'assert';
 import * as sinon from 'sinon';
+
+import { trace } from '@opentelemetry/api';
 import {
   BatchSpanProcessor,
   SimpleSpanProcessor,
@@ -123,5 +125,26 @@ describe('tracing:otlp', () => {
     assert(exp2 instanceof InMemorySpanExporter);
 
     stopTracing();
+  });
+
+  it('flushes when stopped', async () => {
+    const exporter = new InMemorySpanExporter();
+    const exportFn = sinon.spy(exporter, 'export');
+    const shutdownFn = sinon.spy(exporter, 'shutdown');
+
+    startTracing({
+      spanExporterFactory: () => exporter,
+    });
+
+    const span = trace.getTracer('test-tracer').startSpan('test-span').end();
+
+    assert.equal(exportFn.callCount, 0);
+    assert.equal(shutdownFn.callCount, 0);
+    await stopTracing();
+    assert.equal(exportFn.callCount, 1);
+    assert.equal(shutdownFn.callCount, 1);
+
+    exportFn.restore();
+    shutdownFn.restore();
   });
 });
