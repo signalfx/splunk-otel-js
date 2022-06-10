@@ -32,7 +32,7 @@ describe('tracing:otlp', () => {
   let addSpanProcessorMock;
 
   before(() => {
-    addSpanProcessorMock = sinon.stub(
+    addSpanProcessorMock = sinon.spy(
       NodeTracerProvider.prototype,
       'addSpanProcessor'
     );
@@ -40,7 +40,7 @@ describe('tracing:otlp', () => {
 
   beforeEach(() => {
     utils.cleanEnvironment();
-    addSpanProcessorMock.reset();
+    addSpanProcessorMock.resetHistory();
   });
 
   after(() => {

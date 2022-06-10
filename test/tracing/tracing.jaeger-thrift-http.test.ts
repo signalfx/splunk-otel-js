@@ -32,7 +32,7 @@ describe('tracing:jaeger-thrift-http', () => {
   let addSpanProcessorMock;
 
   before(() => {
-    addSpanProcessorMock = sinon.stub(
+    addSpanProcessorMock = sinon.spy(
       NodeTracerProvider.prototype,
       'addSpanProcessor'
     );
@@ -41,7 +41,7 @@ describe('tracing:jaeger-thrift-http', () => {
   beforeEach(() => {
     utils.cleanEnvironment();
     process.env.OTEL_TRACES_EXPORTER = 'jaeger-thrift-http';
-    addSpanProcessorMock.reset();
+    addSpanProcessorMock.resetHistory();
   });
 
   after(() => {

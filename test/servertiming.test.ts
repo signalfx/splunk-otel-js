@@ -15,7 +15,6 @@
  */
 
 import * as assert from 'assert';
-import * as sinon from 'sinon';
 import { context, trace } from '@opentelemetry/api';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { startTracing, stopTracing } from '../src/tracing';
