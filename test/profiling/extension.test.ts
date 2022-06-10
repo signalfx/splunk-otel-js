@@ -66,6 +66,8 @@ describe('profiling native extension', () => {
       assert.equal(typeof stacktrace, 'string');
       assertNanoSecondString(timestamp);
 
+      // The first two lines are intentionally empty,
+      // as we don't have information about the thread state.
       const lines = stacktrace.split('\n');
       assert.deepStrictEqual(lines[0], '');
       assert.deepStrictEqual(lines[1], '');
