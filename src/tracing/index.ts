@@ -17,7 +17,13 @@
 import { strict as assert } from 'assert';
 import { gte } from 'semver';
 
-import { context, propagation, trace } from '@opentelemetry/api';
+import {
+  context,
+  propagation,
+  trace,
+  ProxyTracerProvider,
+  TracerProvider,
+} from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import {
@@ -104,13 +110,35 @@ export async function stopTracing() {
   unregisterInstrumentations?.();
   unregisterInstrumentations = null;
 
-  const provider = trace.getTracerProvider().getDelegate();
-
   propagation.disable();
   context.disable();
   trace.disable();
 
-  return provider.shutdown?.();
+  return shutdownGlobalTracerProvider();
+}
+
+interface ShutDownableTracerProvider extends TracerProvider {
+  shutdown: () => Promise<void>;
+}
+
+function isShutDownable(
+  tracerProvider: TracerProvider
+): tracerProvider is ShutDownableTracerProvider {
+  return typeof (tracerProvider as any).shutdown === 'function';
+}
+
+async function shutdownGlobalTracerProvider() {
+  // `shutdown` is not in the interface of TracerProvider - not always implemented
+  // Global TracerProvider isn't actually the set TracerProvider, but a proxy
+  const globalProvider = trace.getTracerProvider();
+
+  if (globalProvider instanceof ProxyTracerProvider) {
+    const delegate = globalProvider.getDelegate();
+
+    if (isShutDownable(delegate)) {
+      return delegate.shutdown();
+    }
+  }
 }
 
 function configureInstrumentations(options: Options) {
