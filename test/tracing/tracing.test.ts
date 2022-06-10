@@ -128,6 +128,14 @@ describe('tracing:otlp', () => {
   });
 
   it('flushes when stopped', async () => {
+    const createSpan = (
+      expectRecording = true,
+      tracer = trace.getTracer('test-tracer')
+    ) => {
+      const span = tracer.startSpan('test-span');
+      assert.equal(span.isRecording(), expectRecording);
+      span.end();
+    };
     const exporter = new InMemorySpanExporter();
     const exportFn = sinon.spy(exporter, 'export');
     const shutdownFn = sinon.spy(exporter, 'shutdown');
@@ -136,11 +144,18 @@ describe('tracing:otlp', () => {
       spanExporterFactory: () => exporter,
     });
 
-    const span = trace.getTracer('test-tracer').startSpan('test-span').end();
+    const storedTracer = trace.getTracer('test-tracer');
+    createSpan();
 
     assert.equal(exportFn.callCount, 0);
     assert.equal(shutdownFn.callCount, 0);
     await stopTracing();
+
+    createSpan(false);
+    // note that if the tracer is created and stored before stopping tracing, the spans
+    // are "recorded", but the SpanProcessor which is now shut down will just dump them.
+    createSpan(true, storedTracer);
+
     assert.equal(exportFn.callCount, 1);
     assert.equal(shutdownFn.callCount, 1);
 
