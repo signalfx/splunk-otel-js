@@ -85,14 +85,14 @@ describe('profiling', () => {
 
       const { stop } = startProfiling({
         serviceName: 'slow-service',
-        callstackInterval: 100,
+        callstackInterval: 50,
         collectionDuration: 1_000,
         exporters: [exporter],
       });
 
       setTimeout(() => {
         stop();
-        // It might be possible all 10 stacktraces will not be available,
+        // It might be possible all stacktraces will not be available,
         // due to the first few stacktraces having random timings
         // after a profiling run is started.
         const expectedStacktraces = 5;
