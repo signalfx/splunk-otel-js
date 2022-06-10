@@ -93,11 +93,11 @@ describe('profiling', () => {
       setTimeout(() => {
         stop();
         // It might be possible all 10 stacktraces will not be available,
-        // due to the first stacktraces having slightly offset timings
+        // due to the first few stacktraces having random timings
         // after a profiling run is started.
-        const expectedStacktraces = 9;
+        const expectedStacktraces = 5;
         assert(
-          stacktracesReceived >= 9,
+          stacktracesReceived >= expectedStacktraces,
           `expected at least ${expectedStacktraces}, got ${stacktracesReceived}`
         );
         // Stop flushes the exporters, hence the extra call count
