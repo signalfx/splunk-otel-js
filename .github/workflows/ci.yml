@@ -74,7 +74,7 @@ jobs:
       - name: copy prebuilds
         run: |
           mkdir -p prebuilds
-          cp -r prebuilds-linux-node10/* prebuilds
+          cp -r prebuilds-linux-node12/* prebuilds
           cp -r prebuilds-linux-node14/* prebuilds
           cp -r prebuilds-windows/* prebuilds
           cp -r prebuilds-macos/* prebuilds
