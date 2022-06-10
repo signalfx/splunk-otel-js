@@ -15,6 +15,8 @@
  */
 import { strict as assert } from 'assert';
 
+import * as splunk from '../src';
+
 import * as tracing from '../src/tracing';
 import * as metrics from '../src/metrics';
 import * as profiling from '../src/profiling';
@@ -40,12 +42,38 @@ const assertFunction = (api, memberName) => {
  * communicates the intention and progress of merging the API surface.
  */
 
-describe('signal internal API', () => {
+describe('API', () => {
+  describe('global', () => {
+    const api = splunk;
+
+    it.skip('should expose start and stop', () => {
+      assertFunction(api, 'start');
+      assertFunction(api, 'stop');
+    });
+
+    it('should export signal-specific start', () => {
+      assertFunction(api, 'startTracing');
+      assert.equal(api.startTracing, tracing.startTracing);
+      assertFunction(api, 'startProfiling');
+      assert.equal(api.startProfiling, profiling.startProfiling);
+      assertFunction(api, 'startMetrics');
+      assert.equal(api.startMetrics, metrics.startMetrics);
+    });
+
+    it('should export signal-specific stop', () => {
+      assertFunction(api, 'stopTracing');
+      assert.equal(api.stopTracing, tracing.stopTracing);
+      // assertFunction(api, 'stopProfiling');
+      // assert.equal(api.stopProfiling, profiling.stopProfiling);
+      // assertFunction(api, 'stopMetrics');
+      // assert.equal(api.stopMetrics, metrics.stopMetrics);
+    });
+  });
+
   describe('tracing', () => {
     // Since there's a lot of case-by-case logic in the tests, will mimic a
     // would-be-loop-iteration. will perhaps not need these local vars eventually.
     const api = tracing;
-    const name = 'tracing';
 
     it.skip('should expose start and stop', () => {
       // We'd eventually want to have consistency in our APIs internally
@@ -75,7 +103,6 @@ describe('signal internal API', () => {
 
   describe('metrics', () => {
     const api = metrics;
-    const name = 'metrics';
 
     it.skip('should expose start and stop', () => {
       // We'd eventually want to have consistency in our APIs internally
@@ -105,7 +132,6 @@ describe('signal internal API', () => {
 
   describe('profiling', () => {
     const api = profiling;
-    const name = 'profiling';
 
     it.skip('should expose start and stop', () => {
       // We'd eventually want to have consistency in our APIs internally
