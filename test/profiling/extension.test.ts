@@ -53,7 +53,9 @@ describe('profiling native extension', () => {
     const { stacktraces, startTimeNanos } = result;
     assertNanoSecondString(startTimeNanos);
 
-    const expectedStacktraceCount = 9;
+    // Keep the expected count low, the first run of the profiler
+    // has stacktraces with variable timestamps.
+    const expectedStacktraceCount = 5;
     assert(
       stacktraces.length >= expectedStacktraceCount,
       `expected ${expectedStacktraceCount} stacktraces, got ${stacktraces.length}`
