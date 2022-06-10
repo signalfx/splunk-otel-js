@@ -52,6 +52,24 @@ function extCollectSamples(extension: ProfilingExtension) {
   return extension.collect();
 }
 
+export function defaultExporterFactory(
+  options: ProfilingOptions
+): ProfilingExporter[] {
+  const exporters: ProfilingExporter[] = [
+    new OTLPProfilingExporter({
+      endpoint: options.endpoint,
+      callstackInterval: options.callstackInterval,
+      resource: options.resource,
+    }),
+  ];
+
+  if (options.debugExport) {
+    exporters.push(new DebugExporter());
+  }
+
+  return exporters;
+}
+
 export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
   assertNoExtraneousProperties(opts, allowedProfilingOptions);
 
@@ -69,17 +87,7 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
   contextManager.enable();
   context.setGlobalContextManager(contextManager);
 
-  const exporters: ProfilingExporter[] = [
-    new OTLPProfilingExporter({
-      endpoint: options.endpoint,
-      callstackInterval: options.callstackInterval,
-      resource: options.resource,
-    }),
-  ];
-
-  if (options.debugExport) {
-    exporters.push(new DebugExporter());
-  }
+  const exporters = options.exporterFactory(options);
 
   const startOptions = {
     samplingIntervalMicroseconds: options.callstackInterval * 1_000,
@@ -163,5 +171,6 @@ export function _setDefaultOptions(
     collectionDuration: options.collectionDuration || 30_000,
     resource,
     debugExport: options.debugExport ?? false,
+    exporterFactory: options.exporterFactory ?? defaultExporterFactory,
   };
 }
