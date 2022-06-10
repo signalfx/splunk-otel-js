@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export { startTracing } from './tracing';
+export { startTracing, stopTracing } from './tracing';
 export { startMetrics } from './metrics';
 export { startProfiling } from './profiling';
 export { start, stop } from './start';
