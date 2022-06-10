@@ -92,7 +92,10 @@ describe('profiling', () => {
 
       setTimeout(() => {
         stop();
-        assert(stacktracesReceived >= 10);
+        // It might be possible all 10 stacktraces will not be available,
+        // due to the first stacktraces having slightly offset timings
+        // after a profiling run is started.
+        assert(stacktracesReceived >= 9);
         // Stop flushes the exporters, hence the extra call count
         assert.deepStrictEqual(sendCallCount, 2);
         done();
