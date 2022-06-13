@@ -1,8 +1,16 @@
 # Change Log - @splunk/otel
 
-This log was last generated on Fri, 03 Jun 2022 13:48:20 GMT and should not be manually modified.
+This log was last generated on Mon, 13 Jun 2022 08:22:59 GMT and should not be manually modified.
 
 <!-- Start content -->
+
+## 1.1.0
+
+Mon, 13 Jun 2022 08:22:59 GMT
+
+### Minor changes
+
+- feat: call shutdown in `stopTracing()` (rauno56@gmail.com)
 
 ## 1.0.0
 
