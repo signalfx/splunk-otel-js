@@ -2,6 +2,21 @@
   "name": "@splunk/otel",
   "entries": [
     {
+      "date": "Mon, 13 Jun 2022 08:22:59 GMT",
+      "tag": "@splunk/otel_v1.1.0",
+      "version": "1.1.0",
+      "comments": {
+        "minor": [
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "ba8bf26a2ef656c326df62f225c6d5d51eccaef2",
+            "comment": "feat: call shutdown in `stopTracing()`"
+          }
+        ]
+      }
+    },
+    {
       "date": "Fri, 03 Jun 2022 13:48:20 GMT",
       "tag": "@splunk/otel_v1.0.0",
       "version": "1.0.0",
