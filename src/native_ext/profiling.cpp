@@ -708,6 +708,136 @@ void ProfilingBuildStacktraces(
   }
 }
 
+v8::Local<v8::Array> makeStackLine(const v8::CpuProfileNode* node) {
+  int32_t itemCount = 0;
+  auto jsResult = Nan::New<v8::Array>();
+
+  const char* rawFunction = node->GetFunctionNameStr();
+  const char* rawFileName = node->GetScriptResourceNameStr();
+
+  if (strlen(rawFunction) == 0) {
+    rawFunction = "anonymous";
+  }
+
+  if (strlen(rawFileName) == 0) {
+    rawFileName = "unknown";
+  }
+
+  Nan::Set(jsResult, itemCount++, Nan::New<v8::String>(rawFileName).ToLocalChecked());
+  Nan::Set(jsResult, itemCount++, Nan::New<v8::String>(rawFunction).ToLocalChecked());
+  Nan::Set(jsResult, itemCount++, Nan::New<v8::Number>(node->GetLineNumber()));
+  Nan::Set(jsResult, itemCount++, Nan::New<v8::Number>(node->GetColumnNumber()));
+
+  return jsResult;
+}
+
+void ProfilingBuildRawStacktraces(
+  Profiling* profiling, v8::CpuProfile* profile, v8::Local<v8::Object> profilingData) {
+  auto jsTraces = Nan::New<v8::Array>();
+  Nan::Set(profilingData, Nan::New("stacktraces").ToLocalChecked(), jsTraces);
+
+  char startTimeNanos[32];
+  size_t startTimeNanosLen = TimestampString(profiling->wallStartTime, startTimeNanos);
+
+  Nan::Set(
+    profilingData, Nan::New("startTimeNanos").ToLocalChecked(),
+    Nan::New(startTimeNanos, startTimeNanosLen).ToLocalChecked());
+
+#if PROFILER_DEBUG_EXPORT
+  {
+    char tpBuf[32];
+    size_t tpLen = TimestampString(profiling->startTime, tpBuf);
+    Nan::Set(
+      profilingData, Nan::New<v8::String>("startTimepoint").ToLocalChecked(),
+      Nan::New<v8::String>(tpBuf, tpLen).ToLocalChecked());
+  }
+#endif
+
+  int32_t traceCount = 0;
+  auto stackTraceLines = Nan::New<v8::Array>();
+  int32_t stackTraceLineCount = 0;
+
+  int64_t nextSampleTs = profile->GetStartTime() * 1000L;
+  for (int i = 0; i < profile->GetSamplesCount(); i++) {
+    int64_t monotonicTs = profile->GetSampleTimestamp(i) * 1000L;
+
+    if (monotonicTs < nextSampleTs) {
+      continue;
+    }
+
+    nextSampleTs += profiling->samplingIntervalNanos;
+
+    const v8::CpuProfileNode* sample = profile->GetSample(i);
+
+    Nan::Set(stackTraceLines, stackTraceLineCount++, makeStackLine(sample));
+
+    int64_t monotonicDelta = monotonicTs - profiling->startTime;
+    int64_t sampleTimestamp = profiling->wallStartTime + monotonicDelta;
+
+    // TODO: Node <12.5 does not have GetParent, so we'd need to traverse the tree top down instead.
+#if NODE_VERSION_AT_LEAST(12, 5, 0)
+    const v8::CpuProfileNode* parent = sample->GetParent();
+    while (parent) {
+      const v8::CpuProfileNode* next = parent->GetParent();
+
+      // Skip the root node as it does not contain useful information.
+      if (next) {
+        Nan::Set(stackTraceLines, stackTraceLineCount++, makeStackLine(parent));
+      }
+
+      parent = next;
+    }
+#endif
+
+    if (stackTraceLineCount == 0) {
+      continue;
+    }
+    stackTraceLineCount = 0;
+
+    char tsBuf[32];
+    size_t tsLen = TimestampString(sampleTimestamp, tsBuf);
+
+    auto jsTrace = Nan::New<v8::Object>();
+
+    Nan::Set(
+      jsTrace, Nan::New<v8::String>("timestamp").ToLocalChecked(),
+      Nan::New<v8::String>(tsBuf, tsLen).ToLocalChecked());
+    Nan::Set(
+      jsTrace, Nan::New<v8::String>("stacktrace").ToLocalChecked(),
+      stackTraceLines);
+
+#if PROFILER_DEBUG_EXPORT
+    char tpBuf[32];
+    size_t tpLen = TimestampString(monotonicTs, tpBuf);
+    Nan::Set(
+      jsTrace, Nan::New<v8::String>("timepoint").ToLocalChecked(),
+      Nan::New<v8::String>(tpBuf, tpLen).ToLocalChecked());
+#endif
+
+    SpanActivation* match = FindClosestActivation(profiling, monotonicTs);
+
+    if (match) {
+      uint8_t spanId[8];
+      uint8_t traceId[16];
+      HexToBinary(match->spanId, 16, spanId, sizeof(spanId));
+      HexToBinary(match->traceId, 32, traceId, sizeof(traceId));
+
+      Nan::Set(
+        jsTrace, Nan::New<v8::String>("spanId").ToLocalChecked(),
+        Nan::CopyBuffer((const char*)spanId, 8).ToLocalChecked());
+      Nan::Set(
+        jsTrace, Nan::New<v8::String>("traceId").ToLocalChecked(),
+        Nan::CopyBuffer((const char*)traceId, 16).ToLocalChecked());
+
+#if PROFILER_DEBUG_EXPORT
+      match->is_intersected = true;
+#endif
+    }
+
+    Nan::Set(jsTraces, traceCount++, jsTrace);
+  }
+}
+
 void ProfilingReset(Profiling* profiling) {
   kh_clear(ActivationStack, profiling->spanActivations);
   profiling->stacklineCache.Clear();
@@ -739,6 +869,38 @@ NAN_METHOD(CollectProfilingData) {
     profiling->profiler->StopProfiling(Nan::New(prevTitle).ToLocalChecked());
 
   ProfilingBuildStacktraces(profiling, profile, jsProfilingData);
+  ProfilingRecordDebugInfo(profiling, jsProfilingData);
+  ProfilingReset(profiling);
+  profile->Delete();
+
+  profiling->startTime = newStartTime;
+  profiling->wallStartTime = newWallStart;
+}
+
+NAN_METHOD(CollectProfilingDataRaw) {
+  auto jsProfilingData = Nan::New<v8::Object>();
+  info.GetReturnValue().Set(jsProfilingData);
+
+  if (!profiling) {
+    return;
+  }
+
+  char prevTitle[64];
+  ProfileTitle(profiling, prevTitle, sizeof(prevTitle));
+  profiling->profilerSeq++;
+  char nextTitle[64];
+  ProfileTitle(profiling, nextTitle, sizeof(nextTitle));
+
+  profiling->activationDepth = 0;
+  int64_t newStartTime = HrTime();
+  int64_t newWallStart = MicroSecondsSinceEpoch() * 1000L;
+
+  V8StartProfiling(profiling->profiler, nextTitle);
+
+  v8::CpuProfile* profile =
+    profiling->profiler->StopProfiling(Nan::New(prevTitle).ToLocalChecked());
+
+  ProfilingBuildRawStacktraces(profiling, profile, jsProfilingData);
   ProfilingRecordDebugInfo(profiling, jsProfilingData);
   ProfilingReset(profiling);
   profile->Delete();
@@ -889,6 +1051,10 @@ void Initialize(v8::Local<v8::Object> target) {
   Nan::Set(
     profilingModule, Nan::New("collect").ToLocalChecked(),
     Nan::GetFunction(Nan::New<v8::FunctionTemplate>(CollectProfilingData)).ToLocalChecked());
+
+  Nan::Set(
+    profilingModule, Nan::New("collectRaw").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<v8::FunctionTemplate>(CollectProfilingDataRaw)).ToLocalChecked());
 
   Nan::Set(
     profilingModule, Nan::New("enterContext").ToLocalChecked(),
