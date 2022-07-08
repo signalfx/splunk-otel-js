@@ -14,11 +14,17 @@
  * limitations under the License.
  */
 
-import { inspect } from 'util';
 import { strict as assert } from 'assert';
 import { gte } from 'semver';
 
-import { context, propagation, trace, diag } from '@opentelemetry/api';
+import {
+  context,
+  diag,
+  propagation,
+  ProxyTracerProvider,
+  trace,
+  TracerProvider,
+} from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import {
@@ -49,14 +55,11 @@ let unregisterInstrumentations: (() => void) | null = null;
 
 export { Options as TracingOptions };
 export function startTracing(opts: Partial<Options> = {}): boolean {
-  assert(!isStarted || allowDoubleStart, 'Splunk APM already started');
+  assert(!isStarted, 'Splunk APM already started');
   isStarted = true;
-  try {
-    assertNoExtraneousProperties(opts, allowedTracingOptions);
-  } catch (e) {
-    diag.error(inspect(e));
-    diag.warn('This will turn into a thrown exception in @splunk/otel@1.0');
-  }
+
+  assertNoExtraneousProperties(opts, allowedTracingOptions);
+
   const options = _setDefaultOptions(opts);
 
   // propagator
@@ -97,13 +100,55 @@ export function startTracing(opts: Partial<Options> = {}): boolean {
   return true;
 }
 
-export function stopTracing() {
+export async function stopTracing() {
+  if (allowDoubleStart) {
+    isStarted = false;
+  }
+  // in reality unregistering is not reliable because of the function pointers
+  // floating around everywhere in the user code already and will lead to
+  // unexpected consequences should it be done more than once. We enable it
+  // mostly for tests.
   unregisterInstrumentations?.();
   unregisterInstrumentations = null;
+
+  const shutdownPromise = shutdownGlobalTracerProvider();
 
   propagation.disable();
   context.disable();
   trace.disable();
+
+  return shutdownPromise;
+}
+
+interface ShutDownableTracerProvider extends TracerProvider {
+  shutdown: () => Promise<void>;
+}
+
+function isShutDownable(
+  tracerProvider: TracerProvider
+): tracerProvider is ShutDownableTracerProvider {
+  return typeof (tracerProvider as any).shutdown === 'function';
+}
+
+async function shutdownGlobalTracerProvider() {
+  // `shutdown` is not in the interface of TracerProvider - not always implemented
+  // Global TracerProvider isn't actually the set TracerProvider, but a proxy
+  const globalProvider = trace.getTracerProvider();
+  let reportedConstructor = globalProvider?.constructor;
+
+  if (globalProvider instanceof ProxyTracerProvider) {
+    const delegate = globalProvider.getDelegate();
+    reportedConstructor = delegate?.constructor;
+
+    if (isShutDownable(delegate)) {
+      return delegate.shutdown();
+    }
+  }
+  diag.warn(
+    `Enabled TracerProvider(${
+      reportedConstructor?.name ?? reportedConstructor
+    }) does not implement shutdown()`
+  );
 }
 
 function configureInstrumentations(options: Options) {

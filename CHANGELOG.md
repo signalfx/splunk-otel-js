@@ -1,8 +1,39 @@
 # Change Log - @splunk/otel
 
-This log was last generated on Thu, 21 Apr 2022 17:01:07 GMT and should not be manually modified.
+This log was last generated on Mon, 13 Jun 2022 08:22:59 GMT and should not be manually modified.
 
 <!-- Start content -->
+
+## 1.1.0
+
+Mon, 13 Jun 2022 08:22:59 GMT
+
+### Minor changes
+
+- feat: call shutdown in `stopTracing()` (rauno56@gmail.com)
+
+## 1.0.0
+
+Fri, 03 Jun 2022 13:48:20 GMT
+
+### Major changes
+
+- chore: remove support for deprecated `opentelemetry-instrumentation-amqplib` (rauno56@gmail.com)
+- chore: remove support for deprecated `opentelemetry-instrumentation-aws-sdk` (rauno56@gmail.com)
+- feat: throw when `startTracing` is called twice (rauno56@gmail.com)
+- feat: throw when extraneous properties are provided (rauno56@gmail.com)
+- chore: remove support for Node versions before LTS 12 (rauno56@gmail.com)
+- feat: upgrade OTel deps and bump min instrumentation versions (rauno56@gmail.com)
+
+### Minor changes
+
+- feat: prebuild for node@18 (rauno56@gmail.com)
+- feat: add splunk.distro.version resource attribute (rauno56@gmail.com)
+- feat: bring in detectors for os.* and host.* attributes (rauno56@gmail.com)
+- feat: add a generic start API (rauno56@gmail.com)
+- feat: detect resource from process (rauno56@gmail.com)
+- feat: throw when unexpected configuration provided (rauno56@gmail.com)
+- feat: implement setting up ConsoleSpanExporter via env var (rauno56@gmail.com)
 
 ## 0.18.0
 

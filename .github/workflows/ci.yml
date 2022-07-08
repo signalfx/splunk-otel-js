@@ -11,9 +11,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - container: node:10.13.0
-            versions: '8.5.0 9.0.0 10.0.0 11.0.0 12.0.0 13.0.0'
-            label: node10
+          - container: node:12.13.0
+            versions: '12.13.0 13.0.0'
+            label: node12
           - container: node:14.0.0
             versions: '14.0.0 15.0.0 16.0.0 17.0.1 18.0.0'
             label: node14
@@ -74,7 +74,7 @@ jobs:
       - name: copy prebuilds
         run: |
           mkdir -p prebuilds
-          cp -r prebuilds-linux-node10/* prebuilds
+          cp -r prebuilds-linux-node12/* prebuilds
           cp -r prebuilds-linux-node14/* prebuilds
           cp -r prebuilds-windows/* prebuilds
           cp -r prebuilds-macos/* prebuilds
@@ -100,7 +100,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ['ubuntu-latest', 'windows-2019', 'macos-latest']
-        nodejs: ['10', '12', '14', '16', '17', '18']
+        nodejs: ['12.13', '14', '16', '17', '18']
     steps:
       - name: Checkout
         uses: actions/checkout@v2

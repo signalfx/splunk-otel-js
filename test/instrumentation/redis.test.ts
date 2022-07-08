@@ -15,7 +15,7 @@
  */
 
 import * as assert from 'assert';
-import { startTracing } from '../../src/tracing';
+import { startTracing, stopTracing } from '../../src/tracing';
 import { defaultSpanProcessorFactory } from '../../src/tracing/options';
 import {
   InMemorySpanExporter,
@@ -57,6 +57,7 @@ describe('Redis instrumentation', () => {
 
   afterEach(() => {
     utils.cleanEnvironment();
+    stopTracing();
   });
 
   const testOpts = () => ({

@@ -28,8 +28,17 @@ interface Options {
   tracing: boolean | TracingOptions;
 }
 
-let runningProfiling: ReturnType<typeof startProfiling> | null = null;
-let runningTracing: ReturnType<typeof startTracing> | null = null;
+interface RunningState {
+  metrics: ReturnType<typeof startMetrics> | null;
+  profiling: ReturnType<typeof startProfiling> | null;
+  tracing: ReturnType<typeof startTracing> | null;
+}
+
+const running: RunningState = {
+  metrics: null,
+  profiling: null,
+  tracing: null,
+};
 
 function isSignalEnabled<T>(
   option: T | undefined | null,
@@ -40,7 +49,7 @@ function isSignalEnabled<T>(
 }
 
 export const start = (options: Partial<Options> = {}) => {
-  if (runningProfiling || runningTracing) {
+  if (running.metrics || running.profiling || running.tracing) {
     throw new Error('Splunk APM already started');
   }
   const { metrics, profiling, tracing, ...restOptions } = options;
@@ -52,28 +61,37 @@ export const start = (options: Partial<Options> = {}) => {
   ]);
 
   if (isSignalEnabled(options.profiling, 'SPLUNK_PROFILER_ENABLED', false)) {
-    runningProfiling = startProfiling(
+    running.profiling = startProfiling(
       Object.assign({}, restOptions, profiling)
     );
   }
 
   if (isSignalEnabled(options.tracing, 'SPLUNK_TRACING_ENABLED', true)) {
-    runningTracing = startTracing(Object.assign({}, restOptions, tracing));
+    running.tracing = startTracing(Object.assign({}, restOptions, tracing));
   }
 
-  if (isSignalEnabled(options.metrics, 'SPLUNK_METRICS_ENABLED', true)) {
-    startMetrics(Object.assign({}, restOptions, metrics));
+  if (isSignalEnabled(options.metrics, 'SPLUNK_METRICS_ENABLED', false)) {
+    running.metrics = startMetrics(Object.assign({}, restOptions, metrics));
   }
 };
 
-export const stop = () => {
-  if (runningTracing) {
-    stopTracing();
-    runningTracing = null;
+export const stop = async () => {
+  const promises = [];
+
+  if (running.metrics) {
+    running.metrics = null;
   }
 
-  if (runningProfiling) {
-    runningProfiling.stop();
-    runningProfiling = null;
+  if (running.tracing) {
+    promises.push(stopTracing());
+    running.tracing = null;
   }
+
+  if (running.profiling) {
+    // not actually a promise, for forwards compatibility
+    promises.push(running.profiling.stop());
+    running.profiling = null;
+  }
+
+  return Promise.all(promises);
 };

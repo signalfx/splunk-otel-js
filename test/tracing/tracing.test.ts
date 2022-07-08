@@ -16,6 +16,8 @@
 
 import * as assert from 'assert';
 import * as sinon from 'sinon';
+
+import { trace } from '@opentelemetry/api';
 import {
   BatchSpanProcessor,
   SimpleSpanProcessor,
@@ -32,7 +34,7 @@ describe('tracing:otlp', () => {
   let addSpanProcessorMock;
 
   before(() => {
-    addSpanProcessorMock = sinon.stub(
+    addSpanProcessorMock = sinon.spy(
       NodeTracerProvider.prototype,
       'addSpanProcessor'
     );
@@ -40,7 +42,7 @@ describe('tracing:otlp', () => {
 
   beforeEach(() => {
     utils.cleanEnvironment();
-    addSpanProcessorMock.reset();
+    addSpanProcessorMock.resetHistory();
   });
 
   after(() => {
@@ -123,5 +125,41 @@ describe('tracing:otlp', () => {
     assert(exp2 instanceof InMemorySpanExporter);
 
     stopTracing();
+  });
+
+  it('flushes when stopped', async () => {
+    const createSpan = (
+      expectRecording = true,
+      tracer = trace.getTracer('test-tracer')
+    ) => {
+      const span = tracer.startSpan('test-span');
+      assert.equal(span.isRecording(), expectRecording);
+      span.end();
+    };
+    const exporter = new InMemorySpanExporter();
+    const exportFn = sinon.spy(exporter, 'export');
+    const shutdownFn = sinon.spy(exporter, 'shutdown');
+
+    startTracing({
+      spanExporterFactory: () => exporter,
+    });
+
+    const storedTracer = trace.getTracer('test-tracer');
+    createSpan();
+
+    assert.equal(exportFn.callCount, 0);
+    assert.equal(shutdownFn.callCount, 0);
+    await stopTracing();
+
+    createSpan(false);
+    // note that if the tracer is created and stored before stopping tracing, the spans
+    // are "recorded", but the SpanProcessor which is now shut down will just dump them.
+    createSpan(true, storedTracer);
+
+    assert.equal(exportFn.callCount, 1);
+    assert.equal(shutdownFn.callCount, 1);
+
+    exportFn.restore();
+    shutdownFn.restore();
   });
 });

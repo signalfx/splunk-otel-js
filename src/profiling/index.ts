@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { inspect } from 'util';
-
 import { context, diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import {
@@ -54,13 +52,26 @@ function extCollectSamples(extension: ProfilingExtension) {
   return extension.collect();
 }
 
-export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
-  try {
-    assertNoExtraneousProperties(opts, allowedProfilingOptions);
-  } catch (e) {
-    diag.error(inspect(e));
-    diag.warn('This will turn into a thrown exception in @splunk/otel@1.0');
+export function defaultExporterFactory(
+  options: ProfilingOptions
+): ProfilingExporter[] {
+  const exporters: ProfilingExporter[] = [
+    new OTLPProfilingExporter({
+      endpoint: options.endpoint,
+      callstackInterval: options.callstackInterval,
+      resource: options.resource,
+    }),
+  ];
+
+  if (options.debugExport) {
+    exporters.push(new DebugExporter());
   }
+
+  return exporters;
+}
+
+export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
+  assertNoExtraneousProperties(opts, allowedProfilingOptions);
 
   const options = _setDefaultOptions(opts);
 
@@ -76,17 +87,7 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
   contextManager.enable();
   context.setGlobalContextManager(contextManager);
 
-  const exporters: ProfilingExporter[] = [
-    new OTLPProfilingExporter({
-      endpoint: options.endpoint,
-      callstackInterval: options.callstackInterval,
-      resource: options.resource,
-    }),
-  ];
-
-  if (options.debugExport) {
-    exporters.push(new DebugExporter());
-  }
+  const exporters = options.exporterFactory(options);
 
   const startOptions = {
     samplingIntervalMicroseconds: options.callstackInterval * 1_000,
@@ -170,5 +171,6 @@ export function _setDefaultOptions(
     collectionDuration: options.collectionDuration || 30_000,
     resource,
     debugExport: options.debugExport ?? false,
+    exporterFactory: options.exporterFactory ?? defaultExporterFactory,
   };
 }
