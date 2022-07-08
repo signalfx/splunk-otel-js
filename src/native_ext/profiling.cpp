@@ -247,19 +247,27 @@ ActivationBin* ProfilingGetActivationBin(Profiling* profiling, int64_t binIndex)
 }
 
 SpanActivation* FindClosestActivation(Profiling* profiling, int64_t ts) {
-  SpanActivation* t = nullptr;
+  SpanActivation sentinel;
+  sentinel.startTime = std::numeric_limits<int64_t>::min();
+  sentinel.endTime = std::numeric_limits<int64_t>::max();
+  SpanActivation* t = &sentinel;
+
   ActivationBin* bin = ProfilingGetActivationBin(profiling, ActivationBinIndex(profiling, ts));
 
   while (bin) {
     for (int64_t i = 0; i < bin->count; i++) {
       SpanActivation* activation = &bin->activations[i];
       if (activation->startTime <= ts && ts <= activation->endTime) {
-        if (!t || activation->startTime > t->startTime) {
+        if (activation->startTime > t->startTime) {
           t = activation;
         }
       }
     }
     bin = bin->next;
+  }
+
+  if (t == &sentinel) {
+    return nullptr;
   }
 
   return t;
