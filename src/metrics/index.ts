@@ -23,7 +23,7 @@ import {
   PeriodicExportingMetricReader,
 } from '@opentelemetry/sdk-metrics-base';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
-import { ChannelCredentials, Metadata } from '@grpc/grpc-js';
+import { Metadata } from '@grpc/grpc-js';
 import {
   assertNoExtraneousProperties,
   defaultServiceName,
@@ -122,15 +122,9 @@ export function defaultMetricReaderFactory(
     metadata.set('X-SF-TOKEN', options.accessToken);
   }
 
-  // TODO: Remove once https://github.com/open-telemetry/opentelemetry-js/pull/3019 is published
-  const credentials = options.endpoint.startsWith('http://')
-    ? ChannelCredentials.createInsecure()
-    : undefined;
-
   const reader = new PeriodicExportingMetricReader({
     exportIntervalMillis: options.exportIntervalMillis,
     exporter: new OTLPMetricExporter({
-      credentials,
       url: options.endpoint,
       metadata,
     }),
