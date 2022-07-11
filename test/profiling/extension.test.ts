@@ -33,6 +33,10 @@ function assertNanoSecondString(timestamp: any) {
   );
 }
 
+// Keep the expected count low, the first run of the profiler
+// has stacktraces with variable timestamps.
+const expectedStacktraceCount = 5;
+
 describe('profiling native extension', () => {
   afterEach(() => {
     extension.stop();
@@ -53,9 +57,6 @@ describe('profiling native extension', () => {
     const { stacktraces, startTimeNanos } = result;
     assertNanoSecondString(startTimeNanos);
 
-    // Keep the expected count low, the first run of the profiler
-    // has stacktraces with variable timestamps.
-    const expectedStacktraceCount = 5;
     assert(
       stacktraces.length >= expectedStacktraceCount,
       `expected ${expectedStacktraceCount} stacktraces, got ${stacktraces.length}`
@@ -75,6 +76,42 @@ describe('profiling native extension', () => {
 
       for (const stackline of stacklines) {
         assert(/.+\(.+:\d+:\d+\)/.test(stackline), stackline);
+      }
+    }
+  });
+
+  it('is possible to collect raw data on stacktraces', () => {
+    // Use a lower interval to make sure we capture something
+    extension.start({
+      samplingIntervalMicroseconds: 1_000,
+      recordDebugInfo: false,
+    });
+
+    spinMs(100);
+
+    const result = extension.collectRaw();
+    // The types might not be what is declared in typescript, a sanity check.
+    assert.equal(typeof result, 'object');
+    const { stacktraces, startTimeNanos } = result;
+    assertNanoSecondString(startTimeNanos);
+
+    assert(
+      stacktraces.length >= expectedStacktraceCount,
+      `expected ${expectedStacktraceCount} stacktraces, got ${stacktraces.length}`
+    );
+
+    for (const { stacktrace, timestamp } of stacktraces) {
+      // Don't bother checking for span and trace ID here.
+      assert(Array.isArray(stacktrace));
+      assertNanoSecondString(timestamp);
+
+      for (const traceline of stacktrace) {
+        assert(Array.isArray(traceline));
+        assert.strictEqual(traceline.length, 4);
+        assert.strictEqual(typeof traceline[0], 'string'); // filename
+        assert.strictEqual(typeof traceline[1], 'string'); // function name
+        assert.strictEqual(typeof traceline[2], 'number'); // line number
+        assert.strictEqual(typeof traceline[3], 'number'); // column number
       }
     }
   });
