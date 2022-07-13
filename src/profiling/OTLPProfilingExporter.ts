@@ -16,6 +16,7 @@
 import * as protoLoader from '@grpc/proto-loader';
 import * as grpc from '@grpc/grpc-js';
 import * as path from 'path';
+import * as fs from 'fs';
 import { ProfilingData, ProfilingExporter } from './types';
 import { diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
@@ -29,6 +30,48 @@ export interface OTLPExporterOptions {
 
 interface LogsClient extends grpc.Client {
   export: (request: unknown, metadata: grpc.Metadata, callback: Function) => {};
+}
+
+function readContentSync(location: string): Buffer | undefined {
+  try {
+    return fs.readFileSync(path.resolve(process.cwd(), location));
+  } catch (e) {
+    diag.error(`Failed to read file at ${location}`, e);
+  }
+
+  return undefined;
+}
+
+function maybeReadPath(location: string | undefined): Buffer | undefined {
+  if (location === undefined) {
+    return undefined;
+  }
+
+  return readContentSync(location);
+}
+
+function parseEndpoint(endpoint: string): {
+  host: string;
+  credentials: grpc.ChannelCredentials;
+} {
+  let host = endpoint;
+  let credentials = grpc.ChannelCredentials.createInsecure();
+
+  if (endpoint.startsWith('https://')) {
+    host = endpoint.substr(8);
+    credentials = grpc.credentials.createSsl(
+      maybeReadPath(process.env.OTEL_EXPORTER_OTLP_CERTIFICATE),
+      maybeReadPath(process.env.OTEL_EXPORTER_OTLP_CLIENT_KEY),
+      maybeReadPath(process.env.OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE)
+    );
+  } else if (endpoint.startsWith('http://')) {
+    host = endpoint.substr(7);
+  }
+
+  return {
+    host,
+    credentials,
+  };
 }
 
 export class OTLPProfilingExporter implements ProfilingExporter {
@@ -54,12 +97,14 @@ export class OTLPProfilingExporter implements ProfilingExporter {
       }
     );
 
+    const { host, credentials } = parseEndpoint(options.endpoint);
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const packageObject: any = grpc.loadPackageDefinition(packageDef);
     this._client =
       new packageObject.opentelemetry.proto.collector.logs.v1.LogsService(
-        options.endpoint,
-        grpc.credentials.createInsecure()
+        host,
+        credentials
       );
 
     const resource = new Resource({
