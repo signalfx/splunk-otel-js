@@ -44,7 +44,7 @@ const dummyProfile = {
   startTimepoint: '288828098110664',
 };
 
-describe('profiling:serialization', () => {
+describe.only('profiling:serialization', () => {
   it('creates a valid proto object', () => {
     const profile = require('./profile.json');
     const serializedProfile = serialize(profile);
@@ -56,18 +56,20 @@ describe('profiling:serialization', () => {
     const serializedProfile = serialize(dummyProfile);
 
     assert.equal(serializedProfile.sample.length, 1);
+    const { label: labels, ...sample } = serializedProfile.sample[0];
+    assert.deepEqual(sample.locationId, [1, 2]);
+    assert.deepEqual(sample.value, []);
     assert.deepEqual(
-      { ...serializedProfile.sample[0] },
+      { ...labels[0] },
       {
-        locationId: [1, 2],
-        value: [],
-        label: [],
+        key: 1,
+        num: 1657707471544,
       }
     );
     assert.equal(serializedProfile.function.length, 2);
     assert.deepEqual(
       { ...serializedProfile.function[0] },
-      { id: 1, name: 1, systemName: 1, filename: 2 }
+      { id: 1, name: 4, systemName: 4, filename: 5 }
     );
     assert.equal(serializedProfile.location.length, 2);
     assert.deepEqual(
@@ -85,6 +87,9 @@ describe('profiling:serialization', () => {
     );
     assert.deepEqual(serializedProfile.stringTable, [
       '',
+      'source.event.time',
+      'trace_id',
+      'span_id',
       'doWork',
       '/app/file.ts',
       '(anonymous)',

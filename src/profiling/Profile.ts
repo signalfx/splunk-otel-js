@@ -83,6 +83,13 @@ export const serialize = (profile: RawProfilingData) => {
   const locationsMap = new Map();
   const functionsMap = new Map();
 
+  // Precreating those because they are really likely to be used
+  const STR = {
+    TIMESTAMP: stringTable.getIndex('source.event.time'),
+    TRACE_ID: stringTable.getIndex('trace_id'),
+    SPAN_ID: stringTable.getIndex('span_id'),
+  };
+
   const getLocation = (
     fileName: string,
     functionName: string,
@@ -132,13 +139,36 @@ export const serialize = (profile: RawProfilingData) => {
     });
   };
 
-  const samples = stacktraces.map(({ stacktrace }) => {
+  const samples = stacktraces.map(({ stacktrace, timestamp, spanId, traceId }) => {
+    const labels = [
+      new perftools.profiles.Label({
+        key: STR.TIMESTAMP,
+        num: Number(BigInt(timestamp) / BigInt(1_000_000))
+      })
+    ];
+    if (traceId) {
+      labels.push(
+        new perftools.profiles.Label({
+          key: STR.TRACE_ID,
+          str: stringTable.getIndex(traceId.toString()),
+        })
+      );
+    }
+    if (spanId) {
+      labels.push(
+        new perftools.profiles.Label({
+          key: STR.SPAN_ID,
+          str: stringTable.getIndex(spanId.toString()),
+        })
+      );
+    }
+
     return new perftools.profiles.Sample({
       locationId: stacktrace.map(([fileName, functionName, lineNumber]) => {
         return getLocation(fileName, functionName, lineNumber).id;
       }),
-      value: [],
-      label: [],
+      value: [/* TODO */],
+      label: labels,
     });
   });
 
