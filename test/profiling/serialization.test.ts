@@ -43,6 +43,16 @@ const dummyProfile = {
   startTimeNanos: '1657707471456450000',
   startTimepoint: '288828098110664',
 };
+const toBuffer = (profile) => {
+  return perftools.profiles.Profile.encode(profile).finish();
+};
+const toProfileObject = (buffer) => {
+  return perftools.profiles.Profile.decode(buffer);
+};
+const clone = (serializedProfile) => {
+  const buffer = toBuffer(serializedProfile);
+  return toProfileObject(buffer);
+};
 
 describe.only('profiling:serialization', () => {
   it('creates a valid proto object', () => {
@@ -50,49 +60,39 @@ describe.only('profiling:serialization', () => {
     const serializedProfile = serialize(profile);
     assert(serializedProfile instanceof proto.Profile);
     assert.equal(proto.Profile.verify(serializedProfile), null);
+
+    assert.deepEqual(serializedProfile.toJSON(), clone(serializedProfile).toJSON());
   });
 
   it('correctly serializes a dummy profile', () => {
     const serializedProfile = serialize(dummyProfile);
 
-    assert.equal(serializedProfile.sample.length, 1);
-    const { label: labels, ...sample } = serializedProfile.sample[0];
-    assert.deepEqual(sample.locationId, [1, 2]);
-    assert.deepEqual(sample.value, []);
-    assert.deepEqual(
-      { ...labels[0] },
-      {
-        key: 1,
-        num: 1657707471544,
-      }
-    );
-    assert.equal(serializedProfile.function.length, 2);
-    assert.deepEqual(
-      { ...serializedProfile.function[0] },
-      { id: 1, name: 4, systemName: 4, filename: 5 }
-    );
-    assert.equal(serializedProfile.location.length, 2);
-    assert.deepEqual(
-      {
-        ...serializedProfile.location[0],
-        line: { ...serializedProfile.location[0].line[0] },
-      },
-      {
-        id: 1,
-        line: {
-          functionId: 1,
-          line: 44,
-        },
-      }
-    );
-    assert.deepEqual(serializedProfile.stringTable, [
-      '',
-      'source.event.time',
-      'trace_id',
-      'span_id',
-      'doWork',
-      '/app/file.ts',
-      '(anonymous)',
-    ]);
+    assert.deepEqual(serializedProfile.toJSON(), {
+      sample: [
+        {
+          locationId: [ '1', '2' ],
+          label: [ { key: '1', num: '1657707471544' } ]
+        }
+      ],
+      location: [
+        { id: '1', line: [ { functionId: '1', line: '44' } ] },
+        { id: '2', line: [ { functionId: '2', line: '50' } ] }
+      ],
+      function: [
+        { id: '1', name: '4', systemName: '4', filename: '5' },
+        { id: '2', name: '6', systemName: '6', filename: '5' }
+      ],
+      stringTable: [
+        '',
+        'source.event.time',
+        'trace_id',
+        'span_id',
+        'doWork',
+        '/app/file.ts',
+        '(anonymous)'
+      ]
+    });
+
+    assert.deepEqual(serializedProfile.toJSON(), clone(serializedProfile).toJSON());
   });
 });
