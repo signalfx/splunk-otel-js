@@ -167,7 +167,7 @@ export const serialize = (profile: RawProfilingData) => {
       locationId: stacktrace.map(([fileName, functionName, lineNumber]) => {
         return getLocation(fileName, functionName, lineNumber).id;
       }),
-      value: [/* TODO */],
+      value: [],
       label: labels,
     });
   });
