@@ -27,7 +27,7 @@ describe('profiling OTLP exporter', () => {
       utils.cleanEnvironment();
     });
 
-    it('configures insecure gRPC credentials for endpoints without a sceme', () => {
+    it('configures insecure gRPC credentials for endpoints without a scheme', () => {
       const exporter = new OTLPProfilingExporter({
         endpoint: 'foobar:8181',
         callstackInterval: 1000,
