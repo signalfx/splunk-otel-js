@@ -13,14 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { strict as assert } from 'assert';
 import { perftools } from './proto/profile';
-import { inspect } from 'util';
 import type { RawProfilingData } from './types';
 
-inspect.defaultOptions.depth = 20;
-
-class StringTable {
+export class StringTable {
   _stringMap = new Map();
 
   constructor() {
@@ -42,42 +38,8 @@ class StringTable {
   }
 }
 
-const stringTable = new StringTable();
-
-assert.equal(stringTable.getIndex(''), 0);
-assert.equal(stringTable.getIndex('a'), 1);
-assert.equal(stringTable.getIndex('b'), 2);
-assert.equal(stringTable.getIndex('a'), 1);
-assert.deepEqual([...stringTable._stringMap.keys()], ['', 'a', 'b']);
-
-// // Set with each element having an non-zero ID
-// class UniqueElementSet {
-//   _map = new Map();
-
-//   getOrAdd(key, el) {
-//     let el = this._map.get(key);
-//     if (el !== undefined) {
-//         return el;
-//     }
-//     idx = this._map.size + 1;
-//     this._map.set(el, idx);
-//     return idx;
-//   }
-// }
-
-// const els = new UniqueElementSet();
-
-// const a = {};
-// const b = {};
-
-// assert.equal(els.getId(a), 1);
-// assert.equal(els.getId(b), 2);
-// assert.equal(els.getId(a), 1);
-// assert.deepEqual([...els._map.keys()], [a, b]);
-
 export const serialize = (profile: RawProfilingData) => {
-  const { stacktraces, ...rest } = profile;
-  console.log(stacktraces.length, rest);
+  const { stacktraces } = profile;
 
   const stringTable = new StringTable();
   const locationsMap = new Map();
@@ -139,38 +101,40 @@ export const serialize = (profile: RawProfilingData) => {
     });
   };
 
-  const samples = stacktraces.map(({ stacktrace, timestamp, spanId, traceId }) => {
-    const labels = [
-      new perftools.profiles.Label({
-        key: STR.TIMESTAMP,
-        num: Number(BigInt(timestamp) / BigInt(1_000_000))
-      })
-    ];
-    if (traceId) {
-      labels.push(
+  const samples = stacktraces.map(
+    ({ stacktrace, timestamp, spanId, traceId }) => {
+      const labels = [
         new perftools.profiles.Label({
-          key: STR.TRACE_ID,
-          str: stringTable.getIndex(traceId.toString()),
-        })
-      );
-    }
-    if (spanId) {
-      labels.push(
-        new perftools.profiles.Label({
-          key: STR.SPAN_ID,
-          str: stringTable.getIndex(spanId.toString()),
-        })
-      );
-    }
+          key: STR.TIMESTAMP,
+          num: Number(BigInt(timestamp) / BigInt(1_000_000)),
+        }),
+      ];
+      if (traceId) {
+        labels.push(
+          new perftools.profiles.Label({
+            key: STR.TRACE_ID,
+            str: stringTable.getIndex(traceId.toString()),
+          })
+        );
+      }
+      if (spanId) {
+        labels.push(
+          new perftools.profiles.Label({
+            key: STR.SPAN_ID,
+            str: stringTable.getIndex(spanId.toString()),
+          })
+        );
+      }
 
-    return new perftools.profiles.Sample({
-      locationId: stacktrace.map(([fileName, functionName, lineNumber]) => {
-        return getLocation(fileName, functionName, lineNumber).id;
-      }),
-      value: [],
-      label: labels,
-    });
-  });
+      return new perftools.profiles.Sample({
+        locationId: stacktrace.map(([fileName, functionName, lineNumber]) => {
+          return getLocation(fileName, functionName, lineNumber).id;
+        }),
+        value: [],
+        label: labels,
+      });
+    }
+  );
 
   return perftools.profiles.Profile.create({
     sample: samples,
