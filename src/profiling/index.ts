@@ -139,7 +139,7 @@ export function _setDefaultOptions(
   const endpoint =
     options.endpoint ||
     process.env.SPLUNK_PROFILER_LOGS_ENDPOINT ||
-    'localhost:4317';
+    'http://localhost:4317';
 
   const combinedResource = detectResource();
 
