@@ -113,7 +113,7 @@ export const serialize = (profile: RawProfilingData) => {
         labels.push(
           new perftools.profiles.Label({
             key: STR.TRACE_ID,
-            str: stringTable.getIndex(traceId.toString()),
+            str: stringTable.getIndex(traceId.toString('hex')),
           })
         );
       }
@@ -121,7 +121,7 @@ export const serialize = (profile: RawProfilingData) => {
         labels.push(
           new perftools.profiles.Label({
             key: STR.SPAN_ID,
-            str: stringTable.getIndex(spanId.toString()),
+            str: stringTable.getIndex(spanId.toString('hex')),
           })
         );
       }
