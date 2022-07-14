@@ -148,5 +148,27 @@ describe('profiling', () => {
       // Stop flushes the exporters, hence the extra call count
       assert.deepStrictEqual(sendCallCount, 2);
     });
+
+    it('does not call Exporter#send if profiling has not started', async () => {
+      let sendCallCount = 0;
+      const stacktracesReceived = [];
+      const exporter: ProfilingExporter = {
+        send(profilingData: ProfilingData) {
+          sendCallCount += 1;
+        },
+      };
+
+      // enabling tracing is required for span information to be caught
+      const { stop } = startProfiling({
+        serviceName: 'slow-service',
+        callstackInterval: 50,
+        collectionDuration: 500,
+        exporterFactory: () => [exporter],
+      });
+
+      stop();
+
+      assert.equal(sendCallCount, 0);
+    });
   });
 });

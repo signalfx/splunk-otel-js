@@ -846,12 +846,13 @@ void ProfilingReset(Profiling* profiling) {
 }
 
 NAN_METHOD(CollectProfilingData) {
-  auto jsProfilingData = Nan::New<v8::Object>();
-  info.GetReturnValue().Set(jsProfilingData);
-
   if (!profiling) {
+    info.GetReturnValue().SetNull();
     return;
   }
+
+  auto jsProfilingData = Nan::New<v8::Object>();
+  info.GetReturnValue().Set(jsProfilingData);
 
   char prevTitle[64];
   ProfileTitle(profiling, prevTitle, sizeof(prevTitle));
@@ -878,12 +879,13 @@ NAN_METHOD(CollectProfilingData) {
 }
 
 NAN_METHOD(CollectProfilingDataRaw) {
-  auto jsProfilingData = Nan::New<v8::Object>();
-  info.GetReturnValue().Set(jsProfilingData);
-
   if (!profiling) {
+    info.GetReturnValue().SetNull();
     return;
   }
+
+  auto jsProfilingData = Nan::New<v8::Object>();
+  info.GetReturnValue().Set(jsProfilingData);
 
   char prevTitle[64];
   ProfileTitle(profiling, prevTitle, sizeof(prevTitle));
@@ -910,12 +912,13 @@ NAN_METHOD(CollectProfilingDataRaw) {
 }
 
 NAN_METHOD(StopProfiling) {
-  auto jsProfilingData = Nan::New<v8::Object>();
-  info.GetReturnValue().Set(jsProfilingData);
-
   if (!profiling) {
+    info.GetReturnValue().SetNull();
     return;
   }
+
+  auto jsProfilingData = Nan::New<v8::Object>();
+  info.GetReturnValue().Set(jsProfilingData);
 
   char title[64];
   ProfileTitle(profiling, title, sizeof(title));
