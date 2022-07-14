@@ -101,8 +101,10 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
   const interval = setInterval(() => {
     const profilingData = extCollectSamples(extension);
 
-    for (const exporter of exporters) {
-      exporter.send(profilingData);
+    if (profilingData) {
+      for (const exporter of exporters) {
+        exporter.send(profilingData);
+      }
     }
   }, options.collectionDuration);
 
@@ -113,8 +115,10 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
       clearInterval(interval);
       const profilingData = extStopProfiling(extension);
 
-      for (const exporter of exporters) {
-        exporter.send(profilingData);
+      if (profilingData) {
+        for (const exporter of exporters) {
+          exporter.send(profilingData);
+        }
       }
     },
   };
