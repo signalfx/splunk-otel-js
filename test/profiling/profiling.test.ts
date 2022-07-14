@@ -37,7 +37,7 @@ describe('profiling', () => {
       const options = _setDefaultOptions();
       assert.deepStrictEqual(options, {
         serviceName: 'unnamed-node-service',
-        endpoint: 'localhost:4317',
+        endpoint: 'http://localhost:4317',
         callstackInterval: 1_000,
         collectionDuration: 30_000,
         debugExport: false,
