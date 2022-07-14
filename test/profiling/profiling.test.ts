@@ -16,16 +16,27 @@
 
 import * as assert from 'assert';
 import { hrtime } from 'process';
+import { inspect } from 'util';
+
+import { context, trace, propagation } from '@opentelemetry/api';
+import { Resource } from '@opentelemetry/resources';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+
 import {
   defaultExporterFactory,
   startProfiling,
   _setDefaultOptions,
 } from '../../src/profiling';
+import { start, stop } from '../../src';
 import { ProfilingExporter, ProfilingData } from '../../src/profiling/types';
+import { ProfilingContextManager } from '../../src/profiling/ProfilingContextManager';
 import { detect as detectResource } from '../../src/resource';
-import { Resource } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+
 import * as utils from '../utils';
+
+const sleep = (ms: number) => {
+  return new Promise(r => setTimeout(r, ms));
+};
 
 describe('profiling', () => {
   describe('options', () => {
@@ -76,38 +87,66 @@ describe('profiling', () => {
   });
 
   describe('startProfiling', () => {
-    it('exports stacktraces', done => {
-      let stacktracesReceived = 0;
+    it('exports stacktraces', async () => {
       let sendCallCount = 0;
+      const stacktracesReceived = [];
       const exporter: ProfilingExporter = {
         send(profilingData: ProfilingData) {
           const { stacktraces } = profilingData;
-          stacktracesReceived += stacktraces.length;
           sendCallCount += 1;
+          stacktracesReceived.push(...stacktraces);
         },
       };
 
-      const { stop } = startProfiling({
-        serviceName: 'slow-service',
-        callstackInterval: 50,
-        collectionDuration: 1_000,
-        exporterFactory: () => [exporter],
+      // enabling tracing is required for span information to be caught
+      start({
+        profiling: {
+          serviceName: 'slow-service',
+          callstackInterval: 50,
+          collectionDuration: 500,
+          exporterFactory: () => [exporter],
+        },
       });
 
-      setTimeout(() => {
-        stop();
-        // It might be possible all stacktraces will not be available,
-        // due to the first few stacktraces having random timings
-        // after a profiling run is started.
-        const expectedStacktraces = 5;
-        assert(
-          stacktracesReceived >= expectedStacktraces,
-          `expected at least ${expectedStacktraces}, got ${stacktracesReceived}`
-        );
-        // Stop flushes the exporters, hence the extra call count
-        assert.deepStrictEqual(sendCallCount, 2);
-        done();
-      }, 1_100);
+      assert(context._getContextManager() instanceof ProfilingContextManager);
+
+      // let runtime empty the task-queue and enable profiling
+      await sleep(10);
+
+      const span = trace.getTracer('test-tracer').startSpan('test-span');
+      const { spanId: expectedSpanId, traceId: expectedTraceId } =
+        span.spanContext();
+
+      context.with(trace.setSpan(context.active(), span), () => {
+        utils.spinMs(1_000);
+        span.end();
+      });
+
+      // let runtime empty the task-queue and disable profiling
+      await sleep(10);
+
+      stop();
+      // It might be possible all stacktraces will not be available,
+      // due to the first few stacktraces having random timings
+      // after a profiling run is started.
+      const expectedStacktraces = 5;
+      assert(
+        stacktracesReceived.length >= expectedStacktraces,
+        `expected at least ${expectedStacktraces}, got ${stacktracesReceived.length}`
+      );
+
+      assert(
+        stacktracesReceived.some(({ spanId, traceId }, idx) => {
+          return (
+            spanId?.toString('hex') === expectedSpanId &&
+            traceId?.toString('hex') === expectedTraceId
+          );
+        }),
+        `No stacktrace had span info: ${inspect(stacktracesReceived)}`
+      );
+
+      // Stop flushes the exporters, hence the extra call count
+      assert.deepStrictEqual(sendCallCount, 2);
     });
   });
 });

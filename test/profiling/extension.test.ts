@@ -17,13 +17,9 @@
 import * as assert from 'assert';
 import { hrtime } from 'process';
 import { ProfilingExtension } from '../../src/profiling/types';
+import * as utils from '../utils';
 
 const extension: ProfilingExtension = require('../../src/native_ext').profiling;
-
-function spinMs(ms: number) {
-  const start = Date.now();
-  while (Date.now() - start < ms) {}
-}
 
 function assertNanoSecondString(timestamp: any) {
   assert.equal(typeof timestamp, 'string');
@@ -49,7 +45,7 @@ describe('profiling native extension', () => {
       recordDebugInfo: false,
     });
 
-    spinMs(100);
+    utils.spinMs(100);
 
     const result = extension.collect();
     // The types might not be what is declared in typescript, a sanity check.
@@ -87,7 +83,7 @@ describe('profiling native extension', () => {
       recordDebugInfo: false,
     });
 
-    spinMs(100);
+    utils.spinMs(100);
 
     const result = extension.collectRaw();
     // The types might not be what is declared in typescript, a sanity check.
