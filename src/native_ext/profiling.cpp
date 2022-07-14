@@ -846,13 +846,10 @@ void ProfilingReset(Profiling* profiling) {
 }
 
 NAN_METHOD(CollectProfilingData) {
+  info.GetReturnValue().SetNull();
   if (!profiling) {
-    info.GetReturnValue().SetNull();
     return;
   }
-
-  auto jsProfilingData = Nan::New<v8::Object>();
-  info.GetReturnValue().Set(jsProfilingData);
 
   char prevTitle[64];
   ProfileTitle(profiling, prevTitle, sizeof(prevTitle));
@@ -868,6 +865,12 @@ NAN_METHOD(CollectProfilingData) {
 
   v8::CpuProfile* profile =
     profiling->profiler->StopProfiling(Nan::New(prevTitle).ToLocalChecked());
+  if (!profile) {
+    return;
+  }
+
+  auto jsProfilingData = Nan::New<v8::Object>();
+  info.GetReturnValue().Set(jsProfilingData);
 
   ProfilingBuildStacktraces(profiling, profile, jsProfilingData);
   ProfilingRecordDebugInfo(profiling, jsProfilingData);
@@ -879,13 +882,10 @@ NAN_METHOD(CollectProfilingData) {
 }
 
 NAN_METHOD(CollectProfilingDataRaw) {
+  info.GetReturnValue().SetNull();
   if (!profiling) {
-    info.GetReturnValue().SetNull();
     return;
   }
-
-  auto jsProfilingData = Nan::New<v8::Object>();
-  info.GetReturnValue().Set(jsProfilingData);
 
   char prevTitle[64];
   ProfileTitle(profiling, prevTitle, sizeof(prevTitle));
@@ -901,6 +901,12 @@ NAN_METHOD(CollectProfilingDataRaw) {
 
   v8::CpuProfile* profile =
     profiling->profiler->StopProfiling(Nan::New(prevTitle).ToLocalChecked());
+  if (!profile) {
+    return;
+  }
+
+  auto jsProfilingData = Nan::New<v8::Object>();
+  info.GetReturnValue().Set(jsProfilingData);
 
   ProfilingBuildRawStacktraces(profiling, profile, jsProfilingData);
   ProfilingRecordDebugInfo(profiling, jsProfilingData);
@@ -912,18 +918,21 @@ NAN_METHOD(CollectProfilingDataRaw) {
 }
 
 NAN_METHOD(StopProfiling) {
+  info.GetReturnValue().SetNull();
   if (!profiling) {
-    info.GetReturnValue().SetNull();
     return;
   }
-
-  auto jsProfilingData = Nan::New<v8::Object>();
-  info.GetReturnValue().Set(jsProfilingData);
 
   char title[64];
   ProfileTitle(profiling, title, sizeof(title));
 
   v8::CpuProfile* profile = profiling->profiler->StopProfiling(Nan::New(title).ToLocalChecked());
+  if (!profile) {
+    return;
+  }
+
+  auto jsProfilingData = Nan::New<v8::Object>();
+  info.GetReturnValue().Set(jsProfilingData);
 
   ProfilingBuildStacktraces(profiling, profile, jsProfilingData);
   ProfilingRecordDebugInfo(profiling, jsProfilingData);
