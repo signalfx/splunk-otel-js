@@ -76,6 +76,16 @@ The following config options can be set by passing them as arguments to `startTr
 
 \*: Overwritten default value
 
+### Profiling
+
+| Environment variable<br>``startProfiling()`` argument           | Default value           | Support | Notes
+| --------------------------------------------------------------- | ----------------------- | ------- | ---
+| `SPLUNK_PROFILER_ENABLED`                                       | `false`                 | Experimental | Enable continuous profiling. See [profiling documentation](profiling.md) for more information.
+| `SPLUNK_PROFILER_LOGS_ENDPOINT`<br>`endpoint`                   | `http://localhost:4317` | Experimental | The OTLP logs receiver endpoint used for profiling data.
+| `OTEL_SERVICE_NAME`<br>`serviceName`                            | `unnamed-node-service`  | Experimental | Service name of the application.
+| `OTEL_RESOURCE_ATTRIBUTES`                                      |                         | Stable  | Comma-separated list of resource attributes. <details><summary>Example</summary>`deployment.environment=demo,key2=val2`</details>
+
+
 ### Start all
 
 To control all [signals](https://github.com/open-telemetry/opentelemetry-specification/blob/70fecd2dcba505b3ac3a7cb1851f947047743d24/specification/glossary.md#signals) with one call `start()` API can be used:
