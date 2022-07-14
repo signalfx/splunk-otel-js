@@ -34,7 +34,7 @@ interface LogsClient extends grpc.Client {
 
 function readContentSync(location: string): Buffer | undefined {
   try {
-    return fs.readFileSync(path.resolve(process.cwd(), location));
+    return fs.readFileSync(location);
   } catch (e) {
     diag.error(`Failed to read file at ${location}`, e);
   }
