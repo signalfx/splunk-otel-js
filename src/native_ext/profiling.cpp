@@ -866,6 +866,9 @@ NAN_METHOD(CollectProfilingData) {
   v8::CpuProfile* profile =
     profiling->profiler->StopProfiling(Nan::New(prevTitle).ToLocalChecked());
   if (!profile) {
+    // profile with this title might've already be ended using a previous stop call
+    profiling->startTime = newStartTime;
+    profiling->wallStartTime = newWallStart;
     return;
   }
 
@@ -902,6 +905,9 @@ NAN_METHOD(CollectProfilingDataRaw) {
   v8::CpuProfile* profile =
     profiling->profiler->StopProfiling(Nan::New(prevTitle).ToLocalChecked());
   if (!profile) {
+    // profile with this title might've already be ended using a previous stop call
+    profiling->startTime = newStartTime;
+    profiling->wallStartTime = newWallStart;
     return;
   }
 
@@ -926,8 +932,10 @@ NAN_METHOD(StopProfiling) {
   char title[64];
   ProfileTitle(profiling, title, sizeof(title));
 
-  v8::CpuProfile* profile = profiling->profiler->StopProfiling(Nan::New(title).ToLocalChecked());
+  v8::CpuProfile* profile =
+    profiling->profiler->StopProfiling(Nan::New(title).ToLocalChecked());
   if (!profile) {
+    // profile with this title might've already be ended using a previous stop call
     return;
   }
 
