@@ -61,7 +61,7 @@
   },
   "devDependencies": {
     "@commitlint/cli": "^14.1.0",
-    "@commitlint/config-conventional": "^16.2.1",
+    "@commitlint/config-conventional": "^17.0.3",
     "@octokit/core": "^3.5.1",
     "@opentelemetry/instrumentation-bunyan": "^0.28.0",
     "@opentelemetry/instrumentation-http": "^0.28.0",
