@@ -239,8 +239,21 @@ const SpanExporterMap: Record<string, SpanExporterFactory> = {
   'otlp-grpc': otlpSpanExporterFactory,
 };
 
+// Temporary workaround until https://github.com/open-telemetry/opentelemetry-js/issues/3094 is resolved
+function getBatchSpanProcessorConfig() {
+  // OTel uses its own parsed environment, we can just use the default env if the BSP delay is unset.
+  if (process.env.OTEL_BSP_SCHEDULE_DELAY !== undefined) {
+    return undefined;
+  }
+
+  return { scheduledDelayMillis: 500 };
+}
+
 export function defaultSpanProcessorFactory(options: Options): SpanProcessor {
-  return new SplunkBatchSpanProcessor(options.spanExporterFactory(options));
+  return new SplunkBatchSpanProcessor(
+    options.spanExporterFactory(options),
+    getBatchSpanProcessorConfig()
+  );
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
