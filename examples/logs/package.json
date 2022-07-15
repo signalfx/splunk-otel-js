@@ -1,6 +1,6 @@
 {
   "dependencies": {
     "@opentelemetry/api": "^1.0.3",
-    "@splunk/otel": "^1.0.0"
+    "@splunk/otel": "^1.2.0"
   }
 }

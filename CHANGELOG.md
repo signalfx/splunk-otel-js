@@ -1,8 +1,18 @@
 # Change Log - @splunk/otel
 
-This log was last generated on Mon, 13 Jun 2022 08:22:59 GMT and should not be manually modified.
+This log was last generated on Fri, 15 Jul 2022 15:39:32 GMT and should not be manually modified.
 
 <!-- Start content -->
+
+## 1.2.0
+
+Fri, 15 Jul 2022 15:39:32 GMT
+
+### Minor changes
+
+- feat: add a way to collect unformatted profiling data (rauno56@gmail.com)
+- fix: use a 500ms default delay for batch span processor to avoid excessive throttling
+- fix: support HTTP schemes for profiling logs exporter
 
 ## 1.1.0
 
