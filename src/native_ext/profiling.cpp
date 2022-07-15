@@ -323,8 +323,8 @@ void V8StartProfiling(v8::CpuProfiler* profiler, const char* title) {
 #endif
 }
 
-void ProfileTitle(Profiling* profiling, char* buffer, size_t length) {
-  snprintf(buffer, length, "splunk-otel-js-%" PRId64, profiling->profilerSeq);
+void ProfileTitle(int64_t profilerSeq, char* buffer, size_t length) {
+  snprintf(buffer, length, "splunk-otel-js-%" PRId64, profilerSeq);
 }
 
 NAN_METHOD(StartProfiling) {
@@ -367,7 +367,7 @@ NAN_METHOD(StartProfiling) {
   profiling->profiler->SetSamplingInterval(samplingIntervalMicros);
 
   char title[64];
-  ProfileTitle(profiling, title, sizeof(title));
+  ProfileTitle(profiling->profilerSeq, title, sizeof(title));
 
   profiling->activationDepth = 0;
   profiling->startTime = HrTime();
@@ -846,18 +846,16 @@ void ProfilingReset(Profiling* profiling) {
 }
 
 NAN_METHOD(CollectProfilingData) {
-  auto jsProfilingData = Nan::New<v8::Object>();
-  info.GetReturnValue().Set(jsProfilingData);
-
+  info.GetReturnValue().SetNull();
   if (!profiling) {
     return;
   }
 
   char prevTitle[64];
-  ProfileTitle(profiling, prevTitle, sizeof(prevTitle));
+  ProfileTitle(profiling->profilerSeq, prevTitle, sizeof(prevTitle));
   profiling->profilerSeq++;
   char nextTitle[64];
-  ProfileTitle(profiling, nextTitle, sizeof(nextTitle));
+  ProfileTitle(profiling->profilerSeq, nextTitle, sizeof(nextTitle));
 
   profiling->activationDepth = 0;
   int64_t newStartTime = HrTime();
@@ -867,6 +865,15 @@ NAN_METHOD(CollectProfilingData) {
 
   v8::CpuProfile* profile =
     profiling->profiler->StopProfiling(Nan::New(prevTitle).ToLocalChecked());
+  if (!profile) {
+    // profile with this title might've already be ended using a previous stop call
+    profiling->startTime = newStartTime;
+    profiling->wallStartTime = newWallStart;
+    return;
+  }
+
+  auto jsProfilingData = Nan::New<v8::Object>();
+  info.GetReturnValue().Set(jsProfilingData);
 
   ProfilingBuildStacktraces(profiling, profile, jsProfilingData);
   ProfilingRecordDebugInfo(profiling, jsProfilingData);
@@ -878,18 +885,16 @@ NAN_METHOD(CollectProfilingData) {
 }
 
 NAN_METHOD(CollectProfilingDataRaw) {
-  auto jsProfilingData = Nan::New<v8::Object>();
-  info.GetReturnValue().Set(jsProfilingData);
-
+  info.GetReturnValue().SetNull();
   if (!profiling) {
     return;
   }
 
   char prevTitle[64];
-  ProfileTitle(profiling, prevTitle, sizeof(prevTitle));
+  ProfileTitle(profiling->profilerSeq, prevTitle, sizeof(prevTitle));
   profiling->profilerSeq++;
   char nextTitle[64];
-  ProfileTitle(profiling, nextTitle, sizeof(nextTitle));
+  ProfileTitle(profiling->profilerSeq, nextTitle, sizeof(nextTitle));
 
   profiling->activationDepth = 0;
   int64_t newStartTime = HrTime();
@@ -899,6 +904,15 @@ NAN_METHOD(CollectProfilingDataRaw) {
 
   v8::CpuProfile* profile =
     profiling->profiler->StopProfiling(Nan::New(prevTitle).ToLocalChecked());
+  if (!profile) {
+    // profile with this title might've already be ended using a previous stop call
+    profiling->startTime = newStartTime;
+    profiling->wallStartTime = newWallStart;
+    return;
+  }
+
+  auto jsProfilingData = Nan::New<v8::Object>();
+  info.GetReturnValue().Set(jsProfilingData);
 
   ProfilingBuildRawStacktraces(profiling, profile, jsProfilingData);
   ProfilingRecordDebugInfo(profiling, jsProfilingData);
@@ -910,17 +924,23 @@ NAN_METHOD(CollectProfilingDataRaw) {
 }
 
 NAN_METHOD(StopProfiling) {
-  auto jsProfilingData = Nan::New<v8::Object>();
-  info.GetReturnValue().Set(jsProfilingData);
-
+  info.GetReturnValue().SetNull();
   if (!profiling) {
     return;
   }
 
-  char title[64];
-  ProfileTitle(profiling, title, sizeof(title));
+  char prevTitle[64];
+  ProfileTitle(profiling->profilerSeq, prevTitle, sizeof(prevTitle));
 
-  v8::CpuProfile* profile = profiling->profiler->StopProfiling(Nan::New(title).ToLocalChecked());
+  v8::CpuProfile* profile =
+    profiling->profiler->StopProfiling(Nan::New(prevTitle).ToLocalChecked());
+  if (!profile) {
+    // profile with this title might've already be ended using a previous stop call
+    return;
+  }
+
+  auto jsProfilingData = Nan::New<v8::Object>();
+  info.GetReturnValue().Set(jsProfilingData);
 
   ProfilingBuildStacktraces(profiling, profile, jsProfilingData);
   ProfilingRecordDebugInfo(profiling, jsProfilingData);

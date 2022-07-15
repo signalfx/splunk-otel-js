@@ -39,3 +39,8 @@ export const cleanEnvironment = () => {
       delete process.env[key];
     });
 };
+
+export const spinMs = (ms: number) => {
+  const start = Date.now();
+  while (Date.now() - start < ms) {}
+};
