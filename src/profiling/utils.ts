@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import * as fs from 'fs';
+import * as grpc from '@grpc/grpc-js';
+import { diag } from '@opentelemetry/api';
+
 import { perftools } from './proto/profile';
 import type { RawProfilingData } from './types';
 
@@ -143,3 +147,45 @@ export const serialize = (profile: RawProfilingData) => {
     stringTable: stringTable.serialize(),
   });
 };
+
+function readContentSync(location: string): Buffer | undefined {
+  try {
+    return fs.readFileSync(location);
+  } catch (e) {
+    diag.error(`Failed to read file at ${location}`, e);
+  }
+
+  return undefined;
+}
+
+function maybeReadPath(location: string | undefined): Buffer | undefined {
+  if (location === undefined) {
+    return undefined;
+  }
+
+  return readContentSync(location);
+}
+
+export function parseEndpoint(endpoint: string): {
+  host: string;
+  credentials: grpc.ChannelCredentials;
+} {
+  let host = endpoint;
+  let credentials = grpc.ChannelCredentials.createInsecure();
+
+  if (endpoint.startsWith('https://')) {
+    host = endpoint.substr(8);
+    credentials = grpc.credentials.createSsl(
+      maybeReadPath(process.env.OTEL_EXPORTER_OTLP_CERTIFICATE),
+      maybeReadPath(process.env.OTEL_EXPORTER_OTLP_CLIENT_KEY),
+      maybeReadPath(process.env.OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE)
+    );
+  } else if (endpoint.startsWith('http://')) {
+    host = endpoint.substr(7);
+  }
+
+  return {
+    host,
+    credentials,
+  };
+}

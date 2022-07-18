@@ -16,11 +16,23 @@
 import * as protoLoader from '@grpc/proto-loader';
 import * as grpc from '@grpc/grpc-js';
 import * as path from 'path';
+import * as fs from 'fs';
 import { ProfilingData, ProfilingExporter } from './types';
 import { diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { parseEndpoint } from './utils';
+import { gzip, gzipSync } from 'zlib';
+import { promisify } from 'util';
+
+const gzipPromise = promisify(gzip);
+
+const encode = async function encode(
+  profile: perftools.profiles.IProfile
+): Promise<Buffer> {
+  const buffer = perftools.profiles.Profile.encode(profile).finish();
+  return gzipPromise(buffer);
+}
 
 export interface OTLPExporterOptions {
   callstackInterval: number;
@@ -32,7 +44,7 @@ interface LogsClient extends grpc.Client {
   export: (request: unknown, metadata: grpc.Metadata, callback: Function) => {};
 }
 
-export class OTLPProfilingExporter implements ProfilingExporter {
+export class PprofExporter implements ProfilingExporter {
   protected _client: LogsClient;
   protected _options: OTLPExporterOptions;
   protected _resourceAttributes;
@@ -101,7 +113,6 @@ export class OTLPProfilingExporter implements ProfilingExporter {
 
   send(profile: ProfilingData) {
     const { stacktraces } = profile;
-    diag.debug(`profiling: Exporting ${stacktraces?.length} samples`);
     const { callstackInterval } = this._options;
     const attributes = [
       {
@@ -150,7 +161,7 @@ export class OTLPProfilingExporter implements ProfilingExporter {
     };
     this._client.export(payload, new grpc.Metadata(), (err: unknown) => {
       if (err) {
-        diag.error('profiling: Error exporting profiling data', err);
+        diag.error('Error exporting profiling data', err);
       }
     });
   }
