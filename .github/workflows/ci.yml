@@ -178,6 +178,9 @@ jobs:
       - name: Test log-injection example
         working-directory: test/examples
         run: docker-compose -f e2e.docker-compose.yml -f log-injection.override.yml -f published.override.yml up --exit-code-from test
+      - name: Test profiling example
+        working-directory: test/examples
+        run: docker-compose -f e2e.docker-compose.yml -f profiling.override.yml -f published.override.yml up --exit-code-from test
 
   e2e-local:
     runs-on: ubuntu-latest
@@ -197,3 +200,6 @@ jobs:
       - name: Test log-injection example
         working-directory: test/examples
         run: docker-compose -f e2e.docker-compose.yml -f log-injection.override.yml up --exit-code-from test
+      - name: Test profiling example
+        working-directory: test/examples
+        run: docker-compose -f e2e.docker-compose.yml -f profiling.override.yml up --exit-code-from test
