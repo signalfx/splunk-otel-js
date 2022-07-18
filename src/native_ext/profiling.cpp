@@ -942,7 +942,7 @@ NAN_METHOD(StopProfiling) {
   auto jsProfilingData = Nan::New<v8::Object>();
   info.GetReturnValue().Set(jsProfilingData);
 
-  ProfilingBuildStacktraces(profiling, profile, jsProfilingData);
+  ProfilingBuildRawStacktraces(profiling, profile, jsProfilingData);
   ProfilingRecordDebugInfo(profiling, jsProfilingData);
   ProfilingReset(profiling);
   profile->Delete();

@@ -52,7 +52,7 @@ function extStartProfiling(
 
 function extCollectSamples(extension: ProfilingExtension) {
   diag.debug('profiling: Collecting samples');
-  return extension.collect();
+  return extension.collectRaw();
 }
 
 export function defaultExporterFactory(

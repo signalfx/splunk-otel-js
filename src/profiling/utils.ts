@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 import * as fs from 'fs';
+import { gzip } from 'zlib';
+import { promisify } from 'util';
 import * as grpc from '@grpc/grpc-js';
 import { diag } from '@opentelemetry/api';
 
 import { perftools } from './proto/profile';
 import type { RawProfilingData } from './types';
+
+const gzipPromise = promisify(gzip);
 
 export class StringTable {
   _stringMap = new Map();
@@ -146,6 +150,13 @@ export const serialize = (profile: RawProfilingData) => {
     function: [...functionsMap.values()],
     stringTable: stringTable.serialize(),
   });
+};
+
+export const encode = async function encode(
+  profile: perftools.profiles.IProfile
+): Promise<Buffer> {
+  const buffer = perftools.profiles.Profile.encode(profile).finish();
+  return gzipPromise(buffer);
 };
 
 function readContentSync(location: string): Buffer | undefined {
