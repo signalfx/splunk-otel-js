@@ -2,6 +2,7 @@
   "compilerOptions": {
     "rootDir": "./src/",
     "outDir": "lib",
+    "allowJs": true,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "composite": true,
@@ -22,7 +23,8 @@
     "newLine": "LF"
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "src/**/*.js"
   ],
   "exclude": ["node_modules"],
   "references": []
