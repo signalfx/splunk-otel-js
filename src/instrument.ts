@@ -25,4 +25,7 @@ if (getEnvBoolean('SPLUNK_PROFILER_ENABLED', false)) {
 }
 
 startTracing();
-startMetrics();
+
+if (getEnvBoolean('SPLUNK_METRICS_ENABLED', true)) {
+  startMetrics();
+}
