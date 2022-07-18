@@ -1,0 +1,13 @@
+{
+  "name": "splunk-otel-example-profiling",
+  "private": true,
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "SPLUNK_PROFILER_ENABLED=y node -r @splunk/otel/instrument index.js"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.1.0",
+    "@splunk/otel": "1.1.0"
+  }
+}
