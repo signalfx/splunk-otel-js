@@ -38,6 +38,7 @@ export { ProfilingOptions };
 
 /* The following are wrappers around native functions to give more context to profiling samples. */
 function extStopProfiling(extension: ProfilingExtension) {
+  diag.debug('profiling: Stopping');
   return extension.stop();
 }
 
@@ -45,10 +46,12 @@ function extStartProfiling(
   extension: ProfilingExtension,
   opts: ProfilingStartOptions
 ) {
+  diag.debug('profiling: Starting');
   extension.start(opts);
 }
 
 function extCollectSamples(extension: ProfilingExtension) {
+  diag.debug('profiling: Collecting samples');
   return extension.collect();
 }
 
@@ -126,10 +129,11 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
 
 export function loadExtension(): ProfilingExtension | undefined {
   try {
+    diag.debug('profiling: Starting');
     return require('../native_ext').profiling;
   } catch (e) {
     diag.error(
-      'Unable to load profiling extension. Profiling data will not be reported',
+      'profiling: Unable to load extension. Profiling data will not be reported',
       e
     );
   }
