@@ -105,6 +105,14 @@ export class OTLPProfilingExporter implements ProfilingExporter {
     const { callstackInterval } = this._options;
     const attributes = [
       {
+        key: 'profiling.data.format',
+        value: { stringValue: 'pprof-gzip-base64' },
+      },
+      {
+        key: 'profiling.data.type',
+        value: { stringValue: 'cpu' },
+      },
+      {
         key: 'com.splunk.sourcetype',
         value: { stringValue: 'otel.profiling' },
       },
