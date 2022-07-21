@@ -35,7 +35,6 @@
  * limitations under the License.
  */
 import {
-  Detector,
   Resource,
   ResourceDetectionConfig,
 } from '@opentelemetry/resources';
@@ -45,7 +44,7 @@ import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
 import * as fs from 'fs';
 import { diag } from '@opentelemetry/api';
 
-export class DockerCGroupV1Detector implements Detector {
+export class DockerCGroupV1Detector {
   public detect(_config?: ResourceDetectionConfig): Resource {
     try {
       const containerId = this._getContainerId();
