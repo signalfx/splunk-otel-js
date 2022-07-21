@@ -78,7 +78,7 @@ startMetrics({
     return [
       new PeriodicExportingMetricReader({
         exporter: new OTLPMetricExporter({
-          aggregationTemporality: AggregationTemporality.DELTA
+          temporalityPreference: AggregationTemporality.DELTA
         })
       })
     ]

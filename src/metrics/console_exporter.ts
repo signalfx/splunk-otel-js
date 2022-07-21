@@ -82,12 +82,16 @@ function logScopeMetrics(scopeMetrics: ScopeMetrics, index: number) {
   }
 }
 
+export interface ConsoleMetricExporterOptions {
+  temporalityPreference?: AggregationTemporality;
+}
+
 export class ConsoleMetricExporter implements PushMetricExporter {
   private _aggregationTemporality: AggregationTemporality;
 
-  constructor(preferredTemporality?: AggregationTemporality) {
+  constructor(options: ConsoleMetricExporterOptions = {}) {
     this._aggregationTemporality =
-      preferredTemporality ?? AggregationTemporality.CUMULATIVE;
+      options.temporalityPreference ?? AggregationTemporality.CUMULATIVE;
   }
 
   export(
