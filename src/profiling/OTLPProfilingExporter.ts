@@ -143,6 +143,7 @@ export class OTLPProfilingExporter implements ProfilingExporter {
 
   send(profile: ProfilingData) {
     const { stacktraces } = profile;
+    diag.debug(`profiling: Exporting ${stacktraces?.length} samples`);
     const { callstackInterval } = this._options;
     const attributes = [
       {
@@ -191,7 +192,7 @@ export class OTLPProfilingExporter implements ProfilingExporter {
     };
     this._client.export(payload, new grpc.Metadata(), (err: unknown) => {
       if (err) {
-        diag.error('Error exporting profiling data', err);
+        diag.error('profiling: Error exporting profiling data', err);
       }
     });
   }

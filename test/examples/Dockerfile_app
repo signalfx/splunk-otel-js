@@ -7,7 +7,13 @@ ENV TZ=UTC
 RUN mkdir /home/node/app
 WORKDIR /home/node/app
 
-COPY --chown=node:node ["binding.gyp", "package*.json", "*.lock", "./"]
+COPY --chown=node:node [ \
+	"binding.gyp", \
+	"package*.json", \
+	"*.lock", \
+	"./" \
+]
+COPY --chown=node:node ["./scripts/examples-npm-install", "./scripts/examples-npm-install"]
 COPY --chown=node:node ["./src/native_ext", "./src/native_ext"]
 RUN npm install --omit peer
 
@@ -17,10 +23,7 @@ COPY --chown=node:node ./ .
 # Install deps for examples
 FROM base as published
 
-RUN cd examples/basic && npm install
-RUN cd examples/express && npm install
-RUN cd examples/log-injection && npm install
-RUN cd examples/mixed && npm install
+RUN ./scripts/examples-npm-install
 
 ## Project root doesn't have start script defined
 ## Working dir(-w) must be provided to one of the example dirs
@@ -34,7 +37,4 @@ FROM published as compiled
 RUN npm run prebuild:current
 RUN npm run compile
 RUN mv `npm pack` /tmp/splunk-otel.tgz
-RUN cd examples/basic && npm i /tmp/splunk-otel.tgz
-RUN cd examples/express && npm i /tmp/splunk-otel.tgz
-RUN cd examples/log-injection && npm i /tmp/splunk-otel.tgz
-RUN cd examples/mixed && npm i /tmp/splunk-otel.tgz
+RUN ./scripts/examples-npm-install /tmp/splunk-otel.tgz
