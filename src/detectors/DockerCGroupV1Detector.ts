@@ -67,10 +67,7 @@ export class DockerCGroupV1Detector implements Detector {
     const CONTAINER_ID_LENGTH = 64;
 
     try {
-      const rawData = fs.readfileSync(
-        '/proc/self/cgroup',
-        'utf8'
-      );
+      const rawData = fs.readfileSync('/proc/self/cgroup', 'utf8');
       const splitData = rawData.trim().split('\n');
       for (const str of splitData) {
         if (str.length >= CONTAINER_ID_LENGTH) {
