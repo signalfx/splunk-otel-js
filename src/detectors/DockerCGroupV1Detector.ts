@@ -43,7 +43,6 @@ import {
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 import * as fs from 'fs';
-import * as util from 'util';
 import { diag } from '@opentelemetry/api';
 
 export class DockerCGroupV1Detector implements Detector {
@@ -68,7 +67,7 @@ export class DockerCGroupV1Detector implements Detector {
     const CONTAINER_ID_LENGTH = 64;
 
     try {
-      const rawData = DockerCGroupV1Detector.readFileAsync(
+      const rawData = fs.readfileSync(
         '/proc/self/cgroup',
         'utf8'
       );
