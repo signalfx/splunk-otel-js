@@ -18,7 +18,7 @@ export { startTracing, stopTracing } from './tracing';
 export { startMetrics } from './metrics';
 export {
   ConsoleMetricExporter,
-  ConsoleMetricExporterOptions
+  ConsoleMetricExporterOptions,
 } from './metrics/console_exporter';
 export { startProfiling } from './profiling';
 export { start, stop } from './start';
