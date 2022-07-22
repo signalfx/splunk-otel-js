@@ -31,7 +31,7 @@ startMetrics({
   }),
   exportIntervalMillis: 1000, // default: 5000
   // The default exporter used is OTLP over gRPC
-  endpoint: 'collector:4317',
+  endpoint: 'http://collector:4317',
 });
 
 const meter = metrics.getMeter('my-meter');
