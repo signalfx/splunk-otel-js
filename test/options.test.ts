@@ -52,6 +52,7 @@ const MATCH_NO_INSTRUMENTATIONS_WARNING = sinon.match(
 );
 // List of resource attributes we expect to see detected
 const expectedAttributes = new Set([
+  // SemanticResourceAttributes.CONTAINER_ID,
   SemanticResourceAttributes.HOST_ARCH,
   SemanticResourceAttributes.HOST_NAME,
   SemanticResourceAttributes.OS_TYPE,

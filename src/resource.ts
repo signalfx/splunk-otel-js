@@ -18,7 +18,7 @@ import { diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 
 import { distroDetector } from './detectors/DistroDetector';
-import { dockerCGroupV1Detector } from './detectors/DockerCGroupV1Detector.ts';
+import { dockerCGroupV1Detector } from './detectors/DockerCGroupV1Detector';
 import { envDetector } from './detectors/EnvDetector';
 import { hostDetector } from './detectors/HostDetector';
 import { osDetector } from './detectors/OSDetector';

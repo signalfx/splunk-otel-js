@@ -34,10 +34,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-  Resource,
-  ResourceDetectionConfig,
-} from '@opentelemetry/resources';
+import { Resource, ResourceDetectionConfig } from '@opentelemetry/resources';
 
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
@@ -66,7 +63,7 @@ export class DockerCGroupV1Detector {
     const CONTAINER_ID_LENGTH = 64;
 
     try {
-      const rawData = fs.readfileSync('/proc/self/cgroup', 'utf8');
+      const rawData = fs.readFileSync('/proc/self/cgroup', 'utf8');
       const splitData = rawData.trim().split('\n');
       for (const str of splitData) {
         if (str.length >= CONTAINER_ID_LENGTH) {
