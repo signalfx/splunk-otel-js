@@ -1,0 +1,33 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+  signalfx:
+
+exporters:
+  otlphttp:
+    traces_endpoint: "https://ingest.${SPLUNK_REALM}.signalfx.com/v2/trace/otlp"
+    headers:
+      X-SF-TOKEN: "${SPLUNK_ACCESS_TOKEN}"
+  splunk_hec:
+    token: "${SPLUNK_ACCESS_TOKEN}"
+    endpoint: "https://ingest.${SPLUNK_REALM}.signalfx.com/v1/log"
+  logging/debug:
+    loglevel: debug
+
+processors:
+  batch:
+
+service:
+  telemetry:
+   logs:
+     level: "debug"
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [logging/debug, otlphttp]
+    logs/profiling:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [logging/debug, splunk_hec]

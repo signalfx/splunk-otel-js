@@ -1,0 +1,8 @@
+services:
+  app:
+    working_dir: /home/node/app/examples/profiling
+    env_file: ./profiling/app.env
+  test:
+    command: node ./profiling
+    environment:
+      COLLECTOR_URL: http://collector:8378

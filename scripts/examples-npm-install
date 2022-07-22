@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+
+PKG=$1
+echo "Installing in all examples: $PKG"
+
+for d in ./examples/*/ ; do
+  echo "$d"
+  (
+  	cd "$d";
+  	npm install $PKG
+  )
+done
