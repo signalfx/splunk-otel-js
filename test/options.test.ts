@@ -109,7 +109,9 @@ describe('options', () => {
       );
 
       assert(
-        options.tracerConfig.resource.attributes[SemanticResourceAttributes.CONTAINER_ID],
+        options.tracerConfig.resource.attributes[
+          SemanticResourceAttributes.CONTAINER_ID
+        ],
         /^[abcdef0-9]{64}$/
       );
 
