@@ -97,9 +97,7 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
     recordDebugInfo: options.debugExport,
   };
 
-  setImmediate(() => {
-    extStartProfiling(extension, startOptions);
-  });
+  extStartProfiling(extension, startOptions);
 
   const interval = setInterval(() => {
     const profilingData = extCollectSamples(extension);
