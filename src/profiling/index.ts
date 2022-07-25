@@ -129,7 +129,7 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
 
 export function loadExtension(): ProfilingExtension | undefined {
   try {
-    diag.debug('profiling: Starting');
+    diag.debug('profiling: Loading');
     return require('../native_ext').profiling;
   } catch (e) {
     diag.error(
