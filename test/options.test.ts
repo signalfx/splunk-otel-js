@@ -108,6 +108,11 @@ describe('options', () => {
         )
       );
 
+      assert(
+        options.tracerConfig.resource.attributes[SemanticResourceAttributes.CONTAINER_ID],
+        /^[abcdef0-9]{64}$/
+      );
+
       // resource attributes for process, host and os are different at each run, iterate through them, make sure they exist and then delete
       Object.keys(options.tracerConfig.resource.attributes)
         .filter(attribute => {
