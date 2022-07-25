@@ -1,10 +1,7 @@
 {
   "name": "test-e2e",
   "private": true,
-  "scripts": {
-    "start": "node ./express",
-    "test": "doco up --build --exit-code-from test"
-  },
+  "scripts": {},
   "devDependencies": {
     "got": "^11.8.2",
     "nodemon": "^2.0.12"
