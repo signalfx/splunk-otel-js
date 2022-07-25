@@ -147,6 +147,7 @@ export function _setDefaultOptions(
   const endpoint =
     options.endpoint ||
     process.env.SPLUNK_PROFILER_LOGS_ENDPOINT ||
+    process.env.OTEL_EXPORTER_OTLP_ENDPOINT ||
     'http://localhost:4317';
 
   const combinedResource = detectResource();
