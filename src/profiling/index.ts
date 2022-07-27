@@ -92,8 +92,10 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
 
   const exporters = options.exporterFactory(options);
 
+  const samplingIntervalMicroseconds = options.callstackInterval * 1_000;
   const startOptions = {
-    samplingIntervalMicroseconds: options.callstackInterval * 1_000,
+    samplingIntervalMicroseconds,
+    maxSampleCutoffDelayMicroseconds: samplingIntervalMicroseconds / 2,
     recordDebugInfo: options.debugExport,
   };
 
