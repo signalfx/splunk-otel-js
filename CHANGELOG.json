@@ -2,6 +2,27 @@
   "name": "@splunk/otel",
   "entries": [
     {
+      "date": "Thu, 28 Jul 2022 07:45:57 GMT",
+      "tag": "@splunk/otel_v1.2.1",
+      "version": "1.2.1",
+      "comments": {
+        "patch": [
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "d9bb1bdd6cdfc3f16bcf3deba92a0fc69445fb1c",
+            "comment": "feat: start profiling syncronously"
+          },
+          {
+            "author": "siimkallas@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "5600da399cf9409b1bdc7c00091bcf653bcf24e5",
+            "comment": "fix: profiling: avoid biased samples due to self sampling"
+          }
+        ]
+      }
+    },
+    {
       "date": "Fri, 15 Jul 2022 15:39:32 GMT",
       "tag": "@splunk/otel_v1.2.0",
       "version": "1.2.0",
