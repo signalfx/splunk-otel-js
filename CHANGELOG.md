@@ -1,8 +1,17 @@
 # Change Log - @splunk/otel
 
-This log was last generated on Fri, 15 Jul 2022 15:39:32 GMT and should not be manually modified.
+This log was last generated on Thu, 28 Jul 2022 07:45:57 GMT and should not be manually modified.
 
 <!-- Start content -->
+
+## 1.2.1
+
+Thu, 28 Jul 2022 07:45:57 GMT
+
+### Patches
+
+- feat: start profiling syncronously (rauno56@gmail.com)
+- fix: profiling: avoid biased samples due to self sampling
 
 ## 1.2.0
 

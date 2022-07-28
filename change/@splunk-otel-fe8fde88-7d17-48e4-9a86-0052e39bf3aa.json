@@ -1,7 +1,0 @@
-{
-  "type": "patch",
-  "comment": "feat: start profiling syncronously",
-  "packageName": "@splunk/otel",
-  "email": "rauno56@gmail.com",
-  "dependentChangeType": "patch"
-}
