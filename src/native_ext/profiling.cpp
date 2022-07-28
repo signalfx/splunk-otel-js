@@ -182,6 +182,10 @@ struct Profiling {
   v8::CpuProfiler* profiler;
   int64_t wallStartTime = 0;
   int64_t startTime = 0;
+  // Maximum offset in nanoseconds from profiling start from which a sample is considered always valid.
+  int64_t maxSampleCutoffDelayNanos = 500LL * 1000LL * 1000LL;
+  // Point in time before which a sample is considered invalid, necessary to avoid biases with self-sampling.
+  int64_t sampleCutoffPoint = 0;
   int32_t activationDepth = 0;
   int32_t flags = ProfilingFlags_None;
   int64_t samplingIntervalNanos = 0;
@@ -361,6 +365,13 @@ NAN_METHOD(StartProfiling) {
         profiling->flags |= ProfilingFlags_RecordDebugInfo;
       }
     }
+
+    auto maybeMaxSampleCutoffDelay =
+      Nan::Get(options, Nan::New("maxSampleCutoffDelayMicroseconds").ToLocalChecked());
+    if (!maybeMaxSampleCutoffDelay.IsEmpty() && maybeMaxSampleCutoffDelay.ToLocalChecked()->IsNumber()) {
+      int64_t maxSampleCutoffDelayMicros = Nan::To<int64_t>(maybeMaxSampleCutoffDelay.ToLocalChecked()).FromJust();
+      profiling->maxSampleCutoffDelayNanos = maxSampleCutoffDelayMicros * 1000LL;
+    }
   }
 
   profiling->samplingIntervalNanos = int64_t(samplingIntervalMicros) * 1000L;
@@ -373,6 +384,7 @@ NAN_METHOD(StartProfiling) {
   profiling->startTime = HrTime();
   profiling->wallStartTime = MicroSecondsSinceEpoch() * 1000L;
   V8StartProfiling(profiling->profiler, title);
+  profiling->sampleCutoffPoint = HrTime();
 }
 
 struct StringBuilder {
@@ -537,6 +549,24 @@ struct StacktraceBuilder {
 
 size_t TimestampString(int64_t ts, char* out) { return modp_litoa10(ts, out); }
 
+bool ShouldIncludeSample(Profiling* profiling, int64_t sampleTimestamp) {
+  // Include sample if the cutoff point might exceed the maximum allowed delay:
+  // - the profiler collect step is way too slow
+  // - the sample is not one of the first few samples, so exit early
+  if (sampleTimestamp >= profiling->startTime + profiling->maxSampleCutoffDelayNanos) {
+    return true;
+  }
+
+  // Include the sample if we are below the maximum allowed delay,
+  // but have exited the collect step.
+  if (sampleTimestamp >= profiling->sampleCutoffPoint) {
+    return true;
+  }
+
+  // The sample falls into the toggle function.
+  return false;
+}
+
 #if PROFILER_DEBUG_EXPORT
 v8::Local<v8::Object> JsActivation(Profiling* profiling, const SpanActivation* activation) {
   auto jsActivation = Nan::New<v8::Object>();
@@ -626,11 +656,12 @@ void ProfilingBuildStacktraces(
 #endif
 
   int32_t traceCount = 0;
-  int64_t nextSampleTs = profile->GetStartTime() * 1000L;
+  int64_t nextSampleTs = profile->GetStartTime() * 1000LL;
   for (int i = 0; i < profile->GetSamplesCount(); i++) {
-    int64_t monotonicTs = profile->GetSampleTimestamp(i) * 1000L;
+    int64_t monotonicTs = profile->GetSampleTimestamp(i) * 1000LL;
 
-    if (monotonicTs < nextSampleTs) {
+    bool isValidSample = ShouldIncludeSample(profiling, monotonicTs) && monotonicTs >= nextSampleTs;
+    if (!isValidSample) {
       continue;
     }
 
@@ -757,11 +788,12 @@ void ProfilingBuildRawStacktraces(
   auto stackTraceLines = Nan::New<v8::Array>();
   int32_t stackTraceLineCount = 0;
 
-  int64_t nextSampleTs = profile->GetStartTime() * 1000L;
+  int64_t nextSampleTs = profile->GetStartTime() * 1000LL;
   for (int i = 0; i < profile->GetSamplesCount(); i++) {
-    int64_t monotonicTs = profile->GetSampleTimestamp(i) * 1000L;
+    int64_t monotonicTs = profile->GetSampleTimestamp(i) * 1000LL;
 
-    if (monotonicTs < nextSampleTs) {
+    bool isValidSample = ShouldIncludeSample(profiling, monotonicTs) && monotonicTs >= nextSampleTs;
+    if (!isValidSample) {
       continue;
     }
 
@@ -858,11 +890,10 @@ NAN_METHOD(CollectProfilingData) {
   ProfileTitle(profiling->profilerSeq, nextTitle, sizeof(nextTitle));
 
   profiling->activationDepth = 0;
-  int64_t newStartTime = HrTime();
   int64_t newWallStart = MicroSecondsSinceEpoch() * 1000L;
+  int64_t newStartTime = HrTime();
 
   V8StartProfiling(profiling->profiler, nextTitle);
-
   v8::CpuProfile* profile =
     profiling->profiler->StopProfiling(Nan::New(prevTitle).ToLocalChecked());
   if (!profile) {
@@ -882,6 +913,7 @@ NAN_METHOD(CollectProfilingData) {
 
   profiling->startTime = newStartTime;
   profiling->wallStartTime = newWallStart;
+  profiling->sampleCutoffPoint = HrTime();
 }
 
 NAN_METHOD(CollectProfilingDataRaw) {
@@ -921,6 +953,7 @@ NAN_METHOD(CollectProfilingDataRaw) {
 
   profiling->startTime = newStartTime;
   profiling->wallStartTime = newWallStart;
+  profiling->sampleCutoffPoint = HrTime();
 }
 
 NAN_METHOD(StopProfiling) {
