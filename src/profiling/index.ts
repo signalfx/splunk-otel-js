@@ -52,7 +52,7 @@ function extStartProfiling(
 
 function extCollectSamples(extension: ProfilingExtension) {
   diag.debug('profiling: Collecting samples');
-  return extension.collect();
+  return extension.collectRaw();
 }
 
 export function defaultExporterFactory(
@@ -129,7 +129,7 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
 
 export function loadExtension(): ProfilingExtension | undefined {
   try {
-    diag.debug('profiling: Starting');
+    diag.debug('profiling: Loading');
     return require('../native_ext').profiling;
   } catch (e) {
     diag.error(
@@ -147,6 +147,7 @@ export function _setDefaultOptions(
   const endpoint =
     options.endpoint ||
     process.env.SPLUNK_PROFILER_LOGS_ENDPOINT ||
+    process.env.OTEL_EXPORTER_OTLP_ENDPOINT ||
     'http://localhost:4317';
 
   const combinedResource = detectResource();

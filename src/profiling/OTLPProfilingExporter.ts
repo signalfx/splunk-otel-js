@@ -16,11 +16,11 @@
 import * as protoLoader from '@grpc/proto-loader';
 import * as grpc from '@grpc/grpc-js';
 import * as path from 'path';
-import * as fs from 'fs';
-import { ProfilingData, ProfilingExporter } from './types';
+import { RawProfilingData, ProfilingExporter } from './types';
 import { diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { parseEndpoint, serialize, encode } from './utils';
 
 export interface OTLPExporterOptions {
   callstackInterval: number;
@@ -30,48 +30,6 @@ export interface OTLPExporterOptions {
 
 interface LogsClient extends grpc.Client {
   export: (request: unknown, metadata: grpc.Metadata, callback: Function) => {};
-}
-
-function readContentSync(location: string): Buffer | undefined {
-  try {
-    return fs.readFileSync(location);
-  } catch (e) {
-    diag.error(`Failed to read file at ${location}`, e);
-  }
-
-  return undefined;
-}
-
-function maybeReadPath(location: string | undefined): Buffer | undefined {
-  if (location === undefined) {
-    return undefined;
-  }
-
-  return readContentSync(location);
-}
-
-function parseEndpoint(endpoint: string): {
-  host: string;
-  credentials: grpc.ChannelCredentials;
-} {
-  let host = endpoint;
-  let credentials = grpc.ChannelCredentials.createInsecure();
-
-  if (endpoint.startsWith('https://')) {
-    host = endpoint.substr(8);
-    credentials = grpc.credentials.createSsl(
-      maybeReadPath(process.env.OTEL_EXPORTER_OTLP_CERTIFICATE),
-      maybeReadPath(process.env.OTEL_EXPORTER_OTLP_CLIENT_KEY),
-      maybeReadPath(process.env.OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE)
-    );
-  } else if (endpoint.startsWith('http://')) {
-    host = endpoint.substr(7);
-  }
-
-  return {
-    host,
-    credentials,
-  };
 }
 
 export class OTLPProfilingExporter implements ProfilingExporter {
@@ -141,11 +99,19 @@ export class OTLPProfilingExporter implements ProfilingExporter {
     }
   }
 
-  send(profile: ProfilingData) {
+  send(profile: RawProfilingData) {
     const { stacktraces } = profile;
     diag.debug(`profiling: Exporting ${stacktraces?.length} samples`);
     const { callstackInterval } = this._options;
     const attributes = [
+      {
+        key: 'profiling.data.format',
+        value: { stringValue: 'pprof-gzip-base64' },
+      },
+      {
+        key: 'profiling.data.type',
+        value: { stringValue: 'cpu' },
+      },
       {
         key: 'com.splunk.sourcetype',
         value: { stringValue: 'otel.profiling' },
@@ -159,41 +125,41 @@ export class OTLPProfilingExporter implements ProfilingExporter {
         value: { intValue: callstackInterval },
       },
     ];
-    const logs = stacktraces.map(st => {
-      return {
-        timeUnixNano: st.timestamp,
-        name: 'otel.profiling',
-        spanId: st.spanId,
-        traceId: st.traceId,
-        body: { stringValue: st.stacktrace },
-        attributes,
-      };
-    });
-
-    const ilLogs = {
-      instrumentationLibrary: {
-        name: 'otel.profiling',
-        version: '0.1.0',
-      },
-      logs,
-    };
-
-    const resourceLogs = [
-      {
-        resource: {
-          attributes: this._resourceAttributes,
-        },
-        instrumentationLibraryLogs: [ilLogs],
-      },
-    ];
-
-    const payload = {
-      resourceLogs,
-    };
-    this._client.export(payload, new grpc.Metadata(), (err: unknown) => {
-      if (err) {
-        diag.error('profiling: Error exporting profiling data', err);
-      }
-    });
+    encode(serialize(profile))
+      .then(serializedProfile => {
+        const logs = [serializedProfile].map(st => {
+          return {
+            name: 'otel.profiling',
+            body: { stringValue: st.toString('base64') },
+            attributes,
+          };
+        });
+        const ilLogs = {
+          instrumentationLibrary: {
+            name: 'otel.profiling',
+            version: '0.1.0',
+          },
+          logs,
+        };
+        const resourceLogs = [
+          {
+            resource: {
+              attributes: this._resourceAttributes,
+            },
+            instrumentationLibraryLogs: [ilLogs],
+          },
+        ];
+        const payload = {
+          resourceLogs,
+        };
+        this._client.export(payload, new grpc.Metadata(), (err: unknown) => {
+          if (err) {
+            diag.error('Error exporting profiling data', err);
+          }
+        });
+      })
+      .catch((err: unknown) => {
+        diag.error('Error exporting profiling data', err);
+      });
   }
 }
