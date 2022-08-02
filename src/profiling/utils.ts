@@ -46,7 +46,14 @@ export class StringTable {
   }
 }
 
-export const serialize = (profile: RawProfilingData) => {
+export interface PProfSerializationOptions {
+  samplingPeriodMillis: number;
+}
+
+export const serialize = (
+  profile: RawProfilingData,
+  options: PProfSerializationOptions
+) => {
   const { stacktraces } = profile;
 
   const stringTable = new StringTable();
@@ -58,6 +65,7 @@ export const serialize = (profile: RawProfilingData) => {
     TIMESTAMP: stringTable.getIndex('source.event.time'),
     TRACE_ID: stringTable.getIndex('trace_id'),
     SPAN_ID: stringTable.getIndex('span_id'),
+    SOURCE_EVENT_PERIOD: stringTable.getIndex('source.event.period'),
   };
 
   const getLocation = (
@@ -109,6 +117,10 @@ export const serialize = (profile: RawProfilingData) => {
     });
   };
 
+  const eventPeriodLabel = new perftools.profiles.Label({
+    key: STR.SOURCE_EVENT_PERIOD,
+    num: options.samplingPeriodMillis,
+  });
   const samples = stacktraces.map(
     ({ stacktrace, timestamp, spanId, traceId }) => {
       const labels = [
@@ -116,6 +128,7 @@ export const serialize = (profile: RawProfilingData) => {
           key: STR.TIMESTAMP,
           num: Number(BigInt(timestamp) / BigInt(1_000_000)),
         }),
+        eventPeriodLabel,
       ];
       if (traceId) {
         labels.push(

@@ -120,12 +120,8 @@ export class OTLPProfilingExporter implements ProfilingExporter {
         key: 'source.event.name',
         value: { stringValue: 'nodejs.callstack' },
       },
-      {
-        key: 'source.event.period',
-        value: { intValue: callstackInterval },
-      },
     ];
-    encode(serialize(profile))
+    encode(serialize(profile, { samplingPeriodMillis: callstackInterval }))
       .then(serializedProfile => {
         const logs = [serializedProfile].map(st => {
           return {
