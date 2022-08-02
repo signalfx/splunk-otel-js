@@ -24,7 +24,7 @@ const dummyProfile = {
       timestamp: '1657707471544258336',
       stacktrace: [
         ['/app/file.ts', 'doWork', 44],
-        ['/app/file.ts', '', 50],
+        ['/app/foo.ts', 'noline', 0],
       ],
       timepoint: '288828185919000',
       spanId: Buffer.from('adbfe5ed33c9a3ff', 'hex'),
@@ -92,11 +92,11 @@ describe('profiling:serialization', () => {
         ],
         location: [
           { id: '1', line: [{ functionId: '1', line: '44' }] },
-          { id: '2', line: [{ functionId: '2', line: '50' }] },
+          { id: '2', line: [{ functionId: '2', line: '-1' }] },
         ],
         function: [
           { id: '1', name: '7', systemName: '7', filename: '8' },
-          { id: '2', name: '9', systemName: '9', filename: '8' },
+          { id: '2', name: '9', systemName: '9', filename: '10' },
         ],
         stringTable: [
           '',
@@ -108,7 +108,8 @@ describe('profiling:serialization', () => {
           'adbfe5ed33c9a3ff',
           'doWork',
           '/app/file.ts',
-          '(anonymous)',
+          'noline',
+          '/app/foo.ts',
         ],
       });
 

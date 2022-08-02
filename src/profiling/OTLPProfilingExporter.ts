@@ -116,10 +116,6 @@ export class OTLPProfilingExporter implements ProfilingExporter {
         key: 'com.splunk.sourcetype',
         value: { stringValue: 'otel.profiling' },
       },
-      {
-        key: 'source.event.name',
-        value: { stringValue: 'nodejs.callstack' },
-      },
     ];
     encode(serialize(profile, { samplingPeriodMillis: callstackInterval }))
       .then(serializedProfile => {

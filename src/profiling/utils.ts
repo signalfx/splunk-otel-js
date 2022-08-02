@@ -86,15 +86,13 @@ export const serialize = (
   };
 
   const getFunction = (
-    fileName?: string,
-    functionName?: string
+    fileName: string,
+    functionName: string
   ): perftools.profiles.Function => {
     const key = [fileName, functionName].join(':');
     let fun = functionsMap.get(key);
     if (!fun) {
-      const functionNameId = stringTable.getIndex(
-        functionName || '(anonymous)'
-      );
+      const functionNameId = stringTable.getIndex(functionName);
       fun = new perftools.profiles.Function({
         id: functionsMap.size + 1,
         name: functionNameId,
@@ -107,13 +105,13 @@ export const serialize = (
   };
 
   const getLine = (
-    fileName?: string,
-    functionName?: string,
-    lineNumber?: number
+    fileName: string,
+    functionName: string,
+    lineNumber: number
   ): perftools.profiles.Line => {
     return new perftools.profiles.Line({
       functionId: getFunction(fileName, functionName).id,
-      line: lineNumber,
+      line: lineNumber !== 0 ? lineNumber : -1,
     });
   };
 
