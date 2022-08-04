@@ -7,6 +7,7 @@
 #include <chrono>
 #include <inttypes.h>
 #include <nan.h>
+#include <unordered_map>
 #include <v8-profiler.h>
 
 /* Collecting debug info is not compiled in by default to reduce memory usage. */
@@ -182,9 +183,11 @@ struct Profiling {
   v8::CpuProfiler* profiler;
   int64_t wallStartTime = 0;
   int64_t startTime = 0;
-  // Maximum offset in nanoseconds from profiling start from which a sample is considered always valid.
+  // Maximum offset in nanoseconds from profiling start from which a sample is considered always
+  // valid.
   int64_t maxSampleCutoffDelayNanos = 500LL * 1000LL * 1000LL;
-  // Point in time before which a sample is considered invalid, necessary to avoid biases with self-sampling.
+  // Point in time before which a sample is considered invalid, necessary to avoid biases with
+  // self-sampling.
   int64_t sampleCutoffPoint = 0;
   int32_t activationDepth = 0;
   int32_t flags = ProfilingFlags_None;
@@ -368,8 +371,11 @@ NAN_METHOD(StartProfiling) {
 
     auto maybeMaxSampleCutoffDelay =
       Nan::Get(options, Nan::New("maxSampleCutoffDelayMicroseconds").ToLocalChecked());
-    if (!maybeMaxSampleCutoffDelay.IsEmpty() && maybeMaxSampleCutoffDelay.ToLocalChecked()->IsNumber()) {
-      int64_t maxSampleCutoffDelayMicros = Nan::To<int64_t>(maybeMaxSampleCutoffDelay.ToLocalChecked()).FromJust();
+    if (
+      !maybeMaxSampleCutoffDelay.IsEmpty() &&
+      maybeMaxSampleCutoffDelay.ToLocalChecked()->IsNumber()) {
+      int64_t maxSampleCutoffDelayMicros =
+        Nan::To<int64_t>(maybeMaxSampleCutoffDelay.ToLocalChecked()).FromJust();
       profiling->maxSampleCutoffDelayNanos = maxSampleCutoffDelayMicros * 1000LL;
     }
   }
@@ -834,9 +840,7 @@ void ProfilingBuildRawStacktraces(
     Nan::Set(
       jsTrace, Nan::New<v8::String>("timestamp").ToLocalChecked(),
       Nan::New<v8::String>(tsBuf, tsLen).ToLocalChecked());
-    Nan::Set(
-      jsTrace, Nan::New<v8::String>("stacktrace").ToLocalChecked(),
-      stackTraceLines);
+    Nan::Set(jsTrace, Nan::New<v8::String>("stacktrace").ToLocalChecked(), stackTraceLines);
 
 #if PROFILER_DEBUG_EXPORT
     char tpBuf[32];
@@ -1089,6 +1093,114 @@ NAN_METHOD(ExitContext) {
   profiling->activationDepth--;
 }
 
+NAN_METHOD(StartMemoryProfiling) {
+  v8::HeapProfiler* profiler = info.GetIsolate()->GetHeapProfiler();
+
+  if (!profiler) {
+    printf("unable to get profiler\n");
+    return;
+  }
+
+  uint64_t sampleIntervalBytes = 1024 * 128;
+  int stackDepth = 32;
+  bool started = profiler->StartSamplingHeapProfiler(sampleIntervalBytes, stackDepth);
+  printf("started heap profiler: %d\n", started);
+}
+
+v8::Local<v8::Object> ToJsAllocationsRecursive(v8::AllocationProfile::Node* node) {
+  auto jsNode = Nan::New<v8::Object>();
+  Nan::Set(jsNode, Nan::New<v8::String>("name").ToLocalChecked(), node->name);
+  Nan::Set(jsNode, Nan::New<v8::String>("scriptName").ToLocalChecked(), node->script_name);
+  Nan::Set(
+    jsNode, Nan::New<v8::String>("lineNumber").ToLocalChecked(),
+    Nan::New<v8::Integer>(node->line_number));
+  Nan::Set(
+    jsNode, Nan::New<v8::String>("id").ToLocalChecked(), Nan::New<v8::Integer>(node->node_id));
+
+  auto jsAllocations = Nan::New<v8::Array>(node->allocations.size());
+  Nan::Set(jsNode, Nan::New<v8::String>("allocations").ToLocalChecked(), jsAllocations);
+
+  for (size_t allocationIndex = 0; allocationIndex < node->allocations.size(); allocationIndex++) {
+    v8::AllocationProfile::Allocation* allocation = &node->allocations[allocationIndex];
+    v8::Local<v8::Object> jsAlloc = Nan::New<v8::Object>();
+    Nan::Set(
+      jsAlloc, Nan::New<v8::String>("size").ToLocalChecked(),
+      Nan::New<v8::Number>(allocation->size));
+    Nan::Set(
+      jsAlloc, Nan::New<v8::String>("count").ToLocalChecked(),
+      Nan::New<v8::Number>(allocation->count));
+    Nan::Set(jsAllocations, allocationIndex, jsAlloc);
+  }
+
+  auto jsChildren = Nan::New<v8::Array>(node->children.size());
+  Nan::Set(jsNode, Nan::New<v8::String>("children").ToLocalChecked(), jsChildren);
+  for (size_t i = 0; i < node->children.size(); i++) {
+    Nan::Set(jsChildren, i, ToJsAllocationsRecursive(node->children[i]));
+  }
+
+  return jsNode;
+}
+
+/*
+v8::Local<v8::Array> ToJsSamples(const std::vector<v8::AllocationProfile::Sample>& samples) {
+  auto jsSamples = Nan::New<v8::Array>();
+
+  for (size_t i = 0; i < samples.size(); i++) {
+    const auto& sample = samples[i];
+    auto jsSample = Nan::New<v8::Object>();
+    Nan::Set(
+      jsSample, Nan::New<v8::String>("nodeId").ToLocalChecked(),
+      Nan::New<v8::Number>(sample.node_id));
+
+    Nan::Set(
+      jsSample, Nan::New<v8::String>("size").ToLocalChecked(),
+      Nan::New<v8::Number>(sample.size));
+    Nan::Set(
+      jsSample, Nan::New<v8::String>("count").ToLocalChecked(),
+      Nan::New<v8::Number>(sample.count));
+    Nan::Set(
+      jsSample, Nan::New<v8::String>("sampleId").ToLocalChecked(),
+      Nan::New<v8::Number>(sample.sample_id));
+
+    Nan::Set(jsSamples, i,jsSample);
+  }
+
+  return jsSamples;
+}
+*/
+
+#include <queue>
+NAN_METHOD(CollectMemorySamples) {
+  v8::HeapProfiler* profiler = info.GetIsolate()->GetHeapProfiler();
+
+  if (!profiler) {
+    printf("unable to get profiler\n");
+    return;
+  }
+
+  int64_t beginT = HrTime();
+  v8::AllocationProfile* profile = profiler->GetAllocationProfile();
+  int64_t endT = HrTime();
+
+  printf("GetAllocationProfile %.5f ms\n", (endT - beginT) / 1e6);
+
+
+  auto jsResult = Nan::New<v8::Object>();
+  v8::AllocationProfile::Node* root = profile->GetRootNode();
+
+  beginT = HrTime();
+  Nan::Set(
+    jsResult, Nan::New<v8::String>("rootNode").ToLocalChecked(),
+    ToJsAllocationsRecursive(root));
+  endT = HrTime();
+
+  printf("ToJsAllocationsRecursive %.5f ms\n", (endT - beginT) / 1e6);
+
+  info.GetReturnValue().Set(jsResult);
+
+  delete profile;
+}
+
 } // namespace
 
 void Initialize(v8::Local<v8::Object> target) {
@@ -1116,6 +1228,14 @@ void Initialize(v8::Local<v8::Object> target) {
   Nan::Set(
     profilingModule, Nan::New("exitContext").ToLocalChecked(),
     Nan::GetFunction(Nan::New<v8::FunctionTemplate>(ExitContext)).ToLocalChecked());
+
+  Nan::Set(
+    profilingModule, Nan::New("startMemoryProfiling").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<v8::FunctionTemplate>(StartMemoryProfiling)).ToLocalChecked());
+
+  Nan::Set(
+    profilingModule, Nan::New("collectMemorySamples").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<v8::FunctionTemplate>(CollectMemorySamples)).ToLocalChecked());
 
   Nan::Set(target, Nan::New("profiling").ToLocalChecked(), profilingModule);
 }

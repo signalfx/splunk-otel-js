@@ -49,6 +49,24 @@ export interface RawProfilingStackFrame extends Array<string | number> {
 export type RawProfilingData = GenericProfilingData<RawProfilingStackFrame[]>;
 export type ProfilingData = GenericProfilingData<string>;
 
+export interface Allocation {
+  size: number;
+  count: number;
+}
+
+export interface AllocationProfileNode {
+  name: string;
+  scriptName: string;
+  lineNumber: number;
+  id: number;
+  allocations: Allocation[];
+  children: AllocationProfileNode[];
+}
+
+export interface HeapProfile {
+  rootNode: AllocationProfileNode;
+}
+
 export interface ProfilingExtension {
   start(options?: ProfilingStartOptions): void;
   stop(): RawProfilingData;
@@ -56,6 +74,8 @@ export interface ProfilingExtension {
   collectRaw(): RawProfilingData;
   enterContext(context: unknown, traceId: string, spanId: string): void;
   exitContext(context: unknown): void;
+  startMemoryProfiling(): void;
+  collectMemorySamples(): HeapProfile; 
 }
 
 export type ProfilingExporterFactory = (
@@ -75,6 +95,7 @@ export interface ProfilingOptions {
 
 export interface ProfilingExporter {
   send(profile: RawProfilingData): void;
+  sendHeapProfile(profile: HeapProfile): void;
 }
 
 export const allowedProfilingOptions = [

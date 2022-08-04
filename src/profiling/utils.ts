@@ -20,7 +20,7 @@ import * as grpc from '@grpc/grpc-js';
 import { diag } from '@opentelemetry/api';
 
 import { perftools } from './proto/profile';
-import type { RawProfilingData } from './types';
+import type { AllocationProfileNode, HeapProfile, RawProfilingData } from './types';
 
 const gzipPromise = promisify(gzip);
 
@@ -162,6 +162,102 @@ export const serialize = (
     stringTable: stringTable.serialize(),
   });
 };
+
+export function serializeHeapProfile(profile: HeapProfile) {
+  const rootNode = profile.rootNode;
+
+  const stringTable = new StringTable();
+  const locationsMap = new Map();
+  const functionsMap = new Map();
+
+  // Precreating those because they are really likely to be used
+  const STR = {
+    SOURCE_EVENT_TIME: stringTable.getIndex('source.event.time'),
+  };
+
+  const getLocation = (
+    fileName: string,
+    functionName: string,
+    lineNumber: number
+  ): perftools.profiles.Location => {
+    const key = `${fileName}:${functionName}:${lineNumber}`;
+    let location = locationsMap.get(key);
+    if (!location) {
+      location = new perftools.profiles.Location({
+        id: locationsMap.size + 1,
+        line: [getLine(fileName, functionName, lineNumber)],
+      });
+      locationsMap.set(key, location);
+    }
+    return location;
+  };
+
+  const getFunction = (
+    fileName: string,
+    functionName: string
+  ): perftools.profiles.Function => {
+    const key = `${fileName}:${functionName}`;
+    let fun = functionsMap.get(key);
+    if (!fun) {
+      const functionNameId = stringTable.getIndex(functionName);
+      fun = new perftools.profiles.Function({
+        id: functionsMap.size + 1,
+        name: functionNameId,
+        systemName: functionNameId,
+        filename: stringTable.getIndex(fileName),
+      });
+      functionsMap.set(key, fun);
+    }
+    return fun;
+  };
+
+  const getLine = (
+    fileName: string,
+    functionName: string,
+    lineNumber: number
+  ): perftools.profiles.Line => {
+    return new perftools.profiles.Line({
+      functionId: getFunction(fileName, functionName).id,
+      line: lineNumber !== 0 ? lineNumber : -1,
+    });
+  };
+  
+  interface PathNode {
+    node: AllocationProfileNode;
+    path: number[];
+  }
+
+  let nodes: PathNode[] = [{ node: rootNode, path: [] }];
+  let samples: perftools.profiles.ISample[] = [];
+
+  while (nodes.length > 0) {
+    const { path, node } = nodes.pop()!;
+
+    const location = getLocation(node.scriptName, node.name, node.lineNumber);
+    path.push(location.id as number);
+
+    for (const sample of node.allocations) {
+      samples.push({
+        locationId: path.reverse(),
+        value: [sample.count * sample.size],
+        label: [
+          { key: STR.SOURCE_EVENT_TIME, num: Date.now() }
+        ],
+      });
+    }
+
+    for (const child of node.children) {
+      nodes.push({ node: child, path: path.slice() });
+    }
+  }
+
+  return perftools.profiles.Profile.create({
+    sample: samples,
+    location: [...locationsMap.values()],
+    function: [...functionsMap.values()],
+    stringTable: stringTable.serialize(),
+  });
+}
 
 export const encode = async function encode(
   profile: perftools.profiles.IProfile

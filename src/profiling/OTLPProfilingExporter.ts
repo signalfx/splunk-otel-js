@@ -16,11 +16,11 @@
 import * as protoLoader from '@grpc/proto-loader';
 import * as grpc from '@grpc/grpc-js';
 import * as path from 'path';
-import { RawProfilingData, ProfilingExporter } from './types';
+import { HeapProfile, RawProfilingData, ProfilingExporter } from './types';
 import { diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import { parseEndpoint, serialize, encode } from './utils';
+import { parseEndpoint, serialize, serializeHeapProfile, encode } from './utils';
 
 export interface OTLPExporterOptions {
   callstackInterval: number;
@@ -118,6 +118,59 @@ export class OTLPProfilingExporter implements ProfilingExporter {
       },
     ];
     encode(serialize(profile, { samplingPeriodMillis: callstackInterval }))
+      .then(serializedProfile => {
+        const logs = [serializedProfile].map(st => {
+          return {
+            name: 'otel.profiling',
+            body: { stringValue: st.toString('base64') },
+            attributes,
+          };
+        });
+        const ilLogs = {
+          instrumentationLibrary: {
+            name: 'otel.profiling',
+            version: '0.1.0',
+          },
+          logs,
+        };
+        const resourceLogs = [
+          {
+            resource: {
+              attributes: this._resourceAttributes,
+            },
+            instrumentationLibraryLogs: [ilLogs],
+          },
+        ];
+        const payload = {
+          resourceLogs,
+        };
+        this._client.export(payload, new grpc.Metadata(), (err: unknown) => {
+          if (err) {
+            diag.error('Error exporting profiling data', err);
+          }
+        });
+      })
+      .catch((err: unknown) => {
+        diag.error('Error exporting profiling data', err);
+      });
+  }
+
+  sendHeapProfile(profile: HeapProfile) {
+    const attributes = [
+      {
+        key: 'profiling.data.format',
+        value: { stringValue: 'pprof-gzip-base64' },
+      },
+      {
+        key: 'profiling.data.type',
+        value: { stringValue: 'allocation' },
+      },
+      {
+        key: 'com.splunk.sourcetype',
+        value: { stringValue: 'otel.profiling' },
+      },
+    ];
+    encode(serializeHeapProfile(profile))
       .then(serializedProfile => {
         const logs = [serializedProfile].map(st => {
           return {

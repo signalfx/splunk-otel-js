@@ -15,7 +15,7 @@
  */
 import * as fs from 'fs';
 import { diag } from '@opentelemetry/api';
-import { RawProfilingData, ProfilingData, ProfilingExporter } from './types';
+import { HeapProfile, RawProfilingData, ProfilingData, ProfilingExporter } from './types';
 
 export class DebugExporter implements ProfilingExporter {
   runTimestamp = Date.now();
@@ -28,5 +28,8 @@ export class DebugExporter implements ProfilingExporter {
         diag.error(`error writing to ${baseName}`, err);
       }
     });
+  }
+
+  sendHeapProfile(profile: HeapProfile) {
   }
 }
