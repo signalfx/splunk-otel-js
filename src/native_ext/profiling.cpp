@@ -746,7 +746,6 @@ void ProfilingBuildStacktraces(
 }
 
 v8::Local<v8::Array> makeStackLine(const v8::CpuProfileNode* node) {
-  int32_t itemCount = 0;
   auto jsResult = Nan::New<v8::Array>();
 
   const char* rawFunction = node->GetFunctionNameStr();
@@ -760,10 +759,10 @@ v8::Local<v8::Array> makeStackLine(const v8::CpuProfileNode* node) {
     rawFileName = "unknown";
   }
 
-  Nan::Set(jsResult, itemCount++, Nan::New<v8::String>(rawFileName).ToLocalChecked());
-  Nan::Set(jsResult, itemCount++, Nan::New<v8::String>(rawFunction).ToLocalChecked());
-  Nan::Set(jsResult, itemCount++, Nan::New<v8::Number>(node->GetLineNumber()));
-  Nan::Set(jsResult, itemCount++, Nan::New<v8::Number>(node->GetColumnNumber()));
+  Nan::Set(jsResult, 0, Nan::New<v8::String>(rawFileName).ToLocalChecked());
+  Nan::Set(jsResult, 1, Nan::New<v8::String>(rawFunction).ToLocalChecked());
+  Nan::Set(jsResult, 2, Nan::New<v8::Number>(node->GetLineNumber()));
+  Nan::Set(jsResult, 3, Nan::New<v8::Number>(node->GetColumnNumber()));
 
   return jsResult;
 }
@@ -791,8 +790,6 @@ void ProfilingBuildRawStacktraces(
 #endif
 
   int32_t traceCount = 0;
-  auto stackTraceLines = Nan::New<v8::Array>();
-  int32_t stackTraceLineCount = 0;
 
   int64_t nextSampleTs = profile->GetStartTime() * 1000LL;
   for (int i = 0; i < profile->GetSamplesCount(); i++) {
@@ -807,6 +804,8 @@ void ProfilingBuildRawStacktraces(
 
     const v8::CpuProfileNode* sample = profile->GetSample(i);
 
+    auto stackTraceLines = Nan::New<v8::Array>();
+    int32_t stackTraceLineCount = 0;
     Nan::Set(stackTraceLines, stackTraceLineCount++, makeStackLine(sample));
 
     int64_t monotonicDelta = monotonicTs - profiling->startTime;
@@ -826,11 +825,6 @@ void ProfilingBuildRawStacktraces(
       parent = next;
     }
 #endif
-
-    if (stackTraceLineCount == 0) {
-      continue;
-    }
-    stackTraceLineCount = 0;
 
     char tsBuf[32];
     size_t tsLen = TimestampString(sampleTimestamp, tsBuf);
