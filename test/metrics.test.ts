@@ -21,6 +21,7 @@ import {
   AggregationTemporality,
   DataPointType,
   InstrumentType,
+  MetricData,
   MetricReader,
 } from '@opentelemetry/sdk-metrics-base';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
@@ -260,13 +261,19 @@ describe('metrics', () => {
         return validGcTypes.has(v);
       };
 
+      const isSumMetric = (v: MetricData) => v.descriptor.name.includes('memory.gc');
+
       for (const runtimeMetric of runtimeMetrics) {
         const expected = expectedDescriptors.get(runtimeMetric.descriptor.name);
         assert(expected);
 
         assert.deepEqual(runtimeMetric.descriptor.unit, expected.unit);
 
-        assert.deepEqual(runtimeMetric.dataPointType, DataPointType.SINGULAR);
+        if (isSumMetric(runtimeMetric)) {
+          assert.deepEqual(runtimeMetric.dataPointType, DataPointType.SUM);
+        } else {
+          assert.deepEqual(runtimeMetric.dataPointType, DataPointType.GAUGE);
+        }
 
         if (runtimeMetric.descriptor.name.includes('memory.gc')) {
           assert(
