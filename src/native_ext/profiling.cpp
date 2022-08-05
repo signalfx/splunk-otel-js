@@ -1095,8 +1095,8 @@ NAN_METHOD(StartMemoryProfiling) {
     return;
   }
 
-  uint64_t sampleIntervalBytes = 1024 * 128;
-  int stackDepth = 32;
+  uint64_t sampleIntervalBytes = 1024 * 256;
+  int stackDepth = 64;
   bool started = profiler->StartSamplingHeapProfiler(sampleIntervalBytes, stackDepth);
   printf("started heap profiler: %d\n", started);
 }
@@ -1108,22 +1108,14 @@ v8::Local<v8::Object> ToJsAllocationsRecursive(v8::AllocationProfile::Node* node
   Nan::Set(
     jsNode, Nan::New<v8::String>("lineNumber").ToLocalChecked(),
     Nan::New<v8::Integer>(node->line_number));
-  Nan::Set(
-    jsNode, Nan::New<v8::String>("id").ToLocalChecked(), Nan::New<v8::Integer>(node->node_id));
 
   auto jsAllocations = Nan::New<v8::Array>(node->allocations.size());
   Nan::Set(jsNode, Nan::New<v8::String>("allocations").ToLocalChecked(), jsAllocations);
 
   for (size_t allocationIndex = 0; allocationIndex < node->allocations.size(); allocationIndex++) {
     v8::AllocationProfile::Allocation* allocation = &node->allocations[allocationIndex];
-    v8::Local<v8::Object> jsAlloc = Nan::New<v8::Object>();
     Nan::Set(
-      jsAlloc, Nan::New<v8::String>("size").ToLocalChecked(),
-      Nan::New<v8::Number>(allocation->size));
-    Nan::Set(
-      jsAlloc, Nan::New<v8::String>("count").ToLocalChecked(),
-      Nan::New<v8::Number>(allocation->count));
-    Nan::Set(jsAllocations, allocationIndex, jsAlloc);
+      jsAllocations, allocationIndex, Nan::New<v8::Number>(allocation->size * allocation->count));
   }
 
   auto jsChildren = Nan::New<v8::Array>(node->children.size());
@@ -1135,35 +1127,6 @@ v8::Local<v8::Object> ToJsAllocationsRecursive(v8::AllocationProfile::Node* node
   return jsNode;
 }
 
-/*
-v8::Local<v8::Array> ToJsSamples(const std::vector<v8::AllocationProfile::Sample>& samples) {
-  auto jsSamples = Nan::New<v8::Array>();
-
-  for (size_t i = 0; i < samples.size(); i++) {
-    const auto& sample = samples[i];
-    auto jsSample = Nan::New<v8::Object>();
-    Nan::Set(
-      jsSample, Nan::New<v8::String>("nodeId").ToLocalChecked(),
-      Nan::New<v8::Number>(sample.node_id));
-
-    Nan::Set(
-      jsSample, Nan::New<v8::String>("size").ToLocalChecked(),
-      Nan::New<v8::Number>(sample.size));
-    Nan::Set(
-      jsSample, Nan::New<v8::String>("count").ToLocalChecked(),
-      Nan::New<v8::Number>(sample.count));
-    Nan::Set(
-      jsSample, Nan::New<v8::String>("sampleId").ToLocalChecked(),
-      Nan::New<v8::Number>(sample.sample_id));
-
-    Nan::Set(jsSamples, i,jsSample);
-  }
-
-  return jsSamples;
-}
-*/
-
-#include <queue>
 NAN_METHOD(CollectMemorySamples) {
   v8::HeapProfiler* profiler = info.GetIsolate()->GetHeapProfiler();
 
@@ -1178,14 +1141,19 @@ NAN_METHOD(CollectMemorySamples) {
 
   printf("GetAllocationProfile %.5f ms\n", (endT - beginT) / 1e6);
 
-
   auto jsResult = Nan::New<v8::Object>();
   v8::AllocationProfile::Node* root = profile->GetRootNode();
 
+  // The root node is a non-descript (root) function, just cut it off.
+  auto jsNodes = Nan::New<v8::Array>(root->children.size());
+
   beginT = HrTime();
-  Nan::Set(
-    jsResult, Nan::New<v8::String>("rootNode").ToLocalChecked(),
-    ToJsAllocationsRecursive(root));
+
+  for (size_t i = 0; i < root->children.size(); i++) {
+    Nan::Set(jsNodes, i, ToJsAllocationsRecursive(root->children[i]));
+  }
+
+  Nan::Set(jsResult, Nan::New<v8::String>("topDownNodes").ToLocalChecked(), jsNodes);
   endT = HrTime();
 
   printf("ToJsAllocationsRecursive %.5f ms\n", (endT - beginT) / 1e6);

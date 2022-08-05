@@ -164,8 +164,6 @@ export const serialize = (
 };
 
 export function serializeHeapProfile(profile: HeapProfile) {
-  const rootNode = profile.rootNode;
-
   const stringTable = new StringTable();
   const locationsMap = new Map();
   const functionsMap = new Map();
@@ -227,8 +225,12 @@ export function serializeHeapProfile(profile: HeapProfile) {
     path: number[];
   }
 
-  let nodes: PathNode[] = [{ node: rootNode, path: [] }];
+  let nodes: PathNode[] = profile.topDownNodes.map(node => ({ node, path: [] }));
   let samples: perftools.profiles.ISample[] = [];
+
+  const label = [
+    { key: STR.SOURCE_EVENT_TIME, num: Date.now() }
+  ];
 
   while (nodes.length > 0) {
     const { path, node } = nodes.pop()!;
@@ -236,13 +238,12 @@ export function serializeHeapProfile(profile: HeapProfile) {
     const location = getLocation(node.scriptName, node.name, node.lineNumber);
     path.push(location.id as number);
 
-    for (const sample of node.allocations) {
+    const pathToRoot = path.slice().reverse();
+    for (const size of node.allocations) {
       samples.push({
-        locationId: path.reverse(),
-        value: [sample.count * sample.size],
-        label: [
-          { key: STR.SOURCE_EVENT_TIME, num: Date.now() }
-        ],
+        locationId: pathToRoot,
+        value: [size],
+        label,
       });
     }
 
@@ -250,6 +251,8 @@ export function serializeHeapProfile(profile: HeapProfile) {
       nodes.push({ node: child, path: path.slice() });
     }
   }
+
+  console.log(`samples: ${samples.length}`);
 
   return perftools.profiles.Profile.create({
     sample: samples,
