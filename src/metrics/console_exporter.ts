@@ -51,9 +51,9 @@ function logScopeMetrics(scopeMetrics: ScopeMetrics, index: number) {
     console.log(`Metric #${i}, descriptor:`);
     logDescriptor(descriptor);
     const dataPointTypeName =
-      dataPointType === DataPointType.SINGULAR
-        ? 'NumberDataPoints'
-        : 'HistogramDataPoints';
+      dataPointType === DataPointType.HISTOGRAM
+        ? 'HistogramDataPoints'
+        : 'NumberDataPoints';
 
     for (let j = 0; j < dataPoints.length; j++) {
       const dp = dataPoints[j];
@@ -61,7 +61,10 @@ function logScopeMetrics(scopeMetrics: ScopeMetrics, index: number) {
       console.log(`StartTimestamp ${hrTimeToTimeStamp(dp.startTime)}`);
       console.log(`Timestamp ${hrTimeToTimeStamp(dp.endTime)}`);
 
-      if (dataPointType === DataPointType.SINGULAR) {
+      if (
+        dataPointType === DataPointType.SUM ||
+        dataPointType === DataPointType.GAUGE
+      ) {
         const value = dp.value as number;
         console.log(`Value: ${value.toFixed(6)}`);
       } else {
@@ -69,7 +72,9 @@ function logScopeMetrics(scopeMetrics: ScopeMetrics, index: number) {
         const { buckets } = value;
         const { boundaries, counts } = buckets;
         console.log(`Count: ${value.count}`);
-        console.log(`Sum: ${value.sum.toFixed(6)}`);
+        if (value.sum !== undefined) {
+          console.log(`Sum: ${value.sum.toFixed(6)}`);
+        }
         console.log('Bucket counts:');
         for (let boundIdx = -1; boundIdx < boundaries.length; boundIdx++) {
           const lb = boundaries[boundIdx] ?? -Infinity;
