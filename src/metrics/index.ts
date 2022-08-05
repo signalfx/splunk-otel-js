@@ -157,13 +157,6 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
 
   metricReaders.forEach(reader => {
     provider.addMetricReader(reader);
-
-    // HACK until https://github.com/open-telemetry/opentelemetry-js/pull/3106 is published
-    if (reader instanceof PeriodicExportingMetricReader) {
-      if (reader['_interval']) {
-        reader['_interval'].unref();
-      }
-    }
   });
 
   metrics.setGlobalMeterProvider(provider);
