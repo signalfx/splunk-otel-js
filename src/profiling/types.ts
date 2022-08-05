@@ -20,25 +20,40 @@ export interface ProfilingStartOptions {
   recordDebugInfo: boolean;
 }
 
-export interface ProfilingStacktrace {
+interface GenericProfilingStacktrace<StackTraceType> {
   /** Timestamp of the sample (nanoseconds since Unix epoch). */
   timestamp: string;
   /** Formatted stacktrace. */
-  stacktrace: string;
+  stacktrace: StackTraceType;
   traceId: Buffer;
   spanId: Buffer;
 }
 
-export interface ProfilingData {
+interface GenericProfilingData<T> {
   /** Timestamp when profiling was started (nanoseconds since Unix epoch). */
   startTimeNanos: string;
-  stacktraces: ProfilingStacktrace[];
+  stacktraces: GenericProfilingStacktrace<T>[];
 }
+
+export interface RawProfilingStackFrame extends Array<string | number> {
+  /** filename */
+  0: string;
+  /** function name */
+  1: string;
+  /** line number */
+  2: number;
+  /** column number */
+  3: number;
+}
+
+export type RawProfilingData = GenericProfilingData<RawProfilingStackFrame[]>;
+export type ProfilingData = GenericProfilingData<string>;
 
 export interface ProfilingExtension {
   start(options?: ProfilingStartOptions): void;
   stop(): ProfilingData;
   collect(): ProfilingData;
+  collectRaw(): RawProfilingData;
   enterContext(context: unknown, traceId: string, spanId: string): void;
   exitContext(context: unknown): void;
 }
