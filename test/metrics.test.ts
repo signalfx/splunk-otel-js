@@ -170,7 +170,9 @@ describe('metrics', () => {
 
       startMetrics({
         serviceName: 'foo',
-        resource,
+        resourceFactory: (defaultResource: Resource) => {
+          return defaultResource.merge(resource);
+        },
         runtimeMetricsEnabled: true,
         runtimeMetricsCollectionIntervalMillis: 1,
         metricReaderFactory: () => {
@@ -261,7 +263,8 @@ describe('metrics', () => {
         return validGcTypes.has(v);
       };
 
-      const isSumMetric = (v: MetricData) => v.descriptor.name.includes('memory.gc');
+      const isSumMetric = (v: MetricData) =>
+        v.descriptor.name.includes('memory.gc');
 
       for (const runtimeMetric of runtimeMetrics) {
         const expected = expectedDescriptors.get(runtimeMetric.descriptor.name);

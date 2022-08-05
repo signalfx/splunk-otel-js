@@ -34,6 +34,7 @@ import { detect as detectResource } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 export type MetricReaderFactory = (options: MetricsOptions) => MetricReader[];
+export type ResourceFactory = (resource: Resource) => Resource;
 
 export interface MetricsOptions {
   accessToken: string;
@@ -45,6 +46,10 @@ export interface MetricsOptions {
   runtimeMetricsEnabled: boolean;
   runtimeMetricsCollectionIntervalMillis: number;
 }
+
+export type StartMetricsOptions = Partial<Omit<MetricsOptions, 'resource'>> & {
+  resourceFactory?: ResourceFactory;
+};
 
 interface Counters {
   min: number;
@@ -112,8 +117,6 @@ function recordGcCountMetric(counter: Counter, counters: NativeCounters) {
   }
 }
 
-export type StartMetricsOptions = Partial<MetricsOptions>;
-
 export function defaultMetricReaderFactory(
   options: MetricsOptions
 ): MetricReader[] {
@@ -138,7 +141,7 @@ export const allowedMetricsOptions = [
   'endpoint',
   'exportIntervalMillis',
   'metricReaderFactory',
-  'resource',
+  'resourceFactory',
   'runtimeMetricsEnabled',
   'runtimeMetricsCollectionIntervalMillis',
   'serviceName',
@@ -263,21 +266,23 @@ export function _setDefaultOptions(
   const accessToken =
     options.accessToken || process.env.SPLUNK_ACCESS_TOKEN || '';
 
-  let resource = detectResource();
+  let defaultResource = detectResource();
 
   const serviceName = String(
     options.serviceName ||
-      resource.attributes[SemanticResourceAttributes.SERVICE_NAME] ||
+      defaultResource.attributes[SemanticResourceAttributes.SERVICE_NAME] ||
       defaultServiceName
   );
 
-  resource = resource
-    .merge(
-      new Resource({
-        [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
-      })
-    )
-    .merge(options.resource || Resource.empty());
+  defaultResource = defaultResource.merge(
+    new Resource({
+      [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
+    })
+  );
+
+  const resourceFactory =
+    options.resourceFactory || ((resource: Resource) => resource);
+  const resource = resourceFactory(defaultResource);
 
   return {
     serviceName,

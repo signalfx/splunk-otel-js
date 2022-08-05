@@ -24,11 +24,13 @@ const { metrics } = require('@opentelemetry/api-metrics');
 startMetrics({
   // Takes preference over OTEL_SERVICE_NAME environment variable
   serviceName: 'my-service',
-  // Can also be set with OTEL_RESOURCE_ATTRIBUTES
-  resource: new Resource({
-    'my.property': 'xyz',
-    'build': 42
-  }),
+  // The suggested resource is filled in via OTEL_RESOURCE_ATTRIBUTES
+  resourceFactory: (suggestedResource: Resource) => {
+    return suggestedResource.merge(new Resource({
+      'my.property': 'xyz',
+      'build': 42,
+    }));
+  },
   exportIntervalMillis: 1000, // default: 5000
   // The default exporter used is OTLP over gRPC
   endpoint: 'http://collector:4317',
