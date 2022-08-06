@@ -19,9 +19,9 @@ import { Resource } from '@opentelemetry/resources';
 import {
   assertNoExtraneousProperties,
   defaultServiceName,
+  getEnvBoolean,
   getEnvNumber,
 } from '../utils';
-import { serializeHeapProfile } from './utils';
 import { detect as detectResource } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import {
@@ -35,7 +35,6 @@ import {
 import { ProfilingContextManager } from './ProfilingContextManager';
 import { OTLPProfilingExporter } from './OTLPProfilingExporter';
 import { DebugExporter } from './DebugExporter';
-//import * as fs from 'fs/promises';
 
 export { ProfilingOptions };
 
@@ -57,8 +56,8 @@ function extStartMemoryProfiling(extension: ProfilingExtension) {
   return extension.startMemoryProfiling();
 }
 
-function extCollectMemorySamples(extension: ProfilingExtension): HeapProfile {
-  return extension.collectMemorySamples();
+function extCollectHeapProfile(extension: ProfilingExtension): HeapProfile {
+  return extension.collectHeapProfile();
 }
 
 function extCollectSamples(extension: ProfilingExtension) {
@@ -84,15 +83,8 @@ export function defaultExporterFactory(
   return exporters;
 }
 
-
-let buffers = [];
-
-function allocateMuch() {
-  let t = [];
-  for (let i = 0; i < 1000; i++) {
-    t.push(new Buffer(4096 * 2 + (Math.random() * 4096 * 16) | 0));
-  }
-  return t;
+declare global {
+  var SFX: any;
 }
 
 export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
@@ -135,27 +127,15 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
     }
   }, options.collectionDuration);
 
-  buffers = allocateMuch();
-  console.log(buffers.length);
-
-  //let memExportIndex = 0;
   const memSamplesCollectInterval = setInterval(async () => {
     const beginTime = process.hrtime.bigint();
-    const samples = extCollectMemorySamples(extension);
+    const heapProfile = extCollectHeapProfile(extension);
     const collectTime = process.hrtime.bigint();
-    //console.dir(samples, { depth: null, maxArrayLength: null });
-    const processed = serializeHeapProfile(samples);
-    const serializeTime = process.hrtime.bigint();
     const collectDur = Number(collectTime - beginTime) / 1e6;
-    const serializeDur = Number(serializeTime - collectTime) / 1e6;
-    console.log(`collect: ${collectDur.toFixed(3)}ms serialize: ${serializeDur.toFixed(3)}ms ${processed != undefined}`);
-
-    //await fs.writeFile(`mem-${memExportIndex}.json`, JSON.stringify(samples));
-
+    console.log(`collect ${collectDur.toFixed(3)}`);
     for (const exporter of exporters) {
-      exporter.sendHeapProfile(samples);
+      exporter.sendHeapProfile(heapProfile);
     }
-    //memExportIndex++;
   }, 15_000);
 
   cpuSamplesCollectInterval.unref();
@@ -220,6 +200,10 @@ export function _setDefaultOptions(
     })
   );
 
+  const memoryProfilingEnabled = options.memoryProfilingEnabled ??
+    getEnvBoolean('SPLUNK_PROFILER_MEMORY_ENABLED') ??
+    false;
+
   return {
     serviceName: serviceName,
     endpoint,
@@ -230,5 +214,6 @@ export function _setDefaultOptions(
     resource,
     debugExport: options.debugExport ?? false,
     exporterFactory: options.exporterFactory ?? defaultExporterFactory,
+    memoryProfilingEnabled,
   };
 }

@@ -1,5 +1,6 @@
 #include "profiling.h"
 #include "khash.h"
+#include "memory_profiling.h"
 #include "util/arena.h"
 #include "util/hex.h"
 #include "util/modp_numtoa.h"
@@ -7,7 +8,6 @@
 #include <chrono>
 #include <inttypes.h>
 #include <nan.h>
-#include <unordered_map>
 #include <v8-profiler.h>
 
 /* Collecting debug info is not compiled in by default to reduce memory usage. */
@@ -1087,82 +1087,6 @@ NAN_METHOD(ExitContext) {
   profiling->activationDepth--;
 }
 
-NAN_METHOD(StartMemoryProfiling) {
-  v8::HeapProfiler* profiler = info.GetIsolate()->GetHeapProfiler();
-
-  if (!profiler) {
-    printf("unable to get profiler\n");
-    return;
-  }
-
-  uint64_t sampleIntervalBytes = 1024 * 256;
-  int stackDepth = 64;
-  bool started = profiler->StartSamplingHeapProfiler(sampleIntervalBytes, stackDepth);
-  printf("started heap profiler: %d\n", started);
-}
-
-v8::Local<v8::Object> ToJsAllocationsRecursive(v8::AllocationProfile::Node* node) {
-  auto jsNode = Nan::New<v8::Object>();
-  Nan::Set(jsNode, Nan::New<v8::String>("name").ToLocalChecked(), node->name);
-  Nan::Set(jsNode, Nan::New<v8::String>("scriptName").ToLocalChecked(), node->script_name);
-  Nan::Set(
-    jsNode, Nan::New<v8::String>("lineNumber").ToLocalChecked(),
-    Nan::New<v8::Integer>(node->line_number));
-
-  auto jsAllocations = Nan::New<v8::Array>(node->allocations.size());
-  Nan::Set(jsNode, Nan::New<v8::String>("allocations").ToLocalChecked(), jsAllocations);
-
-  for (size_t allocationIndex = 0; allocationIndex < node->allocations.size(); allocationIndex++) {
-    v8::AllocationProfile::Allocation* allocation = &node->allocations[allocationIndex];
-    Nan::Set(
-      jsAllocations, allocationIndex, Nan::New<v8::Number>(allocation->size * allocation->count));
-  }
-
-  auto jsChildren = Nan::New<v8::Array>(node->children.size());
-  Nan::Set(jsNode, Nan::New<v8::String>("children").ToLocalChecked(), jsChildren);
-  for (size_t i = 0; i < node->children.size(); i++) {
-    Nan::Set(jsChildren, i, ToJsAllocationsRecursive(node->children[i]));
-  }
-
-  return jsNode;
-}
-
-NAN_METHOD(CollectMemorySamples) {
-  v8::HeapProfiler* profiler = info.GetIsolate()->GetHeapProfiler();
-
-  if (!profiler) {
-    printf("unable to get profiler\n");
-    return;
-  }
-
-  int64_t beginT = HrTime();
-  v8::AllocationProfile* profile = profiler->GetAllocationProfile();
-  int64_t endT = HrTime();
-
-  printf("GetAllocationProfile %.5f ms\n", (endT - beginT) / 1e6);
-
-  auto jsResult = Nan::New<v8::Object>();
-  v8::AllocationProfile::Node* root = profile->GetRootNode();
-
-  // The root node is a non-descript (root) function, just cut it off.
-  auto jsNodes = Nan::New<v8::Array>(root->children.size());
-
-  beginT = HrTime();
-
-  for (size_t i = 0; i < root->children.size(); i++) {
-    Nan::Set(jsNodes, i, ToJsAllocationsRecursive(root->children[i]));
-  }
-
-  Nan::Set(jsResult, Nan::New<v8::String>("topDownNodes").ToLocalChecked(), jsNodes);
-  endT = HrTime();
-
-  printf("ToJsAllocationsRecursive %.5f ms\n", (endT - beginT) / 1e6);
-
-  info.GetReturnValue().Set(jsResult);
-
-  delete profile;
-}
-
 } // namespace
 
 void Initialize(v8::Local<v8::Object> target) {
@@ -1196,8 +1120,12 @@ void Initialize(v8::Local<v8::Object> target) {
     Nan::GetFunction(Nan::New<v8::FunctionTemplate>(StartMemoryProfiling)).ToLocalChecked());
 
   Nan::Set(
-    profilingModule, Nan::New("collectMemorySamples").ToLocalChecked(),
-    Nan::GetFunction(Nan::New<v8::FunctionTemplate>(CollectMemorySamples)).ToLocalChecked());
+    profilingModule, Nan::New("collectHeapProfile").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<v8::FunctionTemplate>(CollectHeapProfile)).ToLocalChecked());
+
+  Nan::Set(
+    profilingModule, Nan::New("stopMemoryProfiling").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<v8::FunctionTemplate>(StopMemoryProfiling)).ToLocalChecked());
 
   Nan::Set(target, Nan::New("profiling").ToLocalChecked(), profilingModule);
 }

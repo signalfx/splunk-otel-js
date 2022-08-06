@@ -20,7 +20,7 @@ import * as grpc from '@grpc/grpc-js';
 import { diag } from '@opentelemetry/api';
 
 import { perftools } from './proto/profile';
-import type { AllocationProfileNode, HeapProfile, RawProfilingData } from './types';
+import type { HeapProfile, RawProfilingData } from './types';
 
 const gzipPromise = promisify(gzip);
 
@@ -219,40 +219,52 @@ export function serializeHeapProfile(profile: HeapProfile) {
       line: lineNumber !== 0 ? lineNumber : -1,
     });
   };
-  
-  interface PathNode {
-    node: AllocationProfileNode;
-    path: number[];
-  }
-
-  let nodes: PathNode[] = profile.topDownNodes.map(node => ({ node, path: [] }));
-  let samples: perftools.profiles.ISample[] = [];
 
   const label = [
     { key: STR.SOURCE_EVENT_TIME, num: Date.now() }
   ];
 
-  while (nodes.length > 0) {
-    const { path, node } = nodes.pop()!;
+  let samples: perftools.profiles.ISample[] = [];
 
-    const location = getLocation(node.scriptName, node.name, node.lineNumber);
-    path.push(location.id as number);
+  const processedNodes = new Set<number>();
 
-    const pathToRoot = path.slice().reverse();
-    for (const size of node.allocations) {
+  const { tree, leafs } = profile;
+  for (const leaf of leafs) {
+    console.log('------------');
+    const path: number[] = [];
+    let treeIndex = leaf;
+    let pathAllocations = [];
+
+    while (treeIndex >= 0) {
+      const node = tree[treeIndex];
+      console.log(`${node.name}:${node.scriptName}:${node.lineNumber}`);
+      
+      const location = getLocation(node.scriptName, node.name, node.lineNumber);
+      path.push(location.id as number);
+
+      if (!processedNodes.has(treeIndex)) {
+        processedNodes.add(treeIndex);
+
+        const pathStartIndex = path.length - 1;
+
+        for (const size of node.allocations) {
+          pathAllocations.push([pathStartIndex, size]);
+        }
+      }
+
+      treeIndex = node.parent;
+    }
+
+    console.log(pathAllocations);
+
+    for (const pathAlloc of pathAllocations) {
       samples.push({
-        locationId: pathToRoot,
-        value: [size],
-        label,
+        locationId: path.slice(pathAlloc[0]),
+        value: [pathAlloc[1]],
+        label
       });
     }
-
-    for (const child of node.children) {
-      nodes.push({ node: child, path: path.slice() });
-    }
   }
-
-  console.log(`samples: ${samples.length}`);
 
   return perftools.profiles.Profile.create({
     sample: samples,

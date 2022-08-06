@@ -156,6 +156,11 @@ export class OTLPProfilingExporter implements ProfilingExporter {
   }
 
   sendHeapProfile(profile: HeapProfile) {
+    const beginT = process.hrtime.bigint();
+    const serialized = serializeHeapProfile(profile);
+    const endT = process.hrtime.bigint();
+    const serializeDur = Number(endT - beginT) / 1e6;
+    console.log(`serialize ${serializeDur.toFixed(3)}`);
     const attributes = [
       {
         key: 'profiling.data.format',
@@ -170,7 +175,7 @@ export class OTLPProfilingExporter implements ProfilingExporter {
         value: { stringValue: 'otel.profiling' },
       },
     ];
-    encode(serializeHeapProfile(profile))
+    encode(serialized)
       .then(serializedProfile => {
         const logs = [serializedProfile].map(st => {
           return {

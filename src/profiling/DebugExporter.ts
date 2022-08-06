@@ -20,6 +20,7 @@ import { HeapProfile, RawProfilingData, ProfilingData, ProfilingExporter } from 
 export class DebugExporter implements ProfilingExporter {
   runTimestamp = Date.now();
   profileIndex = 0;
+  heapProfileIndex = 0;
 
   send(data: ProfilingData | RawProfilingData) {
     const baseName = `profile-${this.runTimestamp}-${this.profileIndex++}.json`;
@@ -31,5 +32,12 @@ export class DebugExporter implements ProfilingExporter {
   }
 
   sendHeapProfile(profile: HeapProfile) {
+    const name = `heap-profile-${this.runTimestamp}-${this.heapProfileIndex++}.json`;
+    fs.writeFile(name, JSON.stringify(profile), err => {
+      if (err) {
+        diag.error(`error writing to ${name}`, err);
+      }
+    });
   }
+
 }
