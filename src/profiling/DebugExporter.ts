@@ -15,7 +15,12 @@
  */
 import * as fs from 'fs';
 import { diag } from '@opentelemetry/api';
-import { HeapProfile, RawProfilingData, ProfilingData, ProfilingExporter } from './types';
+import {
+  HeapProfile,
+  ProfilingData,
+  ProfilingExporter,
+  RawProfilingData,
+} from './types';
 
 export class DebugExporter implements ProfilingExporter {
   runTimestamp = Date.now();
@@ -32,12 +37,12 @@ export class DebugExporter implements ProfilingExporter {
   }
 
   sendHeapProfile(profile: HeapProfile) {
-    const name = `heap-profile-${this.runTimestamp}-${this.heapProfileIndex++}.json`;
+    const name = `heap-profile-${this.runTimestamp}-${this
+      .heapProfileIndex++}.json`;
     fs.writeFile(name, JSON.stringify(profile), err => {
       if (err) {
         diag.error(`error writing to ${name}`, err);
       }
     });
   }
-
 }

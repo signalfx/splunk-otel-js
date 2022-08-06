@@ -83,10 +83,6 @@ export function defaultExporterFactory(
   return exporters;
 }
 
-declare global {
-  var SFX: any;
-}
-
 export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
   assertNoExtraneousProperties(opts, allowedProfilingOptions);
 
@@ -99,7 +95,6 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
       stop: () => {},
     };
   }
-
 
   const contextManager = new ProfilingContextManager();
   contextManager.enable();
@@ -133,10 +128,11 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
     const collectTime = process.hrtime.bigint();
     const collectDur = Number(collectTime - beginTime) / 1e6;
     console.log(`collect ${collectDur.toFixed(3)}`);
+    //console.dir(heapProfile, { depth: null, color: true });
     for (const exporter of exporters) {
       exporter.sendHeapProfile(heapProfile);
     }
-  }, 15_000);
+  }, 5_000);
 
   cpuSamplesCollectInterval.unref();
   memSamplesCollectInterval.unref();
@@ -200,7 +196,8 @@ export function _setDefaultOptions(
     })
   );
 
-  const memoryProfilingEnabled = options.memoryProfilingEnabled ??
+  const memoryProfilingEnabled =
+    options.memoryProfilingEnabled ??
     getEnvBoolean('SPLUNK_PROFILER_MEMORY_ENABLED') ??
     false;
 

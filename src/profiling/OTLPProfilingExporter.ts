@@ -20,7 +20,12 @@ import { HeapProfile, RawProfilingData, ProfilingExporter } from './types';
 import { diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import { parseEndpoint, serialize, serializeHeapProfile, encode } from './utils';
+import {
+  parseEndpoint,
+  serialize,
+  serializeHeapProfile,
+  encode,
+} from './utils';
 
 export interface OTLPExporterOptions {
   callstackInterval: number;

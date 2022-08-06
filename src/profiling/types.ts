@@ -55,11 +55,17 @@ export interface HeapProfileNode {
   lineNumber: number;
   allocations: number[];
   parent: number;
+  parentId: number;
+}
+
+export interface AllocationSample {
+  nodeId: number;
+  size: number;
 }
 
 export interface HeapProfile {
-  tree: HeapProfileNode[];
-  leafs: number[];
+  samples: AllocationSample[];
+  treeMap: { [nodeId: string]: HeapProfileNode };
 }
 
 export interface ProfilingExtension {

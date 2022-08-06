@@ -220,54 +220,32 @@ export function serializeHeapProfile(profile: HeapProfile) {
     });
   };
 
-  const label = [
-    { key: STR.SOURCE_EVENT_TIME, num: Date.now() }
-  ];
+  const label = [{ key: STR.SOURCE_EVENT_TIME, num: Date.now() }];
 
-  let samples: perftools.profiles.ISample[] = [];
+  const sample: perftools.profiles.ISample[] = [];
 
-  const processedNodes = new Set<number>();
+  const { samples, treeMap } = profile;
 
-  const { tree, leafs } = profile;
-  for (const leaf of leafs) {
-    console.log('------------');
+  for (const s of samples) {
+    let node = treeMap[s.nodeId];
     const path: number[] = [];
-    let treeIndex = leaf;
-    let pathAllocations = [];
 
-    while (treeIndex >= 0) {
-      const node = tree[treeIndex];
-      console.log(`${node.name}:${node.scriptName}:${node.lineNumber}`);
-      
+    while (node !== undefined) {
       const location = getLocation(node.scriptName, node.name, node.lineNumber);
       path.push(location.id as number);
 
-      if (!processedNodes.has(treeIndex)) {
-        processedNodes.add(treeIndex);
-
-        const pathStartIndex = path.length - 1;
-
-        for (const size of node.allocations) {
-          pathAllocations.push([pathStartIndex, size]);
-        }
-      }
-
-      treeIndex = node.parent;
+      node = treeMap[node.parentId];
     }
 
-    console.log(pathAllocations);
-
-    for (const pathAlloc of pathAllocations) {
-      samples.push({
-        locationId: path.slice(pathAlloc[0]),
-        value: [pathAlloc[1]],
-        label
-      });
-    }
+    sample.push({
+      locationId: path,
+      value: [s.size],
+      label,
+    });
   }
 
   return perftools.profiles.Profile.create({
-    sample: samples,
+    sample,
     location: [...locationsMap.values()],
     function: [...functionsMap.values()],
     stringTable: stringTable.serialize(),
