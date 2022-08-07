@@ -53,8 +53,6 @@ export interface HeapProfileNode {
   name: string;
   scriptName: string;
   lineNumber: number;
-  allocations: number[];
-  parent: number;
   parentId: number;
 }
 
@@ -66,6 +64,7 @@ export interface AllocationSample {
 export interface HeapProfile {
   samples: AllocationSample[];
   treeMap: { [nodeId: string]: HeapProfileNode };
+  timestamp: number;
 }
 
 export interface ProfilingExtension {

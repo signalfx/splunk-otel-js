@@ -105,7 +105,7 @@ class Serializer {
   serializeHeapProfile(profile: HeapProfile) {
     const SOURCE_EVENT_TIME = this.stringTable.getIndex('source.event.time');
 
-    const label = [{ key: SOURCE_EVENT_TIME, num: Date.now() }];
+    const label = [{ key: SOURCE_EVENT_TIME, num: profile.timestamp }];
 
     const sample: perftools.profiles.ISample[] = [];
 

@@ -5,7 +5,6 @@
 #include "util/hex.h"
 #include "util/modp_numtoa.h"
 #include "util/platform.h"
-#include <chrono>
 #include <inttypes.h>
 #include <nan.h>
 #include <v8-profiler.h>
@@ -312,12 +311,6 @@ void InsertActivation(Profiling* profiling, SpanActivation* activation) {
 }
 
 Profiling* profiling = nullptr;
-
-int64_t MicroSecondsSinceEpoch() {
-  return std::chrono::duration_cast<std::chrono::microseconds>(
-           std::chrono::system_clock::now().time_since_epoch())
-    .count();
-}
 
 void V8StartProfiling(v8::CpuProfiler* profiler, const char* title) {
   v8::Local<v8::String> v8Title = Nan::New(title).ToLocalChecked();

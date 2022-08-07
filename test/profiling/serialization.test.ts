@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 import { strict as assert } from 'assert';
-import { serialize, StringTable } from '../../src/profiling/utils';
+import {
+  serialize,
+  serializeHeapProfile,
+  StringTable,
+} from '../../src/profiling/utils';
 import { perftools } from '../../src/profiling/proto/profile.js';
 
 const proto = perftools.profiles;
@@ -110,6 +114,90 @@ describe('profiling:serialization', () => {
           '/app/file.ts',
           'noline',
           '/app/foo.ts',
+        ],
+      });
+
+      assert.deepEqual(
+        serializedProfile.toJSON(),
+        clone(serializedProfile).toJSON()
+      );
+    });
+
+    it('correctly serializes a heap profile', () => {
+      const heapProfile = {
+        samples: [
+          { nodeId: 1, size: 128 },
+          { nodeId: 1, size: 256 },
+          { nodeId: 3, size: 512 },
+        ],
+        treeMap: {
+          1: {
+            name: 'work',
+            scriptName: '/app/foo.js',
+            lineNumber: 42,
+            parentId: 2,
+          },
+          2: {
+            name: 'schedule',
+            scriptName: '/app/foo.js',
+            lineNumber: 241,
+            parentId: 3,
+          },
+          3: {
+            name: 'runTimers',
+            scriptName: 'node:internal/timers',
+            lineNumber: -1,
+            parentId: 0,
+          },
+          4: {
+            name: 'other',
+            scriptName: '',
+            lineNumber: 10,
+            parentId: 0,
+          },
+        },
+        timestamp: Date.now(),
+      };
+
+      const ts = String(heapProfile.timestamp);
+      const serializedProfile = serializeHeapProfile(heapProfile);
+
+      assert.deepEqual(serializedProfile.toJSON(), {
+        sample: [
+          {
+            locationId: ['1', '2', '3'],
+            value: ['128'],
+            label: [{ key: '1', num: ts }],
+          },
+          {
+            locationId: ['1', '2', '3'],
+            value: ['256'],
+            label: [{ key: '1', num: ts }],
+          },
+          {
+            locationId: ['3'],
+            value: ['512'],
+            label: [{ key: '1', num: ts }],
+          },
+        ],
+        location: [
+          { id: '1', line: [{ functionId: '1', line: '42' }] },
+          { id: '2', line: [{ functionId: '2', line: '241' }] },
+          { id: '3', line: [{ functionId: '3', line: '-1' }] },
+        ],
+        function: [
+          { id: '1', name: '2', systemName: '2', filename: '3' },
+          { id: '2', name: '4', systemName: '4', filename: '3' },
+          { id: '3', name: '5', systemName: '5', filename: '6' },
+        ],
+        stringTable: [
+          '',
+          'source.event.time',
+          'work',
+          '/app/foo.js',
+          'schedule',
+          'runTimers',
+          'node:internal/timers',
         ],
       });
 

@@ -12,7 +12,6 @@ enum MemoryProfilingStringIndex {
   V8String_Name,
   V8String_ScriptName,
   V8String_LineNumber,
-  V8String_Allocations,
   V8String_ParentId,
   V8String_MAX
 };
@@ -49,16 +48,6 @@ ToJsHeapNode(v8::AllocationProfile::Node* node, uint32_t parentId, StringStash* 
   Nan::Set(jsNode, stash->strings[V8String_ScriptName], node->script_name);
   Nan::Set(jsNode, stash->strings[V8String_LineNumber], Nan::New<v8::Integer>(node->line_number));
   Nan::Set(jsNode, stash->strings[V8String_ParentId], Nan::New<v8::Uint32>(parentId));
-
-  auto jsAllocations = Nan::New<v8::Array>(node->allocations.size());
-  Nan::Set(jsNode, stash->strings[V8String_Allocations], jsAllocations);
-
-  for (size_t allocationIndex = 0; allocationIndex < node->allocations.size(); allocationIndex++) {
-    v8::AllocationProfile::Allocation* allocation = &node->allocations[allocationIndex];
-    Nan::Set(
-      jsAllocations, allocationIndex, Nan::New<v8::Number>(allocation->size * allocation->count));
-  }
-
   return jsNode;
 }
 
@@ -172,7 +161,6 @@ NAN_METHOD(CollectHeapProfile) {
   stash.strings[V8String_Name] = Nan::New<v8::String>("name").ToLocalChecked();
   stash.strings[V8String_ScriptName] = Nan::New<v8::String>("scriptName").ToLocalChecked();
   stash.strings[V8String_LineNumber] = Nan::New<v8::String>("lineNumber").ToLocalChecked();
-  stash.strings[V8String_Allocations] = Nan::New<v8::String>("allocations").ToLocalChecked();
   stash.strings[V8String_ParentId] = Nan::New<v8::String>("parentId").ToLocalChecked();
 
   std::vector<BFSNode>& stack = profiling->stack;
@@ -199,6 +187,9 @@ NAN_METHOD(CollectHeapProfile) {
 
   Nan::Set(jsResult, Nan::New<v8::String>("treeMap").ToLocalChecked(), jsNodeTree);
   Nan::Set(jsResult, Nan::New<v8::String>("samples").ToLocalChecked(), jsSamples);
+  Nan::Set(
+    jsResult, Nan::New<v8::String>("timestamp").ToLocalChecked(),
+    Nan::New<v8::Number>(MilliSecondsSinceEpoch()));
 
   info.GetReturnValue().Set(jsResult);
 
