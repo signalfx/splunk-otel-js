@@ -75,7 +75,8 @@ export interface ProfilingExtension {
   collectRaw(): RawProfilingData;
   enterContext(context: unknown, traceId: string, spanId: string): void;
   exitContext(context: unknown): void;
-  startMemoryProfiling(): void;
+  startMemoryProfiling(options?: MemoryProfilingOptions): void;
+  stopMemoryProfiling(): void;
   collectHeapProfile(): HeapProfile;
 }
 

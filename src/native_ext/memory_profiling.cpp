@@ -1,6 +1,6 @@
 #include "memory_profiling.h"
+#include "khash.h"
 #include "util/platform.h"
-#include <unordered_map>
 #include <v8-profiler.h>
 #include <vector>
 
@@ -18,20 +18,21 @@ enum MemoryProfilingStringIndex {
 };
 
 struct BFSNode {
-  BFSNode(v8::AllocationProfile::Node* node, uint32_t parentId)
-    : node(node), parentId(parentId) {}
+  BFSNode(v8::AllocationProfile::Node* node, uint32_t parentId) : node(node), parentId(parentId) {}
   v8::AllocationProfile::Node* node;
   uint32_t parentId;
 };
 
 using AllocationSample = v8::AllocationProfile::Sample;
+KHASH_MAP_INIT_INT64(SampleId, uint64_t);
 
 struct MemoryProfiling {
-  MemoryProfiling() { stack.reserve(128); }
-  std::vector<BFSNode> stack;
+  MemoryProfiling() : tracking(kh_init(SampleId)) { stack.reserve(128); }
+  ~MemoryProfiling() { kh_destroy(SampleId, tracking); }
   uint64_t generation = 0;
   // Used to keep track which were the new samples added to the allocation profile.
-  std::unordered_map<uint64_t, uint64_t> sampleTracking;
+  khash_t(SampleId) * tracking;
+  std::vector<BFSNode> stack;
   bool isRunning = false;
 };
 
@@ -41,8 +42,8 @@ struct StringStash {
   v8::Local<v8::String> strings[V8String_MAX];
 };
 
-v8::Local<v8::Object> ToJsHeapNode(
-  v8::AllocationProfile::Node* node, uint32_t parentId, StringStash* stash) {
+v8::Local<v8::Object>
+ToJsHeapNode(v8::AllocationProfile::Node* node, uint32_t parentId, StringStash* stash) {
   auto jsNode = Nan::New<v8::Object>();
   Nan::Set(jsNode, stash->strings[V8String_Name], node->name);
   Nan::Set(jsNode, stash->strings[V8String_ScriptName], node->script_name);
@@ -80,7 +81,7 @@ NAN_METHOD(StartMemoryProfiling) {
   }
 
   int64_t sampleIntervalBytes = 1024 * 128;
-  int32_t maxStackDepth = 128;
+  int32_t maxStackDepth = 256;
 
   if (info.Length() >= 1 && info[0]->IsObject()) {
     auto options = Nan::To<v8::Object>(info[0]).ToLocalChecked();
@@ -134,27 +135,36 @@ NAN_METHOD(CollectHeapProfile) {
   const std::vector<v8::AllocationProfile::Sample>& samples = profile->GetSamples();
 
   profiling->generation++;
+  uint64_t generation = profiling->generation;
 
-  std::unordered_map<uint64_t, uint64_t>& sampleTracking = profiling->sampleTracking;
+  khash_t(SampleId)* tracking = profiling->tracking;
 
   for (const auto& sample : samples) {
-    if (sampleTracking.count(sample.sample_id) == 0) {
+    if (kh_get(SampleId, tracking, sample.sample_id) == kh_end(tracking)) {
       auto jsSample = Nan::New<v8::Object>();
       Nan::Set(
-        jsSample, Nan::New<v8::String>("nodeId").ToLocalChecked(), Nan::New<v8::Uint32>(sample.node_id));
+        jsSample, Nan::New<v8::String>("nodeId").ToLocalChecked(),
+        Nan::New<v8::Uint32>(sample.node_id));
       Nan::Set(
         jsSample, Nan::New<v8::String>("size").ToLocalChecked(),
         Nan::New<v8::Uint32>(uint32_t(sample.size * sample.count)));
       Nan::Set(jsSamples, jsSamplesLength++, jsSample);
     }
-    sampleTracking[sample.sample_id] = profiling->generation;
+
+    int ret;
+    khiter_t it = kh_put(SampleId, tracking, sample.sample_id, &ret);
+    if (ret != -1) {
+      kh_value(tracking, it) = generation;
+    }
   }
 
-  for (auto it = sampleTracking.begin(); it != sampleTracking.end();) {
-    if (it->second != profiling->generation) {
-      it = sampleTracking.erase(it);
-    } else {
-      ++it;
+  for (khiter_t it = kh_begin(tracking); it != kh_end(tracking); ++it) {
+    if (!kh_exist(tracking, it)) {
+      continue;
+    }
+
+    if (kh_val(tracking, it) != generation) {
+      kh_del(SampleId, tracking, it);
     }
   }
 
@@ -195,7 +205,24 @@ NAN_METHOD(CollectHeapProfile) {
   delete profile;
 }
 
-NAN_METHOD(StopMemoryProfiling) {}
+NAN_METHOD(StopMemoryProfiling) {
+  if (!profiling) {
+    return;
+  }
+
+  if (profiling->isRunning) {
+    v8::HeapProfiler* profiler = info.GetIsolate()->GetHeapProfiler();
+
+    if (!profiler) {
+      return;
+    }
+
+    profiler->StopSamplingHeapProfiler();
+  }
+
+  delete profiling;
+  profiling = nullptr;
+}
 
 } // namespace Profiling
 } // namespace Splunk
