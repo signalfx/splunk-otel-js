@@ -64,7 +64,9 @@ function extStartMemoryProfiling(
   return extension.startMemoryProfiling(options);
 }
 
-function extCollectHeapProfile(extension: ProfilingExtension): HeapProfile {
+function extCollectHeapProfile(
+  extension: ProfilingExtension
+): HeapProfile | null {
   return extension.collectHeapProfile();
 }
 
@@ -136,8 +138,10 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
     extStartMemoryProfiling(extension, options.memoryProfilingOptions);
     memSamplesCollectInterval = setInterval(() => {
       const heapProfile = extCollectHeapProfile(extension);
-      for (const exporter of exporters) {
-        exporter.sendHeapProfile(heapProfile);
+      if (heapProfile) {
+        for (const exporter of exporters) {
+          exporter.sendHeapProfile(heapProfile);
+        }
       }
     }, options.collectionDuration);
 

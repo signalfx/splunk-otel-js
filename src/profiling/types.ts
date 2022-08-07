@@ -76,7 +76,7 @@ export interface ProfilingExtension {
   exitContext(context: unknown): void;
   startMemoryProfiling(options?: MemoryProfilingOptions): void;
   stopMemoryProfiling(): void;
-  collectHeapProfile(): HeapProfile;
+  collectHeapProfile(): HeapProfile | null;
 }
 
 export type ProfilingExporterFactory = (
