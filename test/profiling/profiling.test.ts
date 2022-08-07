@@ -56,6 +56,8 @@ describe('profiling', () => {
           [SemanticResourceAttributes.SERVICE_NAME]: 'unnamed-node-service',
         }).merge(detectResource()),
         exporterFactory: defaultExporterFactory,
+        memoryProfilingEnabled: false,
+        memoryProfilingOptions: undefined,
       });
     });
 

@@ -37,6 +37,25 @@ interface LogsClient extends grpc.Client {
   export: (request: unknown, metadata: grpc.Metadata, callback: Function) => {};
 }
 
+const OTEL_PROFILING_VERSION = '0.1.0';
+
+function commonAttributes(profilingType: 'cpu' | 'allocation') {
+  return [
+    {
+      key: 'profiling.data.format',
+      value: { stringValue: 'pprof-gzip-base64' },
+    },
+    {
+      key: 'profiling.data.type',
+      value: { stringValue: profilingType },
+    },
+    {
+      key: 'com.splunk.sourcetype',
+      value: { stringValue: 'otel.profiling' },
+    },
+  ];
+}
+
 export class OTLPProfilingExporter implements ProfilingExporter {
   protected _client: LogsClient;
   protected _options: OTLPExporterOptions;
@@ -108,20 +127,7 @@ export class OTLPProfilingExporter implements ProfilingExporter {
     const { stacktraces } = profile;
     diag.debug(`profiling: Exporting ${stacktraces?.length} samples`);
     const { callstackInterval } = this._options;
-    const attributes = [
-      {
-        key: 'profiling.data.format',
-        value: { stringValue: 'pprof-gzip-base64' },
-      },
-      {
-        key: 'profiling.data.type',
-        value: { stringValue: 'cpu' },
-      },
-      {
-        key: 'com.splunk.sourcetype',
-        value: { stringValue: 'otel.profiling' },
-      },
-    ];
+    const attributes = commonAttributes('cpu');
     encode(serialize(profile, { samplingPeriodMillis: callstackInterval }))
       .then(serializedProfile => {
         const logs = [serializedProfile].map(st => {
@@ -134,7 +140,7 @@ export class OTLPProfilingExporter implements ProfilingExporter {
         const ilLogs = {
           instrumentationLibrary: {
             name: 'otel.profiling',
-            version: '0.1.0',
+            version: OTEL_PROFILING_VERSION,
           },
           logs,
         };
@@ -161,25 +167,8 @@ export class OTLPProfilingExporter implements ProfilingExporter {
   }
 
   sendHeapProfile(profile: HeapProfile) {
-    const beginT = process.hrtime.bigint();
     const serialized = serializeHeapProfile(profile);
-    const endT = process.hrtime.bigint();
-    const serializeDur = Number(endT - beginT) / 1e6;
-    console.log(`serialize ${serializeDur.toFixed(3)}`);
-    const attributes = [
-      {
-        key: 'profiling.data.format',
-        value: { stringValue: 'pprof-gzip-base64' },
-      },
-      {
-        key: 'profiling.data.type',
-        value: { stringValue: 'allocation' },
-      },
-      {
-        key: 'com.splunk.sourcetype',
-        value: { stringValue: 'otel.profiling' },
-      },
-    ];
+    const attributes = commonAttributes('allocation');
     encode(serialized)
       .then(serializedProfile => {
         const logs = [serializedProfile].map(st => {
@@ -192,7 +181,7 @@ export class OTLPProfilingExporter implements ProfilingExporter {
         const ilLogs = {
           instrumentationLibrary: {
             name: 'otel.profiling',
-            version: '0.1.0',
+            version: OTEL_PROFILING_VERSION,
           },
           logs,
         };

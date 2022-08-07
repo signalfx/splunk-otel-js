@@ -148,16 +148,11 @@ class Serializer {
   ) {
     const { stacktraces } = profile;
 
-    const stringTable = new StringTable();
-    const locationsMap = new Map();
-    const functionsMap = new Map();
-
-    // Precreating those because they are really likely to be used
     const STR = {
-      TIMESTAMP: stringTable.getIndex('source.event.time'),
-      TRACE_ID: stringTable.getIndex('trace_id'),
-      SPAN_ID: stringTable.getIndex('span_id'),
-      SOURCE_EVENT_PERIOD: stringTable.getIndex('source.event.period'),
+      TIMESTAMP: this.stringTable.getIndex('source.event.time'),
+      TRACE_ID: this.stringTable.getIndex('trace_id'),
+      SPAN_ID: this.stringTable.getIndex('span_id'),
+      SOURCE_EVENT_PERIOD: this.stringTable.getIndex('source.event.period'),
     };
 
     const eventPeriodLabel = new perftools.profiles.Label({
@@ -178,7 +173,7 @@ class Serializer {
           labels.push(
             new perftools.profiles.Label({
               key: STR.TRACE_ID,
-              str: stringTable.getIndex(traceId.toString('hex')),
+              str: this.stringTable.getIndex(traceId.toString('hex')),
             })
           );
         }
@@ -186,7 +181,7 @@ class Serializer {
           labels.push(
             new perftools.profiles.Label({
               key: STR.SPAN_ID,
-              str: stringTable.getIndex(spanId.toString('hex')),
+              str: this.stringTable.getIndex(spanId.toString('hex')),
             })
           );
         }
@@ -203,9 +198,9 @@ class Serializer {
 
     return perftools.profiles.Profile.create({
       sample: samples,
-      location: [...locationsMap.values()],
-      function: [...functionsMap.values()],
-      stringTable: stringTable.serialize(),
+      location: [...this.locationsMap.values()],
+      function: [...this.functionsMap.values()],
+      stringTable: this.stringTable.serialize(),
     });
   }
 }
