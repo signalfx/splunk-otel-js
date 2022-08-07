@@ -134,7 +134,7 @@ describe('profiling native extension', () => {
     function doAllocations() {
       const dump = [];
 
-      for (let i = 0; i < 1024; i++) {
+      for (let i = 0; i < 4096; i++) {
         dump.push(`abcd-${i}`.repeat(2048));
       }
 
