@@ -21,6 +21,8 @@ const { startProfiling } = require('@splunk/otel');
 // NOTE: profiling needs to be started before tracing. This will be fixed in future versions.
 startProfiling({
   serviceName: 'my-service',
+  // Optional, disabled by default
+  memoryProfilingEnabled: true,
 });
 
 startTracing({ ... });
