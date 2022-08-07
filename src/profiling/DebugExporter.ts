@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { diag } from '@opentelemetry/api';
-import { ProfilingData, ProfilingExporter } from './types';
 import * as fs from 'fs';
+import { diag } from '@opentelemetry/api';
+import { RawProfilingData, ProfilingData, ProfilingExporter } from './types';
 
 export class DebugExporter implements ProfilingExporter {
   runTimestamp = Date.now();
   profileIndex = 0;
 
-  send(data: ProfilingData) {
+  send(data: ProfilingData | RawProfilingData) {
     const baseName = `profile-${this.runTimestamp}-${this.profileIndex++}.json`;
     fs.writeFile(baseName, JSON.stringify(data), err => {
       if (err) {

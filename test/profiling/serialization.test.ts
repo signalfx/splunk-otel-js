@@ -24,7 +24,7 @@ const dummyProfile = {
       timestamp: '1657707471544258336',
       stacktrace: [
         ['/app/file.ts', 'doWork', 44],
-        ['/app/file.ts', '', 50],
+        ['/app/foo.ts', 'noline', 0],
       ],
       timepoint: '288828185919000',
       spanId: Buffer.from('adbfe5ed33c9a3ff', 'hex'),
@@ -61,7 +61,9 @@ describe('profiling:serialization', () => {
   describe('serialization', () => {
     it('creates a valid proto object', () => {
       const profile = require('./profile.json');
-      const serializedProfile = serialize(profile);
+      const serializedProfile = serialize(profile, {
+        samplingPeriodMillis: 1_000,
+      });
       assert(serializedProfile instanceof proto.Profile);
       assert.equal(proto.Profile.verify(serializedProfile), null);
 
@@ -72,7 +74,9 @@ describe('profiling:serialization', () => {
     });
 
     it('correctly serializes a dummy profile', () => {
-      const serializedProfile = serialize(dummyProfile);
+      const serializedProfile = serialize(dummyProfile, {
+        samplingPeriodMillis: 1_000,
+      });
 
       assert.deepEqual(serializedProfile.toJSON(), {
         sample: [
@@ -80,29 +84,32 @@ describe('profiling:serialization', () => {
             locationId: ['1', '2'],
             label: [
               { key: '1', num: '1657707471544' },
-              { key: '2', str: '4' },
-              { key: '3', str: '5' },
+              { key: '4', num: '1000' },
+              { key: '2', str: '5' },
+              { key: '3', str: '6' },
             ],
           },
         ],
         location: [
           { id: '1', line: [{ functionId: '1', line: '44' }] },
-          { id: '2', line: [{ functionId: '2', line: '50' }] },
+          { id: '2', line: [{ functionId: '2', line: '-1' }] },
         ],
         function: [
-          { id: '1', name: '6', systemName: '6', filename: '7' },
-          { id: '2', name: '8', systemName: '8', filename: '7' },
+          { id: '1', name: '7', systemName: '7', filename: '8' },
+          { id: '2', name: '9', systemName: '9', filename: '10' },
         ],
         stringTable: [
           '',
           'source.event.time',
           'trace_id',
           'span_id',
+          'source.event.period',
           '10192d1c807161471ad2011522853770',
           'adbfe5ed33c9a3ff',
           'doWork',
           '/app/file.ts',
-          '(anonymous)',
+          'noline',
+          '/app/foo.ts',
         ],
       });
 
