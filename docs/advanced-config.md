@@ -41,6 +41,8 @@ This distribution supports all the configuration options supported by the compon
 | `SPLUNK_TRACE_RESPONSE_HEADER_ENABLED`<br>`serverTimingEnabled` | `true`                  | Stable  | Enable injection of `Server-Timing` header to HTTP responses.
 | `SPLUNK_REDIS_INCLUDE_COMMAND_ARGS` | `false`                  | Stable  | Will include the full redis query in `db.statement` span attribute when using `redis` instrumentation.
 
+\*: Overwritten default value
+
 #### Additional `startTracing` config options
 
 The following config options can be set by passing them as arguments to `startTracing()`.
@@ -71,8 +73,6 @@ Configuration examples can be seen [here](metrics.md).
 | n/a<br>`resourceFactory`                                        |                         | Experimental | Callback which allows to filter the default resource or provide a custom one. The function takes one argument of type `Resource` which is the resource pre-filled by the SDK containing the `service.name`, environment, host and process attributes. |
 | `SPLUNK_RUNTIME_METRICS_ENABLED`<br>`runtimeMetricsEnabled`     | `false`                 | Experimental | Enable collecting and exporting of runtime metrics. See [metrics documentation](metrics.md) for more information.
 | `SPLUNK_RUNTIME_METRICS_COLLECTION_INTERVAL`<br>`runtimeMetricsCollectionIntervalMillis`  | `5000`                 | Experimental | The interval, in milliseconds, during which GC and event loop statistics are collected. After the collection is done, the values become available to the metric exporter.
-
-\*: Overwritten default value
 
 ### Profiling
 
