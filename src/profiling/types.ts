@@ -51,7 +51,7 @@ export type ProfilingData = GenericProfilingData<string>;
 
 export interface ProfilingExtension {
   start(options?: ProfilingStartOptions): void;
-  stop(): ProfilingData;
+  stop(): RawProfilingData;
   collect(): ProfilingData;
   collectRaw(): RawProfilingData;
   enterContext(context: unknown, traceId: string, spanId: string): void;
@@ -74,7 +74,7 @@ export interface ProfilingOptions {
 }
 
 export interface ProfilingExporter {
-  send(profile: ProfilingData): void;
+  send(profile: RawProfilingData): void;
 }
 
 export const allowedProfilingOptions = [

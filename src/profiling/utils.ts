@@ -13,8 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import * as fs from 'fs';
+import { gzip } from 'zlib';
+import { promisify } from 'util';
+import * as grpc from '@grpc/grpc-js';
+import { diag } from '@opentelemetry/api';
+
 import { perftools } from './proto/profile';
 import type { RawProfilingData } from './types';
+
+const gzipPromise = promisify(gzip);
 
 export class StringTable {
   _stringMap = new Map();
@@ -38,7 +46,14 @@ export class StringTable {
   }
 }
 
-export const serialize = (profile: RawProfilingData) => {
+export interface PProfSerializationOptions {
+  samplingPeriodMillis: number;
+}
+
+export const serialize = (
+  profile: RawProfilingData,
+  options: PProfSerializationOptions
+) => {
   const { stacktraces } = profile;
 
   const stringTable = new StringTable();
@@ -50,6 +65,7 @@ export const serialize = (profile: RawProfilingData) => {
     TIMESTAMP: stringTable.getIndex('source.event.time'),
     TRACE_ID: stringTable.getIndex('trace_id'),
     SPAN_ID: stringTable.getIndex('span_id'),
+    SOURCE_EVENT_PERIOD: stringTable.getIndex('source.event.period'),
   };
 
   const getLocation = (
@@ -70,15 +86,13 @@ export const serialize = (profile: RawProfilingData) => {
   };
 
   const getFunction = (
-    fileName?: string,
-    functionName?: string
+    fileName: string,
+    functionName: string
   ): perftools.profiles.Function => {
     const key = [fileName, functionName].join(':');
     let fun = functionsMap.get(key);
     if (!fun) {
-      const functionNameId = stringTable.getIndex(
-        functionName || '(anonymous)'
-      );
+      const functionNameId = stringTable.getIndex(functionName);
       fun = new perftools.profiles.Function({
         id: functionsMap.size + 1,
         name: functionNameId,
@@ -91,16 +105,20 @@ export const serialize = (profile: RawProfilingData) => {
   };
 
   const getLine = (
-    fileName?: string,
-    functionName?: string,
-    lineNumber?: number
+    fileName: string,
+    functionName: string,
+    lineNumber: number
   ): perftools.profiles.Line => {
     return new perftools.profiles.Line({
       functionId: getFunction(fileName, functionName).id,
-      line: lineNumber,
+      line: lineNumber !== 0 ? lineNumber : -1,
     });
   };
 
+  const eventPeriodLabel = new perftools.profiles.Label({
+    key: STR.SOURCE_EVENT_PERIOD,
+    num: options.samplingPeriodMillis,
+  });
   const samples = stacktraces.map(
     ({ stacktrace, timestamp, spanId, traceId }) => {
       const labels = [
@@ -108,6 +126,7 @@ export const serialize = (profile: RawProfilingData) => {
           key: STR.TIMESTAMP,
           num: Number(BigInt(timestamp) / BigInt(1_000_000)),
         }),
+        eventPeriodLabel,
       ];
       if (traceId) {
         labels.push(
@@ -143,3 +162,52 @@ export const serialize = (profile: RawProfilingData) => {
     stringTable: stringTable.serialize(),
   });
 };
+
+export const encode = async function encode(
+  profile: perftools.profiles.IProfile
+): Promise<Buffer> {
+  const buffer = perftools.profiles.Profile.encode(profile).finish();
+  return gzipPromise(buffer);
+};
+
+function readContentSync(location: string): Buffer | undefined {
+  try {
+    return fs.readFileSync(location);
+  } catch (e) {
+    diag.error(`Failed to read file at ${location}`, e);
+  }
+
+  return undefined;
+}
+
+function maybeReadPath(location: string | undefined): Buffer | undefined {
+  if (location === undefined) {
+    return undefined;
+  }
+
+  return readContentSync(location);
+}
+
+export function parseEndpoint(endpoint: string): {
+  host: string;
+  credentials: grpc.ChannelCredentials;
+} {
+  let host = endpoint;
+  let credentials = grpc.ChannelCredentials.createInsecure();
+
+  if (endpoint.startsWith('https://')) {
+    host = endpoint.substr(8);
+    credentials = grpc.credentials.createSsl(
+      maybeReadPath(process.env.OTEL_EXPORTER_OTLP_CERTIFICATE),
+      maybeReadPath(process.env.OTEL_EXPORTER_OTLP_CLIENT_KEY),
+      maybeReadPath(process.env.OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE)
+    );
+  } else if (endpoint.startsWith('http://')) {
+    host = endpoint.substr(7);
+  }
+
+  return {
+    host,
+    credentials,
+  };
+}
