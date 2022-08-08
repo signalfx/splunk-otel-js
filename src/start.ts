@@ -24,7 +24,7 @@ interface Options {
   serviceName: string;
   // Signal-specific configuration options:
   metrics: boolean | MetricsOptions;
-  profiling: ProfilingOptions;
+  profiling: boolean | ProfilingOptions;
   tracing: boolean | TracingOptions;
 }
 
@@ -70,7 +70,7 @@ export const start = (options: Partial<Options> = {}) => {
     running.tracing = startTracing(Object.assign({}, restOptions, tracing));
   }
 
-  if (isSignalEnabled(options.metrics, 'SPLUNK_METRICS_ENABLED', true)) {
+  if (isSignalEnabled(options.metrics, 'SPLUNK_METRICS_ENABLED', false)) {
     running.metrics = startMetrics(Object.assign({}, restOptions, metrics));
   }
 };
@@ -79,6 +79,7 @@ export const stop = async () => {
   const promises = [];
 
   if (running.metrics) {
+    promises.push(running.metrics.stop());
     running.metrics = null;
   }
 

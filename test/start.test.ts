@@ -70,7 +70,14 @@ CONFIG.tracing = {
 describe('start', () => {
   const signals = {};
 
-  const assertCalled = (fns, metrics, profiling, tracing) => {
+  const assertCalled = (
+    fns,
+    signals: ('tracing' | 'metrics' | 'profiling')[]
+  ) => {
+    const metrics = signals.includes('metrics');
+    const tracing = signals.includes('tracing');
+    const profiling = signals.includes('profiling');
+
     if (metrics) {
       sinon.assert.calledOnce(fns.metrics);
     } else {
@@ -98,7 +105,9 @@ describe('start', () => {
     };
 
     signals.start = {
-      metrics: sinon.stub(metrics, 'startMetrics').callsFake(() => {}),
+      metrics: sinon.stub(metrics, 'startMetrics').callsFake(() => {
+        return { stop: signals.stop.metrics };
+      }),
       profiling: sinon.stub(profiling, 'startProfiling').callsFake(() => {
         return { stop: signals.stop.profiling };
       }),
@@ -114,10 +123,10 @@ describe('start', () => {
   describe('toggling signals', () => {
     it('should run only enable tracing by default', () => {
       start();
-      assertCalled(signals.start, true, false, true);
+      assertCalled(signals.start, ['tracing']);
 
       stop();
-      assertCalled(signals.stop, false, false, true);
+      assertCalled(signals.stop, ['tracing']);
     });
 
     it('should allow toggling signals via boolean', () => {
@@ -126,10 +135,10 @@ describe('start', () => {
         profiling: true,
         tracing: false,
       });
-      assertCalled(signals.start, true, true, false);
+      assertCalled(signals.start, ['metrics', 'profiling']);
 
       stop();
-      assertCalled(signals.stop, false, true, false);
+      assertCalled(signals.stop, ['metrics', 'profiling']);
     });
 
     it('should allow toggling signals via env', () => {
@@ -138,20 +147,20 @@ describe('start', () => {
       process.env.SPLUNK_TRACING_ENABLED = 'no';
 
       start();
-      assertCalled(signals.start, true, true, false);
+      assertCalled(signals.start, ['profiling', 'metrics']);
 
       stop();
-      assertCalled(signals.stop, false, true, false);
+      assertCalled(signals.stop, ['profiling', 'metrics']);
     });
 
     it('should throw if start called multiple times', () => {
       start();
       assert.throws(() => start());
 
-      assertCalled(signals.start, true, false, true);
+      assertCalled(signals.start, ['tracing']);
 
       stop();
-      assertCalled(signals.stop, false, false, true);
+      assertCalled(signals.stop, ['tracing']);
     });
   });
 
@@ -173,7 +182,7 @@ describe('start', () => {
         },
       });
 
-      assertCalled(signals.start, true, true, true);
+      assertCalled(signals.start, ['tracing', 'profiling', 'metrics']);
     });
 
     it('works if all the configuration options are passed', () => {
@@ -185,7 +194,7 @@ describe('start', () => {
         /extraneous/
       );
 
-      assertCalled(signals.start, false, false, false);
+      assertCalled(signals.start, []);
     });
   });
 });

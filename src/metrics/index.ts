@@ -164,8 +164,16 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
 
   metrics.setGlobalMeterProvider(provider);
 
+  async function stopGlobalMetrics() {
+    metrics.disable();
+    await provider.forceFlush();
+    await provider.shutdown();
+  }
+
   if (!options.runtimeMetricsEnabled) {
-    return;
+    return {
+      stop: stopGlobalMetrics,
+    };
   }
 
   const meter = metrics.getMeter('splunk-otel-js-runtime-metrics');
@@ -200,7 +208,9 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
   const extension = _loadExtension();
 
   if (extension === undefined) {
-    return;
+    return {
+      stop: stopGlobalMetrics,
+    };
   }
 
   extension.start();
@@ -258,6 +268,13 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
     recordGcCountMetric(gcCountCounter, runtimeCounters);
   }, options.runtimeMetricsCollectionIntervalMillis);
   interval.unref();
+
+  return {
+    stop: async () => {
+      clearInterval(interval);
+      await stopGlobalMetrics();
+    },
+  };
 }
 
 export function _setDefaultOptions(
