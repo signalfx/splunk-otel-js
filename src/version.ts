@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-export const VERSION = '1.3.1-metrics-next.7';
+export const VERSION = '1.3.1-metrics-next.8';
