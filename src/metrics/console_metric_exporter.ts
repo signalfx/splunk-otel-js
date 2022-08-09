@@ -75,6 +75,12 @@ function logScopeMetrics(scopeMetrics: ScopeMetrics, index: number) {
         if (value.sum !== undefined) {
           console.log(`Sum: ${value.sum.toFixed(6)}`);
         }
+        if (value.min !== undefined) {
+          console.log(`Min: ${value.min.toFixed(6)}`);
+        }
+        if (value.max !== undefined) {
+          console.log(`Max: ${value.max.toFixed(6)}`);
+        }
         console.log('Bucket counts:');
         for (let boundIdx = -1; boundIdx < boundaries.length; boundIdx++) {
           const lb = boundaries[boundIdx] ?? -Infinity;
