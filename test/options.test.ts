@@ -226,7 +226,10 @@ describe('options', () => {
 
     it('throws when setting SPLUNK_REALM without an access token', () => {
       process.env.SPLUNK_REALM = 'us0';
-      assert.throws(_setDefaultOptions, /Splunk realm is set, but access token is unset/);
+      assert.throws(
+        _setDefaultOptions,
+        /Splunk realm is set, but access token is unset/
+      );
     });
 
     it('chooses the correct OTLP endpoint when realm is set', () => {
@@ -234,8 +237,14 @@ describe('options', () => {
       process.env.SPLUNK_ACCESS_TOKEN = 'abc';
 
       const options = _setDefaultOptions();
-      assert.deepStrictEqual(options.endpoint, 'https://ingest.us0.signalfx.com/v2/trace/otlp');
-      assert.deepStrictEqual(options.spanExporterFactory, otlpHttpSpanExporterFactory);
+      assert.deepStrictEqual(
+        options.endpoint,
+        'https://ingest.us0.signalfx.com/v2/trace/otlp'
+      );
+      assert.deepStrictEqual(
+        options.spanExporterFactory,
+        otlpHttpSpanExporterFactory
+      );
     });
 
     it('chooses the correct Jaeger Thrift endpoint when realm is set', () => {
@@ -244,8 +253,25 @@ describe('options', () => {
       process.env.OTEL_TRACES_EXPORTER = 'jaeger-thrift-http';
 
       const options = _setDefaultOptions();
-      assert.deepStrictEqual(options.endpoint, 'https://ingest.us0.signalfx.com/v2/trace/jaegerthrift');
-      assert.deepStrictEqual(options.spanExporterFactory, jaegerSpanExporterFactory);
+      assert.deepStrictEqual(
+        options.endpoint,
+        'https://ingest.us0.signalfx.com/v2/trace/jaegerthrift'
+      );
+      assert.deepStrictEqual(
+        options.spanExporterFactory,
+        jaegerSpanExporterFactory
+      );
+    });
+
+    it('throws when setting the realm with an incompatible SPLUNK_TRACES_EXPORTER', () => {
+      process.env.SPLUNK_REALM = 'us0';
+      process.env.SPLUNK_ACCESS_TOKEN = 'abc';
+      process.env.OTEL_TRACES_EXPORTER = 'otlp-grpc';
+
+      assert.throws(
+        _setDefaultOptions,
+        /either otlp-http or jaeger-thrift-splunk/
+      );
     });
   });
 });

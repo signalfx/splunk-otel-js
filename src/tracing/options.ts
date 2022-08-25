@@ -100,7 +100,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   if (options.realm) {
     if (!options.accessToken) {
       throw new Error(
-        'Splunk realm is set, but access token is unset. To send data to the Observability Cloud, both need to be set'
+        'Splunk realm is set, but access token is unset. To send traces to the Observability Cloud, both need to be set'
       );
     }
 
@@ -272,7 +272,7 @@ function resolveExporterType(options: Partial<Options>): ExporterType {
     if (tracesExporter) {
       if (!isSupportedRealmExporter(tracesExporter)) {
         throw new Error(
-          'Setting the Splunk realm with an explicit OTEL_TRACES_EXPORTER requires OTEL_TRACES_EXPORTER to be either otlp-http jaeger-thrift-splunk'
+          'Setting the Splunk realm with an explicit OTEL_TRACES_EXPORTER requires OTEL_TRACES_EXPORTER to be either otlp-http or jaeger-thrift-splunk'
         );
       }
     } else {
