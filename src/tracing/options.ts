@@ -99,7 +99,9 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   if (options.realm) {
     if (!options.accessToken) {
-      throw new Error('Splunk realm is set, but access token is unset');
+      throw new Error(
+        'Splunk realm is set, but access token is unset. To send data to the Observability Cloud, both need to be set'
+      );
     }
 
     if (!options.endpoint) {
@@ -195,7 +197,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   };
 }
 
-function genericJaegerSpanExporterFactory(
+function jaegerThriftSpanExporterFactory(
   defaultEndpoint: string,
   options: Options
 ): SpanExporter {
@@ -218,11 +220,11 @@ function genericJaegerSpanExporterFactory(
   return new JaegerExporter(jaegerOptions);
 }
 
-export const jaegerSpanExporterFactory = genericJaegerSpanExporterFactory.bind(
+export const jaegerSpanExporterFactory = jaegerThriftSpanExporterFactory.bind(
   null,
   'http://localhost:14268/v1/traces'
 );
-export const splunkSpanExporterFactory = genericJaegerSpanExporterFactory.bind(
+export const splunkSpanExporterFactory = jaegerThriftSpanExporterFactory.bind(
   null,
   'http://localhost:9080/v1/trace'
 );
