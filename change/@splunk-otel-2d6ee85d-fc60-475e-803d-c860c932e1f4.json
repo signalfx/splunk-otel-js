@@ -1,7 +1,0 @@
-{
-  "type": "minor",
-  "comment": "add support for SPLUNK_REALM",
-  "packageName": "@splunk/otel",
-  "email": "siimkallas@gmail.com",
-  "dependentChangeType": "patch"
-}
