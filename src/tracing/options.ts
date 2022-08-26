@@ -56,6 +56,7 @@ export type CaptureHttpUriParameters = (
 
 export interface Options {
   accessToken: string;
+  realm?: string;
   endpoint?: string;
   serviceName: string;
   // Tracing-specific configuration options:
@@ -70,6 +71,7 @@ export interface Options {
 
 export const allowedTracingOptions = [
   'accessToken',
+  'realm',
   'captureHttpRequestUriParams',
   'endpoint',
   'instrumentations',
@@ -89,6 +91,26 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   options.accessToken =
     options.accessToken || process.env.SPLUNK_ACCESS_TOKEN || '';
+
+  options.realm = options.realm || process.env.SPLUNK_REALM || '';
+
+  const exporterType = resolveExporterType(options);
+
+  if (options.realm) {
+    if (!options.accessToken) {
+      throw new Error(
+        'Splunk realm is set, but access token is unset. To send traces to the Observability Cloud, both need to be set'
+      );
+    }
+
+    if (!options.endpoint) {
+      if (isJaegerExporter(exporterType)) {
+        if (!process.env.OTEL_EXPORTER_JAEGER_ENDPOINT) {
+          options.endpoint = `https://ingest.${options.realm}.signalfx.com/v2/trace/jaegerthrift`;
+        }
+      }
+    }
+  }
 
   if (options.serverTimingEnabled === undefined) {
     options.serverTimingEnabled = getEnvBoolean(
@@ -128,7 +150,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   // factories
   if (options.spanExporterFactory === undefined) {
-    options.spanExporterFactory = resolveTracesExporter();
+    options.spanExporterFactory = resolveTracesExporter(exporterType);
   }
   options.spanProcessorFactory =
     options.spanProcessorFactory || defaultSpanProcessorFactory;
@@ -167,34 +189,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   };
 }
 
-export function resolveTracesExporter(): SpanExporterFactory {
-  const factory =
-    SpanExporterMap[process.env.OTEL_TRACES_EXPORTER || 'default'];
-  assert.strictEqual(
-    typeof factory,
-    'function',
-    `Invalid value for OTEL_TRACES_EXPORTER env variable: ${util.inspect(
-      process.env.OTEL_TRACES_EXPORTER
-    )}. Pick one of ${util.inspect(Object.keys(SpanExporterMap), {
-      compact: true,
-    })} or leave undefined.`
-  );
-  return factory;
-}
-
-export function otlpSpanExporterFactory(options: Options): SpanExporter {
-  const metadata = new Metadata();
-  if (options.accessToken) {
-    // for forward compatibility, is not currently supported
-    metadata.set('X-SF-TOKEN', options.accessToken);
-  }
-  return new OTLPTraceExporter({
-    url: options.endpoint,
-    metadata,
-  });
-}
-
-function genericJaegerSpanExporterFactory(
+function jaegerThriftSpanExporterFactory(
   defaultEndpoint: string,
   options: Options
 ): SpanExporter {
@@ -217,20 +212,27 @@ function genericJaegerSpanExporterFactory(
   return new JaegerExporter(jaegerOptions);
 }
 
-export const jaegerSpanExporterFactory = genericJaegerSpanExporterFactory.bind(
+export const jaegerSpanExporterFactory = jaegerThriftSpanExporterFactory.bind(
   null,
   'http://localhost:14268/v1/traces'
 );
-export const splunkSpanExporterFactory = genericJaegerSpanExporterFactory.bind(
+export const splunkSpanExporterFactory = jaegerThriftSpanExporterFactory.bind(
   null,
   'http://localhost:9080/v1/trace'
 );
 
-export function consoleSpanExporterFactory(): SpanExporter {
-  return new ConsoleSpanExporter();
-}
+const SUPPORTED_EXPORTER_TYPES = [
+  'default',
+  'console-splunk',
+  'jaeger-thrift-http',
+  'jaeger-thrift-splunk',
+  'otlp',
+  'otlp-grpc',
+];
 
-const SpanExporterMap: Record<string, SpanExporterFactory> = {
+type ExporterType = typeof SUPPORTED_EXPORTER_TYPES[number];
+
+const SpanExporterMap: Record<ExporterType, SpanExporterFactory> = {
   default: otlpSpanExporterFactory,
   'console-splunk': consoleSpanExporterFactory,
   'jaeger-thrift-http': jaegerSpanExporterFactory,
@@ -238,6 +240,72 @@ const SpanExporterMap: Record<string, SpanExporterFactory> = {
   otlp: otlpSpanExporterFactory,
   'otlp-grpc': otlpSpanExporterFactory,
 };
+
+function isSupportedRealmExporter(exporterType: string) {
+  return ['jaeger-thrift-splunk', 'jaeger-thrift-http'].includes(exporterType);
+}
+
+function isValidExporterType(type: string): boolean {
+  return SUPPORTED_EXPORTER_TYPES.includes(type);
+}
+
+function isJaegerExporter(exporterType: ExporterType): boolean {
+  return ['jaeger-thrift-splunk', 'jaeger-thrift-http'].includes(exporterType);
+}
+
+function resolveExporterType(options: Partial<Options>): ExporterType {
+  let tracesExporter: string | undefined = process.env.OTEL_TRACES_EXPORTER;
+
+  if (options.realm) {
+    if (tracesExporter) {
+      if (!isSupportedRealmExporter(tracesExporter)) {
+        throw new Error(
+          'Setting the Splunk realm with an explicit OTEL_TRACES_EXPORTER requires OTEL_TRACES_EXPORTER to be jaeger-thrift-splunk'
+        );
+      }
+    } else {
+      tracesExporter = 'jaeger-thrift-splunk';
+    }
+  }
+
+  if (tracesExporter === undefined) {
+    tracesExporter = 'default';
+  }
+
+  if (!isValidExporterType(tracesExporter)) {
+    throw new Error(
+      `Invalid value for OTEL_TRACES_EXPORTER env variable: ${util.inspect(
+        process.env.OTEL_TRACES_EXPORTER
+      )}. Pick one of ${util.inspect(SUPPORTED_EXPORTER_TYPES, {
+        compact: true,
+      })} or leave undefined.`
+    );
+  }
+
+  return tracesExporter;
+}
+
+export function resolveTracesExporter(
+  exporterType: ExporterType
+): SpanExporterFactory {
+  return SpanExporterMap[exporterType];
+}
+
+export function otlpSpanExporterFactory(options: Options): SpanExporter {
+  const metadata = new Metadata();
+  if (options.accessToken) {
+    // for forward compatibility, is not currently supported
+    metadata.set('X-SF-TOKEN', options.accessToken);
+  }
+  return new OTLPTraceExporter({
+    url: options.endpoint,
+    metadata,
+  });
+}
+
+export function consoleSpanExporterFactory(): SpanExporter {
+  return new ConsoleSpanExporter();
+}
 
 // Temporary workaround until https://github.com/open-telemetry/opentelemetry-js/issues/3094 is resolved
 function getBatchSpanProcessorConfig() {
