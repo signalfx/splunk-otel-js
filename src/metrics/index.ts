@@ -299,7 +299,7 @@ export function _setDefaultOptions(
     }
 
     if (!endpoint) {
-      endpoint = `https://ingest.${realm}.signalfx.com/v2/datapoint`;
+      endpoint = `https://ingest.${realm}.signalfx.com`;
     }
   }
 

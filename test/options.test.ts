@@ -34,7 +34,6 @@ import {
   _setDefaultOptions,
   defaultPropagatorFactory,
   jaegerSpanExporterFactory,
-  otlpHttpSpanExporterFactory,
   otlpSpanExporterFactory,
   splunkSpanExporterFactory,
   defaultSpanProcessorFactory,
@@ -232,25 +231,9 @@ describe('options', () => {
       );
     });
 
-    it('chooses the correct OTLP endpoint when realm is set', () => {
-      process.env.SPLUNK_REALM = 'us0';
-      process.env.SPLUNK_ACCESS_TOKEN = 'abc';
-
-      const options = _setDefaultOptions();
-      assert.deepStrictEqual(
-        options.endpoint,
-        'https://ingest.us0.signalfx.com/v2/trace/otlp'
-      );
-      assert.deepStrictEqual(
-        options.spanExporterFactory,
-        otlpHttpSpanExporterFactory
-      );
-    });
-
     it('chooses the correct Jaeger Thrift endpoint when realm is set', () => {
       process.env.SPLUNK_REALM = 'us0';
       process.env.SPLUNK_ACCESS_TOKEN = 'abc';
-      process.env.OTEL_TRACES_EXPORTER = 'jaeger-thrift-http';
 
       const options = _setDefaultOptions();
       assert.deepStrictEqual(
@@ -259,7 +242,7 @@ describe('options', () => {
       );
       assert.deepStrictEqual(
         options.spanExporterFactory,
-        jaegerSpanExporterFactory
+        splunkSpanExporterFactory
       );
     });
 
@@ -268,10 +251,7 @@ describe('options', () => {
       process.env.SPLUNK_ACCESS_TOKEN = 'abc';
       process.env.OTEL_TRACES_EXPORTER = 'otlp-grpc';
 
-      assert.throws(
-        _setDefaultOptions,
-        /either otlp-http or jaeger-thrift-splunk/
-      );
+      assert.throws(_setDefaultOptions, /jaeger-thrift-splunk/);
     });
   });
 });

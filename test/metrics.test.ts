@@ -141,7 +141,7 @@ describe('metrics', () => {
       const options = _setDefaultOptions();
       assert.deepStrictEqual(
         options.endpoint,
-        'https://ingest.eu0.signalfx.com/v2/datapoint'
+        'https://ingest.eu0.signalfx.com'
       );
     });
 

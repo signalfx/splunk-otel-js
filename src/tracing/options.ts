@@ -25,7 +25,6 @@ import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
 import { getInstrumentations } from '../instrumentations';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
-import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 // eslint-disable-next-line node/no-extraneous-import
 import { Metadata } from '@grpc/grpc-js';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
@@ -105,14 +104,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     }
 
     if (!options.endpoint) {
-      if (exporterType === 'otlp-http') {
-        if (
-          !process.env.OTEL_EXPORTER_OTLP_ENDPOINT &&
-          !process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
-        ) {
-          options.endpoint = `https://ingest.${options.realm}.signalfx.com/v2/trace/otlp`;
-        }
-      } else if (isJaegerExporter(exporterType)) {
+      if (isJaegerExporter(exporterType)) {
         if (!process.env.OTEL_EXPORTER_JAEGER_ENDPOINT) {
           options.endpoint = `https://ingest.${options.realm}.signalfx.com/v2/trace/jaegerthrift`;
         }
@@ -236,7 +228,6 @@ const SUPPORTED_EXPORTER_TYPES = [
   'jaeger-thrift-splunk',
   'otlp',
   'otlp-grpc',
-  'otlp-http',
 ];
 
 type ExporterType = typeof SUPPORTED_EXPORTER_TYPES[number];
@@ -248,13 +239,10 @@ const SpanExporterMap: Record<ExporterType, SpanExporterFactory> = {
   'jaeger-thrift-splunk': splunkSpanExporterFactory,
   otlp: otlpSpanExporterFactory,
   'otlp-grpc': otlpSpanExporterFactory,
-  'otlp-http': otlpHttpSpanExporterFactory,
 };
 
 function isSupportedRealmExporter(exporterType: string) {
-  return ['otlp-http', 'jaeger-thrift-splunk', 'jaeger-thrift-http'].includes(
-    exporterType
-  );
+  return ['jaeger-thrift-splunk', 'jaeger-thrift-http'].includes(exporterType);
 }
 
 function isValidExporterType(type: string): boolean {
@@ -272,11 +260,11 @@ function resolveExporterType(options: Partial<Options>): ExporterType {
     if (tracesExporter) {
       if (!isSupportedRealmExporter(tracesExporter)) {
         throw new Error(
-          'Setting the Splunk realm with an explicit OTEL_TRACES_EXPORTER requires OTEL_TRACES_EXPORTER to be either otlp-http or jaeger-thrift-splunk'
+          'Setting the Splunk realm with an explicit OTEL_TRACES_EXPORTER requires OTEL_TRACES_EXPORTER to be jaeger-thrift-splunk'
         );
       }
     } else {
-      tracesExporter = 'otlp-http';
+      tracesExporter = 'jaeger-thrift-splunk';
     }
   }
 
@@ -312,16 +300,6 @@ export function otlpSpanExporterFactory(options: Options): SpanExporter {
   return new OTLPTraceExporter({
     url: options.endpoint,
     metadata,
-  });
-}
-
-export function otlpHttpSpanExporterFactory(options: Options): SpanExporter {
-  const headers = options.accessToken
-    ? { 'X-SF-TOKEN': options.accessToken }
-    : undefined;
-  return new OTLPHttpTraceExporter({
-    url: options.endpoint,
-    headers,
   });
 }
 
