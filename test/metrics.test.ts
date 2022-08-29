@@ -23,6 +23,7 @@ import {
   InstrumentType,
   MetricData,
   MetricReader,
+  View,
 } from '@opentelemetry/sdk-metrics-base';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
@@ -199,6 +200,9 @@ describe('metrics', () => {
         resourceFactory: (defaultResource: Resource) => {
           return defaultResource.merge(resource);
         },
+        views: [
+          new View({ name: 'clicks.xyz', instrumentName: 'test-counter' }),
+        ],
         runtimeMetricsEnabled: true,
         runtimeMetricsCollectionIntervalMillis: 1,
         metricReaderFactory: () => {
@@ -229,6 +233,14 @@ describe('metrics', () => {
 
       // One is the 'custom' meter, the other one is runtime metrics meter
       assert.deepEqual(metricData.resourceMetrics.scopeMetrics.length, 2);
+
+      const customMetrics = metricData.resourceMetrics.scopeMetrics.find(
+        scopeMetrics => {
+          return scopeMetrics.scope.name === 'custom';
+        }
+      );
+
+      assert.deepEqual(customMetrics.metrics[0].descriptor.name, 'clicks.xyz');
 
       const runtimeIlMetrics = metricData.resourceMetrics.scopeMetrics.find(
         scopeMetrics => {

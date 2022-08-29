@@ -21,6 +21,7 @@ import {
   MeterProvider,
   MetricReader,
   PeriodicExportingMetricReader,
+  View,
 } from '@opentelemetry/sdk-metrics-base';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
 import { Metadata } from '@grpc/grpc-js';
@@ -42,6 +43,7 @@ export interface MetricsOptions {
   serviceName: string;
   endpoint: string;
   resource: Resource;
+  views?: View[];
   exportIntervalMillis: number;
   metricReaderFactory: MetricReaderFactory;
   runtimeMetricsEnabled: boolean;
@@ -143,6 +145,7 @@ export const allowedMetricsOptions = [
   'endpoint',
   'exportIntervalMillis',
   'metricReaderFactory',
+  'views',
   'resourceFactory',
   'runtimeMetricsEnabled',
   'runtimeMetricsCollectionIntervalMillis',
@@ -156,6 +159,7 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
 
   const provider = new MeterProvider({
     resource: options.resource,
+    views: options.views,
   });
 
   const metricReaders = options.metricReaderFactory(options);
@@ -330,6 +334,7 @@ export function _setDefaultOptions(
     accessToken,
     resource,
     endpoint,
+    views: options.views,
     metricReaderFactory:
       options.metricReaderFactory ?? defaultMetricReaderFactory,
     exportIntervalMillis:
