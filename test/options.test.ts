@@ -33,6 +33,7 @@ import * as instrumentations from '../src/instrumentations';
 import {
   _setDefaultOptions,
   defaultPropagatorFactory,
+  jaegerSpanExporterFactory,
   otlpSpanExporterFactory,
   splunkSpanExporterFactory,
   defaultSpanProcessorFactory,
@@ -217,6 +218,41 @@ describe('options', () => {
       ],
       'foobar'
     );
+  });
+
+  describe('Splunk Realm', () => {
+    beforeEach(utils.cleanEnvironment);
+
+    it('throws when setting SPLUNK_REALM without an access token', () => {
+      process.env.SPLUNK_REALM = 'us0';
+      assert.throws(
+        _setDefaultOptions,
+        /Splunk realm is set, but access token is unset/
+      );
+    });
+
+    it('chooses the correct Jaeger Thrift endpoint when realm is set', () => {
+      process.env.SPLUNK_REALM = 'us0';
+      process.env.SPLUNK_ACCESS_TOKEN = 'abc';
+
+      const options = _setDefaultOptions();
+      assert.deepStrictEqual(
+        options.endpoint,
+        'https://ingest.us0.signalfx.com/v2/trace/jaegerthrift'
+      );
+      assert.deepStrictEqual(
+        options.spanExporterFactory,
+        splunkSpanExporterFactory
+      );
+    });
+
+    it('throws when setting the realm with an incompatible SPLUNK_TRACES_EXPORTER', () => {
+      process.env.SPLUNK_REALM = 'us0';
+      process.env.SPLUNK_ACCESS_TOKEN = 'abc';
+      process.env.OTEL_TRACES_EXPORTER = 'otlp-grpc';
+
+      assert.throws(_setDefaultOptions, /jaeger-thrift-splunk/);
+    });
   });
 });
 

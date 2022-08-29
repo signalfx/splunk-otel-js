@@ -38,6 +38,7 @@ export type ResourceFactory = (resource: Resource) => Resource;
 
 export interface MetricsOptions {
   accessToken: string;
+  realm?: string;
   serviceName: string;
   endpoint: string;
   resource: Resource;
@@ -138,6 +139,7 @@ export function defaultMetricReaderFactory(
 
 export const allowedMetricsOptions = [
   'accessToken',
+  'realm',
   'endpoint',
   'exportIntervalMillis',
   'metricReaderFactory',
@@ -277,11 +279,33 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
   };
 }
 
+const defaultEndpoint = 'http://localhost:4317';
+
 export function _setDefaultOptions(
   options: StartMetricsOptions = {}
 ): MetricsOptions {
   const accessToken =
     options.accessToken || process.env.SPLUNK_ACCESS_TOKEN || '';
+
+  let endpoint = options.endpoint || process.env.SPLUNK_METRICS_ENDPOINT;
+
+  const realm = options.realm || process.env.SPLUNK_REALM || '';
+
+  if (realm) {
+    if (!accessToken) {
+      throw new Error(
+        'Splunk realm is set, but access token is unset. To send metrics to the Observability Cloud, both need to be set'
+      );
+    }
+
+    if (!endpoint) {
+      endpoint = `https://ingest.${realm}.signalfx.com/v2/datapoint/otlp`;
+    }
+  }
+
+  if (!endpoint) {
+    endpoint = defaultEndpoint;
+  }
 
   let defaultResource = detectResource();
 
@@ -305,7 +329,7 @@ export function _setDefaultOptions(
     serviceName,
     accessToken,
     resource,
-    endpoint: options.endpoint ?? 'http://localhost:4317',
+    endpoint,
     metricReaderFactory:
       options.metricReaderFactory ?? defaultMetricReaderFactory,
     exportIntervalMillis:
