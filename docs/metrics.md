@@ -11,8 +11,6 @@ For configuration options, see [advanced configuration](advanced-config.md#metri
 
 ## Usage (custom metrics)
 
-[OpenTelemetry metrics API documentation](https://open-telemetry.github.io/opentelemetry-js/modules/_opentelemetry_api_metrics.html)
-
 Add `@opentelemetry/api-metrics` to your dependencies.
 
 ```javascript
