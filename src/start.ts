@@ -89,8 +89,12 @@ export const stop = async () => {
   }
 
   if (running.profiling) {
-    // not actually a promise, for forwards compatibility
-    promises.push(running.profiling.stop());
+    promises.push(
+      new Promise<void>(resolve => {
+        running.profiling!.stop();
+        resolve();
+      })
+    );
     running.profiling = null;
   }
 
