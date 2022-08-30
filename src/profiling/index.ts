@@ -119,6 +119,7 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
       const profilingData = extStopProfiling(extension);
 
       if (profilingData) {
+        console.log(exporters);
         for (const exporter of exporters) {
           exporter.send(profilingData);
         }
