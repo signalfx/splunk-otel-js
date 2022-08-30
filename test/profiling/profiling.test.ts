@@ -108,7 +108,7 @@ describe('profiling', () => {
         profiling: {
           serviceName: 'slow-service',
           callstackInterval: 50,
-          collectionDuration: 750,
+          collectionDuration: 1000,
           exporterFactory: () => [exporter],
         },
       });
@@ -131,7 +131,7 @@ describe('profiling', () => {
       // It might be possible all stacktraces will not be available,
       // due to the first few stacktraces having random timings
       // after a profiling run is started.
-      const expectedStacktraces = 5;
+      const expectedStacktraces = 4;
       assert(
         stacktracesReceived.length >= expectedStacktraces,
         `expected at least ${expectedStacktraces}, got ${stacktracesReceived.length}`
