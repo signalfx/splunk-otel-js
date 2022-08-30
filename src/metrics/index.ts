@@ -24,6 +24,7 @@ import {
   View,
 } from '@opentelemetry/sdk-metrics-base';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
+import { OTLPMetricExporter as OTLPHttpProtoMetricExporter } from '@opentelemetry/exporter-metrics-otlp-proto';
 import { Metadata } from '@grpc/grpc-js';
 import {
   assertNoExtraneousProperties,
@@ -120,20 +121,33 @@ function recordGcCountMetric(counter: Counter, counters: NativeCounters) {
   }
 }
 
-export function defaultMetricReaderFactory(
-  options: MetricsOptions
-): MetricReader[] {
+function chooseExporter(options: MetricsOptions) {
+  if (options.realm) {
+    return new OTLPHttpProtoMetricExporter({
+      url: options.endpoint,
+      headers: {
+        'X-SF-TOKEN': options.accessToken,
+      },
+    });
+  }
+
   const metadata = new Metadata();
   if (options.accessToken) {
     metadata.set('X-SF-TOKEN', options.accessToken);
   }
 
+  return new OTLPMetricExporter({
+    url: options.endpoint,
+    metadata,
+  });
+}
+
+export function defaultMetricReaderFactory(
+  options: MetricsOptions
+): MetricReader[] {
   const reader = new PeriodicExportingMetricReader({
     exportIntervalMillis: options.exportIntervalMillis,
-    exporter: new OTLPMetricExporter({
-      url: options.endpoint,
-      metadata,
-    }),
+    exporter: chooseExporter(options),
   });
 
   return [reader];
@@ -302,6 +316,12 @@ export function _setDefaultOptions(
       );
     }
 
+    if (options.metricReaderFactory) {
+      diag.warn(
+        'Splunk realm is set with a custom metric reader. Make sure to use OTLP metrics proto HTTP exporter.'
+      );
+    }
+
     if (!endpoint) {
       endpoint = `https://ingest.${realm}.signalfx.com/v2/datapoint/otlp`;
     }
@@ -332,6 +352,7 @@ export function _setDefaultOptions(
   return {
     serviceName,
     accessToken,
+    realm,
     resource,
     endpoint,
     views: options.views,

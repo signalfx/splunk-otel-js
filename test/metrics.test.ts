@@ -25,6 +25,8 @@ import {
   MetricReader,
   View,
 } from '@opentelemetry/sdk-metrics-base';
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
+import { OTLPMetricExporter as OTLPHttpProtoMetricExporter } from '@opentelemetry/exporter-metrics-otlp-proto';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 import * as utils from './utils';
@@ -128,6 +130,11 @@ describe('metrics', () => {
       );
       assert.deepEqual(options.runtimeMetricsEnabled, false);
       assert.deepEqual(options.runtimeMetricsCollectionIntervalMillis, 5000);
+      assert(
+        options.metricReaderFactory(options)[0]['_exporter'] instanceof
+          OTLPMetricExporter,
+        'Expected the default metric exporter to be OTLP gRPC'
+      );
     });
 
     it('is possible to set options via env vars', () => {
@@ -167,6 +174,11 @@ describe('metrics', () => {
       assert.deepStrictEqual(
         options.endpoint,
         'https://ingest.eu0.signalfx.com/v2/datapoint/otlp'
+      );
+      assert(
+        options.metricReaderFactory(options)[0]['_exporter'] instanceof
+          OTLPHttpProtoMetricExporter,
+        'Expected the metric exporter to be OTLP HTTP proto exporter when realm is set'
       );
     });
 
