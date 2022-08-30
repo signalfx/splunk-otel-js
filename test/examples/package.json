@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {},
   "devDependencies": {
-    "got": "^11.8.2",
+    "got": "^11.8.5",
     "nodemon": "^2.0.12"
   }
 }
