@@ -75,8 +75,12 @@ export const stop = async () => {
   const promises = [];
 
   if (running.metrics) {
-    // not actually a promise, for forwards compatibility
-    promises.push(running.metrics.stopMetrics());
+    promises.push(
+      new Promise<void>(resolve => {
+        running.metrics!.stopMetrics();
+        resolve();
+      })
+    );
     running.metrics = null;
   }
 
@@ -86,8 +90,12 @@ export const stop = async () => {
   }
 
   if (running.profiling) {
-    // not actually a promise, for forwards compatibility
-    promises.push(running.profiling.stop());
+    promises.push(
+      new Promise<void>(resolve => {
+        running.profiling!.stop();
+        resolve();
+      })
+    );
     running.profiling = null;
   }
 
