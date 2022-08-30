@@ -108,7 +108,7 @@ describe('profiling', () => {
         profiling: {
           serviceName: 'slow-service',
           callstackInterval: 50,
-          collectionDuration: 500,
+          collectionDuration: 750,
           exporterFactory: () => [exporter],
         },
       });
@@ -120,7 +120,7 @@ describe('profiling', () => {
         span.spanContext();
 
       context.with(trace.setSpan(context.active(), span), () => {
-        utils.spinMs(1_500);
+        utils.spinMs(2_500);
         span.end();
       });
 
