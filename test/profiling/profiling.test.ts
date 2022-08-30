@@ -149,6 +149,6 @@ describe('profiling', () => {
 
       // Stop flushes the exporters, hence the extra call count
       assert.deepStrictEqual(sendCallCount, 2);
-    });
+    }).timeout(10_000);
   });
 });
