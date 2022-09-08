@@ -26,7 +26,7 @@ import {
   InMemorySpanExporter,
 } from '@opentelemetry/sdk-trace-base';
 
-import * as assert from 'assert';
+import { strict as assert } from 'assert';
 import * as sinon from 'sinon';
 
 import * as instrumentations from '../src/instrumentations';
@@ -42,17 +42,15 @@ import * as utils from './utils';
 
 const assertVersion = versionAttr => {
   assert.equal(typeof versionAttr, 'string');
-  assert.match(
-    versionAttr,
-    /[0-9]+\.[0-9]+\.[0-9]+/,
+  assert(
+    /[0-9]+\.[0-9]+\.[0-9]+/.test(versionAttr),
     `${versionAttr} is not a valid version`
   );
 };
 const assertContainerId = containerIdAttr => {
   assert.equal(typeof containerIdAttr, 'string');
-  assert.match(
-    containerIdAttr,
-    /^[abcdef0-9]{64}$/i,
+  assert(
+    /^[abcdef0-9]{64}$/i.test(containerIdAttr),
     `${containerIdAttr} is not an hex string`
   );
 };
