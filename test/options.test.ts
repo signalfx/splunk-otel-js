@@ -28,6 +28,7 @@ import {
 
 import { strict as assert } from 'assert';
 import * as sinon from 'sinon';
+import * as fs from 'fs';
 
 import * as instrumentations from '../src/instrumentations';
 import {
@@ -50,7 +51,7 @@ const assertVersion = versionAttr => {
 const assertContainerId = containerIdAttr => {
   assert.equal(typeof containerIdAttr, 'string');
   assert(
-    /^[abcdef0-9]{64}$/i.test(containerIdAttr),
+    /^[abcdef0-9]+$/i.test(containerIdAttr),
     `${containerIdAttr} is not an hex string`
   );
 };
@@ -84,6 +85,7 @@ const expectedAttributes = new Set([
 
 describe('options', () => {
   let logger;
+  let readFileSyncStub;
 
   beforeEach(utils.cleanEnvironment);
 
@@ -94,10 +96,18 @@ describe('options', () => {
     api.diag.setLogger(logger, api.DiagLogLevel.ALL);
     // Setting logger logs stuff. Cleaning that up.
     logger.warn.resetHistory();
+
+    readFileSyncStub = sinon.stub(fs, 'readFileSync');
+    readFileSyncStub
+      .withArgs('/proc/self/cgroup', 'utf8')
+      .returns(
+        '1:blkio:/docker/a4d00c9dd675d67f866c786181419e1b44832d4696780152e61afd44a3e02856\n'
+      );
   });
 
   afterEach(() => {
     api.diag.disable();
+    readFileSyncStub.restore();
   });
 
   describe('defaults', () => {

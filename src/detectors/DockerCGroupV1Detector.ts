@@ -77,7 +77,6 @@ export class DockerCGroupV1Detector {
   protected _getContainerId(): string | null {
     try {
       const rawData = fs.readFileSync('/proc/self/cgroup', 'utf8').trim();
-      console.log('rawData', rawData);
       return this._parseFile(rawData);
     } catch (e) {
       if (e instanceof Error) {
