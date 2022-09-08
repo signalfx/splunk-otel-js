@@ -97,6 +97,14 @@ describe('resource detector', () => {
         ].join('\n'),
         'a4d00c9dd675d67f866c786181419e1b44832d4696780152e61afd44a3e02856',
       ],
+      [
+        [
+          '1:blkio:/ecs/eb9d3d0c-8936-42d7-80d8-f82b2f1a629e/7e9139716d9e5d762d22f9f877b87d1be8b1449ac912c025a984750c5dbff157',
+          '2:cpu:/ecs/eb9d3d0c-8936-42d7-80d8-f82b2f1a629e/7e9139716d9e5d762d22f9f877b87d1be8b1449ac912c025a984750c5dbff157',
+          '3:cpuacct:/ecs/eb9d3d0c-8936-42d7-80d8-f82b2f1a629e/7e9139716d9e5d762d22f9f877b87d1be8b1449ac912c025a984750c5dbff157',
+        ].join('\n'),
+        '7e9139716d9e5d762d22f9f877b87d1be8b1449ac912c025a984750c5dbff157',
+      ],
     ];
 
     it('parses all the known test cases correctly', () => {
