@@ -279,5 +279,5 @@ function testSpanProcessorFactory(options: Options): SpanProcessor {
 }
 
 function testPropagatorFactory(options: Options): api.TextMapPropagator {
-  return new HttpBaggagePropagator();
+  return new W3CBaggagePropagator();
 }
