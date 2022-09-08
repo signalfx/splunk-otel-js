@@ -40,6 +40,22 @@ import {
 } from '../src/tracing/options';
 import * as utils from './utils';
 
+const assertVersion = versionAttr => {
+  assert.equal(typeof versionAttr, 'string');
+  assert.match(
+    versionAttr,
+    /[0-9]+\.[0-9]+\.[0-9]+/,
+    `${versionAttr} is not a valid version`
+  );
+};
+const assertContainerId = containerIdAttr => {
+  assert.equal(typeof containerIdAttr, 'string');
+  assert.match(
+    containerIdAttr,
+    /^[abcdef0-9]{64}$/i,
+    `${containerIdAttr} is not an hex string`
+  );
+};
 /*
   service.name attribute is not set, your service is unnamed and will be difficult to identify.
   Set your service name using the OTEL_RESOURCE_ATTRIBUTES environment variable.
@@ -102,17 +118,14 @@ describe('options', () => {
     it('has expected defaults', () => {
       const options = _setDefaultOptions();
 
-      assert(
-        /[0-9]+\.[0-9]+\.[0-9]+/.test(
-          options.tracerConfig.resource.attributes['splunk.distro.version']
-        )
+      assertVersion(
+        options.tracerConfig.resource.attributes['splunk.distro.version']
       );
 
-      assert(
+      assertContainerId(
         options.tracerConfig.resource.attributes[
           SemanticResourceAttributes.CONTAINER_ID
-        ],
-        /^[abcdef0-9]{64}$/
+        ]
       );
 
       // resource attributes for process, host and os are different at each run, iterate through them, make sure they exist and then delete
