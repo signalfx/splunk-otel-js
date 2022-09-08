@@ -41,6 +41,21 @@ import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
 import * as fs from 'fs';
 import { diag } from '@opentelemetry/api';
 
+const isValidBase16String = (hexString: string) => {
+  for (let ch = 0; ch < hexString.length; ch++) {
+    const code = hexString.charCodeAt(ch);
+    if (
+      (48 <= code && code <= 57) ||
+      (97 <= code && code <= 102) ||
+      (65 <= code && code <= 70)
+    ) {
+      continue;
+    }
+    return false;
+  }
+  return true;
+};
+
 export class DockerCGroupV1Detector {
   public detect(_config?: ResourceDetectionConfig): Resource {
     try {
@@ -59,17 +74,10 @@ export class DockerCGroupV1Detector {
     }
   }
 
-  protected _getContainerId(): string | undefined {
-    const CONTAINER_ID_LENGTH = 64;
-
+  protected _getContainerId(): string | null {
     try {
-      const rawData = fs.readFileSync('/proc/self/cgroup', 'utf8');
-      const splitData = rawData.trim().split('\n');
-      for (const str of splitData) {
-        if (str.length >= CONTAINER_ID_LENGTH) {
-          return str.substring(str.length - CONTAINER_ID_LENGTH);
-        }
-      }
+      const rawData = fs.readFileSync('/proc/self/cgroup', 'utf8').trim();
+      return this._parseFile(rawData);
     } catch (e) {
       if (e instanceof Error) {
         const errorMessage = e.message;
@@ -79,7 +87,43 @@ export class DockerCGroupV1Detector {
         );
       }
     }
-    return undefined;
+    return null;
+  }
+
+  /*
+    This is very likely has false positives since it does not check for the ID length,
+    but is very robust in usually finding the right thing, and if not, finding some
+    identifier for differentiating between containers.
+    It also matches Java: https://github.com/open-telemetry/opentelemetry-java/commit/2cb461d4aef16f1ac1c5e67edc2fb41f90ed96a3#diff-ad68bc34d4da31a50709591d4b7735f88c008be7ed1fc325c6367dd9df033452
+  */
+  protected _parseFile(contents: string): string | null {
+    if (typeof contents !== 'string') {
+      return null;
+    }
+    for (const line of contents.split('\n')) {
+      const lastSlashIdx = line.lastIndexOf('/');
+      if (lastSlashIdx < 0) {
+        return null;
+      }
+
+      const lastSection = line.substring(lastSlashIdx + 1);
+      let startIdx = lastSection.lastIndexOf('-');
+      let endIdx = lastSection.lastIndexOf('.');
+
+      startIdx = startIdx === -1 ? 0 : startIdx + 1;
+      if (endIdx === -1) {
+        endIdx = lastSection.length;
+      }
+      if (startIdx > endIdx) {
+        return null;
+      }
+
+      const containerId = lastSection.substring(startIdx, endIdx);
+      if (containerId && isValidBase16String(containerId)) {
+        return containerId;
+      }
+    }
+    return null;
   }
 }
 
