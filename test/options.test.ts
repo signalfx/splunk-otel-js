@@ -110,10 +110,10 @@ describe('options', () => {
 
       // resource attributes for process, host and os are different at each run, iterate through them, make sure they exist and then delete
       Object.keys(options.tracerConfig.resource.attributes)
-        .filter(attribute => {
+        .filter((attribute) => {
           return expectedAttributes.has(attribute);
         })
-        .forEach(processAttribute => {
+        .forEach((processAttribute) => {
           assert(options.tracerConfig.resource.attributes[processAttribute]);
           delete options.tracerConfig.resource.attributes[processAttribute];
         });

@@ -33,7 +33,7 @@ const detectors = [
 
 export const detect = (): Resource => {
   return detectors
-    .map(detector => {
+    .map((detector) => {
       try {
         return detector.detect();
       } catch (e) {

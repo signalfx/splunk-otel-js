@@ -52,18 +52,18 @@ describe('servertiming', () => {
       res.end('ok');
     });
     server.listen(PORT);
-    http.get(SERVER_URL, res => {
+    http.get(SERVER_URL, (res) => {
       assertHeaders(spanContext, res);
       done();
     });
   }
 
-  it('injects server timing by default', done => {
+  it('injects server timing by default', (done) => {
     startTracing({});
     testHeadersAdded(done);
   });
 
-  it('can be enabled via environment variables', done => {
+  it('can be enabled via environment variables', (done) => {
     process.env.SPLUNK_TRACE_RESPONSE_HEADER_ENABLED = 'true';
     startTracing({});
     testHeadersAdded(() => {
@@ -71,12 +71,12 @@ describe('servertiming', () => {
     });
   });
 
-  it('injects server timing header with current context', done => {
+  it('injects server timing header with current context', (done) => {
     startTracing({ serverTimingEnabled: true });
     testHeadersAdded(done);
   });
 
-  it('works with user provided http instrumentation config', done => {
+  it('works with user provided http instrumentation config', (done) => {
     startTracing({
       serverTimingEnabled: true,
       instrumentations: [new HttpInstrumentation({})],
@@ -85,7 +85,7 @@ describe('servertiming', () => {
     testHeadersAdded(done);
   });
 
-  it('leaves user hooks unchanged', done => {
+  it('leaves user hooks unchanged', (done) => {
     let userHookCalled = false;
 
     startTracing({
@@ -106,7 +106,7 @@ describe('servertiming', () => {
       res.end('ok');
     });
     server.listen(PORT);
-    http.get(SERVER_URL, res => {
+    http.get(SERVER_URL, (res) => {
       assertHeaders(spanContext, res);
       assert.ok(userHookCalled);
       done();

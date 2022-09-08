@@ -76,7 +76,7 @@ export const stop = async () => {
 
   if (running.metrics) {
     promises.push(
-      new Promise<void>(resolve => {
+      new Promise<void>((resolve) => {
         running.metrics!.stopMetrics();
         resolve();
       })
@@ -91,7 +91,7 @@ export const stop = async () => {
 
   if (running.profiling) {
     promises.push(
-      new Promise<void>(resolve => {
+      new Promise<void>((resolve) => {
         running.profiling!.stop();
         resolve();
       })

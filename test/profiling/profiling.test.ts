@@ -36,7 +36,7 @@ import { detect as detectResource } from '../../src/resource';
 import * as utils from '../utils';
 
 const sleep = (ms: number) => {
-  return new Promise(r => setTimeout(r, ms));
+  return new Promise((r) => setTimeout(r, ms));
 };
 
 describe('profiling', () => {

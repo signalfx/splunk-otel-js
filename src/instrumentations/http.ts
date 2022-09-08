@@ -55,7 +55,7 @@ function parseUrlParams(request: IncomingMessage) {
 }
 
 function captureUriParamByKeys(keys: string[]): IncomingHttpRequestHook {
-  const capturedKeys = new Map(keys.map(k => [k, k.replace(/\./g, '_')]));
+  const capturedKeys = new Map(keys.map((k) => [k, k.replace(/\./g, '_')]));
 
   return (span, request) => {
     const params = parseUrlParams(request);

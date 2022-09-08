@@ -26,7 +26,7 @@ describe('instrumentations', () => {
     const inst = instrumentations.getInstrumentations();
     // Note: the list here is the instrumentations among devDependencies
     assert.deepEqual(
-      inst.map(i => i.instrumentationName),
+      inst.map((i) => i.instrumentationName),
       [
         '@opentelemetry/instrumentation-bunyan',
         '@opentelemetry/instrumentation-http',
@@ -60,7 +60,7 @@ describe('instrumentations', () => {
   it('loader imports and returns object when package is available', () => {
     const HttpInstrumentation = function () {};
     const loader = rewire('../src/instrumentations/loader');
-    const revert = loader.__set__('require', module => {
+    const revert = loader.__set__('require', (module) => {
       return { HttpInstrumentation };
     });
 

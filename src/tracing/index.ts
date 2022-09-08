@@ -141,7 +141,7 @@ async function shutdownGlobalTracerProvider() {
     reportedConstructor = delegate?.constructor;
 
     if (isShutDownable(delegate)) {
-      return delegate.shutdown().catch(e => {
+      return delegate.shutdown().catch((e) => {
         diag.warn('OpenTelemetry: error shutting down tracer provider', e);
       });
     }
