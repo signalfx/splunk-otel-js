@@ -21,6 +21,8 @@
           "-Werror"
         ],
         "cflags_cc": [
+          "-Wno-unknown-warning",
+          "-Wno-missing-attributes",
           "-Wno-cast-function-type"
         ]
       }],
