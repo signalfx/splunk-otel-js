@@ -1,4 +1,3 @@
-#include "ext.h"
 #include "metrics.h"
 #include "profiling.h"
 #include <nan.h>
@@ -12,13 +11,6 @@ NAN_MODULE_INIT(Init) {
 
 } // namespace
 
-#if (defined(__GNUC__) && GCC_VERSION >= 80000)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wcast-function-type"
-#endif
-
+SPLK_BEGIN_IGNORE_CAST_FUNCTION_TYPE_WARNING
 NODE_MODULE(NODE_GYP_MODULE_NAME, Init);
-
-#if (defined(__GNUC__) && GCC_VERSION >= 80000)
-#pragma GCC diagnostic pop
-#endif
+SPLK_END_IGNORE_CAST_FUNCTION_TYPE_WARNING

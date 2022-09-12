@@ -1,6 +1,6 @@
 #pragma once
 
-#include <v8.h>
+#include "splunk_v8.h"
 
 namespace Splunk {
 namespace Metrics {
