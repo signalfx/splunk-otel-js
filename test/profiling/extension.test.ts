@@ -15,7 +15,6 @@
  */
 
 import { strict as assert } from 'assert';
-import { hrtime } from 'process';
 import {
   AllocationSample,
   HeapProfileNode,
