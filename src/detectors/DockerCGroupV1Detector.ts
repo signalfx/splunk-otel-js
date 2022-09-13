@@ -39,6 +39,7 @@ import { Resource, ResourceDetectionConfig } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 import * as fs from 'fs';
+import { platform } from 'os';
 import { diag } from '@opentelemetry/api';
 
 const isValidBase16String = (hexString: string) => {
@@ -58,6 +59,10 @@ const isValidBase16String = (hexString: string) => {
 
 export class DockerCGroupV1Detector {
   public detect(_config?: ResourceDetectionConfig): Resource {
+    if (platform() !== 'linux') {
+      diag.debug('Docker CGROUP V1 Detector skipped: Not on linux');
+      return Resource.empty();
+    }
     try {
       const containerId = this._getContainerId();
       return !containerId
