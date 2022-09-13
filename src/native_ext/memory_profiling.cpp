@@ -167,8 +167,8 @@ NAN_METHOD(CollectHeapProfile) {
   stack.clear();
 
   // Cut off the root node
-  for (size_t i = 0; i < root->children.size(); i++) {
-    stack.emplace_back(root->children[i], root->node_id);
+  for (v8::AllocationProfile::Node* child : root->children) {
+    stack.emplace_back(child, root->node_id);
   }
 
   while (!stack.empty()) {
@@ -180,8 +180,8 @@ NAN_METHOD(CollectHeapProfile) {
     auto jsNode = ToJsHeapNode(node, graphNode.parentId, &stash);
     Nan::Set(jsNodeTree, Nan::New<v8::Uint32>(node->node_id), jsNode);
 
-    for (size_t i = 0; i < node->children.size(); i++) {
-      stack.emplace_back(node->children[i], node->node_id);
+    for (v8::AllocationProfile::Node* child : node->children) {
+      stack.emplace_back(child, node->node_id);
     }
   }
 
