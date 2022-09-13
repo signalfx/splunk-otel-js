@@ -21,6 +21,7 @@ import { inspect } from 'util';
 import { context, trace, propagation } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { InMemorySpanExporter } from '@opentelemetry/sdk-trace-base';
 
 import {
   defaultExporterFactory,
@@ -107,36 +108,37 @@ describe('profiling', () => {
 
       // enabling tracing is required for span information to be caught
       start({
+        tracing: {
+          serviceName: 'slow-service',
+          spanExporterFactory: () => new InMemorySpanExporter(),
+        },
         profiling: {
           serviceName: 'slow-service',
           callstackInterval: 50,
-          collectionDuration: 500,
+          collectionDuration: 1000,
           exporterFactory: () => [exporter],
         },
       });
 
       assert(context._getContextManager() instanceof ProfilingContextManager);
 
-      // let runtime empty the task-queue and enable profiling
-      await sleep(10);
-
       const span = trace.getTracer('test-tracer').startSpan('test-span');
       const { spanId: expectedSpanId, traceId: expectedTraceId } =
         span.spanContext();
 
       context.with(trace.setSpan(context.active(), span), () => {
-        utils.spinMs(1_000);
+        utils.spinMs(2_500);
         span.end();
       });
 
       // let runtime empty the task-queue and disable profiling
       await sleep(10);
+      await stop();
 
-      stop();
       // It might be possible all stacktraces will not be available,
       // due to the first few stacktraces having random timings
       // after a profiling run is started.
-      const expectedStacktraces = 5;
+      const expectedStacktraces = 4;
       assert(
         stacktracesReceived.length >= expectedStacktraces,
         `expected at least ${expectedStacktraces}, got ${stacktracesReceived.length}`
@@ -154,7 +156,7 @@ describe('profiling', () => {
 
       // Stop flushes the exporters, hence the extra call count
       assert.deepStrictEqual(sendCallCount, 2);
-    });
+    }).timeout(10_000);
 
     it('exports heap profiles', async () => {
       let sendCallCount = 0;

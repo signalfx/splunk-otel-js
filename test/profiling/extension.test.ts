@@ -55,7 +55,7 @@ describe('profiling native extension', () => {
       recordDebugInfo: false,
     });
 
-    utils.spinMs(100);
+    utils.spinMs(200);
 
     const result = extension.collect();
     // The types might not be what is declared in typescript, a sanity check.
@@ -65,7 +65,7 @@ describe('profiling native extension', () => {
 
     assert(
       stacktraces.length >= expectedStacktraceCount,
-      `expected ${expectedStacktraceCount} stacktraces, got ${stacktraces.length}`
+      `expected at least ${expectedStacktraceCount} stacktraces, got ${stacktraces.length}`
     );
 
     for (const { stacktrace, timestamp } of stacktraces) {
@@ -96,7 +96,7 @@ describe('profiling native extension', () => {
       recordDebugInfo: false,
     });
 
-    utils.spinMs(100);
+    utils.spinMs(200);
 
     const result = extension.collectRaw();
     // The types might not be what is declared in typescript, a sanity check.
@@ -106,7 +106,7 @@ describe('profiling native extension', () => {
 
     assert(
       stacktraces.length >= expectedStacktraceCount,
-      `expected ${expectedStacktraceCount} stacktraces, got ${stacktraces.length}`
+      `expected at least ${expectedStacktraceCount} stacktraces, got ${stacktraces.length}`
     );
 
     for (const { stacktrace, timestamp } of stacktraces) {

@@ -28,6 +28,7 @@ import * as signalfx from 'signalfx';
 
 export interface MetricsOptions {
   accessToken: string;
+  realm?: string;
   endpoint: string;
   serviceName: string;
   // Metrics-specific configuration options:
@@ -83,6 +84,7 @@ export type StartMetricsOptions = Partial<MetricsOptions> & {
 
 export const allowedMetricsOptions = [
   'accessToken',
+  'realm',
   'endpoint',
   'exportInterval',
   'serviceName',
@@ -284,10 +286,26 @@ export function _setDefaultOptions(
 ): MetricsOptions & { sfxClient: signalfx.SignalClient } {
   const accessToken =
     options.accessToken || process.env.SPLUNK_ACCESS_TOKEN || '';
-  const endpoint =
-    options.endpoint ||
-    process.env.SPLUNK_METRICS_ENDPOINT ||
-    'http://localhost:9943';
+
+  let endpoint = options.endpoint || process.env.SPLUNK_METRICS_ENDPOINT;
+
+  const realm = options.realm || process.env.SPLUNK_REALM || '';
+
+  if (realm) {
+    if (!accessToken) {
+      throw new Error(
+        'Splunk realm is set, but access token is unset. To send metrics to the Observability Cloud, both need to be set'
+      );
+    }
+
+    if (!endpoint) {
+      endpoint = `https://ingest.${realm}.signalfx.com`;
+    }
+  }
+
+  if (!endpoint) {
+    endpoint = 'http://localhost:9943';
+  }
 
   const resource = detectResource();
 

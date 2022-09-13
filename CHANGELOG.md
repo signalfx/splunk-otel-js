@@ -1,8 +1,17 @@
 # Change Log - @splunk/otel
 
-This log was last generated on Thu, 28 Jul 2022 07:45:57 GMT and should not be manually modified.
+This log was last generated on Fri, 26 Aug 2022 09:07:44 GMT and should not be manually modified.
 
 <!-- Start content -->
+
+## 1.3.0
+
+Fri, 26 Aug 2022 09:07:44 GMT
+
+### Minor changes
+
+- feat: add support for SPLUNK_REALM (siimkallas@gmail.com)
+- feat: export in pprof (rauno56@gmail.com)
 
 ## 1.2.1
 

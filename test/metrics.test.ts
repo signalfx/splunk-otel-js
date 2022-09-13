@@ -126,6 +126,32 @@ describe('metrics', () => {
         node_version: process.versions.node,
       });
     });
+
+    it('throws when realm is set without an access token', () => {
+      process.env.SPLUNK_REALM = 'eu0';
+      assert.throws(
+        _setDefaultOptions,
+        /To send metrics to the Observability Cloud/
+      );
+    });
+
+    it('chooses the correct endpoint when realm is set', () => {
+      process.env.SPLUNK_REALM = 'eu0';
+      process.env.SPLUNK_ACCESS_TOKEN = 'abc';
+      const options = _setDefaultOptions();
+      assert.deepStrictEqual(
+        options.endpoint,
+        'https://ingest.eu0.signalfx.com'
+      );
+    });
+
+    it('prefers user endpoint when realm is set', () => {
+      process.env.SPLUNK_REALM = 'eu0';
+      process.env.SPLUNK_ACCESS_TOKEN = 'abc';
+      process.env.SPLUNK_METRICS_ENDPOINT = 'http://localhost:9999';
+      const options = _setDefaultOptions();
+      assert.deepStrictEqual(options.endpoint, 'http://localhost:9999');
+    });
   });
 
   describe('startMetrics', () => {
