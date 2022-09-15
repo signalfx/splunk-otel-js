@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { InstrumentationOption } from '@opentelemetry/instrumentation';
-
 import { load } from './loader';
 
 // please keep the list sorted alphabetically
@@ -66,7 +64,7 @@ const supportedInstrumentations: [string, string][] = [
   ['opentelemetry-instrumentation-typeorm', 'TypeormInstrumentation'],
 ];
 
-export function getInstrumentations(): InstrumentationOption[] {
+export function getInstrumentations() {
   const result = [];
 
   // Defensively load all supported instrumentations
