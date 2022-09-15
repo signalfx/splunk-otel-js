@@ -29,6 +29,7 @@ import {
 import { strict as assert } from 'assert';
 import * as sinon from 'sinon';
 import * as fs from 'fs';
+import * as os from 'os';
 
 import * as instrumentations from '../src/instrumentations';
 import {
@@ -86,6 +87,7 @@ const expectedAttributes = new Set([
 describe('options', () => {
   let logger;
   let readFileSyncStub;
+  let platformStub;
 
   beforeEach(utils.cleanEnvironment);
 
@@ -97,6 +99,8 @@ describe('options', () => {
     // Setting logger logs stuff. Cleaning that up.
     logger.warn.resetHistory();
 
+    // as long as it doesn't conflict with other tests, we can stub platform for linux to test cgroup v1 detector
+    platformStub = sinon.stub(os, 'platform').returns('linux');
     readFileSyncStub = sinon.stub(fs, 'readFileSync');
     readFileSyncStub
       .withArgs('/proc/self/cgroup', 'utf8')
@@ -107,6 +111,7 @@ describe('options', () => {
 
   afterEach(() => {
     api.diag.disable();
+    platformStub.restore();
     readFileSyncStub.restore();
   });
 
