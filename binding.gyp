@@ -21,7 +21,7 @@
           "-Werror"
         ],
         "cflags_cc": [
-          "-Wno-cast-function-type"
+          "-Wno-attributes"
         ]
       }],
       ["OS == 'win'", {
