@@ -172,6 +172,19 @@ jobs:
 
   e2e-published:
     runs-on: ubuntu-latest
+    matrix:
+      include:
+        - target: ''
+          name: 'Basic'
+        - target: '-f express.override.yml'
+          name: 'Express'
+        - target: '-f mixed.override.yml'
+          name: 'Mixed'
+        - target: '-f log-injection.override.yml'
+          name: 'Log injection'
+        - target: '-f profiling.override.yml'
+          name: 'Profiling'
+    name: e2e published ${{ matrix.name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -179,39 +192,28 @@ jobs:
         run: |
           docker-compose --version;
           docker --version;
-      - name: Test basic example
+      - name: Test ${{ matrix.name }} example
         working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml -f published.override.yml up --exit-code-from test
-      - name: Test express example
-        working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml -f express.override.yml -f published.override.yml up --exit-code-from test
-      - name: Test mixed example
-        working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml -f mixed.override.yml -f published.override.yml up --exit-code-from test
-      - name: Test log-injection example
-        working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml -f log-injection.override.yml -f published.override.yml up --exit-code-from test
-      - name: Test profiling example
-        working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml -f profiling.override.yml -f published.override.yml up --exit-code-from test
+        run: docker-compose -f e2e.docker-compose.yml ${{ matrix.target }} -f published.override.yml up --exit-code-from test
 
   e2e-local:
     runs-on: ubuntu-latest
+    matrix:
+      include:
+        - target: ''
+          name: 'Basic'
+        - target: '-f express.override.yml'
+          name: 'Express'
+        - target: '-f mixed.override.yml'
+          name: 'Mixed'
+        - target: '-f log-injection.override.yml'
+          name: 'Log injection'
+        - target: '-f profiling.override.yml'
+          name: 'Profiling'
+    name: e2e local ${{ matrix.name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Test basic example
+      - name: Test ${{ matrix.name }} example
         working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml up --exit-code-from test
-      - name: Test express example
-        working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml -f express.override.yml up --exit-code-from test
-      - name: Test mixed example
-        working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml -f mixed.override.yml up --exit-code-from test
-      - name: Test log-injection example
-        working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml -f log-injection.override.yml up --exit-code-from test
-      - name: Test profiling example
-        working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml -f profiling.override.yml up --exit-code-from test
+        run: docker-compose -f e2e.docker-compose.yml ${{ matrix.target }} up --exit-code-from test
