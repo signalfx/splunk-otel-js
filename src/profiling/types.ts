@@ -49,6 +49,24 @@ export interface RawProfilingStackFrame extends Array<string | number> {
 export type RawProfilingData = GenericProfilingData<RawProfilingStackFrame[]>;
 export type ProfilingData = GenericProfilingData<string>;
 
+export interface HeapProfileNode {
+  name: string;
+  scriptName: string;
+  lineNumber: number;
+  parentId: number;
+}
+
+export interface AllocationSample {
+  nodeId: number;
+  size: number;
+}
+
+export interface HeapProfile {
+  samples: AllocationSample[];
+  treeMap: { [nodeId: string]: HeapProfileNode };
+  timestamp: number;
+}
+
 export interface ProfilingExtension {
   start(options?: ProfilingStartOptions): void;
   stop(): RawProfilingData;
@@ -56,11 +74,19 @@ export interface ProfilingExtension {
   collectRaw(): RawProfilingData;
   enterContext(context: unknown, traceId: string, spanId: string): void;
   exitContext(context: unknown): void;
+  startMemoryProfiling(options?: MemoryProfilingOptions): void;
+  stopMemoryProfiling(): void;
+  collectHeapProfile(): HeapProfile | null;
 }
 
 export type ProfilingExporterFactory = (
   options: ProfilingOptions
 ) => ProfilingExporter[];
+
+export interface MemoryProfilingOptions {
+  maxStackDepth?: number;
+  sampleIntervalBytes?: number;
+}
 
 export interface ProfilingOptions {
   endpoint: string;
@@ -71,10 +97,13 @@ export interface ProfilingOptions {
   debugExport: boolean;
   resource: Resource;
   exporterFactory: ProfilingExporterFactory;
+  memoryProfilingEnabled: boolean;
+  memoryProfilingOptions?: MemoryProfilingOptions;
 }
 
 export interface ProfilingExporter {
   send(profile: RawProfilingData): void;
+  sendHeapProfile(profile: HeapProfile): void;
 }
 
 export const allowedProfilingOptions = [
@@ -85,4 +114,6 @@ export const allowedProfilingOptions = [
   'resource',
   'serviceName',
   'exporterFactory',
+  'memoryProfilingEnabled',
+  'memoryProfilingOptions',
 ];

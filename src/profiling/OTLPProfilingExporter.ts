@@ -16,11 +16,16 @@
 import * as protoLoader from '@grpc/proto-loader';
 import * as grpc from '@grpc/grpc-js';
 import * as path from 'path';
-import { RawProfilingData, ProfilingExporter } from './types';
+import { HeapProfile, RawProfilingData, ProfilingExporter } from './types';
 import { diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import { parseEndpoint, serialize, encode } from './utils';
+import {
+  parseEndpoint,
+  serialize,
+  serializeHeapProfile,
+  encode,
+} from './utils';
 
 export interface OTLPExporterOptions {
   callstackInterval: number;
@@ -30,6 +35,25 @@ export interface OTLPExporterOptions {
 
 interface LogsClient extends grpc.Client {
   export: (request: unknown, metadata: grpc.Metadata, callback: Function) => {};
+}
+
+const OTEL_PROFILING_VERSION = '0.1.0';
+
+function commonAttributes(profilingType: 'cpu' | 'allocation') {
+  return [
+    {
+      key: 'profiling.data.format',
+      value: { stringValue: 'pprof-gzip-base64' },
+    },
+    {
+      key: 'profiling.data.type',
+      value: { stringValue: profilingType },
+    },
+    {
+      key: 'com.splunk.sourcetype',
+      value: { stringValue: 'otel.profiling' },
+    },
+  ];
 }
 
 export class OTLPProfilingExporter implements ProfilingExporter {
@@ -103,20 +127,7 @@ export class OTLPProfilingExporter implements ProfilingExporter {
     const { stacktraces } = profile;
     diag.debug(`profiling: Exporting ${stacktraces?.length} samples`);
     const { callstackInterval } = this._options;
-    const attributes = [
-      {
-        key: 'profiling.data.format',
-        value: { stringValue: 'pprof-gzip-base64' },
-      },
-      {
-        key: 'profiling.data.type',
-        value: { stringValue: 'cpu' },
-      },
-      {
-        key: 'com.splunk.sourcetype',
-        value: { stringValue: 'otel.profiling' },
-      },
-    ];
+    const attributes = commonAttributes('cpu');
     encode(serialize(profile, { samplingPeriodMillis: callstackInterval }))
       .then((serializedProfile) => {
         const logs = [serializedProfile].map((st) => {
@@ -129,7 +140,48 @@ export class OTLPProfilingExporter implements ProfilingExporter {
         const ilLogs = {
           instrumentationLibrary: {
             name: 'otel.profiling',
-            version: '0.1.0',
+            version: OTEL_PROFILING_VERSION,
+          },
+          logs,
+        };
+        const resourceLogs = [
+          {
+            resource: {
+              attributes: this._resourceAttributes,
+            },
+            instrumentationLibraryLogs: [ilLogs],
+          },
+        ];
+        const payload = {
+          resourceLogs,
+        };
+        this._client.export(payload, new grpc.Metadata(), (err: unknown) => {
+          if (err) {
+            diag.error('Error exporting profiling data', err);
+          }
+        });
+      })
+      .catch((err: unknown) => {
+        diag.error('Error exporting profiling data', err);
+      });
+  }
+
+  sendHeapProfile(profile: HeapProfile) {
+    const serialized = serializeHeapProfile(profile);
+    const attributes = commonAttributes('allocation');
+    encode(serialized)
+      .then(serializedProfile => {
+        const logs = [serializedProfile].map(st => {
+          return {
+            name: 'otel.profiling',
+            body: { stringValue: st.toString('base64') },
+            attributes,
+          };
+        });
+        const ilLogs = {
+          instrumentationLibrary: {
+            name: 'otel.profiling',
+            version: OTEL_PROFILING_VERSION,
           },
           logs,
         };

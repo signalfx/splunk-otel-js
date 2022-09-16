@@ -15,8 +15,11 @@
  */
 
 import { strict as assert } from 'assert';
-import { hrtime } from 'process';
-import { ProfilingExtension } from '../../src/profiling/types';
+import {
+  AllocationSample,
+  HeapProfileNode,
+  ProfilingExtension,
+} from '../../src/profiling/types';
 import * as utils from '../utils';
 
 const extension: ProfilingExtension = require('../../src/native_ext').profiling;
@@ -120,5 +123,79 @@ describe('profiling native extension', () => {
         assert.equal(typeof traceline[3], 'number'); // column number
       }
     }
+  });
+
+  it('is possible to collect a heap profile', () => {
+    assert.equal(extension.collectHeapProfile(), null);
+
+    extension.startMemoryProfiling();
+
+    function doAllocations() {
+      const dump = [];
+
+      for (let i = 0; i < 4096; i++) {
+        dump.push(`abcd-${i}`.repeat(2048));
+      }
+
+      return dump;
+    }
+
+    doAllocations();
+
+    const profile = extension.collectHeapProfile();
+
+    assert.notEqual(profile, null);
+    assert.equal(typeof profile.timestamp, 'number');
+    assert(
+      Date.now() - profile.timestamp <= 60_000,
+      'not a feasible heap profile timestamp'
+    );
+
+    const { treeMap, samples } = profile;
+
+    assert(samples.length > 0, 'no allocation samples');
+
+    let maybeLeaf: HeapProfileNode | undefined;
+    let leafNodeId;
+    for (const nodeId in treeMap) {
+      const node = treeMap[nodeId];
+      if (node.name === 'repeat') {
+        maybeLeaf = node;
+        leafNodeId = Number(nodeId);
+        break;
+      }
+    }
+
+    assert.notEqual(maybeLeaf, undefined);
+    assert.notEqual(leafNodeId, undefined);
+    const leaf = maybeLeaf!;
+    assert.deepEqual(leaf.lineNumber, 0);
+    assert.deepEqual(leaf.scriptName, '');
+    assert.deepEqual(typeof leaf.parentId, 'number');
+
+    const parentNode = treeMap[leaf.parentId];
+    assert(parentNode.lineNumber > 0, 'parent line number can not be empty');
+    assert(
+      parentNode.scriptName.endsWith('extension.test.ts'),
+      'invalid parent node file name'
+    );
+    assert.deepEqual(parentNode.name, 'doAllocations');
+    assert.deepEqual(typeof parentNode.parentId, 'number');
+
+    // No point going up the tree any more
+
+    let maybeSample: AllocationSample | undefined;
+
+    for (const s of samples) {
+      if (s.nodeId === leafNodeId) {
+        maybeSample = s;
+        break;
+      }
+    }
+
+    assert.notEqual(maybeSample, undefined);
+    const sample = maybeSample!;
+    assert.deepEqual(typeof sample.size, 'number');
+    assert(sample.size > 0, 'sample with zero size');
   });
 });

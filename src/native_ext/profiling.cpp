@@ -1,10 +1,10 @@
 #include "profiling.h"
 #include "khash.h"
+#include "memory_profiling.h"
 #include "util/arena.h"
 #include "util/hex.h"
 #include "util/modp_numtoa.h"
 #include "util/platform.h"
-#include <chrono>
 #include <inttypes.h>
 #include <nan.h>
 #include <v8-profiler.h>
@@ -182,9 +182,11 @@ struct Profiling {
   v8::CpuProfiler* profiler;
   int64_t wallStartTime = 0;
   int64_t startTime = 0;
-  // Maximum offset in nanoseconds from profiling start from which a sample is considered always valid.
+  // Maximum offset in nanoseconds from profiling start from which a sample is considered always
+  // valid.
   int64_t maxSampleCutoffDelayNanos = 500LL * 1000LL * 1000LL;
-  // Point in time before which a sample is considered invalid, necessary to avoid biases with self-sampling.
+  // Point in time before which a sample is considered invalid, necessary to avoid biases with
+  // self-sampling.
   int64_t sampleCutoffPoint = 0;
   int32_t activationDepth = 0;
   int32_t flags = ProfilingFlags_None;
@@ -310,12 +312,6 @@ void InsertActivation(Profiling* profiling, SpanActivation* activation) {
 
 Profiling* profiling = nullptr;
 
-int64_t MicroSecondsSinceEpoch() {
-  return std::chrono::duration_cast<std::chrono::microseconds>(
-           std::chrono::system_clock::now().time_since_epoch())
-    .count();
-}
-
 void V8StartProfiling(v8::CpuProfiler* profiler, const char* title) {
   v8::Local<v8::String> v8Title = Nan::New(title).ToLocalChecked();
   const bool recordSamples = true;
@@ -368,8 +364,11 @@ NAN_METHOD(StartProfiling) {
 
     auto maybeMaxSampleCutoffDelay =
       Nan::Get(options, Nan::New("maxSampleCutoffDelayMicroseconds").ToLocalChecked());
-    if (!maybeMaxSampleCutoffDelay.IsEmpty() && maybeMaxSampleCutoffDelay.ToLocalChecked()->IsNumber()) {
-      int64_t maxSampleCutoffDelayMicros = Nan::To<int64_t>(maybeMaxSampleCutoffDelay.ToLocalChecked()).FromJust();
+    if (
+      !maybeMaxSampleCutoffDelay.IsEmpty() &&
+      maybeMaxSampleCutoffDelay.ToLocalChecked()->IsNumber()) {
+      int64_t maxSampleCutoffDelayMicros =
+        Nan::To<int64_t>(maybeMaxSampleCutoffDelay.ToLocalChecked()).FromJust();
       profiling->maxSampleCutoffDelayNanos = maxSampleCutoffDelayMicros * 1000LL;
     }
   }
@@ -828,9 +827,7 @@ void ProfilingBuildRawStacktraces(
     Nan::Set(
       jsTrace, Nan::New<v8::String>("timestamp").ToLocalChecked(),
       Nan::New<v8::String>(tsBuf, tsLen).ToLocalChecked());
-    Nan::Set(
-      jsTrace, Nan::New<v8::String>("stacktrace").ToLocalChecked(),
-      stackTraceLines);
+    Nan::Set(jsTrace, Nan::New<v8::String>("stacktrace").ToLocalChecked(), stackTraceLines);
 
 #if PROFILER_DEBUG_EXPORT
     char tpBuf[32];
@@ -1110,6 +1107,18 @@ void Initialize(v8::Local<v8::Object> target) {
   Nan::Set(
     profilingModule, Nan::New("exitContext").ToLocalChecked(),
     Nan::GetFunction(Nan::New<v8::FunctionTemplate>(ExitContext)).ToLocalChecked());
+
+  Nan::Set(
+    profilingModule, Nan::New("startMemoryProfiling").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<v8::FunctionTemplate>(StartMemoryProfiling)).ToLocalChecked());
+
+  Nan::Set(
+    profilingModule, Nan::New("collectHeapProfile").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<v8::FunctionTemplate>(CollectHeapProfile)).ToLocalChecked());
+
+  Nan::Set(
+    profilingModule, Nan::New("stopMemoryProfiling").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<v8::FunctionTemplate>(StopMemoryProfiling)).ToLocalChecked());
 
   Nan::Set(target, Nan::New("profiling").ToLocalChecked(), profilingModule);
 }

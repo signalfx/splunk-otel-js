@@ -29,7 +29,11 @@ import {
   _setDefaultOptions,
 } from '../../src/profiling';
 import { start, stop } from '../../src';
-import { ProfilingExporter, ProfilingData } from '../../src/profiling/types';
+import {
+  HeapProfile,
+  ProfilingExporter,
+  RawProfilingData,
+} from '../../src/profiling/types';
 import { ProfilingContextManager } from '../../src/profiling/ProfilingContextManager';
 import { detect as detectResource } from '../../src/resource';
 
@@ -57,6 +61,8 @@ describe('profiling', () => {
           [SemanticResourceAttributes.SERVICE_NAME]: 'unnamed-node-service',
         }).merge(detectResource()),
         exporterFactory: defaultExporterFactory,
+        memoryProfilingEnabled: false,
+        memoryProfilingOptions: undefined,
       });
     });
 
@@ -92,11 +98,12 @@ describe('profiling', () => {
       let sendCallCount = 0;
       const stacktracesReceived = [];
       const exporter: ProfilingExporter = {
-        send(profilingData: ProfilingData) {
+        send(profilingData: RawProfilingData) {
           const { stacktraces } = profilingData;
           sendCallCount += 1;
           stacktracesReceived.push(...stacktraces);
         },
+        sendHeapProfile(_profile: HeapProfile) {},
       };
 
       // enabling tracing is required for span information to be caught
@@ -150,5 +157,31 @@ describe('profiling', () => {
       // Stop flushes the exporters, hence the extra call count
       assert.deepStrictEqual(sendCallCount, 2);
     }).timeout(10_000);
+
+    it('exports heap profiles', async () => {
+      let sendCallCount = 0;
+      const exporter: ProfilingExporter = {
+        send(_profilingData: RawProfilingData) {},
+        sendHeapProfile(profile: HeapProfile) {
+          sendCallCount += 1;
+        },
+      };
+
+      // enabling tracing is required for span information to be caught
+      start({
+        profiling: {
+          serviceName: 'my-service',
+          collectionDuration: 100,
+          exporterFactory: () => [exporter],
+          memoryProfilingEnabled: true,
+        },
+      });
+
+      // let runtime empty the task-queue and enable profiling
+      await sleep(200);
+
+      stop();
+      assert(sendCallCount > 0, 'no profiles were sent');
+    });
   });
 });
