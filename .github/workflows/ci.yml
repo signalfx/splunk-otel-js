@@ -172,18 +172,20 @@ jobs:
 
   e2e-published:
     runs-on: ubuntu-latest
-    matrix:
-      include:
-        - target: ''
-          name: 'Basic'
-        - target: '-f express.override.yml'
-          name: 'Express'
-        - target: '-f mixed.override.yml'
-          name: 'Mixed'
-        - target: '-f log-injection.override.yml'
-          name: 'Log injection'
-        - target: '-f profiling.override.yml'
-          name: 'Profiling'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: ''
+            name: 'Basic'
+          - target: '-f express.override.yml'
+            name: 'Express'
+          - target: '-f mixed.override.yml'
+            name: 'Mixed'
+          - target: '-f log-injection.override.yml'
+            name: 'Log injection'
+          - target: '-f profiling.override.yml'
+            name: 'Profiling'
     name: e2e published ${{ matrix.name }}
     steps:
       - name: Checkout
@@ -198,18 +200,20 @@ jobs:
 
   e2e-local:
     runs-on: ubuntu-latest
-    matrix:
-      include:
-        - target: ''
-          name: 'Basic'
-        - target: '-f express.override.yml'
-          name: 'Express'
-        - target: '-f mixed.override.yml'
-          name: 'Mixed'
-        - target: '-f log-injection.override.yml'
-          name: 'Log injection'
-        - target: '-f profiling.override.yml'
-          name: 'Profiling'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: ''
+            name: 'Basic'
+          - target: '-f express.override.yml'
+            name: 'Express'
+          - target: '-f mixed.override.yml'
+            name: 'Mixed'
+          - target: '-f log-injection.override.yml'
+            name: 'Log injection'
+          - target: '-f profiling.override.yml'
+            name: 'Profiling'
     name: e2e local ${{ matrix.name }}
     steps:
       - name: Checkout
