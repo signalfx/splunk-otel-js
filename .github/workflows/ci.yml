@@ -159,25 +159,23 @@ jobs:
   platform-check:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        container: ['centos:7']
-        nodejs: ['12.13', 14, 16, 18]
-        #cmd: 'curl -sL https://rpm.nodesource.com/setup_14.x | bash - && yum install -y nodejs gcc-c++ make'
+        nodejs: [12, 14, 16, 18]
+        include:
+          - container: 'centos:7'
+          - cmd: 'curl -sL https://rpm.nodesource.com/setup_${{ matrix.nodejs }}.x | bash - && yum install -y nodejs gcc-c++ make'
     container: ${{ matrix.container }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup Node.js ${{ matrix.nodejs }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.nodejs }}
+      - name: Setup container
+        run: ${{ matrix.cmd }}
       - name: Debug
         run: |
           rpm --query centos-release
           node --version
           npm --version
-      #- name: Setup container
-      #  run: ${{ matrix.cmd }}
+      - name: Checkout
+        uses: actions/checkout@v3
       - name: Install npm dependencies
         run: npm ci
       - name: Compile native
