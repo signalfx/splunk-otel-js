@@ -154,7 +154,7 @@ describe('propagation', () => {
     let spanProcessor: SpanProcessor;
     startTracing({
       spanExporterFactory: () => exporter,
-      spanProcessorFactory: options => {
+      spanProcessorFactory: (options) => {
         return (spanProcessor = defaultSpanProcessorFactory(options));
       },
     });

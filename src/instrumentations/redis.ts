@@ -35,7 +35,7 @@ export function configureRedisInstrumentation(
       dbStatementSerializer: (cmd, args) => {
         if (args.length === 0) return cmd;
 
-        const sanitizedArgs = args.map(arg => {
+        const sanitizedArgs = args.map((arg) => {
           if (Buffer.isBuffer(arg)) {
             return `buffer(${arg.length})`;
           }

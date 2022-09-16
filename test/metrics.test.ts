@@ -49,7 +49,7 @@ describe('metrics', () => {
   describe('native counters collection', () => {
     const { metrics } = require('../src/native_ext');
 
-    it('is possible to get native counters', done => {
+    it('is possible to get native counters', (done) => {
       const stats = metrics.collect();
       assert.deepStrictEqual(stats, emptyStats());
 
@@ -66,7 +66,7 @@ describe('metrics', () => {
       assert.deepStrictEqual(metrics.collect(), emptyStats());
     });
 
-    it('does not compute event loop lag to be less than the actual execution time', done => {
+    it('does not compute event loop lag to be less than the actual execution time', (done) => {
       metrics.reset();
       const begin = hrtime();
 
@@ -155,18 +155,18 @@ describe('metrics', () => {
   });
 
   describe('startMetrics', () => {
-    it('exports metrics', done => {
+    it('exports metrics', (done) => {
       const metric =
         (name: string) =>
         ({ metric }) =>
           metric === name;
-      const gcMetric = (name: string) => m =>
+      const gcMetric = (name: string) => (m) =>
         metric(name)(m) && m.dimensions['gctype'] === 'all';
       const { stopMetrics } = startMetrics({
         exportInterval: 100,
         signalfx: {
           client: {
-            send: report => {
+            send: (report) => {
               stopMetrics();
               const gauges = report.gauges;
               const cumulativeCounters = report.cumulative_counters;

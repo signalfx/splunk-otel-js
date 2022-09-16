@@ -118,8 +118,8 @@ export class OTLPProfilingExporter implements ProfilingExporter {
       },
     ];
     encode(serialize(profile, { samplingPeriodMillis: callstackInterval }))
-      .then(serializedProfile => {
-        const logs = [serializedProfile].map(st => {
+      .then((serializedProfile) => {
+        const logs = [serializedProfile].map((st) => {
           return {
             name: 'otel.profiling',
             body: { stringValue: st.toString('base64') },

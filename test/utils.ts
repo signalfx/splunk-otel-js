@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const isConfigVarEntry = key => {
+const isConfigVarEntry = (key) => {
   const lowercased = key.toLowerCase();
   return (
     lowercased.includes('splunk_') ||
@@ -35,7 +35,7 @@ const isConfigVarEntry = key => {
 export const cleanEnvironment = () => {
   Object.keys(process.env)
     .filter(isConfigVarEntry)
-    .forEach(key => {
+    .forEach((key) => {
       delete process.env[key];
     });
 };

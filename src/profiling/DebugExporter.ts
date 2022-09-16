@@ -23,7 +23,7 @@ export class DebugExporter implements ProfilingExporter {
 
   send(data: ProfilingData | RawProfilingData) {
     const baseName = `profile-${this.runTimestamp}-${this.profileIndex++}.json`;
-    fs.writeFile(baseName, JSON.stringify(data), err => {
+    fs.writeFile(baseName, JSON.stringify(data), (err) => {
       if (err) {
         diag.error(`error writing to ${baseName}`, err);
       }

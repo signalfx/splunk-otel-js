@@ -53,7 +53,7 @@ describe('log injection', () => {
 
   beforeEach(() => {
     stream = new Writable({
-      write: chunk => {
+      write: (chunk) => {
         record = JSON.parse(chunk);
       },
     });
