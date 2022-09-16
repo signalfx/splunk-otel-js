@@ -170,8 +170,8 @@ export class OTLPProfilingExporter implements ProfilingExporter {
     const serialized = serializeHeapProfile(profile);
     const attributes = commonAttributes('allocation');
     encode(serialized)
-      .then(serializedProfile => {
-        const logs = [serializedProfile].map(st => {
+      .then((serializedProfile) => {
+        const logs = [serializedProfile].map((st) => {
           return {
             name: 'otel.profiling',
             body: { stringValue: st.toString('base64') },
