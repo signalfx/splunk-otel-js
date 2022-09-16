@@ -164,14 +164,17 @@ jobs:
         nodejs: [12, 14, 16, 18]
         include:
           - container: 'centos:7'
-          - cmd: 'curl -sL https://rpm.nodesource.com/setup_${{ matrix.nodejs }}.x | bash - && yum install -y nodejs gcc-c++ make'
+          - cmd: 'curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && yum install -y nodejs gcc-c++ make'
     container: ${{ matrix.container }}
+    env:
+      NODE_VERSION: ${{ matrix.nodejs }}
     steps:
       - name: Setup container
         run: ${{ matrix.cmd }}
       - name: Debug
         run: |
           rpm --query centos-release
+          echo $NODE_VERSION
           node --version
           npm --version
       - name: Checkout
