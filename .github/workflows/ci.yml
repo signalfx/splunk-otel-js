@@ -10,59 +10,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        container: ['node:14.0.0']
+        node_api_target: ['14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0']
         include:
           - container: node:12.13.0
-            versions: '12.13.0 13.0.0'
-            label: node12
-          - container: node:14.0.0
-            versions: '14.0.0 15.0.0 16.0.0 17.0.1 18.0.0'
-            label: node14
+            node_api_target: '12.13.0'
+          - container: node:12.13.0
+            node_api_target: '13.0.0'
     container: ${{ matrix.container }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       - uses: actions/setup-node@v3
       - name: Install npm dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
       - name: Prebuild
-        run: npm run prebuild:os ${{ matrix.versions }}
-      - name: Run tests
-        run: npm run test
+        run: npm run prebuild:os ${{ matrix.node_api_target }}
       - name: upload prebuilds
         uses: actions/upload-artifact@v3
         with:
-          name: prebuilds-linux-${{ matrix.label }}
+          name: prebuilds-linux
           path: prebuilds
 
-  prebuilds:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: windows-2019
-            label: windows
-          - os: macos-11
-            label: macos
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '14'
-      - name: Install npm dependencies
-        run: npm ci
-      - name: Prebuild
-        run: npm run prebuild:os
-      - name: Run tests
-        run: npm run test
-      - name: upload prebuilds
-        uses: actions/upload-artifact@v3
-        with:
-          name: prebuilds-${{ matrix.label }}
-          path: prebuilds
-
-  prebuilds-parallel:
+  prebuilds-macos-windows:
     strategy:
       fail-fast: false
       matrix:
@@ -74,7 +44,7 @@ jobs:
         uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '16'
       - name: Install npm dependencies
         run: npm ci --ignore-scripts
       - name: Prebuild
@@ -82,27 +52,27 @@ jobs:
       - name: upload prebuilds
         uses: actions/upload-artifact@v3
         with:
-          name: parallel-prebuilds-${{ matrix.label }}
+          name: prebuilds-macos-windows
           path: prebuilds
 
   create-package:
-    needs: [prebuilds-linux, prebuilds]
+    needs: [prebuilds-linux, prebuilds-macos-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       - uses: actions/setup-node@v3
+        with:
+          node-version: '16'
       - name: download prebuilds
         uses: actions/download-artifact@v3
       - name: copy prebuilds
         run: |
           mkdir -p prebuilds
-          cp -r prebuilds-linux-node12/* prebuilds
-          cp -r prebuilds-linux-node14/* prebuilds
-          cp -r prebuilds-windows/* prebuilds
-          cp -r prebuilds-macos/* prebuilds
+          cp -r prebuilds-linux/* prebuilds
+          cp -r prebuilds-macos-windows/* prebuilds
       - name: Install npm dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
       - name: Build
         run: npm run compile
       - name: Pack
@@ -116,9 +86,7 @@ jobs:
           path: ${{ steps.pack.outputs.package_file }}
 
   unit-tests:
-    needs: [prebuilds-linux, prebuilds]
     runs-on: ${{ matrix.os }}
-    permissions: read-all
     strategy:
       fail-fast: false
       matrix:
@@ -135,7 +103,7 @@ jobs:
       - name: Test
         run: npm run test
       - name: Report Coverage
-        if: ${{matrix.nodejs == '14' && matrix.os == 'ubuntu-latest'}}
+        if: ${{matrix.nodejs == '16' && matrix.os == 'ubuntu-latest'}}
         uses: codecov/codecov-action@v3
         with:
           verbose: true
@@ -143,7 +111,6 @@ jobs:
   lint:
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
-    permissions: read-all
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -165,7 +132,6 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    permissions: read-all
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -206,7 +172,6 @@ jobs:
 
   e2e-published:
     runs-on: ubuntu-latest
-    permissions: read-all
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -232,7 +197,6 @@ jobs:
 
   e2e-local:
     runs-on: ubuntu-latest
-    permissions: read-all
     steps:
       - name: Checkout
         uses: actions/checkout@v3
