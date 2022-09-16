@@ -161,9 +161,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - container: centos:7
-            #cmd: 'curl -sL https://rpm.nodesource.com/setup_14.x | bash - && yum install -y nodejs gcc-c++ make'
-            nodejs: ['12.13', 14, 16, 18]
+          container: ['centos:7']
+          nodejs: ['12.13', 14, 16, 18]
+          #cmd: 'curl -sL https://rpm.nodesource.com/setup_14.x | bash - && yum install -y nodejs gcc-c++ make'
     container: ${{ matrix.container }}
     steps:
       - name: Checkout
