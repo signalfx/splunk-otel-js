@@ -26,8 +26,10 @@ import {
   InMemorySpanExporter,
 } from '@opentelemetry/sdk-trace-base';
 
-import * as assert from 'assert';
+import { strict as assert } from 'assert';
 import * as sinon from 'sinon';
+import * as fs from 'fs';
+import * as os from 'os';
 
 import * as instrumentations from '../src/instrumentations';
 import {
@@ -41,6 +43,20 @@ import {
 } from '../src/tracing/options';
 import * as utils from './utils';
 
+const assertVersion = versionAttr => {
+  assert.equal(typeof versionAttr, 'string');
+  assert(
+    /[0-9]+\.[0-9]+\.[0-9]+/.test(versionAttr),
+    `${versionAttr} is not a valid version`
+  );
+};
+const assertContainerId = containerIdAttr => {
+  assert.equal(typeof containerIdAttr, 'string');
+  assert(
+    /^[abcdef0-9]+$/i.test(containerIdAttr),
+    `${containerIdAttr} is not an hex string`
+  );
+};
 /*
   service.name attribute is not set, your service is unnamed and will be difficult to identify.
   Set your service name using the OTEL_RESOURCE_ATTRIBUTES environment variable.
@@ -53,6 +69,7 @@ const MATCH_NO_INSTRUMENTATIONS_WARNING = sinon.match(
 );
 // List of resource attributes we expect to see detected
 const expectedAttributes = new Set([
+  SemanticResourceAttributes.CONTAINER_ID,
   SemanticResourceAttributes.HOST_ARCH,
   SemanticResourceAttributes.HOST_NAME,
   SemanticResourceAttributes.OS_TYPE,
@@ -70,6 +87,8 @@ const expectedAttributes = new Set([
 
 describe('options', () => {
   let logger;
+  let readFileSyncStub;
+  let platformStub;
 
   beforeEach(utils.cleanEnvironment);
 
@@ -80,10 +99,21 @@ describe('options', () => {
     api.diag.setLogger(logger, api.DiagLogLevel.ALL);
     // Setting logger logs stuff. Cleaning that up.
     logger.warn.resetHistory();
+
+    // as long as it doesn't conflict with other tests, we can stub platform for linux to test cgroup v1 detector
+    platformStub = sinon.stub(os, 'platform').returns('linux');
+    readFileSyncStub = sinon.stub(fs, 'readFileSync');
+    readFileSyncStub
+      .withArgs('/proc/self/cgroup', 'utf8')
+      .returns(
+        '1:blkio:/docker/a4d00c9dd675d67f866c786181419e1b44832d4696780152e61afd44a3e02856\n'
+      );
   });
 
   afterEach(() => {
     api.diag.disable();
+    platformStub.restore();
+    readFileSyncStub.restore();
   });
 
   describe('defaults', () => {
@@ -102,10 +132,14 @@ describe('options', () => {
     it('has expected defaults', () => {
       const options = _setDefaultOptions();
 
-      assert(
-        /[0-9]+\.[0-9]+\.[0-9]+/.test(
-          options.tracerConfig.resource.attributes['splunk.distro.version']
-        )
+      assertVersion(
+        options.tracerConfig.resource.attributes['splunk.distro.version']
+      );
+
+      assertContainerId(
+        options.tracerConfig.resource.attributes[
+          SemanticResourceAttributes.CONTAINER_ID
+        ]
       );
 
       // resource attributes for process, host and os are different at each run, iterate through them, make sure they exist and then delete
