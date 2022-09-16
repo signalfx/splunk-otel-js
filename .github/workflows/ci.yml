@@ -164,7 +164,7 @@ jobs:
         nodejs: [12, 14, 16, 18]
         include:
           - container: 'centos:7'
-          - cmd: 'curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && yum install -y nodejs gcc-c++ make'
+          - cmd: 'curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && yum install -y nodejs gcc-c++ make python3'
     container: ${{ matrix.container }}
     env:
       NODE_VERSION: ${{ matrix.nodejs }}
