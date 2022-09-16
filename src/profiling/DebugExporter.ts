@@ -39,7 +39,7 @@ export class DebugExporter implements ProfilingExporter {
   sendHeapProfile(profile: HeapProfile) {
     const name = `heap-profile-${this.runTimestamp}-${this
       .heapProfileIndex++}.json`;
-    fs.writeFile(name, JSON.stringify(profile), err => {
+    fs.writeFile(name, JSON.stringify(profile), (err) => {
       if (err) {
         diag.error(`error writing to ${name}`, err);
       }

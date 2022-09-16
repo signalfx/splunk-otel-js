@@ -43,14 +43,14 @@ import {
 } from '../src/tracing/options';
 import * as utils from './utils';
 
-const assertVersion = versionAttr => {
+const assertVersion = (versionAttr) => {
   assert.equal(typeof versionAttr, 'string');
   assert(
     /[0-9]+\.[0-9]+\.[0-9]+/.test(versionAttr),
     `${versionAttr} is not a valid version`
   );
 };
-const assertContainerId = containerIdAttr => {
+const assertContainerId = (containerIdAttr) => {
   assert.equal(typeof containerIdAttr, 'string');
   assert(
     /^[abcdef0-9]+$/i.test(containerIdAttr),
