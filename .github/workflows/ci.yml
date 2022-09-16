@@ -165,18 +165,13 @@ jobs:
         include:
           - container: 'centos:7'
           - cmd: 'curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && yum install -y nodejs gcc-c++ make'
+    name: Platform check: ${{ matrix.container }}, Node.js ${{ matrix.nodejs }}
     container: ${{ matrix.container }}
     env:
       NODE_VERSION: ${{ matrix.nodejs }}
     steps:
       - name: Setup container
         run: ${{ matrix.cmd }}
-      - name: Debug
-        run: |
-          rpm --query centos-release
-          echo $NODE_VERSION
-          node --version
-          npm --version
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install npm dependencies
