@@ -1,6 +1,5 @@
 name: Continuous Integration
-on:
-  push:
+on: push
 permissions: read-all
 
 jobs:
