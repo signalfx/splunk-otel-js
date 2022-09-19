@@ -1,7 +1,0 @@
-{
-  "type": "minor",
-  "comment": "feat: add detector for container ID in cgroup v1",
-  "packageName": "@splunk/otel",
-  "email": "rauno56@gmail.com",
-  "dependentChangeType": "patch"
-}
