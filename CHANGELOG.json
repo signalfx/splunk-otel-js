@@ -2,6 +2,21 @@
   "name": "@splunk/otel",
   "entries": [
     {
+      "date": "Mon, 19 Sep 2022 12:41:01 GMT",
+      "tag": "@splunk/otel_v1.4.0",
+      "version": "1.4.0",
+      "comments": {
+        "minor": [
+          {
+            "author": "rauno56@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "cc1ba3e36febe854a99d28148d3efb4063baa911",
+            "comment": "feat: add detector for container ID in cgroup v1"
+          }
+        ]
+      }
+    },
+    {
       "date": "Fri, 26 Aug 2022 09:07:44 GMT",
       "tag": "@splunk/otel_v1.3.0",
       "version": "1.3.0",
