@@ -162,7 +162,7 @@ You can find more instrumentation packages over at the [OpenTelemetry Registry](
 
 For troubleshooting issues with the Splunk Distribution of OpenTelemetry JS, see [Troubleshooting](./docs/troubleshooting.md).
 
-# License and versioning
+# License
 
 The Splunk distribution of OpenTelemetry JS Instrumentation is a
 distribution of the [OpenTelemetry JS project](https://github.com/open-telemetry/opentelemetry-js).

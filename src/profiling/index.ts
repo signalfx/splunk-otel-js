@@ -19,11 +19,14 @@ import { Resource } from '@opentelemetry/resources';
 import {
   assertNoExtraneousProperties,
   defaultServiceName,
+  getEnvBoolean,
   getEnvNumber,
 } from '../utils';
 import { detect as detectResource } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import {
+  HeapProfile,
+  MemoryProfilingOptions,
   ProfilingExporter,
   ProfilingExtension,
   ProfilingOptions,
@@ -42,12 +45,29 @@ function extStopProfiling(extension: ProfilingExtension) {
   return extension.stop();
 }
 
+function extStopMemoryProfiling(extension: ProfilingExtension) {
+  return extension.stopMemoryProfiling();
+}
+
 function extStartProfiling(
   extension: ProfilingExtension,
   opts: ProfilingStartOptions
 ) {
   diag.debug('profiling: Starting');
   extension.start(opts);
+}
+
+function extStartMemoryProfiling(
+  extension: ProfilingExtension,
+  options?: MemoryProfilingOptions
+) {
+  return extension.startMemoryProfiling(options);
+}
+
+function extCollectHeapProfile(
+  extension: ProfilingExtension
+): HeapProfile | null {
+  return extension.collectHeapProfile();
 }
 
 function extCollectSamples(extension: ProfilingExtension) {
@@ -101,7 +121,7 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
 
   extStartProfiling(extension, startOptions);
 
-  const interval = setInterval(() => {
+  const cpuSamplesCollectInterval = setInterval(() => {
     const profilingData = extCollectSamples(extension);
 
     if (profilingData) {
@@ -111,16 +131,36 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
     }
   }, options.collectionDuration);
 
-  interval.unref();
+  cpuSamplesCollectInterval.unref();
+
+  let memSamplesCollectInterval: NodeJS.Timer | undefined;
+  if (options.memoryProfilingEnabled) {
+    extStartMemoryProfiling(extension, options.memoryProfilingOptions);
+    memSamplesCollectInterval = setInterval(() => {
+      const heapProfile = extCollectHeapProfile(extension);
+      if (heapProfile) {
+        for (const exporter of exporters) {
+          exporter.sendHeapProfile(heapProfile);
+        }
+      }
+    }, options.collectionDuration);
+
+    memSamplesCollectInterval.unref();
+  }
 
   return {
     stop: () => {
-      clearInterval(interval);
-      const profilingData = extStopProfiling(extension);
+      if (options.memoryProfilingEnabled) {
+        clearInterval(memSamplesCollectInterval);
+        extStopMemoryProfiling(extension);
+      }
 
-      if (profilingData) {
+      clearInterval(cpuSamplesCollectInterval);
+      const cpuProfile = extStopProfiling(extension);
+
+      if (cpuProfile) {
         for (const exporter of exporters) {
-          exporter.send(profilingData);
+          exporter.send(cpuProfile);
         }
       }
     },
@@ -171,6 +211,10 @@ export function _setDefaultOptions(
     })
   );
 
+  const memoryProfilingEnabled =
+    options.memoryProfilingEnabled ??
+    getEnvBoolean('SPLUNK_PROFILER_MEMORY_ENABLED', false);
+
   return {
     serviceName: serviceName,
     endpoint,
@@ -181,5 +225,7 @@ export function _setDefaultOptions(
     resource,
     debugExport: options.debugExport ?? false,
     exporterFactory: options.exporterFactory ?? defaultExporterFactory,
+    memoryProfilingEnabled,
+    memoryProfilingOptions: options.memoryProfilingOptions,
   };
 }

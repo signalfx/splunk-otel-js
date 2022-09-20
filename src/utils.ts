@@ -72,7 +72,7 @@ export function deduplicate(arr: string[]) {
 }
 
 const formatStringSet = (set: Set<string> | string[]) => {
-  return [...set.values()].map(item => `"${item}"`).join(', ');
+  return [...set.values()].map((item) => `"${item}"`).join(', ');
 };
 
 export function assertNoExtraneousProperties(

@@ -90,7 +90,7 @@ export const stop = async () => {
 
   if (running.profiling) {
     promises.push(
-      new Promise<void>(resolve => {
+      new Promise<void>((resolve) => {
         running.profiling!.stop();
         resolve();
       })

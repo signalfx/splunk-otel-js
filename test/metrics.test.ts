@@ -76,7 +76,7 @@ describe('metrics', () => {
   describe('native counters collection', () => {
     const { metrics } = require('../src/native_ext');
 
-    it('is possible to get native counters', done => {
+    it('is possible to get native counters', (done) => {
       const stats = metrics.collect();
       assert.deepStrictEqual(stats, emptyStats());
 
@@ -93,7 +93,7 @@ describe('metrics', () => {
       assert.deepStrictEqual(metrics.collect(), emptyStats());
     });
 
-    it('does not compute event loop lag to be less than the actual execution time', done => {
+    it('does not compute event loop lag to be less than the actual execution time', (done) => {
       metrics.reset();
       const begin = hrtime();
 

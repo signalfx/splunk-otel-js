@@ -30,8 +30,11 @@ module.exports = {
     ],
     "@typescript-eslint/no-unused-vars": ["error", {"argsIgnorePattern": "^_", "args": "after-used"}],
     "@typescript-eslint/no-inferrable-types": ["error", { ignoreProperties: true }],
-    "arrow-parens": ["error", "as-needed"],
-    "prettier/prettier": "error",
+    "arrow-parens": ["error", "always"],
+    "prettier/prettier": ["error", {
+      "singleQuote": true,
+      "arrowParens": "always"
+    }],
     "node/no-deprecated-api": ["warn"],
     "header/header": [2, "block", [
         "",

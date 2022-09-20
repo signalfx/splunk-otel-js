@@ -22,6 +22,7 @@ release:
     - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
     - npm publish ./dist/splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz
     - rm -f ~/.npmrc
+  when: manual
 
 prerelease:
   stage: release
@@ -35,3 +36,4 @@ prerelease:
     - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
     - npm publish --tag prerelease ./dist/splunk-otel-${CI_COMMIT_REF_NAME:12}.tgz
     - rm -f ~/.npmrc
+  when: manual

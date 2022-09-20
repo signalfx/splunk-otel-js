@@ -64,7 +64,7 @@ describe('Capturing URI parameters', () => {
 
   const testOpts = () => ({
     spanExporterFactory: () => exporter,
-    spanProcessorFactory: options => {
+    spanProcessorFactory: (options) => {
       return (spanProcessor = defaultSpanProcessorFactory(options));
     },
   });

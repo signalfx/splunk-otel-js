@@ -1,8 +1,16 @@
 # Change Log - @splunk/otel
 
-This log was last generated on Fri, 26 Aug 2022 09:07:44 GMT and should not be manually modified.
+This log was last generated on Mon, 19 Sep 2022 12:41:01 GMT and should not be manually modified.
 
 <!-- Start content -->
+
+## 1.4.0
+
+Mon, 19 Sep 2022 12:41:01 GMT
+
+- feat: add detector for container ID (cgroup v1) [#515](https://github.com/signalfx/splunk-otel-js/pull/515)
+- feat: memory profiling [#524](https://github.com/signalfx/splunk-otel-js/pull/524)
+- fix: support compilation on CentOS 7 [#552](https://github.com/signalfx/splunk-otel-js/pull/552)
 
 ## 1.3.0
 

@@ -32,9 +32,9 @@ describe('Redis instrumentation', () => {
   let spanProcessor: SpanProcessor;
 
   before(() => {
-    redisServer = net.createServer(socket => {
+    redisServer = net.createServer((socket) => {
       let data = '';
-      socket.on('data', d => {
+      socket.on('data', (d) => {
         data += d;
 
         if (data.endsWith('bar\r\n')) {
@@ -64,12 +64,12 @@ describe('Redis instrumentation', () => {
     serviceName: 'test-service',
     instrumentations: [new RedisInstrumentation()],
     spanExporterFactory: () => exporter,
-    spanProcessorFactory: options => {
+    spanProcessorFactory: (options) => {
       return (spanProcessor = defaultSpanProcessorFactory(options));
     },
   });
 
-  it('db statement is not added by default', done => {
+  it('db statement is not added by default', (done) => {
     startTracing(testOpts());
     const client = require('redis').createClient({
       no_ready_check: true,
@@ -83,7 +83,7 @@ describe('Redis instrumentation', () => {
     });
   });
 
-  it('db statement is not added when SPLUNK_REDIS_INCLUDE_COMMAND_ARGS is false', done => {
+  it('db statement is not added when SPLUNK_REDIS_INCLUDE_COMMAND_ARGS is false', (done) => {
     process.env.SPLUNK_REDIS_INCLUDE_COMMAND_ARGS = 'false';
     startTracing(testOpts());
     const client = require('redis').createClient({
@@ -98,7 +98,7 @@ describe('Redis instrumentation', () => {
     });
   });
 
-  it('db statement is added when setting SPLUNK_REDIS_INCLUDE_COMMAND_ARGS env var', done => {
+  it('db statement is added when setting SPLUNK_REDIS_INCLUDE_COMMAND_ARGS env var', (done) => {
     process.env.SPLUNK_REDIS_INCLUDE_COMMAND_ARGS = 'true';
     startTracing(testOpts());
     const client = require('redis').createClient({

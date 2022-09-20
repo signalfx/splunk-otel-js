@@ -1,7 +1,5 @@
 name: Continuous Integration
-on:
-  pull_request:
-  push:
+on: push
 permissions: read-all
 
 jobs:
@@ -10,76 +8,69 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        container: ['node:14.0.0']
+        node_api_target: ['14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0']
         include:
           - container: node:12.13.0
-            versions: '12.13.0 13.0.0'
-            label: node12
-          - container: node:14.0.0
-            versions: '14.0.0 15.0.0 16.0.0 17.0.1 18.0.0'
-            label: node14
+            node_api_target: '12.13.0'
+          - container: node:12.13.0
+            node_api_target: '13.0.0'
     container: ${{ matrix.container }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+        uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
       - name: Install npm dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
       - name: Prebuild
-        run: npm run prebuild:os ${{ matrix.versions }}
-      - name: Run tests
-        run: npm run test
+        run: npm run prebuild:os ${{ matrix.node_api_target }}
       - name: upload prebuilds
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-          name: prebuilds-linux-${{ matrix.label }}
+          name: prebuilds-linux
           path: prebuilds
 
-  prebuilds:
+  prebuilds-macos-windows:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: windows-2019
-            label: windows
-          - os: macos-11
-            label: macos
+        os: [windows-2019, macos-11]
+        node_api_target: ['12.0.0', '13.0.0', '14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0']
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+        uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '16'
       - name: Install npm dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
       - name: Prebuild
-        run: npm run prebuild:os
-      - name: Run tests
-        run: npm run test
+        run: npm run prebuild:os ${{ matrix.node_api_target }}
       - name: upload prebuilds
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
-          name: prebuilds-${{ matrix.label }}
+          name: prebuilds-macos-windows
           path: prebuilds
 
   create-package:
-    needs: [prebuilds-linux, prebuilds]
+    needs: [prebuilds-linux, prebuilds-macos-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+        uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16'
       - name: download prebuilds
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
       - name: copy prebuilds
         run: |
           mkdir -p prebuilds
-          cp -r prebuilds-linux-node12/* prebuilds
-          cp -r prebuilds-linux-node14/* prebuilds
-          cp -r prebuilds-windows/* prebuilds
-          cp -r prebuilds-macos/* prebuilds
+          cp -r prebuilds-linux/* prebuilds
+          cp -r prebuilds-macos-windows/* prebuilds
       - name: Install npm dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
       - name: Build
         run: npm run compile
       - name: Pack
@@ -87,15 +78,13 @@ jobs:
         run: |
           echo "::set-output name=package_file::$(npm pack)"
       - name: Upload package
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ steps.pack.outputs.package_file }}
           path: ${{ steps.pack.outputs.package_file }}
 
   unit-tests:
-    needs: [prebuilds-linux, prebuilds]
     runs-on: ${{ matrix.os }}
-    permissions: read-all
     strategy:
       fail-fast: false
       matrix:
@@ -103,8 +92,8 @@ jobs:
         nodejs: ['12.13', '14', '16', '17', '18']
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+        uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.nodejs }}
       - name: Install npm dependencies
@@ -112,94 +101,99 @@ jobs:
       - name: Test
         run: npm run test
       - name: Report Coverage
-        if: ${{matrix.nodejs == '14' && matrix.os == 'ubuntu-latest'}}
-        uses: codecov/codecov-action@v2
+        if: ${{matrix.nodejs == '16' && matrix.os == 'ubuntu-latest'}}
+        uses: codecov/codecov-action@v3
         with:
           verbose: true
 
-  lint:
-    if: ${{ github.event_name == 'pull_request' }}
-    runs-on: ubuntu-latest
-    permissions: read-all
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Fetch base_ref
-        run: git fetch origin ${{ github.base_ref }}
-      - uses: actions/setup-node@v2
-        with:
-          node-version: 16
-      - name: Install npm dependencies
-        run: npm ci
-      - name: Check version
-        run: npm run version:check
-      - name: Lint commits
-        run: npm run lint:commits -- --from origin/${{ github.base_ref }}
-      - name: Verify changes
-        run: npm run change:check
-
   build:
     runs-on: ubuntu-latest
-    permissions: read-all
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 1
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 16
       - name: Install npm dependencies
         run: npm ci
-      - name: Lint code
-        run: npm run lint
       - name: Build
         run: npm run compile
 
+  platform-check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        nodejs: [12, 14]
+        include:
+          - container: 'centos:7'
+          - cmd: 'curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && yum install -y nodejs gcc-c++ make'
+    name: Platform check - ${{ matrix.container }} - Node.js ${{ matrix.nodejs }}
+    container: ${{ matrix.container }}
+    env:
+      NODE_VERSION: ${{ matrix.nodejs }}
+    steps:
+      - name: Setup container
+        run: ${{ matrix.cmd }}
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install npm dependencies
+        run: npm ci
+      - name: Compile native
+        run: npm run prebuild:current
+      - name: Run tests
+        run: npm run test
+
   e2e-published:
     runs-on: ubuntu-latest
-    permissions: read-all
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: ''
+            name: 'Basic'
+          - target: '-f express.override.yml'
+            name: 'Express'
+          - target: '-f mixed.override.yml'
+            name: 'Mixed'
+          - target: '-f log-injection.override.yml'
+            name: 'Log injection'
+          - target: '-f profiling.override.yml'
+            name: 'Profiling'
+    name: e2e published ${{ matrix.name }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Get versions
         run: |
           docker-compose --version;
           docker --version;
-      - name: Test basic example
+      - name: Test ${{ matrix.name }} example
         working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml -f published.override.yml up --exit-code-from test
-      - name: Test express example
-        working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml -f express.override.yml -f published.override.yml up --exit-code-from test
-      - name: Test mixed example
-        working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml -f mixed.override.yml -f published.override.yml up --exit-code-from test
-      - name: Test log-injection example
-        working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml -f log-injection.override.yml -f published.override.yml up --exit-code-from test
-      - name: Test profiling example
-        working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml -f profiling.override.yml -f published.override.yml up --exit-code-from test
+        run: docker-compose -f e2e.docker-compose.yml ${{ matrix.target }} -f published.override.yml up --exit-code-from test
 
   e2e-local:
     runs-on: ubuntu-latest
-    permissions: read-all
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: ''
+            name: 'Basic'
+          - target: '-f express.override.yml'
+            name: 'Express'
+          - target: '-f mixed.override.yml'
+            name: 'Mixed'
+          - target: '-f log-injection.override.yml'
+            name: 'Log injection'
+          - target: '-f profiling.override.yml'
+            name: 'Profiling'
+    name: e2e local ${{ matrix.name }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-      - name: Test basic example
+        uses: actions/checkout@v3
+      - name: Test ${{ matrix.name }} example
         working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml up --exit-code-from test
-      - name: Test express example
-        working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml -f express.override.yml up --exit-code-from test
-      - name: Test mixed example
-        working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml -f mixed.override.yml up --exit-code-from test
-      - name: Test log-injection example
-        working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml -f log-injection.override.yml up --exit-code-from test
-      - name: Test profiling example
-        working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml -f profiling.override.yml up --exit-code-from test
+        run: docker-compose -f e2e.docker-compose.yml ${{ matrix.target }} up --exit-code-from test

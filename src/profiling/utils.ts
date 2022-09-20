@@ -20,7 +20,7 @@ import * as grpc from '@grpc/grpc-js';
 import { diag } from '@opentelemetry/api';
 
 import { perftools } from './proto/profile';
-import type { RawProfilingData } from './types';
+import type { HeapProfile, RawProfilingData } from './types';
 
 const gzipPromise = promisify(gzip);
 
@@ -50,118 +50,171 @@ export interface PProfSerializationOptions {
   samplingPeriodMillis: number;
 }
 
+class Serializer {
+  stringTable = new StringTable();
+  locationsMap = new Map();
+  functionsMap = new Map();
+
+  getLocation(
+    fileName: string,
+    functionName: string,
+    lineNumber: number
+  ): perftools.profiles.Location {
+    const key = `${fileName}:${functionName}:${lineNumber}`;
+    let location = this.locationsMap.get(key);
+    if (!location) {
+      location = new perftools.profiles.Location({
+        id: this.locationsMap.size + 1,
+        line: [this.getLine(fileName, functionName, lineNumber)],
+      });
+      this.locationsMap.set(key, location);
+    }
+    return location;
+  }
+
+  getFunction(
+    fileName: string,
+    functionName: string
+  ): perftools.profiles.Function {
+    const key = `${fileName}:${functionName}`;
+    let fun = this.functionsMap.get(key);
+    if (!fun) {
+      const functionNameId = this.stringTable.getIndex(functionName);
+      fun = new perftools.profiles.Function({
+        id: this.functionsMap.size + 1,
+        name: functionNameId,
+        systemName: functionNameId,
+        filename: this.stringTable.getIndex(fileName),
+      });
+      this.functionsMap.set(key, fun);
+    }
+    return fun;
+  }
+
+  getLine(
+    fileName: string,
+    functionName: string,
+    lineNumber: number
+  ): perftools.profiles.Line {
+    return new perftools.profiles.Line({
+      functionId: this.getFunction(fileName, functionName).id,
+      line: lineNumber !== 0 ? lineNumber : -1,
+    });
+  }
+
+  serializeHeapProfile(profile: HeapProfile) {
+    const SOURCE_EVENT_TIME = this.stringTable.getIndex('source.event.time');
+
+    const label = [{ key: SOURCE_EVENT_TIME, num: profile.timestamp }];
+
+    const sample: perftools.profiles.ISample[] = [];
+
+    const { samples, treeMap } = profile;
+
+    for (const s of samples) {
+      let node = treeMap[s.nodeId];
+      const path: number[] = [];
+
+      while (node !== undefined) {
+        const location = this.getLocation(
+          node.scriptName,
+          node.name,
+          node.lineNumber
+        );
+
+        path.push(location.id as number);
+
+        node = treeMap[node.parentId];
+      }
+
+      sample.push({
+        locationId: path,
+        value: [s.size],
+        label,
+      });
+    }
+
+    return perftools.profiles.Profile.create({
+      sample,
+      location: [...this.locationsMap.values()],
+      function: [...this.functionsMap.values()],
+      stringTable: this.stringTable.serialize(),
+    });
+  }
+
+  serializeCpuProfile(
+    profile: RawProfilingData,
+    options: PProfSerializationOptions
+  ) {
+    const { stacktraces } = profile;
+
+    const STR = {
+      TIMESTAMP: this.stringTable.getIndex('source.event.time'),
+      TRACE_ID: this.stringTable.getIndex('trace_id'),
+      SPAN_ID: this.stringTable.getIndex('span_id'),
+      SOURCE_EVENT_PERIOD: this.stringTable.getIndex('source.event.period'),
+    };
+
+    const eventPeriodLabel = new perftools.profiles.Label({
+      key: STR.SOURCE_EVENT_PERIOD,
+      num: options.samplingPeriodMillis,
+    });
+
+    const samples = stacktraces.map(
+      ({ stacktrace, timestamp, spanId, traceId }) => {
+        const labels = [
+          new perftools.profiles.Label({
+            key: STR.TIMESTAMP,
+            num: Number(BigInt(timestamp) / BigInt(1_000_000)),
+          }),
+          eventPeriodLabel,
+        ];
+        if (traceId) {
+          labels.push(
+            new perftools.profiles.Label({
+              key: STR.TRACE_ID,
+              str: this.stringTable.getIndex(traceId.toString('hex')),
+            })
+          );
+        }
+        if (spanId) {
+          labels.push(
+            new perftools.profiles.Label({
+              key: STR.SPAN_ID,
+              str: this.stringTable.getIndex(spanId.toString('hex')),
+            })
+          );
+        }
+
+        return new perftools.profiles.Sample({
+          locationId: stacktrace.map(([fileName, functionName, lineNumber]) => {
+            return this.getLocation(fileName, functionName, lineNumber).id;
+          }),
+          value: [],
+          label: labels,
+        });
+      }
+    );
+
+    return perftools.profiles.Profile.create({
+      sample: samples,
+      location: [...this.locationsMap.values()],
+      function: [...this.functionsMap.values()],
+      stringTable: this.stringTable.serialize(),
+    });
+  }
+}
+
 export const serialize = (
   profile: RawProfilingData,
   options: PProfSerializationOptions
 ) => {
-  const { stacktraces } = profile;
-
-  const stringTable = new StringTable();
-  const locationsMap = new Map();
-  const functionsMap = new Map();
-
-  // Precreating those because they are really likely to be used
-  const STR = {
-    TIMESTAMP: stringTable.getIndex('source.event.time'),
-    TRACE_ID: stringTable.getIndex('trace_id'),
-    SPAN_ID: stringTable.getIndex('span_id'),
-    SOURCE_EVENT_PERIOD: stringTable.getIndex('source.event.period'),
-  };
-
-  const getLocation = (
-    fileName: string,
-    functionName: string,
-    lineNumber: number
-  ): perftools.profiles.Location => {
-    const key = [fileName, functionName, lineNumber].join(':');
-    let location = locationsMap.get(key);
-    if (!location) {
-      location = new perftools.profiles.Location({
-        id: locationsMap.size + 1,
-        line: [getLine(fileName, functionName, lineNumber)],
-      });
-      locationsMap.set(key, location);
-    }
-    return location;
-  };
-
-  const getFunction = (
-    fileName: string,
-    functionName: string
-  ): perftools.profiles.Function => {
-    const key = [fileName, functionName].join(':');
-    let fun = functionsMap.get(key);
-    if (!fun) {
-      const functionNameId = stringTable.getIndex(functionName);
-      fun = new perftools.profiles.Function({
-        id: functionsMap.size + 1,
-        name: functionNameId,
-        systemName: functionNameId,
-        filename: stringTable.getIndex(fileName || ''),
-      });
-      functionsMap.set(key, fun);
-    }
-    return fun;
-  };
-
-  const getLine = (
-    fileName: string,
-    functionName: string,
-    lineNumber: number
-  ): perftools.profiles.Line => {
-    return new perftools.profiles.Line({
-      functionId: getFunction(fileName, functionName).id,
-      line: lineNumber !== 0 ? lineNumber : -1,
-    });
-  };
-
-  const eventPeriodLabel = new perftools.profiles.Label({
-    key: STR.SOURCE_EVENT_PERIOD,
-    num: options.samplingPeriodMillis,
-  });
-  const samples = stacktraces.map(
-    ({ stacktrace, timestamp, spanId, traceId }) => {
-      const labels = [
-        new perftools.profiles.Label({
-          key: STR.TIMESTAMP,
-          num: Number(BigInt(timestamp) / BigInt(1_000_000)),
-        }),
-        eventPeriodLabel,
-      ];
-      if (traceId) {
-        labels.push(
-          new perftools.profiles.Label({
-            key: STR.TRACE_ID,
-            str: stringTable.getIndex(traceId.toString('hex')),
-          })
-        );
-      }
-      if (spanId) {
-        labels.push(
-          new perftools.profiles.Label({
-            key: STR.SPAN_ID,
-            str: stringTable.getIndex(spanId.toString('hex')),
-          })
-        );
-      }
-
-      return new perftools.profiles.Sample({
-        locationId: stacktrace.map(([fileName, functionName, lineNumber]) => {
-          return getLocation(fileName, functionName, lineNumber).id;
-        }),
-        value: [],
-        label: labels,
-      });
-    }
-  );
-
-  return perftools.profiles.Profile.create({
-    sample: samples,
-    location: [...locationsMap.values()],
-    function: [...functionsMap.values()],
-    stringTable: stringTable.serialize(),
-  });
+  return new Serializer().serializeCpuProfile(profile, options);
 };
+
+export function serializeHeapProfile(profile: HeapProfile) {
+  return new Serializer().serializeHeapProfile(profile);
+}
 
 export const encode = async function encode(
   profile: perftools.profiles.IProfile
