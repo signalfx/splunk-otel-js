@@ -115,7 +115,7 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
 
   if (isTracingContextManagerEnabled()) {
     diag.warn(
-      `Profiling: unable to set up context manager due to tracing's context manager being active. Traces won't be correlated to profiling data. Please start profiling before tracing.`
+      `Splunk profiling: unable to set up context manager due to tracing's context manager being active. Traces won't be correlated to profiling data. Please start profiling before tracing.`
     );
   } else if (!profilingContextManagerEnabled) {
     const contextManager = new ProfilingContextManager();
