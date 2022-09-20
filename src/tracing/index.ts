@@ -37,6 +37,7 @@ import { configureLogInjection } from '../instrumentations/logging';
 import { allowedTracingOptions, Options, _setDefaultOptions } from './options';
 import { configureRedisInstrumentation } from '../instrumentations/redis';
 import { assertNoExtraneousProperties, parseEnvBooleanString } from '../utils';
+import { isProfilingContextManagerSet } from '../profiling';
 
 /**
  * We disallow calling `startTracing` twice because:
@@ -50,8 +51,13 @@ const allowDoubleStart = parseEnvBooleanString(
   process.env.TEST_ALLOW_DOUBLE_START
 );
 let isStarted = false;
+let tracingContextManagerEnabled = false;
 
 let unregisterInstrumentations: (() => void) | null = null;
+
+export function isTracingContextManagerEnabled(): boolean {
+  return tracingContextManagerEnabled;
+}
 
 export { Options as TracingOptions };
 export function startTracing(opts: Partial<Options> = {}): boolean {
@@ -65,13 +71,17 @@ export function startTracing(opts: Partial<Options> = {}): boolean {
   // propagator
   propagation.setGlobalPropagator(options.propagatorFactory(options));
 
-  // context manager
-  const ContextManager = gte(process.version, '14.8.0')
-    ? AsyncLocalStorageContextManager
-    : AsyncHooksContextManager;
-  const contextManager = new ContextManager();
-  contextManager.enable();
-  context.setGlobalContextManager(contextManager);
+  // OpenTelemetry would log an error diagnostic when attempting to overwrite a global.
+  // Once profiling has set its context manager, we should not attempt to overwrite it.
+  if (!isProfilingContextManagerSet()) {
+    const ContextManager = gte(process.version, '14.8.0')
+      ? AsyncLocalStorageContextManager
+      : AsyncHooksContextManager;
+    const contextManager = new ContextManager();
+    contextManager.enable();
+    context.setGlobalContextManager(contextManager);
+    tracingContextManagerEnabled = true;
+  }
 
   // tracer provider
   const provider = new NodeTracerProvider(options.tracerConfig);
@@ -114,7 +124,10 @@ export async function stopTracing() {
   const shutdownPromise = shutdownGlobalTracerProvider();
 
   propagation.disable();
-  context.disable();
+  if (tracingContextManagerEnabled) {
+    context.disable();
+    tracingContextManagerEnabled = false;
+  }
   trace.disable();
 
   return shutdownPromise;
