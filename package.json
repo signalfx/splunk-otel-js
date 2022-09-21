@@ -121,7 +121,7 @@
     "nan": "^2.16.0",
     "node-gyp-build": "^4.3.0",
     "semver": "^7.3.5",
-    "signalfx": "7.4.1"
+    "signalfx": "7.5.0"
   },
   "peerDependencies": {
     "@opentelemetry/instrumentation-amqplib": ">=0.29.0 <1",
