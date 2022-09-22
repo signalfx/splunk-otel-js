@@ -178,7 +178,7 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
 
   const metricReaders = options.metricReaderFactory(options);
 
-  metricReaders.forEach(reader => {
+  metricReaders.forEach((reader) => {
     provider.addMetricReader(reader);
   });
 
@@ -203,7 +203,7 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
       unit: 'By',
       valueType: ValueType.INT,
     })
-    .addCallback(result => {
+    .addCallback((result) => {
       result.observe(process.memoryUsage().heapTotal);
     });
 
@@ -212,7 +212,7 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
       unit: 'By',
       valueType: ValueType.INT,
     })
-    .addCallback(result => {
+    .addCallback((result) => {
       result.observe(process.memoryUsage().heapUsed);
     });
 
@@ -221,7 +221,7 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
       unit: 'By',
       valueType: ValueType.INT,
     })
-    .addCallback(result => {
+    .addCallback((result) => {
       result.observe(process.memoryUsage().rss);
     });
 
@@ -242,7 +242,7 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
       unit: 'ns',
       valueType: ValueType.INT,
     })
-    .addCallback(result => {
+    .addCallback((result) => {
       result.observe(runtimeCounters.eventLoopLag.max);
     });
 
@@ -251,7 +251,7 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
       unit: 'ns',
       valueType: ValueType.INT,
     })
-    .addCallback(result => {
+    .addCallback((result) => {
       result.observe(runtimeCounters.eventLoopLag.min);
     });
 

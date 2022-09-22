@@ -225,7 +225,7 @@ describe('metrics', () => {
       const counter = metrics.getMeter('custom').createCounter('test-counter');
       counter.add(42);
 
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       const metricData = await reader.collect();
 
@@ -247,7 +247,7 @@ describe('metrics', () => {
       assert.deepEqual(metricData.resourceMetrics.scopeMetrics.length, 2);
 
       const customMetrics = metricData.resourceMetrics.scopeMetrics.find(
-        scopeMetrics => {
+        (scopeMetrics) => {
           return scopeMetrics.scope.name === 'custom';
         }
       );
@@ -255,7 +255,7 @@ describe('metrics', () => {
       assert.deepEqual(customMetrics.metrics[0].descriptor.name, 'clicks.xyz');
 
       const runtimeIlMetrics = metricData.resourceMetrics.scopeMetrics.find(
-        scopeMetrics => {
+        (scopeMetrics) => {
           return scopeMetrics.scope.name === 'splunk-otel-js-runtime-metrics';
         }
       );
@@ -330,7 +330,7 @@ describe('metrics', () => {
 
         if (runtimeMetric.descriptor.name.includes('memory.gc')) {
           assert(
-            runtimeMetric.dataPoints.every(dp =>
+            runtimeMetric.dataPoints.every((dp) =>
               isValidGcAttribute(dp.attributes['gc.type'])
             )
           );
