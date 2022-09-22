@@ -2,6 +2,27 @@
   "name": "@splunk/otel",
   "entries": [
     {
+      "date": "Wed, 22 Sep 2022 09:24:01 GMT",
+      "tag": "@splunk/otel_v1.4.1",
+      "version": "1.4.1",
+      "comments": {
+        "patch": [
+          {
+            "author": "siimkallas@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "c3e9267a1bc95c0750fd2d684cb419bd58b4be23",
+            "comment": "chore: upgrade to signalfx 7.5.0"
+          },
+          {
+            "author": "siimkallas@gmail.com",
+            "package": "@splunk/otel",
+            "commit": "dc7c14567d3778fb132115d8f2eac7bdaef69fcf",
+            "comment": "fix: don't produce otel diagnostic error when profiling is started"
+          }
+        ]
+      }
+    },
+    {
       "date": "Mon, 19 Sep 2022 12:41:01 GMT",
       "tag": "@splunk/otel_v1.4.0",
       "version": "1.4.0",

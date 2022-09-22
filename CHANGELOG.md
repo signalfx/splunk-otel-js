@@ -1,8 +1,15 @@
 # Change Log - @splunk/otel
 
-This log was last generated on Mon, 19 Sep 2022 12:41:01 GMT and should not be manually modified.
+This log was last generated on Wed, 22 Sep 2022 09:24:01 GMT and should not be manually modified.
 
 <!-- Start content -->
+
+## 1.4.1
+
+Wed, 22 Sep 2022 09:24:01 GMT
+
+- chore: upgrade to signalfx 7.5.0 for Node.js 18 support [#557](https://github.com/signalfx/splunk-otel-js/pull/557)
+- fix: don't log a diagnostic error when profiling is started [#557](https://github.com/signalfx/splunk-otel-js/pull/556)
 
 ## 1.4.0
 
