@@ -36,6 +36,7 @@ import {
 import { ProfilingContextManager } from './ProfilingContextManager';
 import { OTLPProfilingExporter } from './OTLPProfilingExporter';
 import { DebugExporter } from './DebugExporter';
+import { isTracingContextManagerEnabled } from '../tracing';
 
 export { ProfilingOptions };
 
@@ -93,6 +94,12 @@ export function defaultExporterFactory(
   return exporters;
 }
 
+let profilingContextManagerEnabled = false;
+
+export function isProfilingContextManagerSet(): boolean {
+  return profilingContextManagerEnabled;
+}
+
 export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
   assertNoExtraneousProperties(opts, allowedProfilingOptions);
 
@@ -106,9 +113,16 @@ export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
     };
   }
 
-  const contextManager = new ProfilingContextManager();
-  contextManager.enable();
-  context.setGlobalContextManager(contextManager);
+  if (isTracingContextManagerEnabled()) {
+    diag.warn(
+      `Splunk profiling: unable to set up context manager due to tracing's context manager being active. Traces won't be correlated to profiling data. Please start profiling before tracing.`
+    );
+  } else if (!profilingContextManagerEnabled) {
+    const contextManager = new ProfilingContextManager();
+    contextManager.enable();
+    context.setGlobalContextManager(contextManager);
+    profilingContextManagerEnabled = true;
+  }
 
   const exporters = options.exporterFactory(options);
 
