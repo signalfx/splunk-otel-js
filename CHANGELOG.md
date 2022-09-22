@@ -9,7 +9,7 @@ This log was last generated on Wed, 22 Sep 2022 09:24:01 GMT and should not be m
 Wed, 22 Sep 2022 09:24:01 GMT
 
 - chore: upgrade to signalfx 7.5.0 for Node.js 18 support [#557](https://github.com/signalfx/splunk-otel-js/pull/557)
-- fix: don't log a diagnostic error when profiling is started [#557](https://github.com/signalfx/splunk-otel-js/pull/556)
+- fix: don't log a diagnostic error when profiling is started [#556](https://github.com/signalfx/splunk-otel-js/pull/556)
 
 ## 1.4.0
 
