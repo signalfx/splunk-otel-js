@@ -25,9 +25,10 @@ import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
 import { getInstrumentations } from '../instrumentations';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
+import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 // eslint-disable-next-line node/no-extraneous-import
 import { Metadata } from '@grpc/grpc-js';
-import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
+import { JaegerExporter as OriginalJaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { detect as detectResource } from '../resource';
 import { deduplicate, defaultServiceName, getEnvBoolean } from '../utils';
 import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
@@ -40,6 +41,15 @@ import {
 } from '@opentelemetry/core';
 import { SplunkBatchSpanProcessor } from './SplunkBatchSpanProcessor';
 import { Resource } from '@opentelemetry/resources';
+
+const JaegerExporter = util.deprecate(
+  OriginalJaegerExporter,
+  [
+    '"jaeger-thrift-splunk" trace exporter is deprecated and may be removed in a future major release. Use the default',
+    'OTLP exporter instead, or set the SPLUNK_REALM and SPLUNK_ACCESS_TOKEN environment variables to send',
+    'telemetry directly to Splunk Observability Cloud.',
+  ].join(' ')
+);
 
 type SpanExporterFactory = (options: Options) => SpanExporter;
 
@@ -228,6 +238,7 @@ const SUPPORTED_EXPORTER_TYPES = [
   'jaeger-thrift-splunk',
   'otlp',
   'otlp-grpc',
+  'otlp-splunk',
 ];
 
 type ExporterType = typeof SUPPORTED_EXPORTER_TYPES[number];
@@ -239,10 +250,13 @@ const SpanExporterMap: Record<ExporterType, SpanExporterFactory> = {
   'jaeger-thrift-splunk': splunkSpanExporterFactory,
   otlp: otlpSpanExporterFactory,
   'otlp-grpc': otlpSpanExporterFactory,
+  'otlp-splunk': splunkOtlpSpanExporterFactory,
 };
 
 function isSupportedRealmExporter(exporterType: string) {
-  return ['jaeger-thrift-splunk', 'jaeger-thrift-http'].includes(exporterType);
+  return ['jaeger-thrift-splunk', 'jaeger-thrift-http', 'otlp-splunk'].includes(
+    exporterType
+  );
 }
 
 function isValidExporterType(type: string): boolean {
@@ -300,6 +314,34 @@ export function otlpSpanExporterFactory(options: Options): SpanExporter {
   return new OTLPTraceExporter({
     url: options.endpoint,
     metadata,
+  });
+}
+
+export function splunkOtlpSpanExporterFactory(options: Options): SpanExporter {
+  const { accessToken, realm } = options;
+  let { endpoint } = options;
+
+  if (endpoint) {
+    if (realm) {
+      throw new Error('Only one of endpoint and realm should be set');
+    }
+  } else {
+    if (realm) {
+      endpoint = `https://ingest.${realm}.signalfx.com/v2/trace/otlp`;
+    } else {
+      throw new Error('Expected either realm or endpoint to be set');
+    }
+  }
+
+  if (!accessToken) {
+    throw new Error('Expected accessToken to be configured');
+  }
+
+  return new OTLPHttpTraceExporter({
+    url: endpoint,
+    headers: {
+      'X-SF-TOKEN': accessToken,
+    },
   });
 }
 
