@@ -27,7 +27,7 @@ import { getInstrumentations } from '../instrumentations';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 // eslint-disable-next-line node/no-extraneous-import
 import { Metadata } from '@grpc/grpc-js';
-import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
+import { JaegerExporter as OriginalJaegerExporter } from '@opentelemetry/exporter-jaeger';
 import { detect as detectResource } from '../resource';
 import { deduplicate, defaultServiceName, getEnvBoolean } from '../utils';
 import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
@@ -40,6 +40,11 @@ import {
 } from '@opentelemetry/core';
 import { SplunkBatchSpanProcessor } from './SplunkBatchSpanProcessor';
 import { Resource } from '@opentelemetry/resources';
+
+const JaegerExporter = util.deprecate(
+  OriginalJaegerExporter,
+  'Jaeger exporter is deprecated and will be removed in 2.x'
+);
 
 type SpanExporterFactory = (options: Options) => SpanExporter;
 
