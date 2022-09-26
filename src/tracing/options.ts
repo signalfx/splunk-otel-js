@@ -43,7 +43,11 @@ import { Resource } from '@opentelemetry/resources';
 
 const JaegerExporter = util.deprecate(
   OriginalJaegerExporter,
-  'Jaeger exporter is deprecated and will be removed in 2.x'
+  [
+    '"jaeger-thrift-splunk" trace exporter is deprecated and may be removed in a future major release. Use the default',
+    'OTLP exporter instead, or set the SPLUNK_REALM and SPLUNK_ACCESS_TOKEN environment variables to send',
+    'telemetry directly to Splunk Observability Cloud.',
+  ].join(' ')
 );
 
 type SpanExporterFactory = (options: Options) => SpanExporter;
