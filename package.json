@@ -109,7 +109,6 @@
     "@opentelemetry/api-metrics": "^0.31.0",
     "@opentelemetry/context-async-hooks": "~1.6.0",
     "@opentelemetry/core": "~1.6.0",
-    "@opentelemetry/exporter-jaeger": "~1.6.0",
     "@opentelemetry/exporter-metrics-otlp-grpc": "^0.32.0",
     "@opentelemetry/exporter-metrics-otlp-proto": "^0.32.0",
     "@opentelemetry/exporter-trace-otlp-grpc": "^0.32.0",
