@@ -88,19 +88,23 @@ startMetrics({
 
 ## Migrating from SignalFx metrics
 
-The SignalFx client is no longer available.
+Dependency on the SignalFx client has been removed from the Splunk distribution.
 
+The following snippets are semantically equivalent and is an example of how to convert SignalFx custom metrics to OpenTelemetry.
+
+### SignalFx (no longer available)
 ```javascript
-// Before
 const { startMetrics } = require('@splunk/otel');
 const { getSignalFxClient } = startMetrics({ serviceName: 'my-service' });
 
 getSignalFxClient().send({
-  gauges: [{ metric: 'cpu', value: 42, timestamp: 1442960607000}],
-  cumulative_counters: [{ metric: 'clicks', value: 99, timestamp: 1442960607000}],
-})
+  gauges: [{ metric: 'cpu', value: 42, timestamp: Date.now()}],
+  cumulative_counters: [{ metric: 'clicks', value: 99, timestamp: Date.now()}],
+});
+```
 
-// After
+### OpenTelemetry
+```javascript
 const { startMetrics } = require('@splunk/otel');
 const { metrics } = require('@opentelemetry/api-metrics');
 
