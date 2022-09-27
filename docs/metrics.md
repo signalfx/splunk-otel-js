@@ -65,7 +65,11 @@ startMetrics({
 });
 ```
 
-## Choosing temporality aggregation type
+## Choosing [aggregation temporality](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/data-model.md#sums)
+
+There are 2 possible aggregation temporalities:
+- `AggregationTemporality.CUMULATIVE` (default) - cumulative metrics (e.g. counters, histograms) are continuously summed together from a given starting point, which in this case is set with the call to `startMetrics`.
+- `AggregationTemporality.DELTA` - similar to `CUMULATIVE`, but the metrics are summed together relative to the last metric collection step, which is set by the export interval.
 
 ```javascript
 const { startMetrics } = require('@splunk/otel');
