@@ -14,7 +14,8 @@
 
 # Splunk Distribution of OpenTelemetry for Node.js
 
-## **Documentation for the current stable version (1.x) can be viewed [here](https://quickdraw.splunk.com/redirect/?product=Observability&location=nodejs.application&version=current).**
+> ## **Documentation for the current stable version (1.x) can be viewed [here](https://quickdraw.splunk.com/redirect/?product=Observability&location=nodejs.application&version=current).**
+> ## **To access version 1.x examples and developer documentation, see [/tree/1.x](https://github.com/signalfx/splunk-otel-js/tree/1.x).**
 
 The Splunk Distribution of [OpenTelemetry JS](https://github.com/open-telemetry/opentelemetry-js) automatically instruments your Node application to capture and report distributed traces to Splunk APM.
 
