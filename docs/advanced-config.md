@@ -25,7 +25,7 @@ This distribution supports all the configuration options supported by the compon
 | `OTEL_ATTRIBUTE_COUNT_LIMIT`                                    |                         | Stable  | Maximum allowed span attribute count
 | `OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT`                             | `12000`\*               | Stable  | Maximum allowed attribute value size
 | `OTEL_EXPORTER_JAEGER_ENDPOINT`                                 | `http://localhost:14268/v1/traces` or<br>`http://localhost:9080/v1/trace`<br>if `jaeger-thrift-splunk` is used as exporter | Stable | HTTP endpoint for Jaeger traces
-| `OTEL_EXPORTER_OTLP_ENDPOINT`<br>`endpoint`                     | `localhost:4317`        | Stable  | The OTLP endpoint to export to. Only OTLP over gRPC is supported.
+| `OTEL_EXPORTER_OTLP_ENDPOINT`<br>`endpoint`                     | `http://localhost:4317` | Stable  | The OTLP endpoint to export to. Only OTLP over gRPC is supported.
 | `OTEL_LOG_LEVEL`                                                |                         | Stable  | Log level to use in diagnostics logging. **Does not set the logger.**
 | `OTEL_PROPAGATORS`<br>`propagators`                             | `tracecontext,baggage`  | Stable  | Comma-delimited list of propagators to use. Valid keys: `baggage`, `tracecontext`, `b3multi`, `b3`.
 | `OTEL_RESOURCE_ATTRIBUTES`                                      |                         | Stable  | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
@@ -41,6 +41,8 @@ This distribution supports all the configuration options supported by the compon
 | `SPLUNK_REALM`<br>`realm`                                       |                         | Stable  | The name of your organization's realm, for example, ``us0``. When you set the realm, telemetry is sent directly to the ingest endpoint of Splunk Observability Cloud, bypassing the Splunk OpenTelemetry Collector.
 | `SPLUNK_TRACE_RESPONSE_HEADER_ENABLED`<br>`serverTimingEnabled` | `true`                  | Stable  | Enable injection of `Server-Timing` header to HTTP responses.
 | `SPLUNK_REDIS_INCLUDE_COMMAND_ARGS` | `false`                  | Stable  | Will include the full redis query in `db.statement` span attribute when using `redis` instrumentation.
+
+\*: Overwritten default value
 
 #### Additional `startTracing` config options
 
@@ -60,22 +62,18 @@ The following config options can be set by passing them as arguments to `startTr
 
 ### Metrics
 
+Configuration examples can be seen [here](metrics.md).
+
 | Environment variable<br>``startMetrics()`` argument             | Default value           | Support | Notes
 | --------------------------------------------------------------- | ----------------------- | ------- | ---
-| `SPLUNK_METRICS_ENABLED`                                        | `false`                 | Experimental | Enabled metrics export. See [metrics documentation](metrics.md) for more information.
-| `SPLUNK_METRICS_ENDPOINT`<br>`endpoint`                         | `http://localhost:9943` | Experimental | The metrics endpoint to send to.
-| `SPLUNK_METRICS_EXPORT_INTERVAL`<br>`exportInterval`            | `5000`                  | Experimental | The interval, in milliseconds, of metrics collection and exporting.
-
-#### Additional `startMetrics` config options
-
-- `signalfx`: A JS object with optional `client` and `dimensions` fields. If you have already setup a [SignalFx client](https://github.com/signalfx/signalfx-nodejs) with custom configuration, you can use this for sending instead of creating, configuring a new one. `dimensions` object adds a pre-defined dimension for each datapoint. The format for `dimensions` is `{key: value, ...}`.
-
-   The following is a list of dimensions added by default:
-   - `service`: see [`serviceName`](#tracing) from the tracing section
-   - `metric_source`: `splunk-otel-js`
-   - `node_version`: `process.versions.node`, e.g. `16.10.0`
-
-\*: Overwritten default value
+| `OTEL_SERVICE_NAME`<br>`serviceName`                            | `unnamed-node-service`  | Stable  | The service name of this Node service.
+| `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`<br>`endpoint`             | `http://localhost:4317` | Stable | The OTLP endpoint to export to.
+| `OTEL_METRIC_EXPORT_INTERVAL`<br>`exportIntervalMillis`         | `30000`                 | Stable | The interval, in milliseconds, of metrics collection and exporting.
+| `OTEL_RESOURCE_ATTRIBUTES`                                      |                         | Stable  | The resource attributes to metric data. <details><summary>Environment variable example</summary>`key1=val1,key2=val2`</details>
+| `SPLUNK_METRICS_ENABLED`<br>n/a (enabled by calling `startMetrics`) | `false`             | Experimental | Sets up the metrics pipeline (global meter provider, exporters).
+| n/a<br>`resourceFactory`                                        |                         | Experimental | Callback which allows to filter the default resource or provide a custom one. The function takes one argument of type `Resource` which is the resource pre-filled by the SDK containing the `service.name`, environment, host and process attributes. |
+| `SPLUNK_RUNTIME_METRICS_ENABLED`<br>`runtimeMetricsEnabled`     | `false`                 | Experimental | Enable collecting and exporting of runtime metrics. See [metrics documentation](metrics.md) for more information.
+| `SPLUNK_RUNTIME_METRICS_COLLECTION_INTERVAL`<br>`runtimeMetricsCollectionIntervalMillis`  | `5000`                 | Experimental | The interval, in milliseconds, during which GC and event loop statistics are collected. After the collection is done, the values become available to the metric exporter.
 
 ### Profiling
 

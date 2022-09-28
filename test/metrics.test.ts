@@ -15,7 +15,19 @@
  */
 
 import * as assert from 'assert';
-import * as os from 'os';
+import { Resource } from '@opentelemetry/resources';
+import { metrics } from '@opentelemetry/api-metrics';
+import {
+  AggregationTemporality,
+  DataPointType,
+  InstrumentType,
+  MetricData,
+  MetricReader,
+  View,
+} from '@opentelemetry/sdk-metrics-base';
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
+import { OTLPMetricExporter as OTLPHttpProtoMetricExporter } from '@opentelemetry/exporter-metrics-otlp-proto';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 import * as utils from './utils';
 import { hrtime } from 'process';
@@ -30,10 +42,12 @@ function emptyCounter() {
     count: 0,
   };
 }
+
 const emptyGcCounter = () => ({
   collected: emptyCounter(),
   duration: emptyCounter(),
 });
+
 const emptyStats = () => ({
   eventLoopLag: emptyCounter(),
   gc: {
@@ -44,6 +58,19 @@ const emptyStats = () => ({
     process_weak_callbacks: emptyGcCounter(),
   },
 });
+
+class TestMetricReader extends MetricReader {
+  constructor(public temporality: AggregationTemporality) {
+    super();
+  }
+  selectAggregationTemporality(
+    instrumentType: InstrumentType
+  ): AggregationTemporality {
+    return this.temporality;
+  }
+  protected async onForceFlush() {}
+  protected async onShutdown() {}
+}
 
 describe('metrics', () => {
   describe('native counters collection', () => {
@@ -96,35 +123,40 @@ describe('metrics', () => {
       const options = _setDefaultOptions();
       assert.deepEqual(options.serviceName, 'unnamed-node-service');
       assert.deepEqual(options.accessToken, '');
-      assert.deepEqual(options.endpoint, 'http://localhost:9943');
-      assert.deepEqual(options.exportInterval, 5000);
-
-      const sfxClient = options.sfxClient;
-      assert.deepStrictEqual(sfxClient['globalDimensions'], {
-        service: 'unnamed-node-service',
-        metric_source: 'splunk-otel-js',
-        node_version: process.versions.node,
-      });
+      assert.deepEqual(options.exportIntervalMillis, 30000);
+      assert.deepEqual(
+        options.resource.attributes[SemanticResourceAttributes.SERVICE_NAME],
+        'unnamed-node-service'
+      );
+      assert.deepEqual(options.runtimeMetricsEnabled, false);
+      assert.deepEqual(options.runtimeMetricsCollectionIntervalMillis, 5000);
+      assert(
+        options.metricReaderFactory(options)[0]['_exporter'] instanceof
+          OTLPMetricExporter,
+        'Expected the default metric exporter to be OTLP gRPC'
+      );
     });
 
     it('is possible to set options via env vars', () => {
       process.env.SPLUNK_ACCESS_TOKEN = 'foo';
       process.env.OTEL_SERVICE_NAME = 'bigmetric';
-      process.env.SPLUNK_METRICS_ENDPOINT = 'http://localhost:9999';
-      process.env.SPLUNK_METRICS_EXPORT_INTERVAL = '1000';
+      process.env.OTEL_METRIC_EXPORT_INTERVAL = '1000';
+      process.env.OTEL_RESOURCE_ATTRIBUTES = 'key1=val1,key2=val2';
+      process.env.SPLUNK_RUNTIME_METRICS_ENABLED = 'true';
+      process.env.SPLUNK_RUNTIME_METRICS_COLLECTION_INTERVAL = '1200';
 
       const options = _setDefaultOptions();
       assert.deepEqual(options.serviceName, 'bigmetric');
       assert.deepEqual(options.accessToken, 'foo');
-      assert.deepEqual(options.endpoint, 'http://localhost:9999');
-      assert.deepEqual(options.exportInterval, 1000);
-
-      const sfxClient = options.sfxClient;
-      assert.deepStrictEqual(sfxClient['globalDimensions'], {
-        service: 'bigmetric',
-        metric_source: 'splunk-otel-js',
-        node_version: process.versions.node,
-      });
+      assert.deepEqual(options.exportIntervalMillis, 1000);
+      assert.deepEqual(options.resource.attributes['key1'], 'val1');
+      assert.deepEqual(options.resource.attributes['key2'], 'val2');
+      assert.deepEqual(
+        options.resource.attributes[SemanticResourceAttributes.SERVICE_NAME],
+        'bigmetric'
+      );
+      assert.deepEqual(options.runtimeMetricsEnabled, true);
+      assert.deepEqual(options.runtimeMetricsCollectionIntervalMillis, 1200);
     });
 
     it('throws when realm is set without an access token', () => {
@@ -141,7 +173,12 @@ describe('metrics', () => {
       const options = _setDefaultOptions();
       assert.deepStrictEqual(
         options.endpoint,
-        'https://ingest.eu0.signalfx.com'
+        'https://ingest.eu0.signalfx.com/v2/datapoint/otlp'
+      );
+      assert(
+        options.metricReaderFactory(options)[0]['_exporter'] instanceof
+          OTLPHttpProtoMetricExporter,
+        'Expected the metric exporter to be OTLP HTTP proto exporter when realm is set'
       );
     });
 
@@ -155,49 +192,150 @@ describe('metrics', () => {
   });
 
   describe('startMetrics', () => {
-    it('exports metrics', (done) => {
-      const metric =
-        (name: string) =>
-        ({ metric }) =>
-          metric === name;
-      const gcMetric = (name: string) => (m) =>
-        metric(name)(m) && m.dimensions['gctype'] === 'all';
-      const { stopMetrics } = startMetrics({
-        exportInterval: 100,
-        signalfx: {
-          client: {
-            send: (report) => {
-              stopMetrics();
-              const gauges = report.gauges;
-              const cumulativeCounters = report.cumulative_counters;
-              assert(gauges.find(metric('nodejs.memory.heap.total')));
-              assert(gauges.find(metric('nodejs.memory.heap.used')));
-              assert(gauges.find(metric('nodejs.memory.rss')));
-              assert(gauges.find(metric('nodejs.event_loop.lag.max')));
-              assert(gauges.find(metric('nodejs.event_loop.lag.min')));
+    let reader: TestMetricReader;
 
-              assert(
-                cumulativeCounters.find(gcMetric('nodejs.memory.gc.size'))
-              );
-              assert(
-                cumulativeCounters.find(gcMetric('nodejs.memory.gc.pause'))
-              );
-              assert(
-                cumulativeCounters.find(gcMetric('nodejs.memory.gc.count'))
-              );
-
-              done();
-            },
-          },
-        },
-      });
+    beforeEach(() => {
+      utils.cleanEnvironment();
+      reader = new TestMetricReader(AggregationTemporality.CUMULATIVE);
     });
 
-    it('is possible to get the current signalfx client', () => {
-      const { stopMetrics, getSignalFxClient } = startMetrics();
-      const client = getSignalFxClient();
-      stopMetrics();
-      assert(client);
+    after(utils.cleanEnvironment);
+
+    // Custom metrics and runtime metrics are done with 1 test as OTel meter provider can't be reset
+    it('is possible to use metrics', async () => {
+      const resource = new Resource({
+        [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: 'test',
+      });
+
+      startMetrics({
+        serviceName: 'foo',
+        resourceFactory: (defaultResource: Resource) => {
+          return defaultResource.merge(resource);
+        },
+        views: [
+          new View({ name: 'clicks.xyz', instrumentName: 'test-counter' }),
+        ],
+        runtimeMetricsEnabled: true,
+        runtimeMetricsCollectionIntervalMillis: 1,
+        metricReaderFactory: () => {
+          return [reader];
+        },
+      });
+
+      const counter = metrics.getMeter('custom').createCounter('test-counter');
+      counter.add(42);
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const metricData = await reader.collect();
+
+      assert.deepEqual(
+        metricData.resourceMetrics.resource.attributes[
+          SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT
+        ],
+        'test'
+      );
+
+      assert.deepEqual(
+        metricData.resourceMetrics.resource.attributes[
+          SemanticResourceAttributes.SERVICE_NAME
+        ],
+        'foo'
+      );
+
+      // One is the 'custom' meter, the other one is runtime metrics meter
+      assert.deepEqual(metricData.resourceMetrics.scopeMetrics.length, 2);
+
+      const customMetrics = metricData.resourceMetrics.scopeMetrics.find(
+        (scopeMetrics) => {
+          return scopeMetrics.scope.name === 'custom';
+        }
+      );
+
+      assert.deepEqual(customMetrics.metrics[0].descriptor.name, 'clicks.xyz');
+
+      const runtimeIlMetrics = metricData.resourceMetrics.scopeMetrics.find(
+        (scopeMetrics) => {
+          return scopeMetrics.scope.name === 'splunk-otel-js-runtime-metrics';
+        }
+      );
+
+      assert.notEqual(runtimeIlMetrics, undefined);
+
+      const runtimeMetrics = runtimeIlMetrics.metrics;
+      assert.equal(runtimeMetrics.length, 8);
+
+      const expectedDescriptors = new Map([
+        [
+          'process.runtime.nodejs.memory.heap.total',
+          { unit: 'By', type: InstrumentType.OBSERVABLE_GAUGE },
+        ],
+        [
+          'process.runtime.nodejs.memory.heap.used',
+          { unit: 'By', type: InstrumentType.OBSERVABLE_GAUGE },
+        ],
+        [
+          'process.runtime.nodejs.memory.rss',
+          { unit: 'By', type: InstrumentType.OBSERVABLE_GAUGE },
+        ],
+        [
+          'process.runtime.nodejs.event_loop.lag.max',
+          { unit: 'ns', type: InstrumentType.OBSERVABLE_GAUGE },
+        ],
+        [
+          'process.runtime.nodejs.event_loop.lag.min',
+          { unit: 'ns', type: InstrumentType.OBSERVABLE_GAUGE },
+        ],
+        [
+          'process.runtime.nodejs.memory.gc.size',
+          { unit: 'By', type: InstrumentType.COUNTER },
+        ],
+        [
+          'process.runtime.nodejs.memory.gc.pause',
+          { unit: 'By', type: InstrumentType.COUNTER },
+        ],
+        [
+          'process.runtime.nodejs.memory.gc.count',
+          { unit: '1', type: InstrumentType.COUNTER },
+        ],
+      ]);
+
+      const validGcTypes = new Set([
+        'all',
+        'scavenge',
+        'mark_sweep_compact',
+        'incremental_marking',
+        'process_weak_callbacks',
+      ]);
+
+      const isValidGcAttribute = (v: unknown) => {
+        if (typeof v !== 'string') return false;
+        return validGcTypes.has(v);
+      };
+
+      const isSumMetric = (v: MetricData) =>
+        v.descriptor.name.includes('memory.gc');
+
+      for (const runtimeMetric of runtimeMetrics) {
+        const expected = expectedDescriptors.get(runtimeMetric.descriptor.name);
+        assert(expected);
+
+        assert.deepEqual(runtimeMetric.descriptor.unit, expected.unit);
+
+        if (isSumMetric(runtimeMetric)) {
+          assert.deepEqual(runtimeMetric.dataPointType, DataPointType.SUM);
+        } else {
+          assert.deepEqual(runtimeMetric.dataPointType, DataPointType.GAUGE);
+        }
+
+        if (runtimeMetric.descriptor.name.includes('memory.gc')) {
+          assert(
+            runtimeMetric.dataPoints.every((dp) =>
+              isValidGcAttribute(dp.attributes['gc.type'])
+            )
+          );
+        }
+      }
     });
   });
 });

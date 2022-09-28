@@ -40,9 +40,13 @@ const running: RunningState = {
   tracing: null,
 };
 
-const isSignalEnabled = (option: any, envVar: string, def: boolean) => {
+function isSignalEnabled<T>(
+  option: T | undefined | null,
+  envVar: string,
+  def: boolean
+) {
   return option ?? parseEnvBooleanString(process.env[envVar]) ?? def;
-};
+}
 
 export const start = (options: Partial<Options> = {}) => {
   if (running.metrics || running.profiling || running.tracing) {
@@ -75,12 +79,7 @@ export const stop = async () => {
   const promises = [];
 
   if (running.metrics) {
-    promises.push(
-      new Promise<void>((resolve) => {
-        running.metrics!.stopMetrics();
-        resolve();
-      })
-    );
+    promises.push(running.metrics.stop());
     running.metrics = null;
   }
 
