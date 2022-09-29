@@ -1,13 +1,23 @@
 default:
   image: 'cimg/node:lts'
 
+include:
+  - project: 'ci-cd/templates'
+    ref: master
+    file: '/prodsec/.oss-scan.yml'
+
 stages:
+  - scan
   - release
 
 .prepare_dist: &prepare_dist
   - npm install
   - npm run prepare-release-artifact
   - shasum -a 256 dist/* > dist/checksums.txt
+
+oss-scan:
+  stage: scan
+  extends: .oss-scan
 
 release:
   stage: release
