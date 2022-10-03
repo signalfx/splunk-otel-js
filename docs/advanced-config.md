@@ -25,6 +25,7 @@ This distribution supports all the configuration options supported by the compon
 | `OTEL_ATTRIBUTE_COUNT_LIMIT`                                    |                         | Stable  | Maximum allowed span attribute count
 | `OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT`                             | `12000`\*               | Stable  | Maximum allowed attribute value size
 | `OTEL_EXPORTER_JAEGER_ENDPOINT`                                 | `http://localhost:14268/v1/traces` or<br>`http://localhost:9080/v1/trace`<br>if `jaeger-thrift-splunk` is used as exporter | Deprecated | HTTP endpoint for Jaeger traces
+| `OTEL_EXPORTER_OTLP_ENDPOINT`<br>`endpoint`                     | `localhost:4317`        | Stable  | The OTLP endpoint to export to. Only OTLP over gRPC is supported.
 | `OTEL_LOG_LEVEL`                                                |                         | Stable  | Log level to use in diagnostics logging. **Does not set the logger.**
 | `OTEL_PROPAGATORS`<br>`propagators`                             | `tracecontext,baggage`  | Stable  | Comma-delimited list of propagators to use. Valid keys: `baggage`, `tracecontext`, `b3multi`, `b3`.
 | `OTEL_RESOURCE_ATTRIBUTES`                                      |                         | Stable  | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
