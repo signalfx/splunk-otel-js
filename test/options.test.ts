@@ -38,6 +38,7 @@ import {
   jaegerSpanExporterFactory,
   otlpSpanExporterFactory,
   splunkSpanExporterFactory,
+  splunkOtlpSpanExporterFactory,
   defaultSpanProcessorFactory,
   Options,
 } from '../src/tracing/options';
@@ -277,6 +278,20 @@ describe('options', () => {
       assert.deepStrictEqual(
         options.spanExporterFactory,
         splunkSpanExporterFactory
+      );
+    });
+
+    it('will let exporter factory compile the endpoint if realm is set', () => {
+      process.env.SPLUNK_REALM = 'us0';
+      process.env.SPLUNK_ACCESS_TOKEN = 'abc';
+      process.env.OTEL_TRACES_EXPORTER = 'otlp-splunk';
+
+      const options = _setDefaultOptions();
+      // let's exporter factory set the endpoint
+      assert.deepStrictEqual(options.endpoint, undefined);
+      assert.deepStrictEqual(
+        options.spanExporterFactory,
+        splunkOtlpSpanExporterFactory
       );
     });
 
