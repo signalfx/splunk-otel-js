@@ -66,9 +66,7 @@ That's it - the telemetry data is now sent to the locally running Opentelemetry 
 
 In order to send traces directly to Splunk Observability Cloud, you need to:
 
-1. Set `OTEL_EXPORTER_OTLP_ENDPOINT` to
-   `https://ingest.<realm>.signalfx.com/v2/trace/otlp` where `<realm>` is your
-   Splunk APM realm (for example, `https://ingest.us0.signalfx.com/v2/trace/otlp`).
+1. Set `SPLUNK_REALM` to your Splunk APM realm (for example, `us0`).
 1. Set the `SPLUNK_ACCESS_TOKEN` to your Splunk Observability Cloud [access token](https://docs.splunk.com/Observability/admin/authentication-tokens/api-access-tokens.html).
 
 ## Automatically instrument an application
