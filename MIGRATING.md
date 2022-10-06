@@ -85,7 +85,7 @@ Rename environment variables:
 
 ### Programmatic configuration
 
-Update these programmatic configuration options (passed as arguments to `startTracing()`):
+Update these programmatic configuration options (passed as arguments to `start()`):
 
 | OpenTracing property     | OpenTelemetry property  | Notes |
 | ------------------------ | ----------------------- | ----- |
@@ -94,13 +94,12 @@ Update these programmatic configuration options (passed as arguments to `startTr
 | `accessToken`            | `accessToken`           |       |
 | `enabled`                | -                       | no equivalent, but Environment Variable can be used |
 | `debug`                  | -                       | no direct equivalent, see [instrumentation logs](#instrumentation-logs) |
-| `tags`                   | `tracerConfig.resource` | |
-| `logInjection`           | `logInjectionEnabled`   | |
+| `tags`                   | `tracing.tracerConfig.resource` | |
+| `logInjection`           | `tracing.logInjectionEnabled`   | |
 | `logInjectionTags`       | -                       | no direct equivalent, but `tracerConfig.resource` can be used |
 | `flushInterval`          | -                       | no direct equivalent, contact us if you had customized this value |
 | `plugins`                | -                       | see [the README section about instrumentations](./README.md#custom-instrumentation-packages) |
-| `recordedValueMaxLength` | `maxAttrLength`         | |
-| `enableServerTiming`     | `serverTimingEnabled`   | |
+| `enableServerTiming`     | `tracing.serverTimingEnabled`   | |
 
 ### Instrumentation entry point
 
@@ -113,9 +112,9 @@ const tracer = require('signalfx-tracing').init({
 becomes
 
 ```javascript
-const { startTracing } = require('@splunk/otel');
+const { start } = require('@splunk/otel');
 
-startTracing({
+start({
   // your new options here
 });
 ```
@@ -124,7 +123,7 @@ and requires installing `@splunk/otel` first, using either npm or Yarn. Same as 
 is to be run before your `import` or `require` statements.
 
 Alternatively, you can append the flag `-r @splunk/otel/instrument` instead when launching `node` (it runs
-`startTracing` under the hood). In that case you cannot use programmatic configuration and must rely on environment
+`start()` under the hood). In that case you cannot use programmatic configuration and must rely on environment
 variables only.
 
 ### Instrumentation logs
@@ -156,8 +155,8 @@ diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL);
 This package uses OTLP for export format by default so `SIGNALFX_ENDPOINT_URL` doesn't have an direct equivalent without replacing the exporter with one that uses Jaeger format. Options to consider:
 
 - **Using OTLP**: If the receiving endpoint supports OTLP over gRPC (for example, the OTel Collector), set `OTEL_EXPORTER_OTLP_ENDPOINT` instead of `SIGNALFX_ENDPOINT_URL`.
-- **Replacing OTLP with Jaeger**: To export directly to Splunk Observability Cloud, set the exporter back to Jaeger by:
-  - setting the `OTEL_TRACES_EXPORTER` environment variable to `jaeger-thrift-splunk` and
-  - using `OTEL_EXPORTER_JAEGER_ENDPOINT` to configure the endpoint instead of `SIGNALFX_ENDPOINT_URL`. [See the example](./examples/express)).
+- **Replacing gRPC with HTTP**: To export directly to Splunk Observability Cloud, set the exporter to OTLP-over-HTTP by:
+  - setting the `OTEL_TRACES_EXPORTER` environment variable to `otlp-splunk` and
+  - using `SPLUNK_REALM` to configure the realm of the endpoint instead of specifying the full endpoint with `SIGNALFX_ENDPOINT_URL`. [See the example](./examples/express)).
 
 [otel-issue-attr-limits]: https://github.com/open-telemetry/opentelemetry-js/issues/2403
