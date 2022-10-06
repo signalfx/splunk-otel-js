@@ -4,8 +4,8 @@ This example showcases basic integration with OpenTelemetry(OTel): automatic(HTT
 By default, the example requires the OTel Collector to run with the OTLP receiver listening on `localhost:4317`.
 
 ```shell
-# Exposing ports for OTLP/gRPC and Jaeger from collector
-docker run --name otel-collector -d -p 4317:4317 -p 14268:14268 otel/opentelemetry-collector
+# Exposing ports for OTLP/gRPC and OTLP/HTTP from collector
+docker run --name otel-collector -d -p 4317:4317 -p 4318:4318 otel/opentelemetry-collector
 npm start
 ```
 
