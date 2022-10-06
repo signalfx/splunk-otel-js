@@ -26,9 +26,8 @@ docker logs otel-collector -f 2>&1 | grep hello
 It's also possible to send the traces directly to Splunk APM. For that additional environment variables need to be set up:
 
 ```shell
-export OTEL_TRACES_EXPORTER="jaeger-thrift-splunk"
-# Replace <realm> with the correct realm:
-export OTEL_EXPORTER_JAEGER_ENDPOINT="https://ingest.<realm>.signalfx.com/v2/trace"
+export OTEL_TRACES_EXPORTER="otlp-splunk"
+export SPLUNK_REALM="<your Splunk realm>"
 export SPLUNK_ACCESS_TOKEN="<your access token>"
 # Optional. To set the environment:
 export OTEL_RESOURCE_ATTRIBUTES='deployment.environment=dev'
