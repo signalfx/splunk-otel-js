@@ -183,6 +183,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 }
 
 const SUPPORTED_EXPORTER_TYPES = [
+  '',
   'default',
   'console-splunk',
   'otlp',
@@ -193,6 +194,7 @@ const SUPPORTED_EXPORTER_TYPES = [
 type ExporterType = typeof SUPPORTED_EXPORTER_TYPES[number];
 
 const SpanExporterMap: Record<ExporterType, SpanExporterFactory> = {
+  '': otlpSpanExporterFactory,
   default: otlpSpanExporterFactory,
   'console-splunk': consoleSpanExporterFactory,
   otlp: otlpSpanExporterFactory,
