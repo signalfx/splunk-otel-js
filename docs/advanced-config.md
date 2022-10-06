@@ -24,7 +24,6 @@ This distribution supports all the configuration options supported by the compon
 | --------------------------------------------------------------- | ----------------------- | ------- | ---
 | `OTEL_ATTRIBUTE_COUNT_LIMIT`                                    |                         | Stable  | Maximum allowed span attribute count
 | `OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT`                             | `12000`\*               | Stable  | Maximum allowed attribute value size
-| `OTEL_EXPORTER_JAEGER_ENDPOINT`                                 | `http://localhost:14268/v1/traces` or<br>`http://localhost:9080/v1/trace`<br>if `jaeger-thrift-splunk` is used as exporter | Deprecated | HTTP endpoint for Jaeger traces
 | `OTEL_EXPORTER_OTLP_ENDPOINT`<br>`endpoint`                     | `http://localhost:4317` | Stable  | The OTLP endpoint to export to. Only OTLP over gRPC is supported.
 | `OTEL_LOG_LEVEL`                                                |                         | Stable  | Log level to use in diagnostics logging. **Does not set the logger.**
 | `OTEL_PROPAGATORS`<br>`propagators`                             | `tracecontext,baggage`  | Stable  | Comma-delimited list of propagators to use. Valid keys: `baggage`, `tracecontext`, `b3multi`, `b3`.
@@ -34,7 +33,7 @@ This distribution supports all the configuration options supported by the compon
 | `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT`                        |                         | Stable  | Maximum allowed attribute value size. Empty value is treated as infinity
 | `OTEL_SPAN_EVENT_COUNT_LIMIT`                                   | `128`                   | Stable  | 
 | `OTEL_SPAN_LINK_COUNT_LIMIT`                                    | `1000`\*                | Stable  | 
-| `OTEL_TRACES_EXPORTER`<br>`tracesExporter`                      | `otlp`                  | Stable  | Chooses the exporter. Shortcut for setting `spanExporterFactory`. One of [`otlp`, `jaeger-thrift-http`, `jaeger-thrift-splunk`, `console-splunk`]. See [`SpanExporterMap`](../src/tracing/options.ts).
+| `OTEL_TRACES_EXPORTER`<br>`tracesExporter`                      | `otlp`                  | Stable  | Chooses the exporter. Shortcut for setting `spanExporterFactory`. One of [`otlp`, `otlp-splunk`, `console-splunk`]. See [`SpanExporterMap`](../src/tracing/options.ts).
 | `OTEL_TRACES_SAMPLER`                                           | `parentbased_always_on` | Stable  | Sampler to be used for traces. See [Sampling](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling)
 | `OTEL_TRACES_SAMPLER_ARG`                                       |                         | Stable  | String value to be used as the sampler argument. Only be used if OTEL_TRACES_SAMPLER is set.
 | `SPLUNK_ACCESS_TOKEN`<br>`accessToken`                          |                         | Stable  | The optional access token for exporting signal data directly to SignalFx API.
