@@ -41,6 +41,8 @@ start({
 });
 ```
 
+`start()` turns on all stable [signals](https://github.com/open-telemetry/opentelemetry-specification/blob/70fecd2dcba505b3ac3a7cb1851f947047743d24/specification/glossary.md#signals) with one call, which means the list will change over time.
+
 ## List of settings
 
 This distribution supports all the configuration options supported by the components it uses with the defaults specified by the [OTel Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/sdk-environment-variables.md).
@@ -112,10 +114,11 @@ Configuration examples can be seen [here](metrics.md).
 | `OTEL_SERVICE_NAME`<br>`serviceName`                            | `unnamed-node-service`  | Stable  | Service name of the application.
 | `OTEL_RESOURCE_ATTRIBUTES`                                      |                         | Stable  | Comma-separated list of resource attributes. <details><summary>Example</summary>`deployment.environment=demo,key2=val2`</details>
 
+### Migrating from signal-specific `start*` functions
 
-### Start all
+Older versions of `@splunk/otel` shipped with signal-specific start functions: `startMetrics`, `startProfiling`, and `startTracing`. Calling these functions is now deprecated and these functions will be removed in future versions.
 
-To control all [signals](https://github.com/open-telemetry/opentelemetry-specification/blob/70fecd2dcba505b3ac3a7cb1851f947047743d24/specification/glossary.md#signals) with one call `start()` API can be used:
+If your code still uses these, merge them into one start call:
 
 ```js
 const { start } = require('@splunk/otel');
@@ -123,6 +126,7 @@ const { start } = require('@splunk/otel');
 start({
   // accessToken,
   // endpoint,
+  // instrumentations,
   // serviceName,
   tracing: {
     // tracing-specific options here.
@@ -135,7 +139,3 @@ start({
   */
 });
 ```
-
-By default `start()` API enables all stable signals, which means the list will change over time. Shared configuration(`accessToken`, `endpoint`, `serviceName`) can be provided on the root level of the configuration object.
-
-Signal specific options must be provided under specific properties: `tracing`, `profiling`, `metrics`. `true` can be provided for default configuration.

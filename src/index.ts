@@ -14,11 +14,35 @@
  * limitations under the License.
  */
 
-export { startTracing, stopTracing } from './tracing';
-export { startMetrics } from './metrics';
+import { deprecate } from 'util';
+
+import {
+  startTracing as _startTracing,
+  stopTracing as _stopTracing,
+} from './tracing';
+import { startMetrics as _startMetrics } from './metrics';
 export {
   ConsoleMetricExporter,
   ConsoleMetricExporterOptions,
 } from './metrics/console_metric_exporter';
-export { startProfiling } from './profiling';
+import { startProfiling as _startProfiling } from './profiling';
 export { start, stop } from './start';
+
+export const startMetrics = deprecate(
+  _startMetrics,
+  'startMetrics is deprecated. Use generic start() and stop() functions instead'
+);
+
+export const startProfiling = deprecate(
+  _startProfiling,
+  'startProfiling is deprecated. Use generic start() and stop() functions instead'
+);
+
+export const startTracing = deprecate(
+  _startTracing,
+  'startTracing is deprecated. Use generic start() and stop() functions instead'
+);
+export const stopTracing = deprecate(
+  _stopTracing,
+  'stopTracing is deprecated. Use generic start() and stop() functions instead'
+);
