@@ -118,7 +118,7 @@
     "@opentelemetry/resources": "~1.6.0",
     "@opentelemetry/sdk-metrics-base": "^0.31.0",
     "@opentelemetry/sdk-trace-base": "~1.6.0",
-    "@opentelemetry/sdk-trace-node": "~1.6.0",
+    "@opentelemetry/sdk-trace-node": "~1.7.0",
     "@opentelemetry/semantic-conventions": "~1.6.0",
     "nan": "^2.16.0",
     "node-gyp-build": "^4.3.0",
