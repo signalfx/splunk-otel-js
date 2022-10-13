@@ -52,7 +52,7 @@ describe('API', () => {
       assertFunction(api, 'stop');
     });
 
-    it('should export signal-specific deprecated start', () => {
+    it('should export signal-specific start', () => {
       assertFunction(api, 'startTracing');
       assertFunction(api, 'startProfiling');
       assertFunction(api, 'startMetrics');
