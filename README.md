@@ -98,21 +98,21 @@ For more information, see [Correlating traces with logs](./docs/correlate-logs-t
 You can also manually instrument your application by adding the following lines before everything else in your application.
 
 ```js
-const { startTracing } = require('@splunk/otel');
+const { start } = require('@splunk/otel');
 
-startTracing();
+start();
 
 // rest of your application entry point script
 ```
-`startTracing()` accept an optional `Options` argument. It can be used to customize many aspects of the tracing pipeline. For example:
+`start()` accept an optional `Options` argument. It can be used to customize many aspects of the observability pipeline. For example:
 
 ```js
-startTracing({
+start({
   serviceName: 'my-node-service',
 });
 ```
 
-> `startTracing` is destructive to Open Telemetry API globals. Any globals set before running `startTracing` are overwritten.
+> `start` is destructive to Open Telemetry API globals. Any globals set before running `start` are overwritten.
 
 ## Default Instrumentation Packages<a name="default-instrumentation-packages"></a>
 

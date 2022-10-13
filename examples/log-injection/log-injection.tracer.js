@@ -16,12 +16,14 @@ const logHook = (span, logRecord) => {
 	}
 };
 
-require('@splunk/otel').startTracing({
+require('@splunk/otel').start({
 	serviceName: 'example',
-	instrumentations: [
-		...getInstrumentations(),
-		new PinoInstrumentation({
-			logHook: logHook,
-		}),
-	],
+	tracing: {
+		instrumentations: [
+			...getInstrumentations(),
+			new PinoInstrumentation({
+				logHook: logHook,
+			}),
+		],
+	},
 });
