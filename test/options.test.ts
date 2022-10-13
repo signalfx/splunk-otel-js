@@ -35,9 +35,8 @@ import * as instrumentations from '../src/instrumentations';
 import {
   _setDefaultOptions,
   defaultPropagatorFactory,
-  jaegerSpanExporterFactory,
   otlpSpanExporterFactory,
-  splunkSpanExporterFactory,
+  splunkOtlpSpanExporterFactory,
   defaultSpanProcessorFactory,
   Options,
 } from '../src/tracing/options';
@@ -153,6 +152,7 @@ describe('options', () => {
         });
 
       assert.deepStrictEqual(options, {
+        realm: undefined,
         /*
           let the OTel exporter package itself
           resolve the default for endpoint.
@@ -186,6 +186,7 @@ describe('options', () => {
     const idGenerator = new TestIdGenerator();
 
     const options = _setDefaultOptions({
+      realm: 'rlm',
       endpoint: 'custom-endpoint',
       serviceName: 'custom-service-name',
       accessToken: 'custom-access-token',
@@ -203,6 +204,7 @@ describe('options', () => {
     });
 
     assert.deepStrictEqual(options, {
+      realm: 'rlm',
       endpoint: 'custom-endpoint',
       serviceName: 'custom-service-name',
       accessToken: 'custom-access-token',
@@ -227,11 +229,11 @@ describe('options', () => {
 
   describe('OTEL_TRACES_EXPORTER', () => {
     it('accepts a valid key', () => {
-      process.env.OTEL_TRACES_EXPORTER = 'jaeger-thrift-splunk';
+      process.env.OTEL_TRACES_EXPORTER = 'otlp-splunk';
       const options = _setDefaultOptions();
       assert.strictEqual(
         options.spanExporterFactory,
-        splunkSpanExporterFactory
+        splunkOtlpSpanExporterFactory
       );
     });
 
@@ -265,18 +267,16 @@ describe('options', () => {
       );
     });
 
-    it('chooses the correct Jaeger Thrift endpoint when realm is set', () => {
+    it('will let exporter factory compile the endpoint if realm is set', () => {
       process.env.SPLUNK_REALM = 'us0';
       process.env.SPLUNK_ACCESS_TOKEN = 'abc';
 
       const options = _setDefaultOptions();
-      assert.deepStrictEqual(
-        options.endpoint,
-        'https://ingest.us0.signalfx.com/v2/trace/jaegerthrift'
-      );
+      // let's exporter factory set the endpoint
+      assert.deepStrictEqual(options.endpoint, undefined);
       assert.deepStrictEqual(
         options.spanExporterFactory,
-        splunkSpanExporterFactory
+        splunkOtlpSpanExporterFactory
       );
     });
 
@@ -285,7 +285,7 @@ describe('options', () => {
       process.env.SPLUNK_ACCESS_TOKEN = 'abc';
       process.env.OTEL_TRACES_EXPORTER = 'otlp-grpc';
 
-      assert.throws(_setDefaultOptions, /jaeger-thrift-splunk/);
+      assert.throws(_setDefaultOptions, /otlp-splunk/);
     });
   });
 });

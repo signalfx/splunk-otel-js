@@ -1,5 +1,5 @@
 const { start, stop } = require('@splunk/otel');
-const { diag, DiagConsoleLogger, DiagLogLevel, trace, SpanStatusCode, context } = require('@opentelemetry/api');
+const { diag, DiagConsoleLogger, DiagLogLevel, trace, context } = require('@opentelemetry/api');
 
 // If OTEL_LOG_LEVEL env var is set, configure logger
 if (process.env.OTEL_LOG_LEVEL) {
