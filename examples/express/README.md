@@ -13,8 +13,8 @@ Before you start, install the dependencies and run the collector for the example
 
 ```shell
 npm install
-# Exposing ports for OTLP/gRPC and Jaeger from collector
-docker run --name otel-collector -d -p 4317:4317 -p 14268:14268 otel/opentelemetry-collector
+# Exposing ports for OTLP/gRPC and OTLP/HTTP from collector
+docker run --name otel-collector -d -p 4317:4317 -p 4318:4318 otel/opentelemetry-collector
 ```
 
 ## Running
@@ -23,9 +23,8 @@ This example app can be run in following ways:
 
 1. Uninstrumented
 2. Instrumented via OTel SDK, exporting to locally running collector
-3. Instrumented via OTel SDK, exporting to locally running collector using Jaeger Exporter
-4. Instrumented via OTel SDK, exporting to Splunk APM using Jaeger Exporter
-5. Instrumented via legacy OpenTracing SDK
+3. Instrumented via OTel SDK, exporting directly to Splunk APM
+4. Instrumented via legacy OpenTracing SDK
 
 ### Uninstrumented
 
@@ -65,29 +64,17 @@ npm run client:collector
 
 See the exact commands in [package.json](./package.json).
 
-### Instrumented via OTel SDK, Jaeger Exporter
+### Instrumented via OTel SDK, exporting directly to Splunk APM
 
-The [env file `.env.jaeger`](./.env.jaeger) showcases how to replace the default OTLP/gRPC Exporter with a Jaeger exporter. The configuration is similar to the default OTel SDK setup, but the exporter (`OTEL_TRACES_EXPORTER`) has to be replaced by the default Jaeger Exporter which is bundled with the SDK: `jaeger-thrift-http`.
-
-That's it! To run the example with the Jaeger Exporter:
+Instead of using the OTel Collector to forward telemetry data to Splunk APM, you can also send it directly from the application. [.env.otlp-splunk](./.env.otlp-splunk) has the basic configuration for that. The access token and the realm should be configured with correct values. Run the example using the following commands:
 
 ```shell
-npm run server:jaeger
+npm run server:apm
 # In a separate terminal:
-npm run client:jaeger
+npm run client:apm
 ```
 
-### Instrumented via OTel SDK, exporting to Splunk APM using Jaeger Exporter
-
-Instead of using the OTel Collector to forward telemetry data to Splunk APM, you can also send it directly from the application. Once the `.env` file is created (see [.env.jaeger-splunk](./.env.jaeger-splunk) for an example) and the access token is replaced in the file, run the collector using the following commands:
-
-```shell
-npm run server
-# In a separate terminal:
-npm run client
-```
-
-If are not sure about the values to use for `.env`, but you're familiar with configuring the OpenTracing SDK, you can also use [.env.opentracing](./.env.opentracing) as the baseline configuration: The OTel configuration is automatically derived from the OpenTracing settings in the example (see [utils.js](./utils.js) for the conversions).
+If are not sure about the values to use for `.env`, but you're familiar with configuring the OpenTracing SDK, you can also use [.env.opentracing](./.env.opentracing) as the baseline configuration: The OTel configuration is automatically derived from the OpenTracing settings **in this example** (see [utils.js](./utils.js) for the conversions).
 
 ### Instrumented via legacy OpenTracing SDK
 
