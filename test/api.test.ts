@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { strict as assert } from 'assert';
+import { deprecate } from 'util';
 
 import * as splunk from '../src';
 
@@ -51,22 +52,14 @@ describe('API', () => {
       assertFunction(api, 'stop');
     });
 
-    it('should export signal-specific start', () => {
+    it('should export signal-specific deprecated start', () => {
       assertFunction(api, 'startTracing');
-      assert.equal(api.startTracing, tracing.startTracing);
       assertFunction(api, 'startProfiling');
-      assert.equal(api.startProfiling, profiling.startProfiling);
       assertFunction(api, 'startMetrics');
-      assert.equal(api.startMetrics, metrics.startMetrics);
     });
 
     it('should export signal-specific stop', () => {
       assertFunction(api, 'stopTracing');
-      assert.equal(api.stopTracing, tracing.stopTracing);
-      // assertFunction(api, 'stopProfiling');
-      // assert.equal(api.stopProfiling, profiling.stopProfiling);
-      // assertFunction(api, 'stopMetrics');
-      // assert.equal(api.stopMetrics, metrics.stopMetrics);
     });
   });
 
