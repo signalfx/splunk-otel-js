@@ -125,7 +125,6 @@ const { start } = require('@splunk/otel');
 start({
   // accessToken,
   // endpoint,
-  // instrumentations,
   // serviceName,
   tracing: {
     // tracing-specific options here.

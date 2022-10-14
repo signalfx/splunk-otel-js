@@ -24,7 +24,6 @@ interface Options {
   accessToken: string;
   endpoint: string;
   serviceName: string;
-  instrumentations: InstrumentationOption[];
   // Signal-specific configuration options:
   metrics: boolean | MetricsOptions;
   profiling: boolean | ProfilingOptions;
@@ -60,7 +59,6 @@ export const start = (options: Partial<Options> = {}) => {
   assertNoExtraneousProperties(restOptions, [
     'accessToken',
     'endpoint',
-    'instrumentations',
     'serviceName',
   ]);
 
