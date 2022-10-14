@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { InstrumentationOption } from '@opentelemetry/instrumentation';
-
 import { assertNoExtraneousProperties, parseEnvBooleanString } from './utils';
 import { startMetrics, MetricsOptions } from './metrics';
 import { startProfiling, ProfilingOptions } from './profiling';
