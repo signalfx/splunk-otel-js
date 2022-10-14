@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { InstrumentationOption } from '@opentelemetry/instrumentation';
-
 import { assertNoExtraneousProperties, parseEnvBooleanString } from './utils';
 import { startMetrics, MetricsOptions } from './metrics';
 import { startProfiling, ProfilingOptions } from './profiling';
@@ -24,7 +22,6 @@ interface Options {
   accessToken: string;
   endpoint: string;
   serviceName: string;
-  instrumentations: InstrumentationOption[];
   // Signal-specific configuration options:
   metrics: boolean | MetricsOptions;
   profiling: boolean | ProfilingOptions;
@@ -60,7 +57,6 @@ export const start = (options: Partial<Options> = {}) => {
   assertNoExtraneousProperties(restOptions, [
     'accessToken',
     'endpoint',
-    'instrumentations',
     'serviceName',
   ]);
 
