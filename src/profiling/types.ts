@@ -88,7 +88,7 @@ export interface MemoryProfilingOptions {
   sampleIntervalBytes?: number;
 }
 
-interface ProfilingOptions {
+export interface ProfilingOptions {
   endpoint: string;
   serviceName: string;
   // Profiling-specific configuration options:
