@@ -88,7 +88,7 @@ export interface MemoryProfilingOptions {
   sampleIntervalBytes?: number;
 }
 
-export interface ProfilingOptions {
+interface ProfilingOptions {
   endpoint: string;
   serviceName: string;
   // Profiling-specific configuration options:
@@ -100,6 +100,8 @@ export interface ProfilingOptions {
   memoryProfilingEnabled: boolean;
   memoryProfilingOptions?: MemoryProfilingOptions;
 }
+
+export type StartProfilingOptions = Partial<ProfilingOptions>;
 
 export interface ProfilingExporter {
   send(profile: RawProfilingData): void;

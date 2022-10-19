@@ -30,6 +30,7 @@ import {
   ProfilingExporter,
   ProfilingExtension,
   ProfilingOptions,
+  StartProfilingOptions,
   ProfilingStartOptions,
   allowedProfilingOptions,
 } from './types';
@@ -38,7 +39,7 @@ import { OTLPProfilingExporter } from './OTLPProfilingExporter';
 import { DebugExporter } from './DebugExporter';
 import { isTracingContextManagerEnabled } from '../tracing';
 
-export { ProfilingOptions };
+export { StartProfilingOptions };
 
 /* The following are wrappers around native functions to give more context to profiling samples. */
 function extStopProfiling(extension: ProfilingExtension) {
@@ -100,7 +101,7 @@ export function isProfilingContextManagerSet(): boolean {
   return profilingContextManagerEnabled;
 }
 
-export function startProfiling(opts: Partial<ProfilingOptions> = {}) {
+export function startProfiling(opts: StartProfilingOptions = {}) {
   assertNoExtraneousProperties(opts, allowedProfilingOptions);
 
   const options = _setDefaultOptions(opts);
