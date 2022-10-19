@@ -166,7 +166,7 @@ For troubleshooting issues with the Splunk Distribution of OpenTelemetry JS, see
 # License
 
 The Splunk distribution of OpenTelemetry JS Instrumentation is a
-distribution of the [OpenTelemetry JS](https://github.com/open-telemetry/opentelemetry-js).
+distribution of [OpenTelemetry JS](https://github.com/open-telemetry/opentelemetry-js).
 It is licensed under the terms of the Apache Software License version 2.0. See [the
 license file](./LICENSE) for more details.
 
