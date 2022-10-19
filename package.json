@@ -65,11 +65,6 @@
     "@commitlint/cli": "^14.1.0",
     "@commitlint/config-conventional": "^17.1.0",
     "@octokit/core": "^3.5.1",
-    "@opentelemetry/instrumentation-bunyan": "^0.30.0",
-    "@opentelemetry/instrumentation-http": "^0.28.0",
-    "@opentelemetry/instrumentation-pino": "^0.29.0",
-    "@opentelemetry/instrumentation-redis": "^0.31.0",
-    "@opentelemetry/instrumentation-winston": "^0.28.0",
     "@types/bunyan": "1.8.7",
     "@types/mocha": "9.1.1",
     "@types/semver": "7.3.9",
@@ -85,12 +80,12 @@
     "eslint-plugin-header": "^3.1.1",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^4.0.0",
-    "gts": "3.1.0",
+    "gts": "^3.1.1",
     "mocha": "^9.2.2",
     "nyc": "15.1.0",
     "octokit": "^1.7.0",
     "pino": "^6.13.2",
-    "prebuildify": "^5.0.0",
+    "prebuildify": "^5.0.1",
     "prettier": ">=2.3.2",
     "redis": "^3.1.2",
     "rewire": "^6.0.0",
@@ -103,169 +98,62 @@
     "winston": "3.3.3"
   },
   "dependencies": {
-    "@grpc/grpc-js": "^1.6.7",
-    "@grpc/proto-loader": "^0.6.9",
-    "@opentelemetry/api": ">=1.0.0 <1.2.0",
-    "@opentelemetry/api-metrics": "^0.31.0",
-    "@opentelemetry/context-async-hooks": "~1.6.0",
-    "@opentelemetry/core": "~1.6.0",
-    "@opentelemetry/exporter-metrics-otlp-grpc": "^0.32.0",
-    "@opentelemetry/exporter-metrics-otlp-proto": "^0.32.0",
-    "@opentelemetry/exporter-trace-otlp-grpc": "^0.32.0",
+    "@grpc/grpc-js": "^1.7.1",
+    "@grpc/proto-loader": "^0.7.3",
+    "@opentelemetry/api": "^1.2.0",
+    "@opentelemetry/api-metrics": "^0.33.0",
+    "@opentelemetry/context-async-hooks": "~1.7.0",
+    "@opentelemetry/core": "~1.7.0",
+    "@opentelemetry/exporter-metrics-otlp-grpc": "^0.33.0",
+    "@opentelemetry/exporter-metrics-otlp-proto": "^0.33.0",
+    "@opentelemetry/exporter-trace-otlp-grpc": "^0.33.0",
     "@opentelemetry/exporter-trace-otlp-proto": "^0.33.0",
-    "@opentelemetry/instrumentation": "^0.32.0",
-    "@opentelemetry/propagator-b3": "~1.6.0",
-    "@opentelemetry/resources": "~1.6.0",
-    "@opentelemetry/sdk-metrics-base": "^0.31.0",
-    "@opentelemetry/sdk-trace-base": "~1.6.0",
-    "@opentelemetry/sdk-trace-node": "~1.6.0",
-    "@opentelemetry/semantic-conventions": "~1.6.0",
-    "nan": "^2.16.0",
-    "node-gyp-build": "^4.3.0",
-    "semver": "^7.3.5"
-  },
-  "peerDependencies": {
-    "@opentelemetry/instrumentation-amqplib": ">=0.30.0 <1",
-    "@opentelemetry/instrumentation-aws-lambda": ">=0.32.0 <1",
-    "@opentelemetry/instrumentation-aws-sdk": ">=0.8.0 <1",
-    "@opentelemetry/instrumentation-bunyan": ">=0.29.0 <1",
-    "@opentelemetry/instrumentation-cassandra-driver": ">=0.29.0 <1",
-    "@opentelemetry/instrumentation-connect": ">=0.29.0 <1",
-    "@opentelemetry/instrumentation-dns": ">=0.29.0 <1",
-    "@opentelemetry/instrumentation-express": ">=0.30.0 <1",
-    "@opentelemetry/instrumentation-fastify": ">=0.28.0 <1",
-    "@opentelemetry/instrumentation-fs": ">=0.4.0 <1",
-    "@opentelemetry/instrumentation-generic-pool": ">=0.29.0 <1",
-    "@opentelemetry/instrumentation-graphql": ">=0.29.0 <1",
-    "@opentelemetry/instrumentation-grpc": ">=0.31.0 <1",
-    "@opentelemetry/instrumentation-hapi": ">=0.29.0 <1",
-    "@opentelemetry/instrumentation-http": ">=0.31.0 <1",
-    "@opentelemetry/instrumentation-ioredis": ">=0.30.0 <1",
-    "@opentelemetry/instrumentation-knex": ">=0.29.0 <1",
-    "@opentelemetry/instrumentation-koa": ">=0.30.0 <1",
-    "@opentelemetry/instrumentation-memcached": ">=0.29.0 <1",
-    "@opentelemetry/instrumentation-mongodb": ">=0.31.0 <1",
-    "@opentelemetry/instrumentation-mysql": ">=0.30.0 <1",
-    "@opentelemetry/instrumentation-mysql2": ">=0.31.0 <1",
-    "@opentelemetry/instrumentation-nestjs-core": ">=0.30.0 <1",
-    "@opentelemetry/instrumentation-net": ">=0.29.0 <1",
-    "@opentelemetry/instrumentation-pg": ">=0.30.0 <1",
-    "@opentelemetry/instrumentation-pino": ">=0.30.0 <1",
-    "@opentelemetry/instrumentation-redis": ">=0.32.0 <1",
-    "@opentelemetry/instrumentation-restify": ">=0.29.0 <1",
-    "@opentelemetry/instrumentation-tedious": ">=0.3.0 <1",
-    "@opentelemetry/instrumentation-winston": ">=0.29.0 <1",
-    "opentelemetry-instrumentation-elasticsearch": ">=0.29.0 <1",
-    "opentelemetry-instrumentation-kafkajs": ">=0.29.0 <1",
-    "opentelemetry-instrumentation-mongoose": ">=0.29.0 <1",
-    "opentelemetry-instrumentation-sequelize": ">=0.29.0 <1",
-    "opentelemetry-instrumentation-typeorm": ">=0.29.0 <1"
-  },
-  "peerDependenciesMeta": {
-    "@opentelemetry/instrumentation-amqplib": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-aws-lambda": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-aws-sdk": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-bunyan": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-cassandra-driver": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-connect": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-dns": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-express": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-fastify": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-fs": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-generic-pool": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-graphql": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-grpc": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-hapi": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-http": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-ioredis": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-knex": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-koa": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-memcached": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-mongodb": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-mysql": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-mysql2": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-nestjs-core": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-net": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-pg": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-pino": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-redis": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-restify": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-tedious": {
-      "optional": true
-    },
-    "@opentelemetry/instrumentation-winston": {
-      "optional": true
-    },
-    "opentelemetry-instrumentation-elasticsearch": {
-      "optional": true
-    },
-    "opentelemetry-instrumentation-kafkajs": {
-      "optional": true
-    },
-    "opentelemetry-instrumentation-mongoose": {
-      "optional": true
-    },
-    "opentelemetry-instrumentation-sequelize": {
-      "optional": true
-    },
-    "opentelemetry-instrumentation-typeorm": {
-      "optional": true
-    }
+    "@opentelemetry/instrumentation": "^0.33.0",
+    "@opentelemetry/instrumentation-amqplib": "^0.31.0",
+    "@opentelemetry/instrumentation-aws-lambda": "^0.33.0",
+    "@opentelemetry/instrumentation-aws-sdk": "^0.9.2",
+    "@opentelemetry/instrumentation-bunyan": "^0.30.0",
+    "@opentelemetry/instrumentation-cassandra-driver": "^0.30.0",
+    "@opentelemetry/instrumentation-connect": "^0.30.0",
+    "@opentelemetry/instrumentation-dns": "^0.30.0",
+    "@opentelemetry/instrumentation-express": "^0.31.2",
+    "@opentelemetry/instrumentation-fastify": "^0.30.0",
+    "@opentelemetry/instrumentation-fs": "^0.5.0",
+    "@opentelemetry/instrumentation-generic-pool": "^0.30.0",
+    "@opentelemetry/instrumentation-graphql": "^0.31.0",
+    "@opentelemetry/instrumentation-grpc": "^0.33.0",
+    "@opentelemetry/instrumentation-hapi": "^0.30.0",
+    "@opentelemetry/instrumentation-http": "^0.33.0",
+    "@opentelemetry/instrumentation-ioredis": "^0.32.1",
+    "@opentelemetry/instrumentation-knex": "^0.30.0",
+    "@opentelemetry/instrumentation-koa": "^0.32.0",
+    "@opentelemetry/instrumentation-memcached": "^0.30.0",
+    "@opentelemetry/instrumentation-mongodb": "^0.32.1",
+    "@opentelemetry/instrumentation-mysql": "^0.31.1",
+    "@opentelemetry/instrumentation-mysql2": "^0.32.0",
+    "@opentelemetry/instrumentation-nestjs-core": "^0.31.0",
+    "@opentelemetry/instrumentation-net": "^0.30.1",
+    "@opentelemetry/instrumentation-pg": "^0.31.1",
+    "@opentelemetry/instrumentation-pino": "^0.32.0",
+    "@opentelemetry/instrumentation-redis": "^0.33.0",
+    "@opentelemetry/instrumentation-redis-4": "^0.33.0",
+    "@opentelemetry/instrumentation-restify": "^0.30.0",
+    "@opentelemetry/instrumentation-router": "^0.30.0",
+    "@opentelemetry/instrumentation-tedious": "^0.4.0",
+    "@opentelemetry/instrumentation-winston": "^0.30.0",
+    "opentelemetry-instrumentation-elasticsearch": "^0.29.0",
+    "opentelemetry-instrumentation-kafkajs": "^0.29.0",
+    "opentelemetry-instrumentation-mongoose": "^0.29.0",
+    "opentelemetry-instrumentation-sequelize": "^0.29.0",
+    "opentelemetry-instrumentation-typeorm": "^0.29.0",
+    "@opentelemetry/propagator-b3": "~1.7.0",
+    "@opentelemetry/resources": "~1.7.0",
+    "@opentelemetry/sdk-metrics": "^0.33.0",
+    "@opentelemetry/sdk-trace-base": "~1.7.0",
+    "@opentelemetry/sdk-trace-node": "~1.7.0",
+    "@opentelemetry/semantic-conventions": "~1.7.0",
+    "nan": "^2.17.0",
+    "node-gyp-build": "^4.5.0",
+    "semver": "^7.3.8"
   }
 }
