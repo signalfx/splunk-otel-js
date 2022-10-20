@@ -165,6 +165,17 @@ describe('start', () => {
   });
 
   describe('configuration', () => {
+    it('works with partial configurations', () => {
+      start({
+        ...CONFIG.general,
+        profiling: {},
+        tracing: {},
+        metrics: {},
+      });
+
+      assertCalled(signals.start, ['tracing', 'profiling', 'metrics']);
+    });
+
     it('works if all the configuration options are passed', () => {
       start({
         ...CONFIG.general,
@@ -185,7 +196,7 @@ describe('start', () => {
       assertCalled(signals.start, ['tracing', 'profiling', 'metrics']);
     });
 
-    it('works if all the configuration options are passed', () => {
+    it('throws if invalid configuration options are passed', () => {
       assert.throws(
         () =>
           start({
