@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 import { assertNoExtraneousProperties, parseEnvBooleanString } from './utils';
-import { startMetrics, MetricsOptions } from './metrics';
-import { startProfiling, ProfilingOptions } from './profiling';
-import { startTracing, stopTracing, TracingOptions } from './tracing';
+import { startMetrics, StartMetricsOptions } from './metrics';
+import { startProfiling, StartProfilingOptions } from './profiling';
+import { startTracing, stopTracing, StartTracingOptions } from './tracing';
 
 interface Options {
   accessToken: string;
   endpoint: string;
   serviceName: string;
   // Signal-specific configuration options:
-  metrics: boolean | MetricsOptions;
-  profiling: boolean | ProfilingOptions;
-  tracing: boolean | TracingOptions;
+  metrics: boolean | StartMetricsOptions;
+  profiling: boolean | StartProfilingOptions;
+  tracing: boolean | StartTracingOptions;
 }
 
 interface RunningState {

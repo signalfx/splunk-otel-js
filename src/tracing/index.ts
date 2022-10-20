@@ -59,8 +59,8 @@ export function isTracingContextManagerEnabled(): boolean {
   return tracingContextManagerEnabled;
 }
 
-export { Options as TracingOptions };
-export function startTracing(opts: Partial<Options> = {}): boolean {
+export type StartTracingOptions = Partial<Options>;
+export function startTracing(opts: StartTracingOptions = {}): boolean {
   assert(!isStarted, 'Splunk APM already started');
   isStarted = true;
 

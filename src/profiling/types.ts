@@ -101,6 +101,8 @@ export interface ProfilingOptions {
   memoryProfilingOptions?: MemoryProfilingOptions;
 }
 
+export type StartProfilingOptions = Partial<ProfilingOptions>;
+
 export interface ProfilingExporter {
   send(profile: RawProfilingData): void;
   sendHeapProfile(profile: HeapProfile): void;
