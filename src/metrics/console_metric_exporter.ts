@@ -23,7 +23,7 @@ import {
   PushMetricExporter,
   ResourceMetrics,
   InstrumentType,
-} from '@opentelemetry/sdk-metrics-base';
+} from '@opentelemetry/sdk-metrics';
 import { ValueType } from '@opentelemetry/api-metrics';
 import {
   ExportResult,

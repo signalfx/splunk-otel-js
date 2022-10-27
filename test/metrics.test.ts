@@ -24,7 +24,7 @@ import {
   MetricData,
   MetricReader,
   View,
-} from '@opentelemetry/sdk-metrics-base';
+} from '@opentelemetry/sdk-metrics';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
 import { OTLPMetricExporter as OTLPHttpProtoMetricExporter } from '@opentelemetry/exporter-metrics-otlp-proto';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';

@@ -16,10 +16,7 @@
 
 import { load } from './loader';
 
-// please keep the list sorted alphabetically
-// please update ../../README.md#default-instrumentation-packages when changing this list
-// please check if ../../MIGRATING.md#known-limitations needs to be updated when changing this list
-const supportedInstrumentations: [string, string][] = [
+const bundledInstrumentations: [string, string][] = [
   ['@opentelemetry/instrumentation-amqplib', 'AmqplibInstrumentation'],
   ['@opentelemetry/instrumentation-aws-lambda', 'AwsLambdaInstrumentation'],
   ['@opentelemetry/instrumentation-aws-sdk', 'AwsInstrumentation'],
@@ -29,10 +26,10 @@ const supportedInstrumentations: [string, string][] = [
     'CassandraDriverInstrumentation',
   ],
   ['@opentelemetry/instrumentation-connect', 'ConnectInstrumentation'],
+  ['@opentelemetry/instrumentation-dataloader', 'DataloaderInstrumentation'],
   ['@opentelemetry/instrumentation-dns', 'DnsInstrumentation'],
   ['@opentelemetry/instrumentation-express', 'ExpressInstrumentation'],
   ['@opentelemetry/instrumentation-fastify', 'FastifyInstrumentation'],
-  ['@opentelemetry/instrumentation-fs', 'FsInstrumentation'],
   ['@opentelemetry/instrumentation-generic-pool', 'GenericPoolInstrumentation'],
   ['@opentelemetry/instrumentation-graphql', 'GraphQLInstrumentation'],
   ['@opentelemetry/instrumentation-grpc', 'GrpcInstrumentation'],
@@ -50,8 +47,9 @@ const supportedInstrumentations: [string, string][] = [
   ['@opentelemetry/instrumentation-pg', 'PgInstrumentation'],
   ['@opentelemetry/instrumentation-pino', 'PinoInstrumentation'],
   ['@opentelemetry/instrumentation-redis', 'RedisInstrumentation'],
+  ['@opentelemetry/instrumentation-redis-4', 'RedisInstrumentation'],
   ['@opentelemetry/instrumentation-restify', 'RestifyInstrumentation'],
-  ['@opentelemetry/instrumentation-restify', 'RestifyInstrumentation'],
+  ['@opentelemetry/instrumentation-router', 'RouterInstrumentation'],
   ['@opentelemetry/instrumentation-tedious', 'TediousInstrumentation'],
   ['@opentelemetry/instrumentation-winston', 'WinstonInstrumentation'],
   [
@@ -68,8 +66,8 @@ export function getInstrumentations() {
   const result = [];
 
   // Defensively load all supported instrumentations
-  for (const i in supportedInstrumentations) {
-    const [module, name] = supportedInstrumentations[i];
+  for (const i in bundledInstrumentations) {
+    const [module, name] = bundledInstrumentations[i];
     const Instrumentation = load(module, name);
     if (typeof Instrumentation === 'function') {
       result.push(new (Instrumentation as typeof Instrumentation)());

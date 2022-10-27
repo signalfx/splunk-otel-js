@@ -2,7 +2,7 @@
 
 This example showcases a more extensive integration with OpenTelemetry(OTel):
 
-1. automatic instrumentation: HTTP calls are instrumented by installing `@opentelemetry/instrumentation-http`,
+1. automatic HTTP call instrumentation via `@opentelemetry/instrumentation-http`,
 2. manual instrumentation: [index.js](./index.js) manually creates spans for custom "work",
 3. log injection: the example is using a logging library `pino` for structured logging, `trace_id` and `span_id` properties are added to every log line automatically.
 
