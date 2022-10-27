@@ -17,7 +17,7 @@
 > ## **Documentation for the current stable version (1.x) can be viewed [here](https://quickdraw.splunk.com/redirect/?product=Observability&location=nodejs.application&version=current).**
 > ## **To access version 1.x examples and developer documentation, see [/tree/1.x](https://github.com/signalfx/splunk-otel-js/tree/1.x).**
 
-The Splunk Distribution of [OpenTelemetry JS](https://github.com/open-telemetry/opentelemetry-js) automatically instruments your Node application to capture and report distributed traces to Splunk APM.
+The Splunk Distribution of [OpenTelemetry JS](https://github.com/open-telemetry/opentelemetry-js) automatically instruments your Node application to capture and report distributed traces to Splunk APM with additional capacity to capture runtime metrics and support for both CPU and memory profiling.
 
 This Splunk distribution comes with the following defaults:
 
@@ -51,12 +51,6 @@ node -r @splunk/otel/instrument app.js
 ```
 
 That's it - the telemetry data is now sent to the locally running Opentelemetry Collector. You can also instrument your app programmatically as described [here](#instrument-with-code).
-
-> Note: If you are using npm 6 or older, it'll warn you about missing peer
-> dependencies. All of these dependencies are instrumentation packages and are
-> completely optional. You can install the ones you need and ignore the rest.
-> npm 7+ supports optional peer dependencies feature and will not complain
-> about this.
 
 ### Send data directly to Splunk Observability Cloud
 
@@ -93,60 +87,67 @@ You can also manually instrument your application by adding the following lines 
 ```js
 const { start } = require('@splunk/otel');
 
-start();
+start({
+  serviceName: 'my-node-service',
+});
 
 // rest of your application entry point script
 ```
-`start()` accept an optional `Options` argument. It can be used to customize many aspects of the observability pipeline. For example:
+`start()` accepts an optional `Options` argument. It can be used to customize many aspects of the observability pipeline. For example enabling runtime metrics and memory profiling:
 
 ```js
 start({
   serviceName: 'my-node-service',
+  metrics: { runtimeMetricsEnabled: true },
+  profiling: { memoryProfilingEnabled: true }
 });
 ```
+
+For all of the possible options see [Advanced Configuration](./docs/advanced-config.md#advanced-configuration).
 
 > `start` is destructive to Open Telemetry API globals. Any globals set before running `start` are overwritten.
 
 ## Default Instrumentation Packages<a name="default-instrumentation-packages"></a>
 
-By default the following instrumentations will automatically be enabled if installed. In order to use
-any of these instrumentations, you'll need to install them with npm and then run your app with `-r @splunk/otel/instrument` flag as described above.
+By default the following instrumentations will automatically be enabled:
 
-* `@opentelemetry/instrumentation-amqplib`
-* `@opentelemetry/instrumentation-aws-lambda`
-* `@opentelemetry/instrumentation-aws-sdk`
-* `@opentelemetry/instrumentation-bunyan`
-* `@opentelemetry/instrumentation-cassandra-driver`
-* `@opentelemetry/instrumentation-connect`
-* `@opentelemetry/instrumentation-dns`
-* `@opentelemetry/instrumentation-express`
-* `@opentelemetry/instrumentation-fastify`
-* `@opentelemetry/instrumentation-fs`
-* `@opentelemetry/instrumentation-generic-pool`
-* `@opentelemetry/instrumentation-graphql`
-* `@opentelemetry/instrumentation-grpc`
-* `@opentelemetry/instrumentation-hapi`
-* `@opentelemetry/instrumentation-http`
-* `@opentelemetry/instrumentation-ioredis`
-* `@opentelemetry/instrumentation-knex`
-* `@opentelemetry/instrumentation-koa`
-* `@opentelemetry/instrumentation-memcached`
-* `@opentelemetry/instrumentation-mongodb`
-* `@opentelemetry/instrumentation-mysql`
-* `@opentelemetry/instrumentation-mysql2`
-* `@opentelemetry/instrumentation-nestjs-core`
-* `@opentelemetry/instrumentation-net`
-* `@opentelemetry/instrumentation-pg`
-* `@opentelemetry/instrumentation-pino`
-* `@opentelemetry/instrumentation-redis`
-* `@opentelemetry/instrumentation-restify`
-* `@opentelemetry/instrumentation-tedious`
-* `@opentelemetry/instrumentation-winston`
-* `opentelemetry-instrumentation-elasticsearch`
-* `opentelemetry-instrumentation-kafkajs`
-* `opentelemetry-instrumentation-mongoose`
-* `opentelemetry-instrumentation-sequelize`
-* `opentelemetry-instrumentation-typeorm`
+* [`@opentelemetry/instrumentation-amqplib`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/instrumentation-amqplib)
+* [`@opentelemetry/instrumentation-aws-lambda`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-aws-lambda)
+* [`@opentelemetry/instrumentation-aws-sdk`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-aws-sdk)
+* [`@opentelemetry/instrumentation-bunyan`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-bunyan)
+* [`@opentelemetry/instrumentation-cassandra-driver`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-cassandra)
+* [`@opentelemetry/instrumentation-connect`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-connect)
+* [`@opentelemetry/instrumentation-dataloader`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/instrumentation-dataloader)
+* [`@opentelemetry/instrumentation-dns`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-dns)
+* [`@opentelemetry/instrumentation-express`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-express)
+* [`@opentelemetry/instrumentation-fastify`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-fastify)
+* [`@opentelemetry/instrumentation-generic-pool`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-generic-pool)
+* [`@opentelemetry/instrumentation-graphql`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-graphql)
+* [`@opentelemetry/instrumentation-grpc`](https://github.com/open-telemetry/opentelemetry-js/tree/main/experimental/packages/opentelemetry-instrumentation-grpc)
+* [`@opentelemetry/instrumentation-hapi`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-hapi)
+* [`@opentelemetry/instrumentation-http`](https://github.com/open-telemetry/opentelemetry-js/tree/main/experimental/packages/opentelemetry-instrumentation-http)
+* [`@opentelemetry/instrumentation-ioredis`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-ioredis)
+* [`@opentelemetry/instrumentation-knex`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-knex)
+* [`@opentelemetry/instrumentation-koa`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-koa)
+* [`@opentelemetry/instrumentation-memcached`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-memcached)
+* [`@opentelemetry/instrumentation-mongodb`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-mongodb)
+* [`@opentelemetry/instrumentation-mysql`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-mysql)
+* [`@opentelemetry/instrumentation-mysql2`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-mysql2)
+* [`@opentelemetry/instrumentation-nestjs-core`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-nestjs-core)
+* [`@opentelemetry/instrumentation-net`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-net)
+* [`@opentelemetry/instrumentation-pg`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-pg)
+* [`@opentelemetry/instrumentation-pino`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-pino)
+* [`@opentelemetry/instrumentation-redis`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-redis)
+* [`@opentelemetry/instrumentation-redis-4`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-redis-4)
+* [`@opentelemetry/instrumentation-restify`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-restify)
+* [`@opentelemetry/instrumentation-router`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-router)
+* [`@opentelemetry/instrumentation-tedious`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/instrumentation-tedious)
+* [`@opentelemetry/instrumentation-winston`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-winston)
+* [`opentelemetry-instrumentation-elasticsearch`](https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-elasticsearch)
+* [`opentelemetry-instrumentation-kafkajs`](https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-kafkajs)
+* [`opentelemetry-instrumentation-mongoose`](https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-mongoose)
+* [`opentelemetry-instrumentation-sequelize`](https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-sequelize)
+* [`opentelemetry-instrumentation-typeorm`](https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-typeorm)
 
 You can find more instrumentation packages over at the [OpenTelemetry Registry](https://opentelemetry.io/registry/?language=js) and enable them manually as described above.
 
