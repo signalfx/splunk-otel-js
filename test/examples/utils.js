@@ -84,7 +84,7 @@ const getParentSpan = (arr, span) => {
   return parent;
 };
 
-const waitSpans = (count, timeout = 30) => {
+const waitSpans = (count, timeout = 60) => {
   console.error(`Waiting for ${count} spans for ${timeout}s`);
   console.time('waitSpans');
   const collectorUrl = new URL(process.env.COLLECTOR_URL ?? 'http://localhost:8378');
@@ -113,11 +113,11 @@ const request = (url) => {
 };
 
 const assertSpans = (actualSpans, expectedSpans) => {
-  //if (process.env.LOG_NEW_SNAPSHOTS === 'true') {
+  if (process.env.LOG_NEW_SNAPSHOTS === 'true') {
     console.error(actualSpans);
     console.error('skipping checking asserting spans');
-    //return 0;
-  //}
+    return 0;
+  }
   assert(Array.isArray(actualSpans), 'Expected `actualSpans` to be an array');
   assert(
     Array.isArray(expectedSpans),
