@@ -48,7 +48,7 @@ const bundledInstrumentations: [string, string][] = [
   ['@opentelemetry/instrumentation-redis', 'RedisInstrumentation'],
   ['@opentelemetry/instrumentation-redis-4', 'RedisInstrumentation'],
   ['@opentelemetry/instrumentation-restify', 'RestifyInstrumentation'],
-	['@opentelemetry/instrumentation-router', 'RouterInstrumentation'],
+  ['@opentelemetry/instrumentation-router', 'RouterInstrumentation'],
   ['@opentelemetry/instrumentation-tedious', 'TediousInstrumentation'],
   ['@opentelemetry/instrumentation-winston', 'WinstonInstrumentation'],
   [
