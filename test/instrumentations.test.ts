@@ -22,22 +22,7 @@ import * as instrumentations from '../src/instrumentations';
 import * as loader from '../src/instrumentations/loader';
 
 describe('instrumentations', () => {
-  it('does not load if packages are not installed', () => {
-    const inst = instrumentations.getInstrumentations();
-    // Note: the list here is the instrumentations among devDependencies
-    assert.deepEqual(
-      inst.map((i) => i.instrumentationName),
-      [
-        '@opentelemetry/instrumentation-bunyan',
-        '@opentelemetry/instrumentation-http',
-        '@opentelemetry/instrumentation-pino',
-        '@opentelemetry/instrumentation-redis',
-        '@opentelemetry/instrumentation-winston',
-      ]
-    );
-  });
-
-  it('load instrumentations if they are not installed', () => {
+  it('loads instrumentations if they are installed', () => {
     const loadStub = sinon.stub(loader, 'load');
     try {
       const inst = instrumentations.getInstrumentations();
@@ -48,11 +33,11 @@ describe('instrumentations', () => {
     }
   });
 
-  it('loader silently fails when package is not installed', () => {
+  it('loader silently fails when instrumentation is not installed', () => {
     const loader = require('../src/instrumentations/loader');
     const result = loader.load(
-      '@opentelemetry/instrumentation-dns',
-      'DnsInstrumentation'
+      '@opentelemetry/instrumentation-fs',
+      'FsInstrumentation'
     );
     assert.strictEqual(result, null);
   });

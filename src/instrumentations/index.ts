@@ -14,84 +14,64 @@
  * limitations under the License.
  */
 
-import { AmqplibInstrumentation } from '@opentelemetry/instrumentation-amqplib';
-import { AwsLambdaInstrumentation } from '@opentelemetry/instrumentation-aws-lambda';
-import { AwsInstrumentation } from '@opentelemetry/instrumentation-aws-sdk';
-import { BunyanInstrumentation } from '@opentelemetry/instrumentation-bunyan';
-import { CassandraDriverInstrumentation } from '@opentelemetry/instrumentation-cassandra-driver';
-import { ConnectInstrumentation } from '@opentelemetry/instrumentation-connect';
-import { DataloaderInstrumentation } from '@opentelemetry/instrumentation-dataloader';
-import { DnsInstrumentation } from '@opentelemetry/instrumentation-dns';
-import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
-import { FastifyInstrumentation } from '@opentelemetry/instrumentation-fastify';
-import { FsInstrumentation } from '@opentelemetry/instrumentation-fs';
-import { GenericPoolInstrumentation } from '@opentelemetry/instrumentation-generic-pool';
-import { GraphQLInstrumentation } from '@opentelemetry/instrumentation-graphql';
-import { GrpcInstrumentation } from '@opentelemetry/instrumentation-grpc';
-import { HapiInstrumentation } from '@opentelemetry/instrumentation-hapi';
-import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
-import { IORedisInstrumentation } from '@opentelemetry/instrumentation-ioredis';
-import { KnexInstrumentation } from '@opentelemetry/instrumentation-knex';
-import { KoaInstrumentation } from '@opentelemetry/instrumentation-koa';
-import { MemcachedInstrumentation } from '@opentelemetry/instrumentation-memcached';
-import { MongoDBInstrumentation } from '@opentelemetry/instrumentation-mongodb';
-import { MySQLInstrumentation } from '@opentelemetry/instrumentation-mysql';
-import { MySQL2Instrumentation } from '@opentelemetry/instrumentation-mysql2';
-import { NestInstrumentation } from '@opentelemetry/instrumentation-nestjs-core';
-import { NetInstrumentation } from '@opentelemetry/instrumentation-net';
-import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
-import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
-import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
-import { RedisInstrumentation as Redis4Instrumentation } from '@opentelemetry/instrumentation-redis-4';
-import { RestifyInstrumentation } from '@opentelemetry/instrumentation-restify';
-import { RouterInstrumentation } from '@opentelemetry/instrumentation-router';
-import { TediousInstrumentation } from '@opentelemetry/instrumentation-tedious';
-import { WinstonInstrumentation } from '@opentelemetry/instrumentation-winston';
-import { ElasticsearchInstrumentation } from 'opentelemetry-instrumentation-elasticsearch';
-import { KafkaJsInstrumentation } from 'opentelemetry-instrumentation-kafkajs';
-import { MongooseInstrumentation } from 'opentelemetry-instrumentation-mongoose';
-import { SequelizeInstrumentation } from 'opentelemetry-instrumentation-sequelize';
-import { TypeormInstrumentation } from 'opentelemetry-instrumentation-typeorm';
+import { load } from './loader';
+
+const bundledInstrumentations: [string, string][] = [
+  ['@opentelemetry/instrumentation-amqplib', 'AmqplibInstrumentation'],
+  ['@opentelemetry/instrumentation-aws-lambda', 'AwsLambdaInstrumentation'],
+  ['@opentelemetry/instrumentation-aws-sdk', 'AwsInstrumentation'],
+  ['@opentelemetry/instrumentation-bunyan', 'BunyanInstrumentation'],
+  [
+    '@opentelemetry/instrumentation-cassandra-driver',
+    'CassandraDriverInstrumentation',
+  ],
+  ['@opentelemetry/instrumentation-connect', 'ConnectInstrumentation'],
+  ['@opentelemetry/instrumentation-dns', 'DnsInstrumentation'],
+  ['@opentelemetry/instrumentation-express', 'ExpressInstrumentation'],
+  ['@opentelemetry/instrumentation-fastify', 'FastifyInstrumentation'],
+  ['@opentelemetry/instrumentation-generic-pool', 'GenericPoolInstrumentation'],
+  ['@opentelemetry/instrumentation-graphql', 'GraphQLInstrumentation'],
+  ['@opentelemetry/instrumentation-grpc', 'GrpcInstrumentation'],
+  ['@opentelemetry/instrumentation-hapi', 'HapiInstrumentation'],
+  ['@opentelemetry/instrumentation-http', 'HttpInstrumentation'],
+  ['@opentelemetry/instrumentation-ioredis', 'IORedisInstrumentation'],
+  ['@opentelemetry/instrumentation-knex', 'KnexInstrumentation'],
+  ['@opentelemetry/instrumentation-koa', 'KoaInstrumentation'],
+  ['@opentelemetry/instrumentation-memcached', 'MemcachedInstrumentation'],
+  ['@opentelemetry/instrumentation-mongodb', 'MongoDBInstrumentation'],
+  ['@opentelemetry/instrumentation-mysql', 'MySQLInstrumentation'],
+  ['@opentelemetry/instrumentation-mysql2', 'MySQL2Instrumentation'],
+  ['@opentelemetry/instrumentation-nestjs-core', 'NestInstrumentation'],
+  ['@opentelemetry/instrumentation-net', 'NetInstrumentation'],
+  ['@opentelemetry/instrumentation-pg', 'PgInstrumentation'],
+  ['@opentelemetry/instrumentation-pino', 'PinoInstrumentation'],
+  ['@opentelemetry/instrumentation-redis', 'RedisInstrumentation'],
+  ['@opentelemetry/instrumentation-redis-4', 'RedisInstrumentation'],
+  ['@opentelemetry/instrumentation-restify', 'RestifyInstrumentation'],
+	['@opentelemetry/instrumentation-router', 'RouterInstrumentation'],
+  ['@opentelemetry/instrumentation-tedious', 'TediousInstrumentation'],
+  ['@opentelemetry/instrumentation-winston', 'WinstonInstrumentation'],
+  [
+    'opentelemetry-instrumentation-elasticsearch',
+    'ElasticsearchInstrumentation',
+  ],
+  ['opentelemetry-instrumentation-kafkajs', 'KafkaJsInstrumentation'],
+  ['opentelemetry-instrumentation-mongoose', 'MongooseInstrumentation'],
+  ['opentelemetry-instrumentation-sequelize', 'SequelizeInstrumentation'],
+  ['opentelemetry-instrumentation-typeorm', 'TypeormInstrumentation'],
+];
 
 export function getInstrumentations() {
-  return [
-    new AmqplibInstrumentation(),
-    new AwsLambdaInstrumentation(),
-    new AwsInstrumentation(),
-    new BunyanInstrumentation(),
-    new CassandraDriverInstrumentation(),
-    new ConnectInstrumentation(),
-    new DataloaderInstrumentation(),
-    new DnsInstrumentation(),
-    new ExpressInstrumentation(),
-    new FastifyInstrumentation(),
-    new FsInstrumentation(),
-    new GenericPoolInstrumentation(),
-    new GraphQLInstrumentation(),
-    new GrpcInstrumentation(),
-    new HapiInstrumentation(),
-    new HttpInstrumentation(),
-    new IORedisInstrumentation(),
-    new KnexInstrumentation(),
-    new KoaInstrumentation(),
-    new MemcachedInstrumentation(),
-    new MongoDBInstrumentation(),
-    new MySQLInstrumentation(),
-    new MySQL2Instrumentation(),
-    new NestInstrumentation(),
-    new NetInstrumentation(),
-    new PgInstrumentation(),
-    new PinoInstrumentation(),
-    new RedisInstrumentation(),
-    new Redis4Instrumentation(),
-    new RestifyInstrumentation(),
-    new RouterInstrumentation(),
-    new TediousInstrumentation(),
-    new WinstonInstrumentation(),
-    new ElasticsearchInstrumentation(),
-    new KafkaJsInstrumentation(),
-    new MongooseInstrumentation(),
-    new SequelizeInstrumentation(),
-    new TypeormInstrumentation(),
-  ];
+  const result = [];
+
+  // Defensively load all supported instrumentations
+  for (const i in bundledInstrumentations) {
+    const [module, name] = bundledInstrumentations[i];
+    const Instrumentation = load(module, name);
+    if (typeof Instrumentation === 'function') {
+      result.push(new (Instrumentation as typeof Instrumentation)());
+    }
+  }
+
+  return result;
 }
