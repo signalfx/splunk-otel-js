@@ -26,6 +26,7 @@ const bundledInstrumentations: [string, string][] = [
     'CassandraDriverInstrumentation',
   ],
   ['@opentelemetry/instrumentation-connect', 'ConnectInstrumentation'],
+  ['@opentelemetry/instrumentation-dataloader', 'DataloaderInstrumentation'],
   ['@opentelemetry/instrumentation-dns', 'DnsInstrumentation'],
   ['@opentelemetry/instrumentation-express', 'ExpressInstrumentation'],
   ['@opentelemetry/instrumentation-fastify', 'FastifyInstrumentation'],
