@@ -84,7 +84,7 @@ const getParentSpan = (arr, span) => {
   return parent;
 };
 
-const waitSpans = (count, timeout = 11) => {
+const waitSpans = (count, timeout = 30) => {
   console.error(`Waiting for ${count} spans for ${timeout}s`);
   console.time('waitSpans');
   const collectorUrl = new URL(process.env.COLLECTOR_URL ?? 'http://localhost:8378');
