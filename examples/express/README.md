@@ -38,18 +38,9 @@ node client.js
 
 ### Instrumented via OTel SDK
 
-To start collecting and exporting tracing data from the app it requires
-
-1. Three additional packages to be installed, which are specified in `package.json` and were installed automatically during the setup:
-    - `@opentelemetry/instrumentation-express`,
-    - `@opentelemetry/instrumentation-http` and
-    - `@splunk/otel`.
-2. Configuration for the SDK.
-3. SDK initialization before running the application.
-
 All the following steps are done for you in the example:
 
-1. Additional packages are already specified in the `package.json` file.
+1. `@splunk/otel` is already specified in the `package.json` file.
 2. All the configuration is included in [an environment file, `.env.collector`](./.env.collector).
 3. SDK initialization happens in [tracer.js](./tracer.js).
 
