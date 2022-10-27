@@ -40,17 +40,10 @@ The following instructions assume that you're sending data to Splunk Observabili
 npm install @splunk/otel --save
 ```
 
-2. Install the instrumentation packages for your library or framework:
-
-```
-npm install @opentelemetry/instrumentation-http --save
-```
-
 You can find a list of instrumentation packages supported out of the box [here](#default-instrumentation-packages).
+To install additional instrumentations or provide your own, see [instrumentations](./docs/instrumentations.md).
 
-To install packages in addition to the default ones, see [Plugins](./docs/plugins.md).
-
-3. Run node app with the `-r @splunk/otel/instrument` CLI argument
+1. Run node app with the `-r @splunk/otel/instrument` CLI argument
 
 ```
 export OTEL_SERVICE_NAME=my-node-svc
