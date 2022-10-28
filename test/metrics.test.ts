@@ -128,7 +128,7 @@ describe('metrics', () => {
         options.resource.attributes[SemanticResourceAttributes.SERVICE_NAME],
         'unnamed-node-service'
       );
-      assert.deepEqual(options.runtimeMetricsEnabled, false);
+      assert.deepEqual(options.runtimeMetricsEnabled, true);
       assert.deepEqual(options.runtimeMetricsCollectionIntervalMillis, 5000);
       assert(
         options.metricReaderFactory(options)[0]['_exporter'] instanceof

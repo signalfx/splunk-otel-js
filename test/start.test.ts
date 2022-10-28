@@ -20,6 +20,7 @@ import * as metrics from '../src/metrics';
 import * as profiling from '../src/profiling';
 import * as tracing from '../src/tracing';
 import { start, stop } from '../src';
+import { Resource } from '@opentelemetry/resources';
 
 import * as utils from './utils';
 
@@ -42,7 +43,7 @@ CONFIG.metrics = {
 const callstackInterval = 'callstackInterval';
 const collectionDuration = 'collectionDuration';
 const debugExport = 'debugExport';
-const resource = 'resource';
+const resource = Resource.empty();
 CONFIG.profiling = {
   callstackInterval,
   collectionDuration,
