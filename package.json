@@ -39,7 +39,7 @@
     "stats"
   ],
   "engines": {
-    "node": ">=12.13"
+    "node": ">=14"
   },
   "files": [
     "binding.gyp",

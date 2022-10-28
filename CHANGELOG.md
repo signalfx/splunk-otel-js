@@ -106,6 +106,10 @@ Fri, 28 Oct 2022 08:48:00 GMT
   });
   ```
 
+- ### Update OpenTelemetry SDKs
+
+  Minimum Node.js version has been bumped to 14 due to OpenTelemetry SDKs dropping support for Node.js 12.
+
 ## 1.4.1
 
 Wed, 22 Sep 2022 09:24:01 GMT
