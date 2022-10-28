@@ -14,17 +14,16 @@
 
 # Splunk Distribution of OpenTelemetry for Node.js
 
-> ## **Documentation for the current stable version (1.x) can be viewed [here](https://quickdraw.splunk.com/redirect/?product=Observability&location=nodejs.application&version=current).**
-> ## **To access version 1.x examples and developer documentation, see [/tree/1.x](https://github.com/signalfx/splunk-otel-js/tree/1.x).**
+> ## **Version 1.x examples and developer documentation can be seen at [/tree/1.x](https://github.com/signalfx/splunk-otel-js/tree/1.x).**
 
-The Splunk Distribution of [OpenTelemetry JS](https://github.com/open-telemetry/opentelemetry-js) automatically instruments your Node application to capture and report distributed traces to Splunk APM with additional capacity to capture runtime metrics and support for both CPU and memory profiling.
+The Splunk Distribution of [OpenTelemetry JS](https://github.com/open-telemetry/opentelemetry-js) integrates with Splunk APM and automatically instruments your Node application to capture traces, collect runtime metrics, CPU and memory profiles.
 
 This Splunk distribution comes with the following defaults:
 
 - [W3C tracecontext and baggage propagation](https://www.w3.org/TR/trace-context).
 - [OTLP exporter](https://www.npmjs.com/package/@opentelemetry/exporter-trace-otlp-grpc)
   configured to send spans to a locally running [OpenTelemetry Collector](https://github.com/open-telemetry/opentelemetry-collector) over gRPC
-  (default endpoint: `localhost:4317`).
+  (default endpoint: `http://localhost:4317`).
 - Unlimited default limits for [configuration options](#trace-configuration) to
   support full-fidelity traces.
 
@@ -43,7 +42,7 @@ npm install @splunk/otel --save
 You can find a list of instrumentation packages supported out of the box [here](#default-instrumentation-packages).
 To install additional instrumentations or provide your own, see [instrumentations](./docs/instrumentations.md).
 
-1. Run node app with the `-r @splunk/otel/instrument` CLI argument
+2. Run node app with the `-r @splunk/otel/instrument` CLI argument
 
 ```
 export OTEL_SERVICE_NAME=my-node-svc
@@ -58,21 +57,6 @@ In order to send traces directly to Splunk Observability Cloud, you need to:
 
 1. Set `SPLUNK_REALM` to your Splunk APM realm (for example, `us0`).
 1. Set the `SPLUNK_ACCESS_TOKEN` to your Splunk Observability Cloud [access token](https://docs.splunk.com/Observability/admin/authentication-tokens/api-access-tokens.html).
-
-## Automatically instrument an application
-
-You can use the `-r` CLI flag to preload the instrumentation module and automatically instrument your Node.js application.
-For example, if you normally started your application as follows:
-
-```bash
-node index.js
-```
-
-Then you can automatically instrument your application by running
-
-```bash
-node -r @splunk/otel/instrument index.js
-```
 
 ## Correlate traces and logs
 
@@ -89,10 +73,12 @@ const { start } = require('@splunk/otel');
 
 start({
   serviceName: 'my-node-service',
+	endpoint: 'http://localhost:4317'
 });
 
 // rest of your application entry point script
 ```
+
 `start()` accepts an optional `Options` argument. It can be used to customize many aspects of the observability pipeline. For example enabling runtime metrics and memory profiling:
 
 ```js
