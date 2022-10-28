@@ -4,12 +4,11 @@ To capture HTTP header names as span attributes, you must specify a list of head
 
 ```js
 const { start } = require('@splunk/otel');
-const { getInstrumentations } = require('@splunk/otel/lib/instrumentations');
+const { HttpInstrumentation } = require('@opentelemetry/instrumentation-http');
 
 start({
   tracing: {
     instrumentations: [
-      ...getInstrumentations(),
       new HttpInstrumentation({
         headersToSpanAttributes: {
           // Server side capturing, e.g. express
