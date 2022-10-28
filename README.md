@@ -14,7 +14,7 @@
 
 # Splunk Distribution of OpenTelemetry for Node.js
 
-> ## **Version 1.x examples and developer documentation can be seen at [/tree/1.x](https://github.com/signalfx/splunk-otel-js/tree/1.x).**
+> ## **Examples and developer documentation for version 1.x can be seen at [/tree/1.x](https://github.com/signalfx/splunk-otel-js/tree/1.x).**
 
 The Splunk Distribution of [OpenTelemetry JS](https://github.com/open-telemetry/opentelemetry-js) integrates with Splunk APM and automatically instruments your Node application to capture traces, collect runtime metrics, CPU and memory profiles.
 
@@ -58,12 +58,6 @@ In order to send traces directly to Splunk Observability Cloud, you need to:
 1. Set `SPLUNK_REALM` to your Splunk APM realm (for example, `us0`).
 1. Set the `SPLUNK_ACCESS_TOKEN` to your Splunk Observability Cloud [access token](https://docs.splunk.com/Observability/admin/authentication-tokens/api-access-tokens.html).
 
-## Correlate traces and logs
-
-The Splunk Distribution of OpenTelemetry JS automatically injects trace metadata into logs so that Node.js logging libraries can access it. You can use trace metadata to correlate traces with log events and explore logs in Observability Cloud.
-
-For more information, see [Correlating traces with logs](./docs/correlate-logs-traces.md).
-
 ## Manually instrument an application<a name="instrument-with-code"></a>
 
 You can also manually instrument your application by adding the following lines before everything else in your application.
@@ -73,7 +67,7 @@ const { start } = require('@splunk/otel');
 
 start({
   serviceName: 'my-node-service',
-	endpoint: 'http://localhost:4317'
+  endpoint: 'http://localhost:4317'
 });
 
 // rest of your application entry point script
@@ -92,6 +86,12 @@ start({
 For all of the possible options see [Advanced Configuration](./docs/advanced-config.md#advanced-configuration).
 
 > `start` is destructive to Open Telemetry API globals. Any globals set before running `start` are overwritten.
+
+## Correlate traces and logs
+
+The Splunk Distribution of OpenTelemetry JS automatically injects trace metadata into logs so that Node.js logging libraries can access it. You can use trace metadata to correlate traces with log events and explore logs in Observability Cloud.
+
+For more information, see [Correlating traces with logs](./docs/correlate-logs-traces.md).
 
 ## Default Instrumentation Packages<a name="default-instrumentation-packages"></a>
 
