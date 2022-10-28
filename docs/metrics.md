@@ -135,20 +135,7 @@ counter.add(99);
 
 ## Runtime metrics
 
-Runtime metrics are disabled by default and need to be explicitly enabled ([advanced configuration](advanced-config.md#metrics)):
-
-```javascript
-const { start } = require('@splunk/otel');
-
-start({
-  serviceName: 'my-service',
-  metrics: {
-    runtimeMetricsEnabled: true,
-  },
-});
-```
-
-The following is a list of metrics automatically collected and exported:
+The following is a list of metrics automatically collected and exported if runtime metrics is switched on:
 
 - `process.runtime.nodejs.memory.heap.total` (gauge, bytes) - Heap total via `process.memoryUsage().heapTotal`.
 - `process.runtime.nodejs.memory.heap.used` (gauge, bytes) - Heap used via `process.memoryUsage().heapUsed`.
@@ -158,3 +145,17 @@ The following is a list of metrics automatically collected and exported:
 - `process.runtime.nodejs.memory.gc.count` (counter, count) - Number of times GC ran.
 - `process.runtime.nodejs.event_loop.lag.max` (gauge, nanoseconds) - Max event loop lag within the collection interval.
 - `process.runtime.nodejs.event_loop.lag.min` (gauge, nanoseconds) - Min event loop lag within the collection interval.
+
+Runtime metrics are enabled by default if metrics are enabled. To switch them off, set `runtimeMetricsEnabled` to `false`:
+
+```javascript
+const { start } = require('@splunk/otel');
+
+start({
+  serviceName: 'my-service',
+  metrics: {
+    runtimeMetricsEnabled: false,
+  },
+});
+```
+
