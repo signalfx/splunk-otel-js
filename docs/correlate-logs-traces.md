@@ -6,7 +6,7 @@ The Splunk Distribution of OpenTelemetry JS automatically injects trace metadata
 
 ## Supported logging libraries
 
-The following logging librares are supported:
+The Splunk Distribution of OpenTelemetry JS automatically supports the following libraries:
 
 - Bunyan
 - Pino
