@@ -28,7 +28,7 @@ Fri, 28 Oct 2022 08:48:00 GMT
 
   start({
     serviceName: 'my-node-service',
-    endpoint: 'http://collector-host:4317',
+    endpoint: 'http://collector:4317',
   });
   ```
 
