@@ -24,11 +24,10 @@ This example app can be run in following ways:
 1. Uninstrumented
 2. Instrumented via OTel SDK, exporting to locally running collector
 3. Instrumented via OTel SDK, exporting directly to Splunk APM
-4. Instrumented via legacy OpenTracing SDK
 
 ### Uninstrumented
 
-Original app files do not cointain any reference to neither OTel or OpenTracing, nor does it need the SDKs to be installed. To run the app as is, without tracing run the server and the client in different terminals:
+Original app files do not contain any references to OpenTelemetry, nor does it need the SDKs to be installed. To run the app as is, without tracing run the server and the client in different terminals:
 
 ```shell
 node server.js
@@ -64,20 +63,6 @@ npm run server:apm
 # In a separate terminal:
 npm run client:apm
 ```
-
-If are not sure about the values to use for `.env`, but you're familiar with configuring the OpenTracing SDK, you can also use [.env.opentracing](./.env.opentracing) as the baseline configuration: The OTel configuration is automatically derived from the OpenTracing settings **in this example** (see [utils.js](./utils.js) for the conversions).
-
-### Instrumented via legacy OpenTracing SDK
-
-For comparison this example also includes the legacy OpenTracing SDK setup which can be run using predefined commands:
-
-```shell
-npm run server:opentracing
-# In a separate terminal:
-npm run client:opentracing
-```
-
-These commands require a configuration in the `.env` file compatible with the [SignalFX Tracing Library](https://github.com/signalfx/signalfx-nodejs-tracing). See the [example](./.env.opentracing).
 
 # License and versioning
 
