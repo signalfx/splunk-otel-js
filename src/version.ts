@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-export const VERSION = '1.4.1';
+export const VERSION = '2.0.0-rc1';

@@ -4,6 +4,108 @@ This log was last generated on Wed, 22 Sep 2022 09:24:01 GMT and should not be m
 
 <!-- Start content -->
 
+## 2.0.0-rc1
+
+Fri, 28 Oct 2022 08:48:00 GMT
+
+- ### Deprecate `startTracing`, `startMetrics`, `startProfiling` functions
+
+  There is a new function called `start`, which can be used to start all 3 signals:
+  ```js
+  const { start } = require('@splunk/otel');
+
+  start({
+    serviceName: 'my-node-service',
+    metrics: true, // Sets up OpenTelemetry metrics pipeline for custom metrics
+    profiling: true, // Enables CPU profiling
+  });
+  ```
+
+  If you have been only been using tracing, then `startTracing` can be replaced like this:
+
+  ```js
+  const { start } = require('@splunk/otel');
+
+  start({
+    serviceName: 'my-node-service',
+    endpoint: 'http://collector-host:4317',
+  });
+  ```
+
+  Signal-specific configuration options can still be passed in:
+
+  ```js
+  const { start } = require('@splunk/otel');
+
+  start({
+    serviceName: 'my-node-service',
+    tracing: {
+      instrumentations: [
+        // Custom instrumentation list
+      ],
+    },
+    metrics: {
+      runtimeMetricsEnabled: true,
+    },
+    profiling: {
+      memoryProfilingEnabled: true,
+    }
+  });
+  ```
+
+  For all possible options see [Advanced Configuration](./docs/advanced-config.md#advanced-configuration).
+
+  The deprecated functions are still available, but using them will log a deprecation message.
+
+- ### Replace SignalFx metrics with OpenTelemetry metrics
+  
+  SignalFx metrics SDK has been removed and replaced with OpenTelemetry Metrics SDKs.
+  The internal SignalFx client is no longer available to users, if you have been using custom metrics with the SignalFx client provided by Splunk OpenTelemetry JS distribution, see the [migration guide](./docs/metrics.md#migrating-from-signalfx-metrics) for how to start using custom metrics via OpenTelemetry.
+
+  Runtime metric names are now using [OpenTelemetry conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/runtime-environment-metrics.md), the following is a list of changed metric names:
+  
+  | SignalFx (no longer available) | OpenTelemetry                               |
+  | ------------------------------ | ------------------------------------------- |
+  | `nodejs.memory.heap.total`     | `process.runtime.nodejs.memory.heap.total`  |
+  | `nodejs.memory.heap.used`      | `process.runtime.nodejs.memory.heap.used`   |
+  | `nodejs.memory.rss`            | `process.runtime.nodejs.memory.rss`         |
+  | `nodejs.memory.gc.size`        | `process.runtime.nodejs.memory.gc.size`     |
+  | `nodejs.memory.gc.pause`       | `process.runtime.nodejs.memory.gc.pause`    | 
+  | `nodejs.memory.gc.count`       | `process.runtime.nodejs.memory.gc.count`    | 
+  | `nodejs.event_loop.lag.max`    | `process.runtime.nodejs.event_loop.lag.max` |
+  | `nodejs.event_loop.lag.min`    | `process.runtime.nodejs.event_loop.lag.min` |
+
+- ### Bundle instrumentations with the distribution
+
+  It is no longer necessary to add instrumentation packages to your `package.json` file, unless you intend to use instrumentations not bundled in the distribution.
+
+  For the list of instrumentations bundled by default see [Default instrumentation packages](./README.md#default-instrumentation-packages).
+
+- ### Remove Jaeger exporter
+
+  It is no longer possible to use the `jaeger-thrift-splunk` value for `OTEL_TRACES_EXPORTER` to send traces via Jaeger Thrift over HTTP.
+
+  The default exporting format is still OTLP over gRPC, however it is now possible to use OTLP over HTTP by setting `OTLP_TRACES_EXPORTER` environment variable to `otlp-splunk`.
+
+  If you want to keep using Jaeger exporter, you can use the [@opentelemetry/exporter-jaeger](https://www.npmjs.com/package/@opentelemetry/exporter-jaeger) package by specifying a custom span exporter for the tracing configuration:
+
+  ```js
+  const { start } = require('@splunk/otel');
+  const { JaegerExporter } = require('@opentelemetry/exporter-jaeger');
+
+  start({
+    serviceName: 'my-node-service',
+    tracing: {
+      spanExporterFactory: (options) => {
+        return new JaegerExporter({
+          serviceName: options.serviceName,
+          // Additional config
+        })
+      }
+    },
+  });
+  ```
+
 ## 1.4.1
 
 Wed, 22 Sep 2022 09:24:01 GMT
