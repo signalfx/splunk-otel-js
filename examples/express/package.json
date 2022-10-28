@@ -6,19 +6,16 @@
     "client": "env-cmd --silent nodemon -r ./tracer.js client.js",
     "client:apm": "env-cmd -f .env.otlp-splunk nodemon -r ./tracer.js client.js",
     "client:collector": "env-cmd -f .env.collector nodemon -r ./tracer.js client.js",
-    "client:opentracing": "env-cmd --silent nodemon -r ./tracer.opentracing.js client.js",
     "start": "npm run server",
     "server": "env-cmd --silent nodemon -r ./tracer.js server.js",
     "server:apm": "env-cmd -f .env.otlp-splunk nodemon -r ./tracer.js server.js",
-    "server:collector": "env-cmd -f .env.collector nodemon -r ./tracer.js server.js",
-    "server:opentracing": "env-cmd --silent nodemon -r ./tracer.opentracing.js server.js"
+    "server:collector": "env-cmd -f .env.collector nodemon -r ./tracer.js server.js"
   },
   "dependencies": {
     "@splunk/otel": "1.4.0",
     "axios": "^0.21.1",
     "env-cmd": "^10.1.0",
-    "express": "^4.17.1",
-    "signalfx-tracing": "^0.13.0"
+    "express": "^4.17.1"
   },
   "devDependencies": {
     "nodemon": "^2.0.12"
