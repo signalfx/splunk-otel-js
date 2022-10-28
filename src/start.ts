@@ -15,7 +15,11 @@
  */
 import { assertNoExtraneousProperties, parseEnvBooleanString } from './utils';
 import { startMetrics, StartMetricsOptions } from './metrics';
-import { startProfiling, StartProfilingOptions } from './profiling';
+import {
+  startProfiling,
+  StartProfilingOptions,
+  _setDefaultOptions as setDefaultProfilingOptions,
+} from './profiling';
 import { startTracing, stopTracing, StartTracingOptions } from './tracing';
 
 interface Options {
@@ -60,17 +64,31 @@ export const start = (options: Partial<Options> = {}) => {
     'serviceName',
   ]);
 
+  let metricsEnabledByDefault = false;
   if (isSignalEnabled(options.profiling, 'SPLUNK_PROFILER_ENABLED', false)) {
-    running.profiling = startProfiling(
-      Object.assign({}, restOptions, profiling)
-    );
+    const profilingOptions = Object.assign({}, restOptions, profiling);
+    running.profiling = startProfiling(profilingOptions);
+
+    // HACK: memory profiling needs to enable metrics,
+    // run the default option function to see whether memory profiling is enabled
+    const materializedOptions = setDefaultProfilingOptions(profilingOptions);
+
+    if (materializedOptions.memoryProfilingEnabled) {
+      metricsEnabledByDefault = true;
+    }
   }
 
   if (isSignalEnabled(options.tracing, 'SPLUNK_TRACING_ENABLED', true)) {
     running.tracing = startTracing(Object.assign({}, restOptions, tracing));
   }
 
-  if (isSignalEnabled(options.metrics, 'SPLUNK_METRICS_ENABLED', false)) {
+  if (
+    isSignalEnabled(
+      options.metrics,
+      'SPLUNK_METRICS_ENABLED',
+      metricsEnabledByDefault
+    )
+  ) {
     running.metrics = startMetrics(Object.assign({}, restOptions, metrics));
   }
 };

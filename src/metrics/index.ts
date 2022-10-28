@@ -363,7 +363,7 @@ export function _setDefaultOptions(
       getEnvNumber('OTEL_METRIC_EXPORT_INTERVAL', 30_000),
     runtimeMetricsEnabled:
       options.runtimeMetricsEnabled ??
-      getEnvBoolean('SPLUNK_RUNTIME_METRICS_ENABLED', false),
+      getEnvBoolean('SPLUNK_RUNTIME_METRICS_ENABLED', true),
     runtimeMetricsCollectionIntervalMillis:
       options.runtimeMetricsCollectionIntervalMillis ||
       getEnvNumber('SPLUNK_RUNTIME_METRICS_COLLECTION_INTERVAL', 5000),

@@ -100,7 +100,7 @@ Configuration examples can be seen [here](metrics.md).
 | `OTEL_RESOURCE_ATTRIBUTES`                                      |                         | Stable  | The resource attributes to metric data. <details><summary>Environment variable example</summary>`key1=val1,key2=val2`</details>
 | `SPLUNK_METRICS_ENABLED`<br>n/a (enabled by calling `start`) | `false`             | Experimental | Sets up the metrics pipeline (global meter provider, exporters).
 | n/a<br>`metrics.resourceFactory`                                |                         | Experimental | Callback which allows to filter the default resource or provide a custom one. The function takes one argument of type `Resource` which is the resource pre-filled by the SDK containing the `service.name`, environment, host and process attributes. |
-| `SPLUNK_RUNTIME_METRICS_ENABLED`<br>`metrics.runtimeMetricsEnabled` | `false`                 | Experimental | Enable collecting and exporting of runtime metrics. See [metrics documentation](metrics.md) for more information.
+| `SPLUNK_RUNTIME_METRICS_ENABLED`<br>`metrics.runtimeMetricsEnabled` | `true`                 | Experimental | Enable collecting and exporting of runtime metrics. See [metrics documentation](metrics.md) for more information.
 | `SPLUNK_RUNTIME_METRICS_COLLECTION_INTERVAL`<br>`metrics.runtimeMetricsCollectionIntervalMillis`  | `5000`                 | Experimental | The interval, in milliseconds, during which GC and event loop statistics are collected. After the collection is done, the values become available to the metric exporter.
 
 ### Profiling
