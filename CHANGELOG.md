@@ -4,6 +4,10 @@ This log was last generated on Wed, 22 Sep 2022 09:24:01 GMT and should not be m
 
 <!-- Start content -->
 
+## 2.0.0-rc2
+
+- Omit setting the default endpoint for metrics, as OpenTelemetry OTLP metrics exporters already have their own default configuration [#592](https://github.com/signalfx/splunk-otel-js/pull/592)
+
 ## 2.0.0-rc1
 
 Fri, 28 Oct 2022 08:48:00 GMT
