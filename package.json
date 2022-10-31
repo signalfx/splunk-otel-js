@@ -1,6 +1,6 @@
 {
   "name": "@splunk/otel",
-  "version": "1.4.1",
+  "version": "2.0.0-rc1",
   "description": "The Splunk distribution of OpenTelemetry Node Instrumentation provides a Node agent that automatically instruments your Node application to capture and report distributed traces to Splunk APM.",
   "repository": "git@github.com:signalfx/splunk-otel-js.git",
   "author": "Splunk <splunk-oss@splunk.com>",
@@ -39,7 +39,7 @@
     "stats"
   ],
   "engines": {
-    "node": ">=12.13"
+    "node": ">=14"
   },
   "files": [
     "binding.gyp",
