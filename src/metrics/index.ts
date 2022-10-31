@@ -42,7 +42,7 @@ interface MetricsOptions {
   accessToken: string;
   realm?: string;
   serviceName: string;
-  endpoint: string;
+  endpoint?: string;
   resource: Resource;
   views?: View[];
   exportIntervalMillis: number;
@@ -297,8 +297,6 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
   };
 }
 
-const defaultEndpoint = 'http://localhost:4317';
-
 export function _setDefaultOptions(
   options: StartMetricsOptions = {}
 ): MetricsOptions {
@@ -325,10 +323,6 @@ export function _setDefaultOptions(
     if (!endpoint) {
       endpoint = `https://ingest.${realm}.signalfx.com/v2/datapoint/otlp`;
     }
-  }
-
-  if (!endpoint) {
-    endpoint = defaultEndpoint;
   }
 
   let defaultResource = detectResource();
