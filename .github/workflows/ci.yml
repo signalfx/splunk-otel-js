@@ -149,7 +149,6 @@ jobs:
         run: npm run test
 
   e2e-published:
-    if: ${{ false }}  # FIXME: Enable again when 2.0.0 is released
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
