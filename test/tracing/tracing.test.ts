@@ -102,7 +102,23 @@ describe('tracing:otlp', () => {
     stopTracing();
   });
 
-  it('setups tracing with multiple processors', () => {
+  it('sets up tracing with a single processor', () => {
+    startTracing({
+      spanProcessorFactory: () => {
+        return new SimpleSpanProcessor(new ConsoleSpanExporter());
+      },
+    });
+
+    sinon.assert.calledOnce(addSpanProcessorMock);
+    const p1 = addSpanProcessorMock.getCall(0).args[0];
+
+    assert(p1 instanceof SimpleSpanProcessor);
+    const exp1 = p1['_exporter'];
+    assert(exp1 instanceof ConsoleSpanExporter);
+    stopTracing();
+  });
+
+  it('sets up tracing with multiple processors', () => {
     startTracing({
       spanProcessorFactory: function (options) {
         return [

@@ -38,7 +38,6 @@ and the application logs to stdout:
 It's also possible to send the traces directly to Splunk APM. For that additional environment variables need to be set up:
 
 ```shell
-export OTEL_TRACES_EXPORTER="otlp-splunk"
 # Replace <realm> with the correct realm:
 export SPLUNK_REALM="<your Splunk APM realm>"
 export SPLUNK_ACCESS_TOKEN="<your access token>"

@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-// TODO: use assert.strict once we deprecate node@8
-import * as assert from 'assert';
+import { strict as assert } from 'assert';
 
 export const defaultServiceName = 'unnamed-node-service';
 
@@ -69,6 +68,31 @@ export function getEnvNumber(key: string, defaultValue: number): number {
 
 export function deduplicate(arr: string[]) {
   return [...new Set(arr)];
+}
+
+export function getEnvArray(key: string, defaultValue: string[]): string[] {
+  const value = process.env[key];
+
+  if (value === undefined) {
+    return defaultValue;
+  }
+
+  return deduplicate(value.split(',')).map((v) => v.trim());
+}
+
+export function getEnvValueByPrecedence(
+  keys: string[],
+  defaultValue?: string
+): string | undefined {
+  for (const key of keys) {
+    const value = process.env[key];
+
+    if (value !== undefined) {
+      return value;
+    }
+  }
+
+  return defaultValue;
 }
 
 const formatStringSet = (set: Set<string> | string[]) => {

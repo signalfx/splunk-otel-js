@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as assert from 'assert';
 import * as util from 'util';
 import {
   ConsoleSpanExporter,
@@ -29,7 +28,12 @@ import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/expor
 // eslint-disable-next-line node/no-extraneous-import
 import { Metadata } from '@grpc/grpc-js';
 import { detect as detectResource } from '../resource';
-import { deduplicate, defaultServiceName, getEnvBoolean } from '../utils';
+import {
+  defaultServiceName,
+  getEnvArray,
+  getEnvBoolean,
+  getEnvValueByPrecedence,
+} from '../utils';
 import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { diag, Span, TextMapPropagator } from '@opentelemetry/api';
@@ -41,7 +45,7 @@ import {
 import { SplunkBatchSpanProcessor } from './SplunkBatchSpanProcessor';
 import { Resource } from '@opentelemetry/resources';
 
-type SpanExporterFactory = (options: Options) => SpanExporter;
+type SpanExporterFactory = (options: Options) => SpanExporter | SpanExporter[];
 
 type SpanProcessorFactory = (
   options: Options
@@ -94,8 +98,6 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   options.realm = options.realm || process.env.SPLUNK_REALM;
 
-  const exporterType = resolveExporterType(options);
-
   if (options.realm) {
     if (!options.accessToken) {
       throw new Error(
@@ -140,9 +142,11 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     ...extraTracerConfig,
   };
 
+  const exporterTypes = getExporterTypes(options);
+
   // factories
   if (options.spanExporterFactory === undefined) {
-    options.spanExporterFactory = resolveTracesExporter(exporterType);
+    options.spanExporterFactory = resolveTraceExporters(exporterTypes);
   }
   options.spanProcessorFactory =
     options.spanProcessorFactory || defaultSpanProcessorFactory;
@@ -182,110 +186,125 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   };
 }
 
-const SUPPORTED_EXPORTER_TYPES = [
-  '',
-  'default',
-  'console-splunk',
-  'otlp',
-  'otlp-grpc',
-  'otlp-splunk',
-];
+const SUPPORTED_EXPORTER_TYPES = ['console', 'otlp'];
 
 type ExporterType = typeof SUPPORTED_EXPORTER_TYPES[number];
 
 const SpanExporterMap: Record<ExporterType, SpanExporterFactory> = {
-  '': otlpSpanExporterFactory,
-  default: otlpSpanExporterFactory,
-  'console-splunk': consoleSpanExporterFactory,
+  console: consoleSpanExporterFactory,
   otlp: otlpSpanExporterFactory,
-  'otlp-grpc': otlpSpanExporterFactory,
-  'otlp-splunk': splunkOtlpSpanExporterFactory,
 };
 
-function isSupportedRealmExporter(exporterType: string) {
-  return 'otlp-splunk' === exporterType;
+function containsSupportedRealmExporter(exporterTypes: string[]) {
+  return exporterTypes.includes('otlp');
 }
 
-function isValidExporterType(type: string): boolean {
-  return SUPPORTED_EXPORTER_TYPES.includes(type);
-}
-
-function resolveExporterType(options: Partial<Options>): ExporterType {
-  let tracesExporter: string | undefined = process.env.OTEL_TRACES_EXPORTER;
-
-  if (options.realm) {
-    if (tracesExporter) {
-      if (!isSupportedRealmExporter(tracesExporter)) {
-        throw new Error(
-          'Setting the Splunk realm with an explicit OTEL_TRACES_EXPORTER requires OTEL_TRACES_EXPORTER to be otlp-splunk'
-        );
-      }
-    } else {
-      tracesExporter = 'otlp-splunk';
+function areValidExporterTypes(types: string[]): boolean {
+  for (const t of types) {
+    if (!SUPPORTED_EXPORTER_TYPES.includes(t)) {
+      return false;
     }
   }
 
-  if (tracesExporter === undefined) {
-    tracesExporter = 'default';
+  return true;
+}
+
+function getExporterTypes(options: Partial<Options>): ExporterType[] {
+  const traceExporters: string[] = getEnvArray('OTEL_TRACES_EXPORTER', [
+    'otlp',
+  ]);
+
+  if (options.realm) {
+    if (!containsSupportedRealmExporter(traceExporters)) {
+      throw new Error(
+        'Setting the Splunk realm with an explicit OTEL_TRACES_EXPORTER requires OTEL_TRACES_EXPORTER to be either otlp or be left undefined'
+      );
+    }
   }
 
-  if (!isValidExporterType(tracesExporter)) {
+  if (!areValidExporterTypes(traceExporters)) {
     throw new Error(
       `Invalid value for OTEL_TRACES_EXPORTER env variable: ${util.inspect(
         process.env.OTEL_TRACES_EXPORTER
-      )}. Pick one of ${util.inspect(SUPPORTED_EXPORTER_TYPES, {
+      )}. Choose from ${util.inspect(SUPPORTED_EXPORTER_TYPES, {
         compact: true,
       })} or leave undefined.`
     );
   }
 
-  return tracesExporter;
+  return traceExporters;
 }
 
-export function resolveTracesExporter(
-  exporterType: ExporterType
+function resolveTraceExporters(
+  exporterTypes: ExporterType[]
 ): SpanExporterFactory {
-  return SpanExporterMap[exporterType];
+  const factories = exporterTypes.map((t) => SpanExporterMap[t]);
+  return (options) => factories.flatMap((factory) => factory(options));
 }
 
 export function otlpSpanExporterFactory(options: Options): SpanExporter {
-  const metadata = new Metadata();
-  if (options.accessToken) {
-    // for forward compatibility, is not currently supported
-    metadata.set('X-SF-TOKEN', options.accessToken);
-  }
-  return new OTLPTraceExporter({
-    url: options.endpoint,
-    metadata,
-  });
-}
+  let protocol = getEnvValueByPrecedence([
+    'OTEL_EXPORTER_OTLP_TRACES_PROTOCOL',
+    'OTEL_EXPORTER_OTLP_PROTOCOL',
+  ]);
 
-export function splunkOtlpSpanExporterFactory(options: Options): SpanExporter {
-  const { accessToken, realm } = options;
-  let endpoint = options.endpoint ?? process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
+  let endpoint =
+    options.endpoint ??
+    getEnvValueByPrecedence([
+      'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT',
+      'OTEL_EXPORTER_OTLP_ENDPOINT',
+    ]);
 
-  if (endpoint) {
-    if (realm) {
-      throw new Error('Only one of endpoint and realm should be set');
+  const accessToken = options.accessToken;
+
+  if (options.realm !== undefined) {
+    if (protocol !== undefined && protocol !== 'http/protobuf') {
+      diag.warn(
+        `OTLP span exporter factory: defaulting protocol to 'http/protobuf' instead of ${protocol} due to realm being defined.`
+      );
     }
+
+    protocol = 'http/protobuf';
+
+    if (endpoint !== undefined) {
+      diag.warn(
+        'OTLP span exporter factory: explicit endpoint ignored due to realm being set.'
+      );
+    }
+
+    endpoint = `https://ingest.${options.realm}.signalfx.com/v2/trace/otlp`;
   } else {
-    if (realm) {
-      endpoint = `https://ingest.${realm}.signalfx.com/v2/trace/otlp`;
-    } else {
-      throw new Error('Expected either realm or endpoint to be set');
+    protocol = protocol ?? 'grpc';
+  }
+
+  switch (protocol) {
+    case 'grpc': {
+      const metadata = new Metadata();
+      if (accessToken) {
+        // for forward compatibility, is not currently supported
+        metadata.set('X-SF-TOKEN', accessToken);
+      }
+      return new OTLPTraceExporter({
+        url: endpoint,
+        metadata,
+      });
     }
+    case 'http/protobuf': {
+      const headers = accessToken
+        ? {
+            'X-SF-TOKEN': accessToken,
+          }
+        : {};
+      return new OTLPHttpTraceExporter({
+        url: endpoint,
+        headers,
+      });
+    }
+    default:
+      throw new Error(
+        `Expected OTLP protocol to be either grpc or http/protobuf, got ${protocol}.`
+      );
   }
-
-  if (!accessToken) {
-    throw new Error('Expected accessToken to be configured');
-  }
-
-  return new OTLPHttpTraceExporter({
-    url: endpoint,
-    headers: {
-      'X-SF-TOKEN': accessToken,
-    },
-  });
 }
 
 export function consoleSpanExporterFactory(): SpanExporter {
@@ -302,23 +321,28 @@ function getBatchSpanProcessorConfig() {
   return { scheduledDelayMillis: 500 };
 }
 
-export function defaultSpanProcessorFactory(options: Options): SpanProcessor {
-  return new SplunkBatchSpanProcessor(
-    options.spanExporterFactory(options),
-    getBatchSpanProcessorConfig()
+export function defaultSpanProcessorFactory(options: Options): SpanProcessor[] {
+  let exporters = options.spanExporterFactory(options);
+
+  if (!Array.isArray(exporters)) {
+    exporters = [exporters];
+  }
+
+  return exporters.map(
+    (exporter) =>
+      new SplunkBatchSpanProcessor(exporter, getBatchSpanProcessorConfig())
   );
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function defaultPropagatorFactory(options: Options): TextMapPropagator {
-  const propagatorsStr = process.env.OTEL_PROPAGATORS ?? 'tracecontext,baggage';
-  assert.equal(
-    typeof propagatorsStr,
-    'string',
-    'Expecting OTEL_PROPAGATORS environment variable to be a comma-delimited string.'
-  );
+  const envPropagators = getEnvArray('OTEL_PROPAGATORS', [
+    'tracecontext',
+    'baggage',
+  ]);
+
   const propagators = [];
-  for (const propagator of deduplicate(propagatorsStr.split(','))) {
+  for (const propagator of envPropagators) {
     switch (propagator) {
       case 'baggage':
         propagators.push(new W3CBaggagePropagator());

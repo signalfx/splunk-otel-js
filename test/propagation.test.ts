@@ -155,7 +155,7 @@ describe('propagation', () => {
     startTracing({
       spanExporterFactory: () => exporter,
       spanProcessorFactory: (options) => {
-        return (spanProcessor = defaultSpanProcessorFactory(options));
+        return ([spanProcessor] = defaultSpanProcessorFactory(options));
       },
     });
 

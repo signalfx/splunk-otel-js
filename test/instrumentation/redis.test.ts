@@ -65,7 +65,7 @@ describe('Redis instrumentation', () => {
     instrumentations: [new RedisInstrumentation()],
     spanExporterFactory: () => exporter,
     spanProcessorFactory: (options) => {
-      return (spanProcessor = defaultSpanProcessorFactory(options));
+      return ([spanProcessor] = defaultSpanProcessorFactory(options));
     },
   });
 
