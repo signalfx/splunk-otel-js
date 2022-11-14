@@ -1,8 +1,5 @@
 const assert = require('assert');
-const http = require('http');
 const util = require('util');
-
-const got = require('got');
 
 /*
 entry:
@@ -91,25 +88,36 @@ const waitSpans = (count, timeout = 60) => {
   collectorUrl.searchParams.set('count', count);
   collectorUrl.searchParams.set('timeout', timeout);
 
-  return got(collectorUrl, {
-    retry: 0,
-  }).json().catch((err) => {waitSpans
-    assert.doesNotMatch(err?.response?.body, /timed.*out.*waiting.*spans/, `Timed out waiting for ${count} spans for ${timeout}s.`);
-  }).then((ret) => {
-    console.timeEnd('waitSpans');
-    return ret.map(entryToSpan).sort((a, b) => {
-      return a.startTime > b.startTime ? 1 : -1;
+  return fetch(collectorUrl)
+    .then((res) => res.text())
+    .then((content) => {
+      if (content.match(/timed.*out.*waiting.*spans/)) {
+        assert.fail(`Timed out waiting for ${count} spans for ${timeout}s.`);
+      }
+
+      return JSON.parse(content);
+    })
+    .then((res) => {
+      console.timeEnd('waitSpans');
+      return res.map(entryToSpan).sort((a, b) => {
+        return a.startTime > b.startTime ? 1 : -1;
+      });
     });
-  });
 };
 
-const request = (url) => {
-  return got(url, {
-    retry: {
-      errorCodes: ['ECONNREFUSED'],
-      maxRetryAfter: 1000,
-    },
-  });
+const request = async (url) => {
+  for (let i = 0; i < 30; i++) {
+    try {
+      return await fetch(url);
+    } catch (e) {
+      if (e?.cause?.code === 'ECONNREFUSED') {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        continue;
+      }
+
+      return Promise.reject(e);
+    }
+  }
 };
 
 const assertSpans = (actualSpans, expectedSpans) => {

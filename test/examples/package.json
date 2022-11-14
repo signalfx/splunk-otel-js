@@ -1,8 +1,5 @@
 {
   "name": "test-e2e",
   "private": true,
-  "scripts": {},
-  "devDependencies": {
-    "got": "^12.5.2"
-  }
+  "scripts": {}
 }
