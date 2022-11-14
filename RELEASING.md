@@ -15,9 +15,9 @@ Release process:
 Checkout a new branch from main with name equal to `release/v<VERSION_NUMBER>`.
 So if you intend to release `1.2.0`, create a branch named `release/v1.2.0`
 
-## 2. Generate changelog and version <a href="step-2"></a>
+## 2. Update the changelog <a href="step-2"></a>
 
-Run `npm run change:bump`. Entries in `CHANGELOG.md` and `CHANGELOG.json` will be generated automatically.
+Add the list of changes to `CHANGELOG.md`. Keep with the subtitle convention, e.g. `## 2.0.0`.
 
 ## 3. Submit changes for review <a href="step-3"></a>
 
