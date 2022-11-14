@@ -1,0 +1,36 @@
+name: Released package e2e tests
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  release:
+    types: [released]
+permissions: read-all
+
+jobs:
+  e2e-published:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: ''
+            name: 'Basic'
+          - target: '-f express.override.yml'
+            name: 'Express'
+          - target: '-f mixed.override.yml'
+            name: 'Mixed'
+          - target: '-f log-injection.override.yml'
+            name: 'Log injection'
+          - target: '-f profiling.override.yml'
+            name: 'Profiling'
+    name: e2e published ${{ matrix.name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Get versions
+        run: |
+          docker-compose --version;
+          docker --version;
+      - name: Test ${{ matrix.name }} example
+        working-directory: test/examples
+        run: docker-compose -f e2e.docker-compose.yml ${{ matrix.target }} -f published.override.yml up --exit-code-from test
