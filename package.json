@@ -8,8 +8,6 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "change:new": "beachball change",
-    "change:bump": "beachball bump",
     "clean": "tsc --build --clean",
     "compile": "tsc --build",
     "prepare-release-artifact": "node scripts/prepare-release-artifact.js",
@@ -71,7 +69,6 @@
     "@types/sinon": "^10.0.2",
     "@typescript-eslint/eslint-plugin": "^5.20.0",
     "@typescript-eslint/parser": "^5.20.0",
-    "beachball": "^2.31.4",
     "bunyan": "1.8.15",
     "cross-env": "^7.0.3",
     "eslint": "^8.13.0",
