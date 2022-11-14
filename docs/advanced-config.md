@@ -62,7 +62,7 @@ This distribution supports all the configuration options supported by the compon
 | `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT`                        |                         | Stable  | Maximum allowed attribute value size. Empty value is treated as infinity
 | `OTEL_SPAN_EVENT_COUNT_LIMIT`                                   | `128`                   | Stable  | 
 | `OTEL_SPAN_LINK_COUNT_LIMIT`                                    | `1000`\*                | Stable  | 
-| `OTEL_TRACES_EXPORTER`<br>`traces.tracesExporter`               | `otlp`                  | Stable  | Chooses the trace exporters. Shortcut for setting `spanExporterFactory`. Comma-delimited list of exporters. Currently supported values: `otlp`, `console`.
+| `OTEL_TRACES_EXPORTER`<br>`tracing.spanExporterFactory`         | `otlp`                  | Stable  | Chooses the trace exporters. Shortcut for setting `spanExporterFactory`. Comma-delimited list of exporters. Currently supported values: `otlp`, `console`.
 | `OTEL_TRACES_SAMPLER`                                           | `parentbased_always_on` | Stable  | Sampler to be used for traces. See [Sampling](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling)
 | `OTEL_TRACES_SAMPLER_ARG`                                       |                         | Stable  | String value to be used as the sampler argument. Only be used if OTEL_TRACES_SAMPLER is set.
 | `SPLUNK_ACCESS_TOKEN`<br>`accessToken`                          |                         | Stable  | The optional access token for exporting signal data directly to SignalFx API.
