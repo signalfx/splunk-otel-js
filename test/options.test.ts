@@ -20,11 +20,14 @@ import { InstrumentationBase } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import {
+  ConsoleSpanExporter,
   SimpleSpanProcessor,
   SpanExporter,
   SpanProcessor,
   InMemorySpanExporter,
 } from '@opentelemetry/sdk-trace-base';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
+import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 
 import { strict as assert } from 'assert';
 import * as sinon from 'sinon';
@@ -34,9 +37,9 @@ import * as os from 'os';
 import * as instrumentations from '../src/instrumentations';
 import {
   _setDefaultOptions,
+  allowedTracingOptions,
   defaultPropagatorFactory,
   otlpSpanExporterFactory,
-  splunkOtlpSpanExporterFactory,
   defaultSpanProcessorFactory,
   Options,
 } from '../src/tracing/options';
@@ -151,27 +154,46 @@ describe('options', () => {
           delete options.tracerConfig.resource.attributes[processAttribute];
         });
 
-      assert.deepStrictEqual(options, {
-        realm: undefined,
-        /*
-          let the OTel exporter package itself
-          resolve the default for endpoint.
-        */
-        endpoint: undefined,
-        serviceName: 'unnamed-node-service',
-        accessToken: '',
-        serverTimingEnabled: true,
-        instrumentations: [],
-        tracerConfig: {
-          resource: new Resource({
-            [SemanticResourceAttributes.SERVICE_NAME]: 'unnamed-node-service',
-          }),
-        },
-        spanExporterFactory: otlpSpanExporterFactory,
-        spanProcessorFactory: defaultSpanProcessorFactory,
-        propagatorFactory: defaultPropagatorFactory,
-        captureHttpRequestUriParams: [],
+      assert.deepStrictEqual(
+        Object.keys(options).sort(),
+        allowedTracingOptions.sort()
+      );
+
+      assert.deepStrictEqual(options.realm, undefined);
+
+      /*
+        let the OTel exporter package itself
+        resolve the default for endpoint.
+      */
+      assert.deepStrictEqual(options.endpoint, undefined);
+      assert.deepStrictEqual(options.serviceName, 'unnamed-node-service');
+      assert.deepStrictEqual(options.accessToken, '');
+      assert.deepStrictEqual(options.serverTimingEnabled, true);
+      assert.deepStrictEqual(options.instrumentations, []);
+      assert.deepStrictEqual(options.tracerConfig, {
+        resource: new Resource({
+          [SemanticResourceAttributes.SERVICE_NAME]: 'unnamed-node-service',
+        }),
       });
+
+      assert.deepStrictEqual(
+        options.spanProcessorFactory,
+        defaultSpanProcessorFactory
+      );
+      assert.deepStrictEqual(
+        options.propagatorFactory,
+        defaultPropagatorFactory
+      );
+      assert.deepStrictEqual(options.captureHttpRequestUriParams, []);
+
+      const exporters = options.spanExporterFactory(options);
+
+      assert(Array.isArray(exporters));
+      assert.deepStrictEqual(exporters.length, 1);
+
+      const [exporter] = exporters;
+
+      assert(exporter instanceof OTLPTraceExporter);
 
       sinon.assert.calledWithMatch(logger.warn, MATCH_SERVICE_NAME_WARNING);
       sinon.assert.calledWithMatch(
@@ -228,13 +250,26 @@ describe('options', () => {
   });
 
   describe('OTEL_TRACES_EXPORTER', () => {
-    it('accepts a valid key', () => {
-      process.env.OTEL_TRACES_EXPORTER = 'otlp-splunk';
+    it('accepts a single key', () => {
+      process.env.OTEL_TRACES_EXPORTER = 'console';
       const options = _setDefaultOptions();
-      assert.strictEqual(
-        options.spanExporterFactory,
-        splunkOtlpSpanExporterFactory
-      );
+      const exporters = options.spanExporterFactory(options);
+
+      assert(Array.isArray(exporters));
+      assert.deepStrictEqual(exporters.length, 1);
+      assert(exporters[0] instanceof ConsoleSpanExporter);
+    });
+
+    it('accepts multiple keys', () => {
+      process.env.OTEL_TRACES_EXPORTER = 'otlp,console';
+      const options = _setDefaultOptions();
+      const exporters = options.spanExporterFactory(options);
+
+      assert(Array.isArray(exporters));
+      assert.deepStrictEqual(exporters.length, 2);
+
+      assert(exporters[0] instanceof OTLPTraceExporter);
+      assert(exporters[1] instanceof ConsoleSpanExporter);
     });
 
     it('throws on invalid key', () => {
@@ -267,25 +302,126 @@ describe('options', () => {
       );
     });
 
-    it('will let exporter factory compile the endpoint if realm is set', () => {
+    it('will use OTLP over HTTP by default when realm and access token are set', () => {
       process.env.SPLUNK_REALM = 'us0';
       process.env.SPLUNK_ACCESS_TOKEN = 'abc';
 
       const options = _setDefaultOptions();
       // let's exporter factory set the endpoint
       assert.deepStrictEqual(options.endpoint, undefined);
+
+      const exporters = options.spanExporterFactory(options);
+      assert(Array.isArray(exporters));
+      assert.deepStrictEqual(exporters.length, 1);
+
+      const [exporter] = exporters;
+      assert(exporter instanceof OTLPHttpTraceExporter);
       assert.deepStrictEqual(
-        options.spanExporterFactory,
-        splunkOtlpSpanExporterFactory
+        exporter.url,
+        `https://ingest.us0.signalfx.com/v2/trace/otlp`
       );
     });
 
-    it('throws when setting the realm with an incompatible SPLUNK_TRACES_EXPORTER', () => {
+    it('throws when setting the realm with an incompatible OTEL_TRACES_EXPORTER', () => {
       process.env.SPLUNK_REALM = 'us0';
       process.env.SPLUNK_ACCESS_TOKEN = 'abc';
       process.env.OTEL_TRACES_EXPORTER = 'otlp-grpc';
 
-      assert.throws(_setDefaultOptions, /otlp-splunk/);
+      assert.throws(
+        _setDefaultOptions,
+        /requires OTEL_TRACES_EXPORTER to be either otlp or be left undefined/
+      );
+    });
+
+    it('warns when specifying an invalid protocol for realm transport and defaults to HTTP', () => {
+      process.env.SPLUNK_REALM = 'us0';
+      process.env.SPLUNK_ACCESS_TOKEN = 'abc';
+      process.env.OTEL_EXPORTER_OTLP_TRACES_PROTOCOL = 'grpc';
+
+      const options = _setDefaultOptions();
+      const exporters = options.spanExporterFactory(options);
+
+      assert(Array.isArray(exporters));
+      const [exporter] = exporters;
+      assert(exporter instanceof OTLPHttpTraceExporter);
+      assert.deepStrictEqual(
+        exporter.url,
+        'https://ingest.us0.signalfx.com/v2/trace/otlp'
+      );
+      sinon.assert.calledWith(
+        logger.warn,
+        `OTLP span exporter factory: defaulting protocol to 'http/protobuf' instead of grpc due to realm being defined.`
+      );
+    });
+
+    it('throws when setting an endpoint when realm is set', () => {
+      process.env.SPLUNK_REALM = 'us0';
+      process.env.SPLUNK_ACCESS_TOKEN = 'abc';
+      process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT = 'https://www.splunk.com';
+
+      const options = _setDefaultOptions();
+      const exporters = options.spanExporterFactory(options);
+      assert(Array.isArray(exporters));
+      const [exporter] = exporters;
+      sinon.assert.calledWith(
+        logger.warn,
+        'OTLP span exporter factory: explicit endpoint ignored due to realm being set.'
+      );
+      assert(exporter instanceof OTLPHttpTraceExporter);
+      assert.deepStrictEqual(
+        exporter.url,
+        'https://ingest.us0.signalfx.com/v2/trace/otlp'
+      );
+    });
+  });
+
+  describe('OTLP span exporter factory', () => {
+    it('throws when called with an unsupported OTLP protocol', () => {
+      process.env.OTEL_EXPORTER_OTLP_TRACES_PROTOCOL = 'http/json';
+      const options = _setDefaultOptions();
+      assert.throws(() => {
+        options.spanExporterFactory(options);
+      }, 'OTLP span exporter factory: expected OTLP protocol to be either grpc or http/protobuf, got http/json.');
+    });
+
+    it('is possible to use OTEL_EXPORTER_OTLP_PROTOCOL', () => {
+      process.env.OTEL_EXPORTER_OTLP_PROTOCOL = 'http/protobuf';
+      const options = _setDefaultOptions();
+      const exporters = options.spanExporterFactory(options);
+      assert(Array.isArray(exporters));
+      const [exporter] = exporters;
+      assert(exporter instanceof OTLPHttpTraceExporter);
+    });
+
+    it('prefers OTEL_EXPORTER_OTLP_TRACES_PROTOCOL over OTEL_EXPORTER_OTLP_PROTOCOL', () => {
+      process.env.OTEL_EXPORTER_OTLP_TRACES_PROTOCOL = 'http/protobuf';
+      process.env.OTEL_EXPORTER_OTLP_PROTOCOL = 'grpc';
+      const options = _setDefaultOptions();
+      const exporters = options.spanExporterFactory(options);
+      assert(Array.isArray(exporters));
+      const [exporter] = exporters;
+      assert(exporter instanceof OTLPHttpTraceExporter);
+    });
+
+    it('is possible to use OTEL_EXPORTER_OTLP_ENDPOINT', () => {
+      process.env.OTEL_EXPORTER_OTLP_ENDPOINT = 'foobar:4200';
+      const options = _setDefaultOptions();
+      const exporters = options.spanExporterFactory(options);
+      assert(Array.isArray(exporters));
+      const [exporter] = exporters;
+      assert(exporter instanceof OTLPTraceExporter);
+      assert.deepStrictEqual(exporter.url, 'foobar:4200');
+    });
+
+    it('prefers OTEL_EXPORTER_OTLP_TRACES_ENDPOINT over OTEL_EXPORTER_OTLP_ENDPOINT', () => {
+      process.env.OTEL_EXPORTER_OTLP_ENDPOINT = 'foobar:4200';
+      process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT = 'barfoo:2400';
+      const options = _setDefaultOptions();
+      const exporters = options.spanExporterFactory(options);
+      assert(Array.isArray(exporters));
+      const [exporter] = exporters;
+      assert(exporter instanceof OTLPTraceExporter);
+      assert.deepStrictEqual(exporter.url, 'barfoo:2400');
     });
   });
 });
@@ -308,8 +444,14 @@ function testSpanExporterFactory(): SpanExporter {
   return new InMemorySpanExporter();
 }
 
-function testSpanProcessorFactory(options: Options): SpanProcessor {
-  return new SimpleSpanProcessor(options.spanExporterFactory(options));
+function testSpanProcessorFactory(options: Options) {
+  const exporters = options.spanExporterFactory(options);
+
+  if (Array.isArray(exporters)) {
+    return exporters.map((e) => new SimpleSpanProcessor(e));
+  }
+
+  return new SimpleSpanProcessor(exporters);
 }
 
 function testPropagatorFactory(options: Options): api.TextMapPropagator {
