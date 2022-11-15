@@ -79,7 +79,8 @@ interface NativeCounters {
   };
 }
 
-const typedKeys = <T>(obj: T): (keyof T)[] => Object.keys(obj) as (keyof T)[];
+const typedKeys = <T extends {}>(obj: T): (keyof T)[] =>
+  Object.keys(obj) as (keyof T)[];
 
 interface CountersExtension {
   start(): void;
