@@ -24,8 +24,7 @@ This Splunk distribution comes with the following defaults:
 - [OTLP exporter](https://www.npmjs.com/package/@opentelemetry/exporter-trace-otlp-grpc)
   configured to send spans to a locally running [OpenTelemetry Collector](https://github.com/open-telemetry/opentelemetry-collector) over gRPC
   (default endpoint: `http://localhost:4317`).
-- Unlimited default limits for [configuration options](#trace-configuration) to
-  support full-fidelity traces.
+- Many bundled [instrumentations](#default-instrumentation-packages).
 
 If you're currently using the SignalFx Tracing Library for Node and want to migrate to the Splunk Distribution of OpenTelemetry Node, see [Migrate from the SignalFx Tracing Library for JS](./MIGRATING.md).
 

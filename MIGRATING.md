@@ -27,20 +27,17 @@ open an issue in GitHub. Any and all ideas for improvements are also welcome.
   - `mongodb-core` ([because it's deprecated](https://github.com/mongodb-js/mongodb-core)), but note that there is
     [an instrumentation for MongoDB driver](https://opentelemetry.io/registry/?s=mongodb&component=&language=js#),
   - `sails`.
-- Limited instrumentation for:
-  - `nest` - only manual instrumentation helpers, provided by community.
 - Other notes on instrumentation:
   - `express`, `koa` and `hapi` instrumentations require active `http`/`https` instrumentation to produce spans,
   - `bluebird`, `q`, `when` - supported out-of-the-box via `AsyncLocalStorageContextManager` (or `AsyncHooksContextManager` in Node.js below `14.8`),
-  - `socket.io` - provided by community and improved by Splunk (<https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-socket.io>).
 
 ## Changes to defaults
 
-- Default flush interval, which defines how frequently captured telemetry data is sent to the backend, is now 30s instead of 2s
+- Default flush interval, which defines how frequently captured trace data is sent to the backend, is now 500ms instead of 2s.
 
 ## Requirements
 
-This Splunk Distribution of OpenTelemetry requires Node.js v12.13 or higher,
+This Splunk Distribution of OpenTelemetry requires Node.js 14 or higher,
 [see more information here](https://github.com/open-telemetry/opentelemetry-js#node-support)
 
 Current effective required Node.js version is: ![node-current](https://img.shields.io/node/v/@splunk/otel?style=flat-square)
@@ -55,15 +52,8 @@ each instrumentation
 [from `signalfx-nodejs-tracing`'s README](https://github.com/signalfx/signalfx-nodejs-tracing/#requirements-and-supported-software)
 search by the name of the library in the registry.
 
-For example, if you'd like to migrate instrumentation for `mysql`, go to
-[https://opentelemetry.io/registry/?s=**mysql**&component=&language=**js**#](https://opentelemetry.io/registry/?s=mysql&component=&language=js#).
-
-Once you have identified an instrumentation package, **install it** using npm or yarn.
-
-- If the package is [on this list](./README.md#default-instrumentation-packages-), it
-  will be enabled automatically (**but it won't be installed automatically**).
-- if it's not on the list, follow the steps for
-  [installing other instrumentation packages](./README.md#custom-instrumentation-packages).
+If an instrumentation is not [bundled](./README.md#default-instrumentation-packages) you can use custom instrumentation
+packages via the method described [here](./docs/instrumentations.md#using-custom-or-third-party-instrumentations).
 
 ### Environment variables
 
@@ -79,7 +69,7 @@ Rename environment variables:
 | SIGNALFX_SPAN_TAGS                 | OTEL_RESOURCE_ATTRIBUTES               | Format needs to be changed to `key1=val1,key2=val2` |
 | SIGNALFX_LOGS_INJECTION            | n/a                                    | Logs injection is now enabled by default. |
 | SIGNALFX_LOGS_INJECTION_TAGS       | n/a                                    | |
-| SIGNALFX_ENABLED_PLUGINS           | n/a                                    | see [the README section about instrumentations](./README.md#custom-instrumentation-packages) |
+| SIGNALFX_ENABLED_PLUGINS           | n/a                                    | see [the section about instrumentations](./docs/instrumentations.md#using-custom-or-third-party-instrumentations) |
 | SIGNALFX_SERVER_TIMING_CONTEXT     | SPLUNK_TRACE_RESPONSE_HEADER_ENABLED   | |
 | SIGNALFX_TRACING_ENABLED           | n/a                                    | |
 
@@ -98,7 +88,7 @@ Update these programmatic configuration options (passed as arguments to `start()
 | `logInjection`           | `tracing.logInjectionEnabled`   | |
 | `logInjectionTags`       | -                       | no direct equivalent, but `tracerConfig.resource` can be used |
 | `flushInterval`          | -                       | no direct equivalent, contact us if you had customized this value |
-| `plugins`                | -                       | see [the README section about instrumentations](./README.md#custom-instrumentation-packages) |
+| `plugins`                | -                       | see [the section about instrumentations](./docs/instrumentations.md#using-custom-or-third-party-instrumentations) |
 | `enableServerTiming`     | `tracing.serverTimingEnabled`   | |
 
 ### Instrumentation entry point
@@ -155,8 +145,4 @@ diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ALL);
 This package uses OTLP for export format by default so `SIGNALFX_ENDPOINT_URL` doesn't have an direct equivalent without replacing the exporter with one that uses Jaeger format. Options to consider:
 
 - **Using OTLP**: If the receiving endpoint supports OTLP over gRPC (for example, the OTel Collector), set `OTEL_EXPORTER_OTLP_ENDPOINT` instead of `SIGNALFX_ENDPOINT_URL`.
-- **Replacing gRPC with HTTP**: To export directly to Splunk Observability Cloud, set the exporter to OTLP-over-HTTP by:
-  - setting the `OTEL_TRACES_EXPORTER` environment variable to `otlp-splunk` and
-  - using `SPLUNK_REALM` to configure the realm of the endpoint instead of specifying the full endpoint with `SIGNALFX_ENDPOINT_URL`. [See the example](./examples/express)).
-
-[otel-issue-attr-limits]: https://github.com/open-telemetry/opentelemetry-js/issues/2403
+- **Replacing gRPC with HTTP**: To export directly to Splunk Observability Cloud set `SPLUNK_REALM` and `SPLUNK_ACCESS_TOKEN` environment variables. [See the example](./examples/express).
