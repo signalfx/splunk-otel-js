@@ -21,6 +21,7 @@ import * as profiling from '../src/profiling';
 import * as tracing from '../src/tracing';
 import { start, stop } from '../src';
 import { Resource } from '@opentelemetry/resources';
+import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 
 import * as utils from './utils';
 
@@ -207,6 +208,52 @@ describe('start', () => {
       );
 
       assertCalled(signals.start, []);
+    });
+  });
+
+  describe('diagnostic logging', () => {
+    const sandbox = sinon.createSandbox();
+    let c;
+
+    beforeEach(() => {
+      utils.cleanEnvironment();
+      c = sandbox.spy(console);
+    });
+
+    afterEach(() => {
+      sandbox.restore();
+    });
+
+    it('does not enable diagnostic logging by default', () => {
+      start();
+      diag.info('42');
+      assert(c.log.notCalled);
+    });
+
+    it('does not enable diagnostic logging via explicit config', () => {
+      start({ logLevel: 'none' });
+      diag.info('42');
+      assert(c.log.notCalled);
+    });
+
+    it('is possible to enable diag logging via config', () => {
+      start({ logLevel: 'debug' });
+      diag.debug('42');
+      assert(c.debug.calledWithExactly('42'));
+    });
+
+    it('is possible to enable diag logging via env vars', () => {
+      process.env.OTEL_LOG_LEVEL = 'info';
+      start();
+      diag.info('42');
+      assert(c.info.calledWithExactly('42'));
+    });
+
+    it('prefers programmatic config over env var', () => {
+      process.env.OTEL_LOG_LEVEL = 'debug';
+      start({ logLevel: 'info' });
+      diag.debug('42');
+      assert(c.debug.notCalled);
     });
   });
 });

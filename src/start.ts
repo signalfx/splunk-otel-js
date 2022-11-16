@@ -13,19 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { assertNoExtraneousProperties, parseEnvBooleanString } from './utils';
+import {
+  assertNoExtraneousProperties,
+  parseEnvBooleanString,
+  parseLogLevel,
+  toDiagLogLevel,
+} from './utils';
 import { startMetrics, StartMetricsOptions } from './metrics';
 import {
   startProfiling,
   StartProfilingOptions,
   _setDefaultOptions as setDefaultProfilingOptions,
 } from './profiling';
+import type { LogLevel } from './types';
 import { startTracing, stopTracing, StartTracingOptions } from './tracing';
+import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 
 interface Options {
   accessToken: string;
   endpoint: string;
   serviceName: string;
+  logLevel?: LogLevel;
   // Signal-specific configuration options:
   metrics: boolean | StartMetricsOptions;
   profiling: boolean | StartProfilingOptions;
@@ -62,7 +70,16 @@ export const start = (options: Partial<Options> = {}) => {
     'accessToken',
     'endpoint',
     'serviceName',
+    'logLevel',
   ]);
+
+  const logLevel = options.logLevel
+    ? toDiagLogLevel(options.logLevel)
+    : parseLogLevel(process.env.OTEL_LOG_LEVEL);
+
+  if (logLevel !== DiagLogLevel.NONE) {
+    diag.setLogger(new DiagConsoleLogger(), logLevel);
+  }
 
   let metricsEnabledByDefault = false;
   if (isSignalEnabled(options.profiling, 'SPLUNK_PROFILER_ENABLED', false)) {
