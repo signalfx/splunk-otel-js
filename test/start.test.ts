@@ -248,5 +248,12 @@ describe('start', () => {
       diag.info('42');
       assert(c.info.calledWithExactly('42'));
     });
+
+    it('prefers programmatic config over env var', () => {
+      process.env.OTEL_LOG_LEVEL = 'debug';
+      start({ logLevel: 'info' });
+      diag.debug('42');
+      assert(c.debug.notCalled);
+    });
   });
 });
