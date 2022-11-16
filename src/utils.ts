@@ -15,6 +15,8 @@
  */
 
 import { strict as assert } from 'assert';
+import { DiagLogLevel } from '@opentelemetry/api';
+import type { LogLevel } from './types';
 
 export const defaultServiceName = 'unnamed-node-service';
 
@@ -115,4 +117,39 @@ export function assertNoExtraneousProperties(
       keys
     )}. Allowed: ${formatStringSet(expectedProps)}`
   );
+}
+
+function validLogLevel(level: string): level is LogLevel {
+  return ['verbose', 'debug', 'info', 'warn', 'error'].includes(level);
+}
+
+export function toDiagLogLevel(level: LogLevel): DiagLogLevel {
+  switch (level) {
+    case 'verbose':
+      return DiagLogLevel.VERBOSE;
+    case 'debug':
+      return DiagLogLevel.DEBUG;
+    case 'info':
+      return DiagLogLevel.INFO;
+    case 'warn':
+      return DiagLogLevel.WARN;
+    case 'error':
+      return DiagLogLevel.ERROR;
+  }
+
+  return DiagLogLevel.NONE;
+}
+
+export function parseLogLevel(value: string | undefined): DiagLogLevel {
+  if (value === undefined) {
+    return DiagLogLevel.NONE;
+  }
+
+  const v = value.trim().toLowerCase();
+
+  if (validLogLevel(v)) {
+    return toDiagLogLevel(v);
+  }
+
+  return DiagLogLevel.NONE;
 }
