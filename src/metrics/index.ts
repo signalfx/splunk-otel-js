@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { diag } from '@opentelemetry/api';
-import { Counter, metrics, ValueType } from '@opentelemetry/api-metrics';
+import { Counter, diag, metrics, ValueType } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import {
   MeterProvider,

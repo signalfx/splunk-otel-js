@@ -24,7 +24,7 @@ import {
   ResourceMetrics,
   InstrumentType,
 } from '@opentelemetry/sdk-metrics';
-import { ValueType } from '@opentelemetry/api-metrics';
+import { ValueType } from '@opentelemetry/api';
 import {
   ExportResult,
   ExportResultCode,

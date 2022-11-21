@@ -11,12 +11,12 @@ For configuration options, see [advanced configuration](advanced-config.md#metri
 
 ## Usage (custom metrics)
 
-Add `@opentelemetry/api-metrics` to your dependencies.
+Add `@opentelemetry/api` to your dependencies.
 
 ```javascript
 const { start } = require('@splunk/otel');
 const { Resource } = require('@opentelemetry/resources');
-const { metrics } = require('@opentelemetry/api-metrics');
+const { metrics } = require('@opentelemetry/api');
 
 // All fields are optional.
 start({
@@ -118,7 +118,7 @@ getSignalFxClient().send({
 
 ```javascript
 const { start } = require('@splunk/otel');
-const { metrics } = require('@opentelemetry/api-metrics');
+const { metrics } = require('@opentelemetry/api');
 
 start({
   serviceName: 'my-service',

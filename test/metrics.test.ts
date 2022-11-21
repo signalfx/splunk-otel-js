@@ -16,7 +16,7 @@
 
 import * as assert from 'assert';
 import { Resource } from '@opentelemetry/resources';
-import { metrics } from '@opentelemetry/api-metrics';
+import { metrics } from '@opentelemetry/api';
 import {
   AggregationTemporality,
   DataPointType,
