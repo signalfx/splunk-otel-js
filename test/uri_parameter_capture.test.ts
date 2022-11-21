@@ -24,7 +24,7 @@ import {
   SpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
 
-const PORT = 9111;
+const PORT = 9112;
 const SERVER_URL = `http://localhost:${PORT}`;
 
 describe('Capturing URI parameters', () => {

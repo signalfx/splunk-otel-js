@@ -15,7 +15,7 @@
     "lint:fix": "eslint . --ext .ts --fix",
     "lint": "eslint . --ext .ts",
     "lint:commits": "commitlint",
-    "test": "cross-env TEST_ALLOW_DOUBLE_START=y nyc ts-mocha --timeout 30000 --parallel -p tsconfig.json 'test/**/*.test.ts'",
+    "test": "cross-env TEST_ALLOW_DOUBLE_START=y nyc ts-mocha --timeout 60s --parallel --jobs 2 -p tsconfig.json 'test/**/*.test.ts'",
     "prebuild:current": "node scripts/prebuild-current.js",
     "prebuild:os": "node scripts/prebuild-os.js",
     "profile:proto": "pbjs -t static-module -w commonjs -o src/profiling/proto/profile.js protos/pprof/profile.proto",
