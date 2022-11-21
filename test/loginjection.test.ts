@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 import * as assert from 'assert';
 import * as util from 'util';
 import { Writable } from 'stream';
