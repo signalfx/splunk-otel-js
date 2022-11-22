@@ -56,13 +56,9 @@ class ProcessDetector {
     const processResource: ResourceAttributes = {
       [SemanticResourceAttributes.PROCESS_PID]: process.pid,
       [SemanticResourceAttributes.PROCESS_EXECUTABLE_NAME]: process.title || '',
-      [SemanticResourceAttributes.PROCESS_COMMAND]: process.argv[1] || '',
-      [SemanticResourceAttributes.PROCESS_COMMAND_LINE]:
-        process.argv.join(' ') || '',
       [SemanticResourceAttributes.PROCESS_RUNTIME_VERSION]:
         process.versions.node,
       [SemanticResourceAttributes.PROCESS_RUNTIME_NAME]: 'nodejs',
-      [SemanticResourceAttributes.PROCESS_RUNTIME_DESCRIPTION]: 'Node.js',
     };
     return this._getResourceAttributes(processResource, config);
   }
@@ -82,8 +78,6 @@ class ProcessDetector {
         '' ||
       processResource[SemanticResourceAttributes.PROCESS_EXECUTABLE_PATH] ===
         '' ||
-      processResource[SemanticResourceAttributes.PROCESS_COMMAND] === '' ||
-      processResource[SemanticResourceAttributes.PROCESS_COMMAND_LINE] === '' ||
       processResource[SemanticResourceAttributes.PROCESS_RUNTIME_VERSION] === ''
     ) {
       diag.debug(
