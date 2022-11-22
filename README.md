@@ -97,7 +97,6 @@ For more information, see [Correlating traces with logs](./docs/correlate-logs-t
 By default the following instrumentations will automatically be enabled:
 
 * [`@opentelemetry/instrumentation-amqplib`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/instrumentation-amqplib)
-* [`@opentelemetry/instrumentation-aws-lambda`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-aws-lambda)
 * [`@opentelemetry/instrumentation-aws-sdk`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-aws-sdk)
 * [`@opentelemetry/instrumentation-bunyan`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-bunyan)
 * [`@opentelemetry/instrumentation-cassandra-driver`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-cassandra)

@@ -18,7 +18,6 @@ import { load } from './loader';
 
 const bundledInstrumentations: [string, string][] = [
   ['@opentelemetry/instrumentation-amqplib', 'AmqplibInstrumentation'],
-  ['@opentelemetry/instrumentation-aws-lambda', 'AwsLambdaInstrumentation'],
   ['@opentelemetry/instrumentation-aws-sdk', 'AwsInstrumentation'],
   ['@opentelemetry/instrumentation-bunyan', 'BunyanInstrumentation'],
   [
