@@ -43,12 +43,10 @@ CONFIG.metrics = {
 
 const callstackInterval = 'callstackInterval';
 const collectionDuration = 'collectionDuration';
-const debugExport = 'debugExport';
 const resource = Resource.empty();
 CONFIG.profiling = {
   callstackInterval,
   collectionDuration,
-  debugExport,
   resource,
 };
 

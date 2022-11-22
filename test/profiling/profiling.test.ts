@@ -56,7 +56,6 @@ describe('profiling', () => {
         endpoint: 'http://localhost:4317',
         callstackInterval: 1_000,
         collectionDuration: 30_000,
-        debugExport: false,
         resource: new Resource({
           [SemanticResourceAttributes.SERVICE_NAME]: 'unnamed-node-service',
         }).merge(detectResource()),
