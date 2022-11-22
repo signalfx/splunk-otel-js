@@ -36,7 +36,6 @@ import {
 } from './types';
 import { ProfilingContextManager } from './ProfilingContextManager';
 import { OTLPProfilingExporter } from './OTLPProfilingExporter';
-import { DebugExporter } from './DebugExporter';
 import { isTracingContextManagerEnabled } from '../tracing';
 
 export { StartProfilingOptions };
@@ -88,10 +87,6 @@ export function defaultExporterFactory(
     }),
   ];
 
-  if (options.debugExport) {
-    exporters.push(new DebugExporter());
-  }
-
   return exporters;
 }
 
@@ -131,7 +126,7 @@ export function startProfiling(opts: StartProfilingOptions = {}) {
   const startOptions = {
     samplingIntervalMicroseconds,
     maxSampleCutoffDelayMicroseconds: samplingIntervalMicroseconds / 2,
-    recordDebugInfo: options.debugExport,
+    recordDebugInfo: false,
   };
 
   extStartProfiling(extension, startOptions);
@@ -238,7 +233,6 @@ export function _setDefaultOptions(
       getEnvNumber('SPLUNK_PROFILER_CALL_STACK_INTERVAL', 1000),
     collectionDuration: options.collectionDuration || 30_000,
     resource,
-    debugExport: options.debugExport ?? false,
     exporterFactory: options.exporterFactory ?? defaultExporterFactory,
     memoryProfilingEnabled,
     memoryProfilingOptions: options.memoryProfilingOptions,

@@ -94,7 +94,6 @@ export interface ProfilingOptions {
   // Profiling-specific configuration options:
   callstackInterval: number;
   collectionDuration: number;
-  debugExport: boolean;
   resource: Resource;
   exporterFactory: ProfilingExporterFactory;
   memoryProfilingEnabled: boolean;
@@ -111,7 +110,6 @@ export interface ProfilingExporter {
 export const allowedProfilingOptions = [
   'callstackInterval',
   'collectionDuration',
-  'debugExport',
   'endpoint',
   'resource',
   'serviceName',
