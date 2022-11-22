@@ -1,16 +1,32 @@
 # Change Log - @splunk/otel
 
-This log was last generated on Wed, 22 Sep 2022 09:24:01 GMT and should not be manually modified.
+## 2.0.0
 
-<!-- Start content -->
+22nd of November, 2022
+
+For a list of major changes and features in `2.0.0` see the notes for [`2.0.0-rc1`](CHANGELOG.md#200-rc1).
+
+Additional changes in this release:
+- Upgrade to OpenTelemetry JS 1.8.0 / 0.34.0. [#612](https://github.com/signalfx/splunk-otel-js/pull/612)
+- Remove `@opentelemetry/instrumentation-aws-lambda` from the bundled packages as there exists a separate [lambda instrumentation](https://github.com/signalfx/splunk-otel-lambda) and due to the package not being compatible with `@opentelemetry/instrumentation@0.34.0`. [#612](https://github.com/signalfx/splunk-otel-js/pull/612).
+- `@opentelemetry/api` is now a peer dependency and the required version has been bumped to `1.3.0`.
+- `OTEL_LOG_LEVEL` now also sets up the logging pipeline, thus diagnostic logging can now be enabled just by enabling it
+  via the environment variable. The supported log level values are `none`, `verbose`, `debug`, `info`, `warn`, `error`.
+  The logging pipeline can additionally be enabled by setting `logLevel` configuration option. [#605](https://github.com/signalfx/splunk-otel-js/pull/605).
+- `process.command`, `process.command_line` and `process.runtime.description` resource attributes have been removed from the automatic process detection. [#613](https://github.com/signalfx/splunk-otel-js/pull/613)
+- `OTEL_TRACES_EXPORTER` now only supports `otlp`, `console` or both (e.g. `OTEL_TRACES_EXPORTER=otlp,console`).
+  [#599](https://github.com/signalfx/splunk-otel-js/pull/599)
+- Add support for `OTEL_EXPORTER_OTLP_PROTOCOL`, `OTEL_EXPORTER_OTLP_TRACES_PROTOCOL`, `OTEL_EXPORTER_OTLP_METRICS_PROTOCOL`. The supported values are `grpc` (the default) or `http/protobuf`. [#599](https://github.com/signalfx/splunk-otel-js/pull/599) [#614](https://github.com/signalfx/splunk-otel-js/pull/614)
 
 ## 2.0.0-rc2
+
+31st of October, 2022
 
 - Omit setting the default endpoint for metrics, as OpenTelemetry OTLP metrics exporters already have their own default configuration [#592](https://github.com/signalfx/splunk-otel-js/pull/592)
 
 ## 2.0.0-rc1
 
-Fri, 28 Oct 2022 08:48:00 GMT
+28th of October, 2022
 
 - ### Deprecate `startTracing`, `startMetrics`, `startProfiling` functions
 
