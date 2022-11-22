@@ -128,13 +128,7 @@ function recordGcCountMetric(counter: Counter, counters: NativeCounters) {
 const SUPPORTED_EXPORTER_TYPES = ['console', 'otlp'];
 
 function areValidExporterTypes(types: string[]): boolean {
-  for (const t of types) {
-    if (!SUPPORTED_EXPORTER_TYPES.includes(t)) {
-      return false;
-    }
-  }
-
-  return true;
+  return types.every(t => SUPPORTED_EXPORTER_TYPES.includes(t));
 }
 
 function createOtlpExporter(options: MetricsOptions) {
