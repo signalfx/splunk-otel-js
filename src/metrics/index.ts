@@ -28,11 +28,15 @@ import { Metadata } from '@grpc/grpc-js';
 import {
   assertNoExtraneousProperties,
   defaultServiceName,
+  getEnvArray,
   getEnvBoolean,
   getEnvNumber,
+  getEnvValueByPrecedence,
 } from '../utils';
+import * as util from 'util';
 import { detect as detectResource } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { ConsoleMetricExporter } from './ConsoleMetricExporter';
 
 export type MetricReaderFactory = (options: MetricsOptions) => MetricReader[];
 export type ResourceFactory = (resource: Resource) => Resource;
@@ -121,36 +125,105 @@ function recordGcCountMetric(counter: Counter, counters: NativeCounters) {
   }
 }
 
-function chooseExporter(options: MetricsOptions) {
+const SUPPORTED_EXPORTER_TYPES = ['console', 'otlp'];
+
+function areValidExporterTypes(types: string[]): boolean {
+  return types.every((t) => SUPPORTED_EXPORTER_TYPES.includes(t));
+}
+
+function createOtlpExporter(options: MetricsOptions) {
+  let protocol = getEnvValueByPrecedence([
+    'OTEL_EXPORTER_OTLP_METRICS_PROTOCOL',
+    'OTEL_EXPORTER_OTLP_PROTOCOL',
+  ]);
+
+  let endpoint = options.endpoint;
+
   if (options.realm) {
-    return new OTLPHttpProtoMetricExporter({
-      url: options.endpoint,
-      headers: {
-        'X-SF-TOKEN': options.accessToken,
-      },
-    });
+    if (protocol !== undefined && protocol !== 'http/protobuf') {
+      diag.warn(
+        `OTLP metric exporter: defaulting protocol to 'http/protobuf' instead of '${protocol}' due to realm being defined.`
+      );
+    }
+
+    protocol = 'http/protobuf';
+
+    if (options.endpoint) {
+      diag.warn(
+        'OTLP metric exporter factory: explicit endpoint ignored due to realm being set.'
+      );
+    }
+
+    endpoint = `https://ingest.${options.realm}.signalfx.com/v2/datapoint/otlp`;
+  } else {
+    protocol = protocol ?? 'grpc';
   }
 
-  const metadata = new Metadata();
-  if (options.accessToken) {
-    metadata.set('X-SF-TOKEN', options.accessToken);
+  switch (protocol) {
+    case 'grpc': {
+      const metadata = new Metadata();
+      if (options.accessToken) {
+        metadata.set('X-SF-TOKEN', options.accessToken);
+      }
+      return new OTLPMetricExporter({
+        url: endpoint,
+        metadata,
+      });
+    }
+    case 'http/protobuf': {
+      const headers = options.accessToken
+        ? {
+            'X-SF-TOKEN': options.accessToken,
+          }
+        : {};
+      return new OTLPHttpProtoMetricExporter({
+        url: endpoint,
+        headers,
+      });
+    }
+    default:
+      throw new Error(
+        `Metrics: expected OTLP protocol to be either grpc or http/protobuf, got ${protocol}.`
+      );
+  }
+}
+
+function createExporters(options: MetricsOptions) {
+  const metricExporters: string[] = getEnvArray('OTEL_METRICS_EXPORTER', [
+    'otlp',
+  ]);
+
+  if (!areValidExporterTypes(metricExporters)) {
+    throw new Error(
+      `Invalid value for OTEL_METRICS_EXPORTER env variable: ${util.inspect(
+        process.env.OTEL_METRICS_EXPORTER
+      )}. Choose from ${util.inspect(SUPPORTED_EXPORTER_TYPES, {
+        compact: true,
+      })} or leave undefined.`
+    );
   }
 
-  return new OTLPMetricExporter({
-    url: options.endpoint,
-    metadata,
+  return metricExporters.flatMap((type) => {
+    switch (type) {
+      case 'otlp':
+        return createOtlpExporter(options);
+      case 'console':
+        return new ConsoleMetricExporter();
+      default:
+        return [];
+    }
   });
 }
 
 export function defaultMetricReaderFactory(
   options: MetricsOptions
 ): MetricReader[] {
-  const reader = new PeriodicExportingMetricReader({
-    exportIntervalMillis: options.exportIntervalMillis,
-    exporter: chooseExporter(options),
+  return createExporters(options).map((exporter) => {
+    return new PeriodicExportingMetricReader({
+      exportIntervalMillis: options.exportIntervalMillis,
+      exporter,
+    });
   });
-
-  return [reader];
 }
 
 export const allowedMetricsOptions = [
