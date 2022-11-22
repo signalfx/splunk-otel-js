@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 
-import { getEnvBoolean } from './utils';
+import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
+import { getEnvBoolean, parseLogLevel } from './utils';
 
 import { startMetrics } from './metrics';
 import { startProfiling } from './profiling';
 import { startTracing } from './tracing';
+
+const logLevel = parseLogLevel(process.env.OTEL_LOG_LEVEL);
+
+if (logLevel !== DiagLogLevel.NONE) {
+  diag.setLogger(new DiagConsoleLogger(), logLevel);
+}
 
 if (getEnvBoolean('SPLUNK_PROFILER_ENABLED', false)) {
   startProfiling();
