@@ -354,7 +354,7 @@ describe('options', () => {
       );
     });
 
-    it('throws when setting an endpoint when realm is set', () => {
+    it('warns when setting an endpoint when realm is set', () => {
       process.env.SPLUNK_REALM = 'us0';
       process.env.SPLUNK_ACCESS_TOKEN = 'abc';
       process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT = 'https://www.splunk.com';
@@ -376,6 +376,10 @@ describe('options', () => {
   });
 
   describe('OTLP span exporter factory', () => {
+    beforeEach(() => {
+      beforeEach(utils.cleanEnvironment);
+    });
+
     it('throws when called with an unsupported OTLP protocol', () => {
       process.env.OTEL_EXPORTER_OTLP_TRACES_PROTOCOL = 'http/json';
       const options = _setDefaultOptions();

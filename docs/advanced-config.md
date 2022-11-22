@@ -97,6 +97,8 @@ Configuration examples can be seen [here](metrics.md).
 | `OTEL_SERVICE_NAME`<br>`serviceName`                            | `unnamed-node-service`  | Stable  | The service name of this Node service.
 | `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`<br>`endpoint`             | `http://localhost:4317` | Stable | The OTLP endpoint to export to.
 | `OTEL_METRIC_EXPORT_INTERVAL`<br>`metrics.exportIntervalMillis` | `30000`                 | Stable | The interval, in milliseconds, of metrics collection and exporting.
+| `OTEL_METRICS_EXPORTER`<br>`metrics.metricReaderFactory`        | `otlp`                  | Stable  | Chooses the metric exporters. Comma-delimited list of exporters. Currently supported values: `otlp`, `console`.
+| `OTEL_EXPORTER_OTLP_METRICS_PROTOCOL`<br>`metrics.metricReaderFactory` | `grpc`           | Stable  | Chooses the metric exporter protocol. Currently supported values: `grpc`, `http/protobuf`.
 | `OTEL_RESOURCE_ATTRIBUTES`                                      |                         | Stable  | The resource attributes to metric data. <details><summary>Environment variable example</summary>`key1=val1,key2=val2`</details>
 | `SPLUNK_METRICS_ENABLED`<br>n/a (enabled by calling `start`) | `false`             | Experimental | Sets up the metrics pipeline (global meter provider, exporters).
 | n/a<br>`metrics.resourceFactory`                                |                         | Experimental | Callback which allows to filter the default resource or provide a custom one. The function takes one argument of type `Resource` which is the resource pre-filled by the SDK containing the `service.name`, environment, host and process attributes. |

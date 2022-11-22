@@ -24,7 +24,7 @@ import { startMetrics as _startMetrics } from './metrics';
 export {
   ConsoleMetricExporter,
   ConsoleMetricExporterOptions,
-} from './metrics/console_metric_exporter';
+} from './metrics/ConsoleMetricExporter';
 import { startProfiling as _startProfiling } from './profiling';
 export { start, stop } from './start';
 
