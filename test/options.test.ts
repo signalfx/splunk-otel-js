@@ -69,23 +69,6 @@ const MATCH_SERVICE_NAME_WARNING = sinon.match(/service\.name.*not.*set/i);
 const MATCH_NO_INSTRUMENTATIONS_WARNING = sinon.match(
   /no.*instrumentation.*install.*package/i
 );
-// List of resource attributes we expect to see detected
-const expectedAttributes = new Set([
-  SemanticResourceAttributes.CONTAINER_ID,
-  SemanticResourceAttributes.HOST_ARCH,
-  SemanticResourceAttributes.HOST_NAME,
-  SemanticResourceAttributes.OS_TYPE,
-  SemanticResourceAttributes.OS_VERSION,
-  SemanticResourceAttributes.PROCESS_COMMAND,
-  SemanticResourceAttributes.PROCESS_COMMAND_LINE,
-  SemanticResourceAttributes.PROCESS_EXECUTABLE_NAME,
-  SemanticResourceAttributes.PROCESS_EXECUTABLE_PATH,
-  SemanticResourceAttributes.PROCESS_PID,
-  SemanticResourceAttributes.PROCESS_RUNTIME_DESCRIPTION,
-  SemanticResourceAttributes.PROCESS_RUNTIME_NAME,
-  SemanticResourceAttributes.PROCESS_RUNTIME_VERSION,
-  'splunk.distro.version',
-]);
 
 describe('options', () => {
   let logger;
@@ -144,13 +127,32 @@ describe('options', () => {
         ]
       );
 
+      const expectedAttributes = new Set([
+        SemanticResourceAttributes.CONTAINER_ID,
+        SemanticResourceAttributes.HOST_ARCH,
+        SemanticResourceAttributes.HOST_NAME,
+        SemanticResourceAttributes.OS_TYPE,
+        SemanticResourceAttributes.OS_VERSION,
+        SemanticResourceAttributes.PROCESS_EXECUTABLE_NAME,
+        SemanticResourceAttributes.PROCESS_PID,
+        SemanticResourceAttributes.PROCESS_RUNTIME_NAME,
+        SemanticResourceAttributes.PROCESS_RUNTIME_VERSION,
+        'splunk.distro.version',
+      ]);
+
+      expectedAttributes.forEach((processAttribute) => {
+        assert(
+          options.tracerConfig.resource.attributes[processAttribute],
+          `${processAttribute} missing`
+        );
+      });
+
       // resource attributes for process, host and os are different at each run, iterate through them, make sure they exist and then delete
       Object.keys(options.tracerConfig.resource.attributes)
         .filter((attribute) => {
           return expectedAttributes.has(attribute);
         })
         .forEach((processAttribute) => {
-          assert(options.tracerConfig.resource.attributes[processAttribute]);
           delete options.tracerConfig.resource.attributes[processAttribute];
         });
 

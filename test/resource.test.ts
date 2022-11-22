@@ -143,8 +143,6 @@ describe('resource detector', () => {
 
       for (const attributeName of [
         'process.executable.name',
-        'process.command',
-        'process.command_line',
         'process.runtime.version',
         'process.runtime.name',
       ]) {
