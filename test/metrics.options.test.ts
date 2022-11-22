@@ -139,15 +139,20 @@ describe('metrics options', () => {
     it('chooses the correct endpoint when realm is set', () => {
       process.env.SPLUNK_REALM = 'eu0';
       process.env.SPLUNK_ACCESS_TOKEN = 'abc';
+
       const options = _setDefaultOptions();
+      const [reader] = options.metricReaderFactory(options);
+      const exporter = reader['_exporter'];
+      assert(exporter instanceof OTLPHttpProtoMetricExporter);
+
       assert.deepStrictEqual(
-        options.endpoint,
-        'https://ingest.eu0.signalfx.com/v2/datapoint/otlp'
+        exporter['_otlpExporter'].headers['X-SF-TOKEN'],
+        'abc'
       );
-      assert(
-        options.metricReaderFactory(options)[0]['_exporter'] instanceof
-          OTLPHttpProtoMetricExporter,
-        'Expected the metric exporter to be OTLP HTTP proto exporter when realm is set'
+
+      assert.deepStrictEqual(
+        exporter['_otlpExporter'].url,
+        'https://ingest.eu0.signalfx.com/v2/datapoint/otlp'
       );
     });
 
