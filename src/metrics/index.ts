@@ -376,7 +376,7 @@ export function _setDefaultOptions(
   const accessToken =
     options.accessToken || process.env.SPLUNK_ACCESS_TOKEN || '';
 
-  let endpoint = options.endpoint || process.env.SPLUNK_METRICS_ENDPOINT;
+  const endpoint = options.endpoint || process.env.SPLUNK_METRICS_ENDPOINT;
 
   const realm = options.realm || process.env.SPLUNK_REALM || '';
 
