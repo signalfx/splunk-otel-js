@@ -392,10 +392,6 @@ export function _setDefaultOptions(
         'Splunk realm is set with a custom metric reader. Make sure to use OTLP metrics proto HTTP exporter.'
       );
     }
-
-    if (!endpoint) {
-      endpoint = `https://ingest.${realm}.signalfx.com/v2/datapoint/otlp`;
-    }
   }
 
   let defaultResource = detectResource();
