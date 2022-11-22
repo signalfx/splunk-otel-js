@@ -1,9 +1,13 @@
 const { version } = require('../package.json');
 const { dependencies } = require('../package-lock.json');
 const { readFileSync } = require('fs');
+const path = require('path');
 
 exports.getReleaseMessage = () => {
-  const changelog = readFileSync('../CHANGELOG.md', { encoding: 'utf-8' });
+  const changelog = readFileSync(
+    path.resolve(__dirname, '../CHANGELOG.md'),
+    { encoding: 'utf-8' }
+  );
   const changeHeaderBegin = changelog.indexOf(`## ${version}`);
 
   if (changeHeaderBegin === -1) {
