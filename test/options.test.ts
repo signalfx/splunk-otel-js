@@ -108,7 +108,6 @@ describe('options', () => {
       );
 
       const expectedAttributes = new Set([
-        SemanticResourceAttributes.CONTAINER_ID,
         SemanticResourceAttributes.HOST_ARCH,
         SemanticResourceAttributes.HOST_NAME,
         SemanticResourceAttributes.OS_TYPE,
@@ -126,6 +125,12 @@ describe('options', () => {
           `${processAttribute} missing`
         );
       });
+
+      // Container ID is checked in a different test,
+      // this avoids collisions with stubbing fs methods.
+      delete options.tracerConfig.resource.attributes[
+        SemanticResourceAttributes.CONTAINER_ID
+      ];
 
       // resource attributes for process, host and os are different at each run, iterate through them, make sure they exist and then delete
       Object.keys(options.tracerConfig.resource.attributes)
