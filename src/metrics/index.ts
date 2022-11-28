@@ -399,7 +399,7 @@ export function _setDefaultOptions(
   const serviceName = String(
     options.serviceName ||
       defaultResource.attributes[SemanticResourceAttributes.SERVICE_NAME] ||
-      defaultServiceName
+      defaultServiceName()
   );
 
   defaultResource = defaultResource.merge(

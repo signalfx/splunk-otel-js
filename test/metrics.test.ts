@@ -121,12 +121,12 @@ describe('metrics', () => {
 
     it('has expected defaults', () => {
       const options = _setDefaultOptions();
-      assert.deepEqual(options.serviceName, 'unnamed-node-service');
+      assert.deepEqual(options.serviceName, '@splunk/otel');
       assert.deepEqual(options.accessToken, '');
       assert.deepEqual(options.exportIntervalMillis, 30000);
       assert.deepEqual(
         options.resource.attributes[SemanticResourceAttributes.SERVICE_NAME],
-        'unnamed-node-service'
+        '@splunk/otel'
       );
       assert.deepEqual(options.runtimeMetricsEnabled, true);
       assert.deepEqual(options.runtimeMetricsCollectionIntervalMillis, 5000);

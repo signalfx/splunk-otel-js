@@ -72,8 +72,6 @@ const MATCH_NO_INSTRUMENTATIONS_WARNING = sinon.match(
 
 describe('options', () => {
   let logger;
-  let readFileSyncStub;
-  let platformStub;
 
   beforeEach(utils.cleanEnvironment);
 
@@ -84,34 +82,22 @@ describe('options', () => {
     api.diag.setLogger(logger, api.DiagLogLevel.ALL);
     // Setting logger logs stuff. Cleaning that up.
     logger.warn.resetHistory();
-
-    // as long as it doesn't conflict with other tests, we can stub platform for linux to test cgroup v1 detector
-    platformStub = sinon.stub(os, 'platform').returns('linux');
-    readFileSyncStub = sinon.stub(fs, 'readFileSync');
-    readFileSyncStub
-      .withArgs('/proc/self/cgroup', 'utf8')
-      .returns(
-        '1:blkio:/docker/a4d00c9dd675d67f866c786181419e1b44832d4696780152e61afd44a3e02856\n'
-      );
   });
 
   afterEach(() => {
     api.diag.disable();
-    platformStub.restore();
-    readFileSyncStub.restore();
   });
 
   describe('defaults', () => {
-    let getInstrumentationsStub;
+    const sandbox = sinon.createSandbox();
+
     beforeEach(() => {
       // Mock the default `getInstrumentations` in case some instrumentations (e.g. http) are part of dev dependencies.
-      getInstrumentationsStub = sinon
-        .stub(instrumentations, 'getInstrumentations')
-        .returns([]);
+      sandbox.stub(instrumentations, 'getInstrumentations').returns([]);
     });
 
     afterEach(() => {
-      getInstrumentationsStub.restore();
+      sandbox.restore();
     });
 
     it('has expected defaults', () => {
@@ -119,12 +105,6 @@ describe('options', () => {
 
       assertVersion(
         options.tracerConfig.resource.attributes['splunk.distro.version']
-      );
-
-      assertContainerId(
-        options.tracerConfig.resource.attributes[
-          SemanticResourceAttributes.CONTAINER_ID
-        ]
       );
 
       const expectedAttributes = new Set([
@@ -168,13 +148,15 @@ describe('options', () => {
         resolve the default for endpoint.
       */
       assert.deepStrictEqual(options.endpoint, undefined);
-      assert.deepStrictEqual(options.serviceName, 'unnamed-node-service');
+      // The service name is retrieved from package.json,
+      // since tests run at the source directory, it is detected as such.
+      assert.deepStrictEqual(options.serviceName, '@splunk/otel');
       assert.deepStrictEqual(options.accessToken, '');
       assert.deepStrictEqual(options.serverTimingEnabled, true);
       assert.deepStrictEqual(options.instrumentations, []);
       assert.deepStrictEqual(options.tracerConfig, {
         resource: new Resource({
-          [SemanticResourceAttributes.SERVICE_NAME]: 'unnamed-node-service',
+          [SemanticResourceAttributes.SERVICE_NAME]: '@splunk/otel',
         }),
       });
 
@@ -201,6 +183,22 @@ describe('options', () => {
       sinon.assert.calledWithMatch(
         logger.warn,
         MATCH_NO_INSTRUMENTATIONS_WARNING
+      );
+    });
+
+    it('reads the container when setting default options', () => {
+      sandbox.stub(os, 'platform').returns('linux');
+      sandbox
+        .stub(fs, 'readFileSync')
+        .withArgs('/proc/self/cgroup', 'utf8')
+        .returns(
+          '1:blkio:/docker/a4d00c9dd675d67f866c786181419e1b44832d4696780152e61afd44a3e02856\n'
+        );
+      const options = _setDefaultOptions();
+      assertContainerId(
+        options.tracerConfig.resource.attributes[
+          SemanticResourceAttributes.CONTAINER_ID
+        ]
       );
     });
   });
