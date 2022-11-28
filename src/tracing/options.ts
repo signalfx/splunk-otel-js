@@ -133,7 +133,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   resource = resource.merge(
     new Resource({
       [SemanticResourceAttributes.SERVICE_NAME]:
-        serviceName || defaultServiceName,
+        serviceName || defaultServiceName(),
     })
   );
 

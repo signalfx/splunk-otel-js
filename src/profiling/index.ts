@@ -206,7 +206,7 @@ export function _setDefaultOptions(
     options.serviceName ||
       process.env.OTEL_SERVICE_NAME ||
       combinedResource.attributes[SemanticResourceAttributes.SERVICE_NAME] ||
-      defaultServiceName
+      defaultServiceName()
   );
 
   let resource =
@@ -216,8 +216,7 @@ export function _setDefaultOptions(
 
   resource = resource.merge(
     new Resource({
-      [SemanticResourceAttributes.SERVICE_NAME]:
-        serviceName || defaultServiceName,
+      [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
     })
   );
 

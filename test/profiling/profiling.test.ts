@@ -52,12 +52,12 @@ describe('profiling', () => {
     it('sets default options when no options are provided', () => {
       const options = _setDefaultOptions();
       assert.deepStrictEqual(options, {
-        serviceName: 'unnamed-node-service',
+        serviceName: '@splunk/otel',
         endpoint: 'http://localhost:4317',
         callstackInterval: 1_000,
         collectionDuration: 30_000,
         resource: new Resource({
-          [SemanticResourceAttributes.SERVICE_NAME]: 'unnamed-node-service',
+          [SemanticResourceAttributes.SERVICE_NAME]: '@splunk/otel',
         }).merge(detectResource()),
         exporterFactory: defaultExporterFactory,
         memoryProfilingEnabled: false,

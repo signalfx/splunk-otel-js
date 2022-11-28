@@ -15,10 +15,44 @@
  */
 
 import { strict as assert } from 'assert';
-import { DiagLogLevel } from '@opentelemetry/api';
+import { diag, DiagLogLevel } from '@opentelemetry/api';
 import type { LogLevel } from './types';
+import { resolve } from 'path';
+import * as fs from 'fs';
 
-export const defaultServiceName = 'unnamed-node-service';
+export type ConfigCache = Map<string, string>;
+
+const configCache: ConfigCache = new Map();
+
+export function findServiceName(
+  cache: ConfigCache = configCache
+): string | undefined {
+  const cacheKey = 'package.name';
+
+  if (cache.has(cacheKey)) {
+    return cache.get(cacheKey);
+  }
+
+  const pkgPath = resolve(process.cwd(), 'package.json');
+
+  try {
+    const content = fs.readFileSync(pkgPath, { encoding: 'utf8' });
+    const pkg = JSON.parse(content);
+    const name = pkg['name'];
+    if (typeof name === 'string') {
+      cache.set(cacheKey, name);
+      return name;
+    }
+  } catch (e) {
+    diag.debug(`Error reading ${pkgPath}`, e);
+  }
+
+  return undefined;
+}
+
+export function defaultServiceName(cache: ConfigCache = configCache): string {
+  return findServiceName(cache) || 'unnamed-node-service';
+}
 
 export function parseEnvBooleanString(value?: string) {
   if (typeof value !== 'string') {
