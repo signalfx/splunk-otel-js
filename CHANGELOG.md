@@ -1,5 +1,12 @@
 # Change Log - @splunk/otel
 
+## 2.1.0
+
+1st of December, 2022
+
+- Deduce the service name from `package.json` if it is not explicitly configured. [#625](https://github.com/signalfx/splunk-otel-js/pull/625)
+- Fix console metric exporter omitting datapoint specific attributes. [#626](https://github.com/signalfx/splunk-otel-js/pull/626)
+
 ## 2.0.0
 
 22nd of November, 2022
