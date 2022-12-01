@@ -64,7 +64,7 @@ function logScopeMetrics(scopeMetrics: ScopeMetrics, index: number) {
 
       for (const attributeName of Object.keys(dp.attributes)) {
         const attributeValue = dp.attributes[attributeName];
-        console.log(` ${attributeName}: `, attributeValue)
+        console.log(` ${attributeName}: `, attributeValue);
       }
 
       console.log('}');
