@@ -60,6 +60,14 @@ function logScopeMetrics(scopeMetrics: ScopeMetrics, index: number) {
       console.log(`${dataPointTypeName} #${j}`);
       console.log(`StartTimestamp ${hrTimeToTimeStamp(dp.startTime)}`);
       console.log(`Timestamp ${hrTimeToTimeStamp(dp.endTime)}`);
+      console.log('Attributes {');
+
+      for (const attributeName of Object.keys(dp.attributes)) {
+        const attributeValue = dp.attributes[attributeName];
+        console.log(` ${attributeName}: `, attributeValue);
+      }
+
+      console.log('}');
 
       if (
         dataPointType === DataPointType.SUM ||
