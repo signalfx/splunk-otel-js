@@ -6,7 +6,6 @@ if (process.env.OTEL_LOG_LEVEL) {
   diag.setLogger(new DiagConsoleLogger(), DiagLogLevel[process.env.OTEL_LOG_LEVEL]);
 }
 
-// Profiling is still experimental and has to be enabled explicitly
 start({
   // Tracing is enabled by default and is required for profiling
   profiling: {
