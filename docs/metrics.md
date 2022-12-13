@@ -1,7 +1,5 @@
 # Metrics
 
-> :construction: &nbsp;Status: Experimental
-
 The Splunk Distribution for OpenTelemetry Node.js configures the default OpenTelemetry meter provider and can collect
 runtime metrics.
 
