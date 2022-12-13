@@ -1,7 +1,5 @@
 # Profiling
 
-> :construction: &nbsp;Status: Experimental - profiling is currently considered in alpha status and not suitable for production use.
-
 Continuous profiling of applications.
 
 ## Configuration
