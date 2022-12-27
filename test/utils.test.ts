@@ -15,7 +15,7 @@
  */
 import * as assert from 'assert';
 
-import { parseLogLevel } from '../src/utils';
+import { deduplicateByLast, parseLogLevel } from '../src/utils';
 import { cleanEnvironment } from './utils';
 import { DiagLogLevel } from '@opentelemetry/api';
 
@@ -31,6 +31,27 @@ describe('utils', () => {
       assert.deepStrictEqual(parseLogLevel('error'), DiagLogLevel.ERROR);
       assert.deepStrictEqual(parseLogLevel(' error'), DiagLogLevel.ERROR);
       assert.deepStrictEqual(parseLogLevel('ERROR'), DiagLogLevel.ERROR);
+    });
+  });
+
+  describe('deduplicateBy', () => {
+    it('returns an empty array for empty input', () => {});
+    it('deduplicates by keys keeping the last element', () => {
+      assert.deepStrictEqual(
+        deduplicateByLast(
+          [
+            { a: 33 },
+            { a: 1 },
+            { a: 42 },
+            { a: 0 },
+            { a: 1, b: 'abc' },
+            { a: 42 },
+            { a: 33, b: 'xyz' },
+          ],
+          (v) => v.a
+        ),
+        [{ a: 0 }, { a: 1, b: 'abc' }, { a: 42 }, { a: 33, b: 'xyz' }]
+      );
     });
   });
 });

@@ -19,7 +19,10 @@ import {
   SpanExporter,
   SpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
-import { InstrumentationOption } from '@opentelemetry/instrumentation';
+import {
+  Instrumentation,
+  InstrumentationOption,
+} from '@opentelemetry/instrumentation';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
 import { getInstrumentations } from '../instrumentations';
@@ -29,6 +32,7 @@ import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/expor
 import { Metadata } from '@grpc/grpc-js';
 import { detect as detectResource } from '../resource';
 import {
+  deduplicateByLast,
   defaultServiceName,
   getEnvArray,
   getEnvBoolean,
@@ -86,6 +90,26 @@ export const allowedTracingOptions = [
   'spanProcessorFactory',
   'tracerConfig',
 ];
+
+export function flattenInstrumentationOptions(
+  options: InstrumentationOption[] = []
+): Instrumentation[] {
+  let instrumentations: Instrumentation[] = [];
+  for (let i = 0, j = options.length; i < j; i++) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const option = options[i] as any;
+    if (Array.isArray(option)) {
+      const results = flattenInstrumentationOptions(option);
+      instrumentations = instrumentations.concat(results);
+    } else if (typeof option === 'function') {
+      instrumentations.push(new option());
+    } else if ((option as Instrumentation).instrumentationName) {
+      instrumentations.push(option);
+    }
+  }
+
+  return instrumentations;
+}
 
 export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   process.env.OTEL_SPAN_LINK_COUNT_LIMIT =
@@ -158,6 +182,11 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   if (options.instrumentations === undefined) {
     options.instrumentations = getInstrumentations();
   }
+
+  options.instrumentations = deduplicateByLast(
+    flattenInstrumentationOptions(options.instrumentations),
+    (instr) => instr.instrumentationName
+  );
 
   if (options.instrumentations.length === 0) {
     diag.warn(

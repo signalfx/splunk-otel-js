@@ -106,6 +106,28 @@ export function deduplicate(arr: string[]) {
   return [...new Set(arr)];
 }
 
+export function deduplicateByLast<T, K>(arr: T[], f: (_: T) => K): T[] {
+  const existing = new Map<K, number>();
+
+  const deduplicated: T[] = [];
+  const redundant = new Set<number>();
+
+  for (const v of arr) {
+    const key = f(v);
+    const existsAt = existing.get(key);
+
+    const count = deduplicated.push(v);
+
+    if (existsAt === undefined) {
+      existing.set(key, count - 1);
+    } else {
+      redundant.add(existsAt);
+    }
+  }
+
+  return deduplicated.filter((_v, i) => !redundant.has(i));
+}
+
 export function getEnvArray(key: string, defaultValue: string[]): string[] {
   const value = process.env[key];
 
