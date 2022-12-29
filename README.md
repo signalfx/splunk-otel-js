@@ -9,7 +9,7 @@
   <img alt="npm" src="https://img.shields.io/npm/v/@splunk/otel?style=for-the-badge">
   <img alt="node-current" src="https://img.shields.io/node/v/@splunk/otel?style=for-the-badge">
   <img alt="Codecov" src="https://img.shields.io/codecov/c/github/signalfx/splunk-otel-js?style=for-the-badge&token=XKXjEQKGaK">
-  <img alt="GitHub branch checks state" src="https://img.shields.io/github/workflow/status/signalfx/splunk-otel-js/.github/workflows/ci.yml?branch=main">
+  <img alt="GitHub branch checks state" src="https://img.shields.io/github/actions/workflow/status/signalfx/splunk-otel-js/.github/workflows/ci.yml?branch=main&style=for-the-badge">
 </p>
 
 # Splunk Distribution of OpenTelemetry for Node.js
