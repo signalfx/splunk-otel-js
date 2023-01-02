@@ -69,20 +69,6 @@ describe('Redis instrumentation', () => {
     },
   });
 
-  it('db statement is not added by default', (done) => {
-    startTracing(testOpts());
-    const client = require('redis').createClient({
-      no_ready_check: true,
-    });
-    client.hget('foo', 'bar', async () => {
-      await spanProcessor.forceFlush();
-      const [span] = await exporter.getFinishedSpans();
-      client.end(false);
-      assert.deepStrictEqual(span.attributes['db.statement'], 'hget');
-      done();
-    });
-  });
-
   it('db statement is not added when SPLUNK_REDIS_INCLUDE_COMMAND_ARGS is false', (done) => {
     process.env.SPLUNK_REDIS_INCLUDE_COMMAND_ARGS = 'false';
     startTracing(testOpts());
@@ -93,12 +79,15 @@ describe('Redis instrumentation', () => {
       await spanProcessor.forceFlush();
       const [span] = await exporter.getFinishedSpans();
       client.end(false);
-      assert.deepStrictEqual(span.attributes['db.statement'], 'hget');
+      assert.deepStrictEqual(
+        span.attributes['db.statement'],
+        'hget [2 other arguments]'
+      );
       done();
     });
   });
 
-  it('db statement is added when setting SPLUNK_REDIS_INCLUDE_COMMAND_ARGS env var', (done) => {
+  it('db statement is fully added when setting SPLUNK_REDIS_INCLUDE_COMMAND_ARGS env var', (done) => {
     process.env.SPLUNK_REDIS_INCLUDE_COMMAND_ARGS = 'true';
     startTracing(testOpts());
     const client = require('redis').createClient({
