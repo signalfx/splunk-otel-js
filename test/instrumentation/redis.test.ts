@@ -79,7 +79,10 @@ describe('Redis instrumentation', () => {
       await spanProcessor.forceFlush();
       const [span] = await exporter.getFinishedSpans();
       client.end(false);
-      assert.deepStrictEqual(span.attributes['db.statement'], 'hget [2 other arguments]');
+      assert.deepStrictEqual(
+        span.attributes['db.statement'],
+        'hget [2 other arguments]'
+      );
       done();
     });
   });
