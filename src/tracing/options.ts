@@ -188,7 +188,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
 const SUPPORTED_EXPORTER_TYPES = ['console', 'otlp'];
 
-type ExporterType = typeof SUPPORTED_EXPORTER_TYPES[number];
+type ExporterType = (typeof SUPPORTED_EXPORTER_TYPES)[number];
 
 const SpanExporterMap: Record<ExporterType, SpanExporterFactory> = {
   console: consoleSpanExporterFactory,
