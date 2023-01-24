@@ -74,7 +74,7 @@ module.exports = [
     traceId: '/9GShGd4h/tJ1Yei1rzV8A==',
     id: 'nUmcea9N0DM=',
     startTime: '2022-10-27T15:28:23.700294656Z',
-    name: 'request handler - /hello',
+    name: 'hello',
     kind: 'internal',
     parentSpanId: '2PYWumUB8/Q=',
     parent: { id: '2PYWumUB8/Q=', traceId: '/9GShGd4h/tJ1Yei1rzV8A==' },
