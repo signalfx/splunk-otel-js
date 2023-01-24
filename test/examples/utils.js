@@ -101,7 +101,7 @@ const waitSpans = (count, timeout = 60) => {
     .then((res) => {
       console.log(res);
       console.timeEnd('waitSpans');
-      return res.map(entryToSpan).sort((a, b) => a - b);
+      return res.map(entryToSpan).sort((a, b) => a.startTime - b.startTime);
     });
 };
 
