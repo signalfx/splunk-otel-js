@@ -151,7 +151,7 @@ function createOtlpExporter(options: MetricsOptions) {
       protocol = 'http/protobuf';
     } else {
       diag.warn(
-        'OTLP metric exporter factory: realm ignored due to explicit endpoint being set.'
+        'OTLP metric exporter factory: Realm value ignored (full endpoint URL has been specified).'
       );
     }
   }
