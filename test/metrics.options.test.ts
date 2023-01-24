@@ -166,7 +166,7 @@ describe('metrics options', () => {
       const exporter = reader['_exporter'];
       sinon.assert.calledWith(
         logger.warn,
-        'OTLP metric exporter factory: realm ignored due to explicit endpoint being set.'
+        'OTLP metric exporter factory: Realm value ignored (full endpoint URL has been specified).'
       );
       assert(exporter instanceof OTLPMetricExporter);
       assert.deepStrictEqual(exporter['_otlpExporter'].url, 'localhost:4317');
