@@ -269,7 +269,7 @@ export function otlpSpanExporterFactory(options: Options): SpanExporter {
       protocol = 'http/protobuf';
     } else {
       diag.warn(
-        'OTLP span exporter factory: realm ignored due to explicit endpoint being set.'
+        'OTLP span exporter factory: Realm value ignored (full endpoint URL has been specified).'
       );
     }
   }
