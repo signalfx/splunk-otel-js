@@ -359,10 +359,10 @@ describe('options', () => {
       );
     });
 
-    it('warns when setting an endpoint when realm is set', () => {
+    it('warns when realm and endpoint are both set', () => {
       process.env.SPLUNK_REALM = 'us0';
       process.env.SPLUNK_ACCESS_TOKEN = 'abc';
-      process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT = 'https://www.splunk.com';
+      process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT = 'http://localhost:4317';
 
       const options = _setDefaultOptions();
       const exporters = options.spanExporterFactory(options);
@@ -370,13 +370,13 @@ describe('options', () => {
       const [exporter] = exporters;
       sinon.assert.calledWith(
         logger.warn,
-        'OTLP span exporter factory: explicit endpoint ignored due to realm being set.'
+        'OTLP span exporter factory: realm ignored due to explicit endpoint being set.'
       );
-      assert(exporter instanceof OTLPHttpTraceExporter);
-      assert.deepStrictEqual(
-        exporter.url,
-        'https://ingest.us0.signalfx.com/v2/trace/otlp'
+      assert(
+        exporter instanceof OTLPTraceExporter,
+        'Expected exporter to be instance of OTLPTraceExporter'
       );
+      assert.deepStrictEqual(exporter.url, 'localhost:4317');
     });
   });
 

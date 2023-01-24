@@ -264,18 +264,17 @@ export function otlpSpanExporterFactory(options: Options): SpanExporter {
       );
     }
 
-    protocol = 'http/protobuf';
-
-    if (endpoint !== undefined) {
+    if (endpoint === undefined) {
+      endpoint = `https://ingest.${options.realm}.signalfx.com/v2/trace/otlp`;
+      protocol = 'http/protobuf';
+    } else {
       diag.warn(
-        'OTLP span exporter factory: explicit endpoint ignored due to realm being set.'
+        'OTLP span exporter factory: realm ignored due to explicit endpoint being set.'
       );
     }
-
-    endpoint = `https://ingest.${options.realm}.signalfx.com/v2/trace/otlp`;
-  } else {
-    protocol = protocol ?? 'grpc';
   }
+
+  protocol = protocol ?? 'grpc';
 
   switch (protocol) {
     case 'grpc': {

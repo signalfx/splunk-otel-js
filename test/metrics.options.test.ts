@@ -156,23 +156,20 @@ describe('metrics options', () => {
       );
     });
 
-    it('warns when setting an endpoint when realm is set', () => {
+    it('warns when realm and endpoint are both set', () => {
       process.env.SPLUNK_REALM = 'us0';
       process.env.SPLUNK_ACCESS_TOKEN = 'abc';
-      process.env.SPLUNK_METRICS_ENDPOINT = 'https://www.splunk.com';
+      process.env.SPLUNK_METRICS_ENDPOINT = 'http://localhost:4317';
 
       const options = _setDefaultOptions();
       const [reader] = options.metricReaderFactory(options);
       const exporter = reader['_exporter'];
       sinon.assert.calledWith(
         logger.warn,
-        'OTLP metric exporter factory: explicit endpoint ignored due to realm being set.'
+        'OTLP metric exporter factory: realm ignored due to explicit endpoint being set.'
       );
-      assert(exporter instanceof OTLPHttpProtoMetricExporter);
-      assert.deepStrictEqual(
-        exporter['_otlpExporter'].url,
-        'https://ingest.us0.signalfx.com/v2/datapoint/otlp'
-      );
+      assert(exporter instanceof OTLPMetricExporter);
+      assert.deepStrictEqual(exporter['_otlpExporter'].url, 'localhost:4317');
     });
   });
 });

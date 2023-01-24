@@ -146,18 +146,17 @@ function createOtlpExporter(options: MetricsOptions) {
       );
     }
 
-    protocol = 'http/protobuf';
-
-    if (options.endpoint) {
+    if (options.endpoint === undefined) {
+      endpoint = `https://ingest.${options.realm}.signalfx.com/v2/datapoint/otlp`;
+      protocol = 'http/protobuf';
+    } else {
       diag.warn(
-        'OTLP metric exporter factory: explicit endpoint ignored due to realm being set.'
+        'OTLP metric exporter factory: realm ignored due to explicit endpoint being set.'
       );
     }
-
-    endpoint = `https://ingest.${options.realm}.signalfx.com/v2/datapoint/otlp`;
-  } else {
-    protocol = protocol ?? 'grpc';
   }
+
+  protocol = protocol ?? 'grpc';
 
   switch (protocol) {
     case 'grpc': {
