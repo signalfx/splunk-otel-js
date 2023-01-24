@@ -370,7 +370,7 @@ describe('options', () => {
       const [exporter] = exporters;
       sinon.assert.calledWith(
         logger.warn,
-        'OTLP span exporter factory: realm ignored due to explicit endpoint being set.'
+        'OTLP span exporter factory: Realm value ignored (full endpoint URL has been specified).'
       );
       assert(
         exporter instanceof OTLPTraceExporter,
