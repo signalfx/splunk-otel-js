@@ -129,7 +129,7 @@ By default the following instrumentations will automatically be enabled:
 * [`@opentelemetry/instrumentation-winston`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-winston)
 * [`opentelemetry-instrumentation-elasticsearch`](https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-elasticsearch)
 * [`opentelemetry-instrumentation-kafkajs`](https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-kafkajs)
-* [`opentelemetry-instrumentation-mongoose`](https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-mongoose)
+* [`opentelemetry-instrumentation-mongoose`](https://www.npmjs.com/package/opentelemetry-instrumentation-mongoose)
 * [`opentelemetry-instrumentation-sequelize`](https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-sequelize)
 * [`opentelemetry-instrumentation-typeorm`](https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-typeorm)
 
