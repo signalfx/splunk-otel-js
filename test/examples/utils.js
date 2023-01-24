@@ -41,7 +41,7 @@ const entryToSpan = (entry) => {
   return {
     traceId: entry.traceId,
     id: entry.spanId,
-    startTime: entry.startTime,
+    startTime: new Date(entry.startTime),
     name: entry.operationName,
     kind: tags['span.kind'],
     parentSpanId: parent?.spanId,
@@ -101,7 +101,7 @@ const waitSpans = (count, timeout = 60) => {
     .then((res) => {
       console.log(res);
       console.timeEnd('waitSpans');
-      return res.map(entryToSpan);
+      return res.map(entryToSpan).sort((a, b) => a - b);
     });
 };
 
