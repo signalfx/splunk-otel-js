@@ -95,11 +95,9 @@ const waitSpans = (count, timeout = 60) => {
         assert.fail(`Timed out waiting for ${count} spans for ${timeout}s.`);
       }
 
-      console.log(content);
       return JSON.parse(content);
     })
     .then((res) => {
-      console.log(res);
       console.timeEnd('waitSpans');
       return res.map(entryToSpan).sort((a, b) => a.startTime - b.startTime);
     });

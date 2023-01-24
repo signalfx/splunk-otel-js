@@ -7,7 +7,6 @@ const {
 const snapshot = require('./snapshot.js');
 
 waitSpans(snapshot.length).then((data) => {
-  console.dir(data, { depth: null });
 	logSpanTable(data);
   return assertSpans(data, snapshot);
 }).then((validatedSpans) => {
