@@ -34,6 +34,14 @@ entry:
   ]
 }
 */
+
+function hrTimestamp(ts) {
+	const unixTimeNanos = BigInt(Date(ts.slice(0, 19)).getTime()) * 1_000_000n;
+	const fractionMillis = parseFloat(ts.slice(19).replace('Z', ''));
+	const fractionNanos = BigInt(fractionMillis * 1e9);
+  return unixTimeNanos + fractionNanos;
+}
+
 const entryToSpan = (entry) => {
   const tags = getAttributes(entry);
   // assuming the first reference is the parent
@@ -42,6 +50,7 @@ const entryToSpan = (entry) => {
     traceId: entry.traceId,
     id: entry.spanId,
     startTime: new Date(entry.startTime),
+    hrStartTime: hrTimestamp(entry.startTime),
     name: entry.operationName,
     kind: tags['span.kind'],
     parentSpanId: parent?.spanId,
@@ -99,8 +108,7 @@ const waitSpans = (count, timeout = 60) => {
     })
     .then((res) => {
       console.timeEnd('waitSpans');
-			console.log(res);
-      return res.map(entryToSpan).sort((a, b) => a.startTime - b.startTime);
+      return res.map(entryToSpan).sort((a, b) => a.hrStartTime - b.hrStartTime);
     });
 };
 
