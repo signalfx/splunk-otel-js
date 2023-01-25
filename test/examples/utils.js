@@ -107,9 +107,10 @@ const waitSpans = (count, timeout = 60) => {
       return JSON.parse(content);
     })
     .then((res) => {
-      console.dir(res, { depth: null });
       console.timeEnd('waitSpans');
-      return res.map(entryToSpan).sort((a, b) => Number(a.hrStartTime - b.hrStartTime));
+     	let spans = res.map(entryToSpan).sort((a, b) => Number(a.hrStartTime - b.hrStartTime));
+      console.dir(spans, { depth: null });
+			return spans;
     });
 };
 
