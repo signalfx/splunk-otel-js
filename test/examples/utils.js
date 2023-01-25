@@ -36,7 +36,7 @@ entry:
 */
 
 function hrTimestamp(ts) {
-	const unixTimeNanos = BigInt(Date(ts.slice(0, 19)).getTime()) * 1_000_000n;
+	const unixTimeNanos = BigInt(new Date(ts.slice(0, 19)).getTime()) * 1_000_000n;
 	const fractionMillis = parseFloat(ts.slice(19).replace('Z', ''));
 	const fractionNanos = BigInt(fractionMillis * 1e9);
   return unixTimeNanos + fractionNanos;
