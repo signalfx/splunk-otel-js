@@ -108,9 +108,12 @@ const waitSpans = (count, timeout = 60) => {
     })
     .then((res) => {
       console.timeEnd('waitSpans');
-     	let spans = res.map(entryToSpan).sort((a, b) => Number(a.hrStartTime - b.hrStartTime));
-      console.dir(spans, { depth: null });
-			return spans;
+			return res.map(entryToSpan).sort((a, b) => {
+				if (a.hrStartTime === b.hrStartTime) {
+					return a.name.localeCompare(b.name);
+				}
+				return Number(a.hrStartTime - b.hrStartTime);
+			});
     });
 };
 
