@@ -13,4 +13,4 @@ waitSpans(snapshot.length).then((data) => {
   console.log(`${validatedSpans} spans validated.`);
 });
 
-request(process.env.REQ_URL ?? 'http://localhost:8080/all');
+request(process.env.REQ_URL ?? 'http://localhost:8080/animal');

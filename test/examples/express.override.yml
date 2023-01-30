@@ -2,8 +2,13 @@ services:
   app:
     working_dir: /home/node/app/examples/express
     env_file: ./express/app.env
+    depends_on:
+      - collector
   test:
     command: node ./express
     environment:
-      REQ_URL: http://app/all
+      REQ_URL: http://app/animal
       COLLECTOR_URL: http://collector:8378
+    depends_on:
+      - app
+      - collector

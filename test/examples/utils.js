@@ -34,6 +34,14 @@ entry:
   ]
 }
 */
+
+function hrTimestamp(ts) {
+	const unixTimeNanos = BigInt(new Date(ts.slice(0, 19)).getTime()) * 1_000_000n;
+	const fractionSeconds = parseFloat(ts.slice(19).replace('Z', ''));
+	const fractionNanos = BigInt((fractionSeconds * 1e9) | 0);
+  return unixTimeNanos + fractionNanos;
+}
+
 const entryToSpan = (entry) => {
   const tags = getAttributes(entry);
   // assuming the first reference is the parent
@@ -41,7 +49,8 @@ const entryToSpan = (entry) => {
   return {
     traceId: entry.traceId,
     id: entry.spanId,
-    startTime: entry.startTime,
+    startTime: new Date(entry.startTime),
+    hrStartTime: hrTimestamp(entry.startTime),
     name: entry.operationName,
     kind: tags['span.kind'],
     parentSpanId: parent?.spanId,
@@ -99,9 +108,12 @@ const waitSpans = (count, timeout = 60) => {
     })
     .then((res) => {
       console.timeEnd('waitSpans');
-      return res.map(entryToSpan).sort((a, b) => {
-        return a.startTime > b.startTime ? 1 : -1;
-      });
+			return res.map(entryToSpan).sort((a, b) => {
+				if (a.hrStartTime === b.hrStartTime) {
+					return a.name.localeCompare(b.name);
+				}
+				return Number(a.hrStartTime - b.hrStartTime);
+			});
     });
 };
 
