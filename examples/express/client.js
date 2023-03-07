@@ -2,7 +2,7 @@
 const axios = require('axios').default;
 
 const SERVER_BASE = process.env.SERVER_BASE ?? 'http://localhost:8080';
-const { href } = new URL('/all', SERVER_BASE);
+const { href } = new URL('/animal', SERVER_BASE);
 const { log } = require('./utils.js');
 const jitter = () => {
   return (Math.random() * 300) >> 0;
