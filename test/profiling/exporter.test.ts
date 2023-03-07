@@ -34,7 +34,7 @@ describe('profiling OTLP exporter', () => {
         resource: Resource.empty(),
       });
       assert.deepStrictEqual(
-        exporter['_client'].getChannel()['credentials'],
+        exporter['_client'].getChannel()['internalChannel']['credentials'],
         grpc.ChannelCredentials.createInsecure()
       );
     });
@@ -46,7 +46,7 @@ describe('profiling OTLP exporter', () => {
         resource: Resource.empty(),
       });
       assert.deepStrictEqual(
-        exporter['_client'].getChannel()['credentials'],
+        exporter['_client'].getChannel()['internalChannel']['credentials'],
         grpc.ChannelCredentials.createInsecure()
       );
     });
@@ -58,7 +58,7 @@ describe('profiling OTLP exporter', () => {
         resource: Resource.empty(),
       });
       assert.deepStrictEqual(
-        exporter['_client'].getChannel()['credentials'],
+        exporter['_client'].getChannel()['internalChannel']['credentials'],
         grpc.ChannelCredentials.createSsl()
       );
     });
