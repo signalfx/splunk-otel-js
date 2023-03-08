@@ -1,4 +1,6 @@
-> The official Splunk documentation for this page is [Configure the Splunk Distribution of OTel JS](https://docs.splunk.com/Observability/gdi/get-data-in/application/nodejs/configuration/advanced-nodejs-otel-configuration.html). For instructions on how to contribute to the docs, see [CONTRIBUTING.md](../CONTRIBUTING.md#documentation).
+> The official Splunk documentation for this page is [Configure the Splunk Distribution of OTel JS](https://quickdraw.splunk.com/redirect/?product=Observability&version=current&location=nodejs.application.config). 
+> 
+> For instructions on how to contribute to the docs, see [CONTRIBUTING.md](../CONTRIBUTING.md#documentation).
 
 # Advanced Configuration
 
@@ -90,8 +92,6 @@ The following config options can be set by passing them as tracing arguments to 
 
 ### Metrics
 
-Configuration examples can be seen [here](metrics.md).
-
 | Environment variable<br>``start()`` argument             | Default value           | Support | Notes
 | --------------------------------------------------------------- | ----------------------- | ------- | ---
 | `OTEL_SERVICE_NAME`<br>`serviceName`                            | `unnamed-node-service`  | Stable  | The service name of this Node service.
@@ -102,14 +102,14 @@ Configuration examples can be seen [here](metrics.md).
 | `OTEL_RESOURCE_ATTRIBUTES`                                      |                         | Stable  | The resource attributes to metric data. <details><summary>Environment variable example</summary>`key1=val1,key2=val2`</details>
 | `SPLUNK_METRICS_ENABLED`<br>n/a (enabled by calling `start`) | `false`             | Experimental | Sets up the metrics pipeline (global meter provider, exporters).
 | n/a<br>`metrics.resourceFactory`                                |                         | Experimental | Callback which allows to filter the default resource or provide a custom one. The function takes one argument of type `Resource` which is the resource pre-filled by the SDK containing the `service.name`, environment, host and process attributes. |
-| `SPLUNK_RUNTIME_METRICS_ENABLED`<br>`metrics.runtimeMetricsEnabled` | `true`                 | Experimental | Enable collecting and exporting of runtime metrics. See [metrics documentation](metrics.md) for more information.
+| `SPLUNK_RUNTIME_METRICS_ENABLED`<br>`metrics.runtimeMetricsEnabled` | `true`                 | Experimental | Enable collecting and exporting of runtime metrics.
 | `SPLUNK_RUNTIME_METRICS_COLLECTION_INTERVAL`<br>`metrics.runtimeMetricsCollectionIntervalMillis`  | `5000`                 | Experimental | The interval, in milliseconds, during which GC and event loop statistics are collected. After the collection is done, the values become available to the metric exporter.
 
 ### Profiling
 
 | Environment variable<br>``start()`` argument           | Default value           | Support | Notes
 | --------------------------------------------------------------- | ----------------------- | ------- | ---
-| `SPLUNK_PROFILER_ENABLED`                                       | `false`                 | Experimental | Enable continuous profiling. See [profiling documentation](profiling.md) for more information.
+| `SPLUNK_PROFILER_ENABLED`                                       | `false`                 | Experimental | Enable continuous profiling.
 | `SPLUNK_PROFILER_MEMORY_ENABLED`<br>`profiling.memoryProfilingEnabled` | `false`          | Experimental | Enable continuous memory profiling.
 | `SPLUNK_PROFILER_LOGS_ENDPOINT`<br>`endpoint`                   | `http://localhost:4317` | Experimental | The OTLP logs receiver endpoint used for profiling data.
 | `OTEL_SERVICE_NAME`<br>`serviceName`                            | `unnamed-node-service`  | Stable  | Service name of the application.
