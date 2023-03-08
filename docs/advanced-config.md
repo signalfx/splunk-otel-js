@@ -1,4 +1,6 @@
-> The official Splunk documentation for this page is [Configure the Splunk Distribution of OTel JS](https://docs.splunk.com/Observability/gdi/get-data-in/application/nodejs/configuration/advanced-nodejs-otel-configuration.html). For instructions on how to contribute to the docs, see [CONTRIBUTING.md](../CONTRIBUTING.md#documentation).
+> The official Splunk documentation for this page is [Configure the Splunk Distribution of OTel JS](https://quickdraw.splunk.com/redirect/?product=Observability&version=current&location=nodejs.application.config). 
+> 
+> For instructions on how to contribute to the docs, see [CONTRIBUTING.md](../CONTRIBUTING.md#documentation).
 
 # Advanced Configuration
 
