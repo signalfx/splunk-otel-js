@@ -87,7 +87,7 @@ Additional changes in this release:
 - ### Replace SignalFx metrics with OpenTelemetry metrics
   
   SignalFx metrics SDK has been removed and replaced with OpenTelemetry Metrics SDKs.
-  The internal SignalFx client is no longer available to users, if you have been using custom metrics with the SignalFx client provided by Splunk OpenTelemetry JS distribution, see the [migration guide](./docs/metrics.md#migrating-from-signalfx-metrics) for how to start using custom metrics via OpenTelemetry.
+  The internal SignalFx client is no longer available to users, if you have been using custom metrics with the SignalFx client provided by Splunk OpenTelemetry JS distribution, see the [Migrate from the SignalFx Tracing Library for NodeJS](https://quickdraw.splunk.com/redirect/?product=Observability&version=current&location=nodejs.application.migrate) in the official documentation.
 
   Runtime metric names are now using [OpenTelemetry conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/runtime-environment-metrics.md), the following is a list of changed metric names:
   
