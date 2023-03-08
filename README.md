@@ -14,87 +14,30 @@
 
 # Splunk Distribution of OpenTelemetry for Node.js
 
-> ## **Examples and developer documentation for version 1.x can be seen at [/tree/1.x](https://github.com/signalfx/splunk-otel-js/tree/1.x).**
+The Splunk Distribution of [OpenTelemetry JS](https://github.com/open-telemetry/opentelemetry-js) integrates with Splunk APM and automatically instruments your Node application to capture traces, collect runtime metrics, and CPU and memory profiles.
 
-The Splunk Distribution of [OpenTelemetry JS](https://github.com/open-telemetry/opentelemetry-js) integrates with Splunk APM and automatically instruments your Node application to capture traces, collect runtime metrics, CPU and memory profiles.
+This distribution comes with the following defaults:
 
-This Splunk distribution comes with the following defaults:
-
-- [W3C tracecontext and baggage propagation](https://www.w3.org/TR/trace-context).
+- [W3C tracecontext and baggage propagation](https://www.w3.org/TR/trace-context)
 - [OTLP exporter](https://www.npmjs.com/package/@opentelemetry/exporter-trace-otlp-grpc)
-  configured to send spans to a locally running [OpenTelemetry Collector](https://github.com/open-telemetry/opentelemetry-collector) over gRPC
-  (default endpoint: `http://localhost:4317`).
-- Many bundled [instrumentations](#default-instrumentation-packages).
+  configured to send spans to a locally running OpenTelemetry Collector over gRPC
+- Many bundled [instrumentations](#default-instrumentation-packages)
 
-If you're currently using the SignalFx Tracing Library for Node and want to migrate to the Splunk Distribution of OpenTelemetry Node, see [Migrate from the SignalFx Tracing Library for JS](./MIGRATING.md).
+If you're using the SignalFx Tracing Library for Node and want to migrate to the Splunk Distribution of OpenTelemetry Node, see [Migrate from the SignalFx Tracing Library for NodeJS](https://quickdraw.splunk.com/redirect/?product=Observability&version=current&location=nodejs.application.migrate) in the official documentation.
 
 ## Get started
 
-The following instructions assume that you're sending data to Splunk Observability Cloud using the [OpenTelemetry Collector](https://docs.splunk.com/Observability/gdi/opentelemetry/opentelemetry.html) running on localhost. If you're running a different setup, refer to the [configuration options](./docs/advanced-config.md) to customize your settings.
-
-1. Install the `@splunk/otel` package:
-
-```
-npm install @splunk/otel --save
-```
-
-You can find a list of instrumentation packages supported out of the box [here](#default-instrumentation-packages).
-To install additional instrumentations or provide your own, see [instrumentations](./docs/instrumentations.md).
-
-2. Run node app with the `-r @splunk/otel/instrument` CLI argument
-
-```
-export OTEL_SERVICE_NAME=my-node-svc
-node -r @splunk/otel/instrument app.js
-```
-
-That's it - the telemetry data is now sent to the locally running Opentelemetry Collector. You can also instrument your app programmatically as described [here](#instrument-with-code).
-
-### Send data directly to Splunk Observability Cloud
-
-In order to send traces directly to Splunk Observability Cloud, you need to:
-
-1. Set `SPLUNK_REALM` to your Splunk APM realm (for example, `us0`).
-1. Set the `SPLUNK_ACCESS_TOKEN` to your Splunk Observability Cloud [access token](https://docs.splunk.com/Observability/admin/authentication-tokens/api-access-tokens.html).
-
-## Manually instrument an application<a name="instrument-with-code"></a>
-
-You can also manually instrument your application by adding the following lines before everything else in your application.
-
-```js
-const { start } = require('@splunk/otel');
-
-start({
-  serviceName: 'my-node-service',
-  endpoint: 'http://localhost:4317'
-});
-
-// rest of your application entry point script
-```
-
-`start()` accepts an optional `Options` argument. It can be used to customize many aspects of the observability pipeline. For example enabling runtime metrics and memory profiling:
-
-```js
-start({
-  serviceName: 'my-node-service',
-  metrics: { runtimeMetricsEnabled: true },
-  profiling: { memoryProfilingEnabled: true }
-});
-```
-
-For all of the possible options see [Advanced Configuration](./docs/advanced-config.md#advanced-configuration).
-
-> `start` is destructive to Open Telemetry API globals. Any globals set before running `start` are overwritten.
+For complete instructions on how to get started with the Splunk Distribution of OpenTelemetry JS, see [Instrument a Node application for Splunk Observability Cloud](https://quickdraw.splunk.com/redirect/?product=Observability&version=current&location=nodejs.application.gdi) in the official documentation.
 
 ## Correlate traces and logs
 
 The Splunk Distribution of OpenTelemetry JS automatically injects trace metadata into logs so that Node.js logging libraries can access it. You can use trace metadata to correlate traces with log events and explore logs in Observability Cloud.
 
-For more information, see [Correlating traces with logs](./docs/correlate-logs-traces.md).
+For more information, see [Connect Node.js trace data with logs for Splunk Observability Cloud](https://quickdraw.splunk.com/redirect/?product=Observability&version=current&location=nodejs.application.tracelogs) in the official documentation.
 
-## Default Instrumentation Packages<a name="default-instrumentation-packages"></a>
+## Default instrumentation packages<a name="default-instrumentation-packages"></a>
 
-By default the following instrumentations will automatically be enabled:
+By default, the following instrumentations are active:
 
 * [`@opentelemetry/instrumentation-amqplib`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/instrumentation-amqplib)
 * [`@opentelemetry/instrumentation-aws-sdk`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-aws-sdk)
@@ -133,13 +76,13 @@ By default the following instrumentations will automatically be enabled:
 * [`opentelemetry-instrumentation-sequelize`](https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-sequelize)
 * [`opentelemetry-instrumentation-typeorm`](https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-typeorm)
 
-You can find more instrumentation packages over at the [OpenTelemetry Registry](https://opentelemetry.io/registry/?language=js) and enable them manually as described above.
-
-**Note that many of the instrumentation libraries offered by OpenTelemetry are still experimental.**
+You can find more instrumentation packages in the [OpenTelemetry Registry](https://opentelemetry.io/registry/?language=js).
 
 ## Troubleshooting
 
-For troubleshooting issues with the Splunk Distribution of OpenTelemetry JS, see [Troubleshooting](./docs/troubleshooting.md).
+For troubleshooting issues with the Splunk Distribution of OpenTelemetry JS, see [TroTroubleshoot Node.js instrumentation for Splunk Observability Cloud](https://quickdraw.splunk.com/redirect/?product=Observability&version=current&location=nodejs.application.tshoot) in the official documentation.
+
+> Examples and developer documentation for version 1.x is available at [/tree/1.x](https://github.com/signalfx/splunk-otel-js/tree/1.x).
 
 # License
 
