@@ -109,7 +109,7 @@ The following config options can be set by passing them as tracing arguments to 
 
 | Environment variable<br>``start()`` argument           | Default value           | Support | Notes
 | --------------------------------------------------------------- | ----------------------- | ------- | ---
-| `SPLUNK_PROFILER_ENABLED`                                       | `false`                 | Experimental | Enable continuous profiling. See [profiling documentation](profiling.md) for more information.
+| `SPLUNK_PROFILER_ENABLED`                                       | `false`                 | Experimental | Enable continuous profiling.
 | `SPLUNK_PROFILER_MEMORY_ENABLED`<br>`profiling.memoryProfilingEnabled` | `false`          | Experimental | Enable continuous memory profiling.
 | `SPLUNK_PROFILER_LOGS_ENDPOINT`<br>`endpoint`                   | `http://localhost:4317` | Experimental | The OTLP logs receiver endpoint used for profiling data.
 | `OTEL_SERVICE_NAME`<br>`serviceName`                            | `unnamed-node-service`  | Stable  | Service name of the application.
