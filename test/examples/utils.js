@@ -186,7 +186,7 @@ function compareTraces(actualRoot, expectedRoot, actualSpansByParentId, expected
       'Different amount of span children'
     );
 
-    for (let i = 0; i < childrenA.length; i++) {
+    for (let i = 0; i < actualChildren.length; i++) {
       queue.push([actualChildren[i], expectedChildren[i]]);
     }
   }
