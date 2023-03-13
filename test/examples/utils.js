@@ -49,7 +49,7 @@ const entryToSpan = (entry) => {
   return {
     traceId: entry.traceId,
     id: entry.spanId,
-    startTime: new Date(entry.startTime),
+    startTime: entry.startTime,
     hrStartTime: hrTimestamp(entry.startTime),
     name: entry.operationName,
     kind: tags['span.kind'],
@@ -58,7 +58,6 @@ const entryToSpan = (entry) => {
       id: parent?.spanId,
       traceId: parent?.traceId
     } || undefined,
-    references: entry.references,
     status: { code: tags['status.code'] },
     attributes: tags,
   };
@@ -90,6 +89,25 @@ const getParentSpan = (arr, span) => {
   return parent;
 };
 
+function groupBy(elems, key) {
+  const grouped = new Map();
+
+  for (const e of elems) {
+    const value = e[key];
+    if (grouped.has(value)) {
+      grouped.get(value).push(e);
+    } else {
+      grouped.set(value, [e]);
+    }
+  }
+
+  return grouped;
+}
+
+function sortByName(spans) {
+  return spans.sort((a, b) => a.name.localeCompare(b.name));
+}
+
 const waitSpans = (count, timeout = 60) => {
   console.error(`Waiting for ${count} spans for ${timeout}s`);
   console.time('waitSpans');
@@ -108,12 +126,7 @@ const waitSpans = (count, timeout = 60) => {
     })
     .then((res) => {
       console.timeEnd('waitSpans');
-			return res.map(entryToSpan).sort((a, b) => {
-				if (a.hrStartTime === b.hrStartTime) {
-					return a.name.localeCompare(b.name);
-				}
-				return Number(a.hrStartTime - b.hrStartTime);
-			});
+      return res.map(entryToSpan);
     });
 };
 
@@ -132,13 +145,62 @@ const request = async (url) => {
   }
 };
 
+function compareSpans(actual, expected) {
+  try {
+    assert.notStrictEqual(actual, undefined);
+    assert.notStrictEqual(expected, undefined);
+
+    assert.strictEqual(actual.name, expected.name);
+
+    assert.strictEqual(actual.attributes['http.method'], expected.attributes['http.method']);
+    assert.strictEqual(actual.attributes['http.url'], expected.attributes['http.url']);
+    assert.strictEqual(actual.attributes['http.route'], expected.attributes['http.route']);
+    assert.strictEqual(actual.attributes['http.target'], expected.attributes['http.target']);
+    assert.strictEqual(actual.attributes['otel.library.name'], expected.attributes['otel.library.name']);
+
+    // TODO: Check for status. HTTP Sink endpoint on the collector doesn't return status correctly.
+
+  } catch (e) {
+    e.actualSpan = util.inspect(actual);
+    e.expectedSpan = expected;
+    e.message = `At span[${idx}] "${actual.name}": ${e.message}`;
+    throw e;
+  }
+}
+
+// TODO: Timestamp comparisons can be re-enabled
+// once https://github.com/open-telemetry/opentelemetry-js/issues/2643 is fixed
+function compareTraces(actualRoot, expectedRoot, actualSpansByParentId, expectedSpansByParentId) {
+  let queue = [[actualRoot, expectedRoot]];
+
+  while (queue.length > 0) {
+    let [actual, expected] = queue.shift();
+    compareSpans(actual, expected);
+
+    let actualChildren = sortByName(actualSpansByParentId.get(actual.id) || []);
+    let expectedChildren = sortByName(expectedSpansByParentId.get(expected.id) || []);
+
+    assert.strictEqual(
+      actualChildren.length,
+      expectedChildren.length,
+      'Different amount of span children'
+    );
+
+    for (let i = 0; i < childrenA.length; i++) {
+      queue.push([actualChildren[i], expectedChildren[i]]);
+    }
+  }
+}
+
 const assertSpans = (actualSpans, expectedSpans) => {
   if (process.env.LOG_NEW_SNAPSHOTS === 'true') {
     console.error(actualSpans);
     console.error('skipping checking asserting spans');
     return 0;
   }
+
   assert(Array.isArray(actualSpans), 'Expected `actualSpans` to be an array');
+
   assert(
     Array.isArray(expectedSpans),
     'Expected `expectedSpans` to be an array'
@@ -149,37 +211,21 @@ const assertSpans = (actualSpans, expectedSpans) => {
     'Expected span count different from actual'
   );
 
-  actualSpans.forEach((span, idx) => {
-    const expected = expectedSpans[idx];
-    if (expected === null) return;
-    try {
-      assert.notStrictEqual(span, undefined);
-      assert.notStrictEqual(expected, undefined);
+  const actualSpansByParentId = groupBy(actualSpans, 'parentSpanId');
+  const expectedSpansByParentId = groupBy(expectedSpans, 'parentSpanId');
 
-      assert.strictEqual(span.name, expected.name);
+  const expectedRoots = sortByName(expectedSpansByParentId.get(undefined));
+  const actualRoots = sortByName(actualSpansByParentId.get(undefined));
 
-      assert.strictEqual(span.attributes['http.method'], expected.attributes['http.method']);
-      assert.strictEqual(span.attributes['http.url'], expected.attributes['http.url']);
-      assert.strictEqual(span.attributes['http.route'], expected.attributes['http.route']);
-      assert.strictEqual(span.attributes['http.target'], expected.attributes['http.target']);
-      assert.strictEqual(span.attributes['otel.library.name'], expected.attributes['otel.library.name']);
+  assert(
+    actualRoots.length,
+    expectedRoots.length,
+    'Expected span count different from actual'
+  );
 
-      // TODO: Check for status. HTTP Sink endpoint on the collector doesn't return status correctly.
-      if (expected.parentSpanId == undefined) {
-        assert.strictEqual(expected.parentSpanId, span.parentSpanId, 'Expected no parent span, but got one');
-      } else {
-        assert.strictEqual(
-          getParentSpan(actualSpans, span).name,
-          getParentSpan(expectedSpans, expected).name
-        );
-      }
-    } catch (e) {
-      e.actualSpan = util.inspect(span);
-      e.expectedSpan = expected;
-      e.message = `At span[${idx}] "${span.name}": ${e.message}`;
-      throw e;
-    }
-  });
+  for (let i = 0; i < actualRoots.length; i++) {
+    compareTraces(actualRoots[i], expectedRoots[i], actualSpansByParentId, expectedSpansByParentId);
+  }
 
   return expectedSpans.length;
 };
