@@ -36,14 +36,17 @@ See [SECURITY.md](SECURITY.md#reporting-security-issues) for detailed instructio
 
 ## Documentation
 
-The Splunk Observability documentation is hosted on https://docs.splunk.com/Observability,
-which contains all the prescriptive guidance for Splunk Observability products. 
-Prescriptive guidance consists of step-by-step instructions, conceptual material,
-and decision support for customers. Reference documentation and development 
-documentation is hosted on this repository.
+The Splunk Observability documentation is hosted on the [Splunk Observability
+Cloud docs site](https://docs.splunk.com/Observability), which contains all the
+prescriptive guidance for Splunk Observability products. Prescriptive guidance
+consists of step-by-step instructions, conceptual material, and decision support
+for customers. Reference documentation and development documentation is still
+hosted on this repository.
 
 To contribute documentation for this project, open a pull request in the 
-https://github.com/splunk/public-o11y-docs repository. See the [CONTRIBUTING.md](https://github.com/splunk/public-o11y-docs/blob/main/CONTRIBUTING.md) guide for documentation for more information.
+[public-o11y-docs](https://github.com/splunk/public-o11y-docs) repository. See
+the [CONTRIBUTING.md](https://github.com/splunk/public-o11y-docs/blob/main/CONTRIBUTING.md)
+guide of the Splunk Observability Cloud documentation for more information.
 
 ## Contributing via Pull Requests
 
