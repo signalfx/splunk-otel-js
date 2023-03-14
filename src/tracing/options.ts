@@ -33,6 +33,7 @@ import {
   getEnvArray,
   getEnvBoolean,
   getEnvValueByPrecedence,
+  getNonEmptyEnvVar,
 } from '../utils';
 import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
@@ -89,14 +90,14 @@ export const allowedTracingOptions = [
 
 export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   process.env.OTEL_SPAN_LINK_COUNT_LIMIT =
-    process.env.OTEL_SPAN_LINK_COUNT_LIMIT ?? '1000';
+    getNonEmptyEnvVar('OTEL_SPAN_LINK_COUNT_LIMIT') ?? '1000';
   process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT =
-    process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT ?? '12000';
+    getNonEmptyEnvVar('OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT') ?? '12000';
 
   options.accessToken =
-    options.accessToken || process.env.SPLUNK_ACCESS_TOKEN || '';
+    options.accessToken || getNonEmptyEnvVar('SPLUNK_ACCESS_TOKEN') || '';
 
-  options.realm = options.realm || process.env.SPLUNK_REALM;
+  options.realm = options.realm || getNonEmptyEnvVar('SPLUNK_REALM');
 
   if (options.realm) {
     if (!options.accessToken) {
@@ -119,7 +120,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   const serviceName =
     options.serviceName ||
-    process.env.OTEL_SERVICE_NAME ||
+    getNonEmptyEnvVar('OTEL_SERVICE_NAME') ||
     resource.attributes[SemanticResourceAttributes.SERVICE_NAME];
 
   if (!serviceName) {
@@ -313,7 +314,7 @@ export function consoleSpanExporterFactory(): SpanExporter {
 // Temporary workaround until https://github.com/open-telemetry/opentelemetry-js/issues/3094 is resolved
 function getBatchSpanProcessorConfig() {
   // OTel uses its own parsed environment, we can just use the default env if the BSP delay is unset.
-  if (process.env.OTEL_BSP_SCHEDULE_DELAY !== undefined) {
+  if (getNonEmptyEnvVar('OTEL_BSP_SCHEDULE_DELAY') !== undefined) {
     return undefined;
   }
 

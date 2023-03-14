@@ -21,6 +21,7 @@ import {
   defaultServiceName,
   getEnvBoolean,
   getEnvNumber,
+  getNonEmptyEnvVar,
 } from '../utils';
 import { detect as detectResource } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
@@ -196,15 +197,15 @@ export function _setDefaultOptions(
 ): ProfilingOptions {
   const endpoint =
     options.endpoint ||
-    process.env.SPLUNK_PROFILER_LOGS_ENDPOINT ||
-    process.env.OTEL_EXPORTER_OTLP_ENDPOINT ||
+    getNonEmptyEnvVar('SPLUNK_PROFILER_LOGS_ENDPOINT') ||
+    getNonEmptyEnvVar('OTEL_EXPORTER_OTLP_ENDPOINT') ||
     'http://localhost:4317';
 
   const combinedResource = detectResource();
 
   const serviceName = String(
     options.serviceName ||
-      process.env.OTEL_SERVICE_NAME ||
+      getNonEmptyEnvVar('OTEL_SERVICE_NAME') ||
       combinedResource.attributes[SemanticResourceAttributes.SERVICE_NAME] ||
       defaultServiceName()
   );

@@ -32,6 +32,7 @@ import {
   getEnvBoolean,
   getEnvNumber,
   getEnvValueByPrecedence,
+  getNonEmptyEnvVar,
 } from '../utils';
 import * as util from 'util';
 import { detect as detectResource } from '../resource';
@@ -195,7 +196,7 @@ function createExporters(options: MetricsOptions) {
   if (!areValidExporterTypes(metricExporters)) {
     throw new Error(
       `Invalid value for OTEL_METRICS_EXPORTER env variable: ${util.inspect(
-        process.env.OTEL_METRICS_EXPORTER
+        getNonEmptyEnvVar('OTEL_METRICS_EXPORTER')
       )}. Choose from ${util.inspect(SUPPORTED_EXPORTER_TYPES, {
         compact: true,
       })} or leave undefined.`
@@ -373,11 +374,12 @@ export function _setDefaultOptions(
   options: StartMetricsOptions = {}
 ): MetricsOptions {
   const accessToken =
-    options.accessToken || process.env.SPLUNK_ACCESS_TOKEN || '';
+    options.accessToken || getNonEmptyEnvVar('SPLUNK_ACCESS_TOKEN') || '';
 
-  const endpoint = options.endpoint || process.env.SPLUNK_METRICS_ENDPOINT;
+  const endpoint =
+    options.endpoint || getNonEmptyEnvVar('SPLUNK_METRICS_ENDPOINT');
 
-  const realm = options.realm || process.env.SPLUNK_REALM || '';
+  const realm = options.realm || getNonEmptyEnvVar('SPLUNK_REALM') || '';
 
   if (realm) {
     if (!accessToken) {

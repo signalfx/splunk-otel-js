@@ -18,6 +18,7 @@ import { gzip } from 'zlib';
 import { promisify } from 'util';
 import * as grpc from '@grpc/grpc-js';
 import { diag } from '@opentelemetry/api';
+import { getNonEmptyEnvVar } from '../utils';
 
 import { perftools } from './proto/profile';
 import type { HeapProfile, RawProfilingData } from './types';
@@ -251,9 +252,9 @@ export function parseEndpoint(endpoint: string): {
   if (endpoint.startsWith('https://')) {
     host = endpoint.substr(8);
     credentials = grpc.credentials.createSsl(
-      maybeReadPath(process.env.OTEL_EXPORTER_OTLP_CERTIFICATE),
-      maybeReadPath(process.env.OTEL_EXPORTER_OTLP_CLIENT_KEY),
-      maybeReadPath(process.env.OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE)
+      maybeReadPath(getNonEmptyEnvVar('OTEL_EXPORTER_OTLP_CERTIFICATE')),
+      maybeReadPath(getNonEmptyEnvVar('OTEL_EXPORTER_OTLP_CLIENT_KEY')),
+      maybeReadPath(getNonEmptyEnvVar('OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE'))
     );
   } else if (endpoint.startsWith('http://')) {
     host = endpoint.substr(7);

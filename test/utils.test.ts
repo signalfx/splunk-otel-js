@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 import * as assert from 'assert';
+import * as sinon from 'sinon';
+import * as api from '@opentelemetry/api';
 
-import { parseLogLevel } from '../src/utils';
+import { getNonEmptyEnvVar, parseLogLevel } from '../src/utils';
 import { cleanEnvironment } from './utils';
 import { DiagLogLevel } from '@opentelemetry/api';
 
@@ -31,6 +33,54 @@ describe('utils', () => {
       assert.deepStrictEqual(parseLogLevel('error'), DiagLogLevel.ERROR);
       assert.deepStrictEqual(parseLogLevel(' error'), DiagLogLevel.ERROR);
       assert.deepStrictEqual(parseLogLevel('ERROR'), DiagLogLevel.ERROR);
+    });
+  });
+
+  describe('getNonEmptyEnvVar', () => {
+    const sandbox = sinon.createSandbox();
+    let logger;
+
+    beforeEach(() => {
+      cleanEnvironment();
+      logger = {
+        warn: sandbox.spy(),
+      };
+      api.diag.setLogger(logger, api.DiagLogLevel.ALL);
+      logger.warn.resetHistory();
+    });
+
+    afterEach(() => {
+      sandbox.restore();
+    });
+
+    it('returns an empty environment variable as undefined', () => {
+      process.env.OTEL_SERVICE_NAME = '';
+      assert.deepStrictEqual(getNonEmptyEnvVar('OTEL_SERVICE_NAME'), undefined);
+    });
+
+    it('returns a whitespace environment variable as undefined', () => {
+      process.env.OTEL_SERVICE_NAME = '  ';
+      assert.deepStrictEqual(getNonEmptyEnvVar('OTEL_SERVICE_NAME'), undefined);
+    });
+
+    it('returns a defined environment variable', () => {
+      process.env.OTEL_SERVICE_NAME = 'TEST';
+      assert.deepStrictEqual(getNonEmptyEnvVar('OTEL_SERVICE_NAME'), 'TEST');
+    });
+
+    it('trims whitespace', () => {
+      process.env.OTEL_SERVICE_NAME = ' TEST ';
+      assert.deepStrictEqual(getNonEmptyEnvVar('OTEL_SERVICE_NAME'), 'TEST');
+    });
+
+    it('warns when reading an empty environment variable', () => {
+      process.env.OTEL_SERVICE_NAME = '';
+      assert.deepStrictEqual(getNonEmptyEnvVar('OTEL_SERVICE_NAME'), undefined);
+
+      sinon.assert.calledWith(
+        logger.warn,
+        `Defined, but empty environment variable: 'OTEL_SERVICE_NAME'. The value will be considered as undefined.`
+      );
     });
   });
 });

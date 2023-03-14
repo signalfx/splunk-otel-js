@@ -15,6 +15,7 @@
  */
 import {
   assertNoExtraneousProperties,
+  getNonEmptyEnvVar,
   parseEnvBooleanString,
   parseLogLevel,
   toDiagLogLevel,
@@ -25,7 +26,7 @@ import {
   StartProfilingOptions,
   _setDefaultOptions as setDefaultProfilingOptions,
 } from './profiling';
-import type { LogLevel } from './types';
+import type { EnvVarKey, LogLevel } from './types';
 import { startTracing, stopTracing, StartTracingOptions } from './tracing';
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 
@@ -54,10 +55,10 @@ const running: RunningState = {
 
 function isSignalEnabled<T>(
   option: T | undefined | null,
-  envVar: string,
+  envVar: EnvVarKey,
   def: boolean
 ) {
-  return option ?? parseEnvBooleanString(process.env[envVar]) ?? def;
+  return option ?? parseEnvBooleanString(getNonEmptyEnvVar(envVar)) ?? def;
 }
 
 export const start = (options: Partial<Options> = {}) => {
@@ -75,7 +76,7 @@ export const start = (options: Partial<Options> = {}) => {
 
   const logLevel = options.logLevel
     ? toDiagLogLevel(options.logLevel)
-    : parseLogLevel(process.env.OTEL_LOG_LEVEL);
+    : parseLogLevel(getNonEmptyEnvVar('OTEL_LOG_LEVEL'));
 
   if (logLevel !== DiagLogLevel.NONE) {
     diag.setLogger(new DiagConsoleLogger(), logLevel);
