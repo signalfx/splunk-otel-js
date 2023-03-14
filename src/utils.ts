@@ -16,7 +16,7 @@
 
 import { strict as assert } from 'assert';
 import { diag, DiagLogLevel } from '@opentelemetry/api';
-import type { LogLevel } from './types';
+import type { EnvVarKey, LogLevel } from './types';
 import { resolve } from 'path';
 import * as fs from 'fs';
 
@@ -54,6 +54,24 @@ export function defaultServiceName(cache: ConfigCache = configCache): string {
   return findServiceName(cache) || 'unnamed-node-service';
 }
 
+export function getNonEmptyEnvVar(key: EnvVarKey): string | undefined {
+  const value = process.env[key];
+
+  if (value !== undefined) {
+    const trimmed = value.trim();
+    if (trimmed.length === 0) {
+      diag.warn(
+        `Defined, but empty environment variable: '${key}'. The value will be considered as undefined.`
+      );
+      return undefined;
+    }
+
+    return trimmed;
+  }
+
+  return value;
+}
+
 export function parseEnvBooleanString(value?: string) {
   if (typeof value !== 'string') {
     return value;
@@ -72,8 +90,8 @@ export function parseEnvBooleanString(value?: string) {
   throw new Error(`Invalid string representing boolean: ${value}`);
 }
 
-export function getEnvBoolean(key: string, defaultValue = true) {
-  const value = process.env[key];
+export function getEnvBoolean(key: EnvVarKey, defaultValue = true) {
+  const value = getNonEmptyEnvVar(key);
 
   if (value === undefined) {
     return defaultValue;
@@ -86,8 +104,8 @@ export function getEnvBoolean(key: string, defaultValue = true) {
   return true;
 }
 
-export function getEnvNumber(key: string, defaultValue: number): number {
-  const value = process.env[key];
+export function getEnvNumber(key: EnvVarKey, defaultValue: number): number {
+  const value = getNonEmptyEnvVar(key);
 
   if (value === undefined) {
     return defaultValue;
@@ -106,8 +124,8 @@ export function deduplicate(arr: string[]) {
   return [...new Set(arr)];
 }
 
-export function getEnvArray(key: string, defaultValue: string[]): string[] {
-  const value = process.env[key];
+export function getEnvArray(key: EnvVarKey, defaultValue: string[]): string[] {
+  const value = getNonEmptyEnvVar(key);
 
   if (value === undefined) {
     return defaultValue;
@@ -117,11 +135,11 @@ export function getEnvArray(key: string, defaultValue: string[]): string[] {
 }
 
 export function getEnvValueByPrecedence(
-  keys: string[],
+  keys: EnvVarKey[],
   defaultValue?: string
 ): string | undefined {
   for (const key of keys) {
-    const value = process.env[key];
+    const value = getNonEmptyEnvVar(key);
 
     if (value !== undefined) {
       return value;

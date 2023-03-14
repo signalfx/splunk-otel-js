@@ -20,7 +20,7 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      exporters: [httpsink]
+      exporters: [httpsink, logging/debug]
     logs/profiling:
       receivers: [otlp]
       exporters: [logging/debug]

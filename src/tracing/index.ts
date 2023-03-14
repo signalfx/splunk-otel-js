@@ -36,7 +36,11 @@ import { configureHttpInstrumentation } from '../instrumentations/http';
 import { configureLogInjection } from '../instrumentations/logging';
 import { allowedTracingOptions, Options, _setDefaultOptions } from './options';
 import { configureRedisInstrumentation } from '../instrumentations/redis';
-import { assertNoExtraneousProperties, parseEnvBooleanString } from '../utils';
+import {
+  assertNoExtraneousProperties,
+  getNonEmptyEnvVar,
+  parseEnvBooleanString,
+} from '../utils';
 import { isProfilingContextManagerSet } from '../profiling';
 
 /**
@@ -48,7 +52,7 @@ import { isProfilingContextManagerSet } from '../profiling';
  * leaks and is inperfect in terms of the end result.
  */
 const allowDoubleStart = parseEnvBooleanString(
-  process.env.TEST_ALLOW_DOUBLE_START
+  getNonEmptyEnvVar('TEST_ALLOW_DOUBLE_START')
 );
 let isStarted = false;
 let tracingContextManagerEnabled = false;

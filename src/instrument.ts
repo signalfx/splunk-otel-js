@@ -19,6 +19,7 @@ import {
   defaultServiceName,
   getEnvArray,
   getEnvBoolean,
+  getNonEmptyEnvVar,
   parseLogLevel,
 } from './utils';
 
@@ -27,13 +28,13 @@ import { startProfiling } from './profiling';
 import { startTracing } from './tracing';
 
 function boot() {
-  const logLevel = parseLogLevel(process.env.OTEL_LOG_LEVEL);
+  const logLevel = parseLogLevel(getNonEmptyEnvVar('OTEL_LOG_LEVEL'));
 
   if (logLevel !== DiagLogLevel.NONE) {
     diag.setLogger(new DiagConsoleLogger(), logLevel);
   }
 
-  if (process.env.SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES !== undefined) {
+  if (getNonEmptyEnvVar('SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES') !== undefined) {
     const limitToPackages = getEnvArray(
       'SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES',
       []
