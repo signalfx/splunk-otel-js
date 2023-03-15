@@ -386,166 +386,6 @@ NAN_METHOD(StartProfiling) {
   profiling->sampleCutoffPoint = HrTime();
 }
 
-struct StringBuilder {
-  StringBuilder(char* buffer, size_t length) : buffer(buffer), capacity(length) {}
-
-  size_t Add(const char* s, size_t length) {
-    memcpy(buffer + offset, s, length);
-    offset += length;
-    return offset;
-  }
-
-  size_t Add(int32_t value) {
-    size_t digitSize = modp_uitoa10(value, buffer + offset);
-    offset += digitSize;
-    return offset;
-  }
-
-  size_t Add(char c) {
-    buffer[offset++] = c;
-    return offset;
-  }
-
-  char* buffer;
-  size_t capacity;
-  size_t offset = 0;
-};
-
-size_t RemoveParen(char* content, size_t length) {
-  size_t size = 0;
-  for (size_t i = 0; i < length; i++) {
-    char c = content[i];
-
-    if (c == '(' || c == ')') {
-      continue;
-    }
-
-    content[size++] = c;
-  }
-
-  return size;
-}
-
-String NewStackLine(PagedArena* arena, const v8::CpuProfileNode* node) {
-  const char* rawFunction = node->GetFunctionNameStr();
-  const char* rawFileName = node->GetScriptResourceNameStr();
-  size_t functionLen = strlen(rawFunction);
-  size_t fileNameLen = strlen(rawFileName);
-
-  if (functionLen == 0) {
-    rawFunction = "anonymous";
-    functionLen = 9;
-  }
-
-  if (fileNameLen == 0) {
-    rawFileName = "unknown";
-    fileNameLen = 7;
-  }
-
-  const size_t extraLength = 8;
-  const size_t lineNoLength = 16;
-  const size_t bytesNeeded = functionLen + fileNameLen + extraLength + lineNoLength;
-
-  char* content = (char*)PagedArenaAlloc(arena, bytesNeeded);
-
-  if (!content) {
-    return String();
-  }
-
-  StringBuilder builder(content, bytesNeeded);
-  builder.Add(rawFunction, functionLen);
-  builder.offset = RemoveParen(content, functionLen);
-  builder.Add('(');
-  builder.Add(rawFileName, fileNameLen);
-  builder.Add(':');
-  builder.Add(node->GetLineNumber());
-  builder.Add(':');
-  builder.Add(node->GetColumnNumber());
-  builder.Add(')');
-  builder.Add('\n');
-
-  return String(content, builder.offset);
-}
-
-struct StacktraceBuilder {
-  struct StackLines {
-    static const int32_t kMaxLines = 32;
-    String lines[kMaxLines];
-    int32_t count = 0;
-    StackLines* next = nullptr;
-  };
-
-  StacktraceBuilder(PagedArena* arena, StackLineCache* cache)
-    : arena(arena), cache(cache), lines(&entry) {}
-
-  void Add(const v8::CpuProfileNode* node) {
-    String line = cache->Get(node->GetNodeId());
-
-    if (line.IsEmpty()) {
-      line = NewStackLine(arena, node);
-      cache->Set(node->GetNodeId(), line);
-    }
-
-    lines->lines[lines->count++] = line;
-
-    if (lines->count == StackLines::kMaxLines) {
-      StackLines* newBuffer = (StackLines*)PagedArenaAlloc(arena, sizeof(StackLines));
-
-      if (!newBuffer) {
-        return;
-      }
-
-      lines->next = newBuffer;
-      lines = newBuffer;
-    }
-  }
-
-  String Build() {
-    static const char prefix[] = "\n\n";
-
-    size_t bytesNeeded = sizeof(prefix) - 1;
-
-    {
-      StackLines* l = &entry;
-
-      while (l) {
-        for (int32_t i = 0; i < l->count; i++) {
-          String* line = &l->lines[i];
-          bytesNeeded += line->length;
-        }
-
-        l = l->next;
-      }
-    }
-
-    char* dest = (char*)PagedArenaAlloc(arena, bytesNeeded);
-
-    if (!dest) {
-      return String();
-    }
-
-    StringBuilder builder(dest, bytesNeeded);
-    builder.Add(prefix, sizeof(prefix) - 1);
-
-    StackLines* l = &entry;
-    while (l) {
-      for (int32_t i = 0; i < l->count; i++) {
-        String* line = &l->lines[i];
-        builder.Add(line->data, line->length);
-      }
-
-      l = l->next;
-    }
-
-    return String(dest, builder.offset);
-  }
-
-  PagedArena* arena;
-  StackLineCache* cache;
-  StackLines* lines;
-  StackLines entry;
-};
-
 size_t TimestampString(int64_t ts, char* out) { return modp_litoa10(ts, out); }
 
 bool ShouldIncludeSample(Profiling* profiling, int64_t sampleTimestamp) {
@@ -632,112 +472,6 @@ void ProfilingRecordDebugInfo(Profiling* profiling, v8::Local<v8::Object> profil
 #endif
 }
 
-void ProfilingBuildStacktraces(
-  Profiling* profiling, v8::CpuProfile* profile, v8::Local<v8::Object> profilingData) {
-  auto jsTraces = Nan::New<v8::Array>();
-  Nan::Set(profilingData, Nan::New("stacktraces").ToLocalChecked(), jsTraces);
-
-  char startTimeNanos[32];
-  size_t startTimeNanosLen = TimestampString(profiling->wallStartTime, startTimeNanos);
-
-  Nan::Set(
-    profilingData, Nan::New("startTimeNanos").ToLocalChecked(),
-    Nan::New(startTimeNanos, startTimeNanosLen).ToLocalChecked());
-
-#if PROFILER_DEBUG_EXPORT
-  {
-    char tpBuf[32];
-    size_t tpLen = TimestampString(profiling->startTime, tpBuf);
-    Nan::Set(
-      profilingData, Nan::New<v8::String>("startTimepoint").ToLocalChecked(),
-      Nan::New<v8::String>(tpBuf, tpLen).ToLocalChecked());
-  }
-#endif
-
-  int32_t traceCount = 0;
-  int64_t nextSampleTs = profile->GetStartTime() * 1000LL;
-  for (int i = 0; i < profile->GetSamplesCount(); i++) {
-    int64_t monotonicTs = profile->GetSampleTimestamp(i) * 1000LL;
-
-    bool isValidSample = ShouldIncludeSample(profiling, monotonicTs) && monotonicTs >= nextSampleTs;
-    if (!isValidSample) {
-      continue;
-    }
-
-    nextSampleTs += profiling->samplingIntervalNanos;
-
-    const v8::CpuProfileNode* sample = profile->GetSample(i);
-    StacktraceBuilder builder(&profiling->arena, &profiling->stacklineCache);
-    builder.Add(sample);
-
-    int64_t monotonicDelta = monotonicTs - profiling->startTime;
-    int64_t sampleTimestamp = profiling->wallStartTime + monotonicDelta;
-
-    // TODO: Node <12.5 does not have GetParent, so we'd need to traverse the tree top down instead.
-#if NODE_VERSION_AT_LEAST(12, 5, 0)
-    const v8::CpuProfileNode* parent = sample->GetParent();
-    while (parent) {
-      const v8::CpuProfileNode* next = parent->GetParent();
-
-      // Skip the root node as it does not contain useful information.
-      if (next) {
-        builder.Add(parent);
-      }
-
-      parent = next;
-    }
-#endif
-
-    String stacktrace = builder.Build();
-
-    if (stacktrace.IsEmpty()) {
-      continue;
-    }
-
-    char tsBuf[32];
-    size_t tsLen = TimestampString(sampleTimestamp, tsBuf);
-
-    auto jsTrace = Nan::New<v8::Object>();
-
-    Nan::Set(
-      jsTrace, Nan::New<v8::String>("timestamp").ToLocalChecked(),
-      Nan::New<v8::String>(tsBuf, tsLen).ToLocalChecked());
-    Nan::Set(
-      jsTrace, Nan::New<v8::String>("stacktrace").ToLocalChecked(),
-      Nan::New<v8::String>(stacktrace.data, stacktrace.length).ToLocalChecked());
-
-#if PROFILER_DEBUG_EXPORT
-    char tpBuf[32];
-    size_t tpLen = TimestampString(monotonicTs, tpBuf);
-    Nan::Set(
-      jsTrace, Nan::New<v8::String>("timepoint").ToLocalChecked(),
-      Nan::New<v8::String>(tpBuf, tpLen).ToLocalChecked());
-#endif
-
-    SpanActivation* match = FindClosestActivation(profiling, monotonicTs);
-
-    if (match) {
-      uint8_t spanId[8];
-      uint8_t traceId[16];
-      HexToBinary(match->spanId, 16, spanId, sizeof(spanId));
-      HexToBinary(match->traceId, 32, traceId, sizeof(traceId));
-
-      Nan::Set(
-        jsTrace, Nan::New<v8::String>("spanId").ToLocalChecked(),
-        Nan::CopyBuffer((const char*)spanId, 8).ToLocalChecked());
-      Nan::Set(
-        jsTrace, Nan::New<v8::String>("traceId").ToLocalChecked(),
-        Nan::CopyBuffer((const char*)traceId, 16).ToLocalChecked());
-
-#if PROFILER_DEBUG_EXPORT
-      match->is_intersected = true;
-#endif
-    }
-
-    Nan::Set(jsTraces, traceCount++, jsTrace);
-  }
-}
-
 v8::Local<v8::Array> makeStackLine(const v8::CpuProfileNode* node) {
   auto jsResult = Nan::New<v8::Array>();
 
@@ -760,7 +494,7 @@ v8::Local<v8::Array> makeStackLine(const v8::CpuProfileNode* node) {
   return jsResult;
 }
 
-void ProfilingBuildRawStacktraces(
+void ProfilingBuildStacktraces(
   Profiling* profiling, v8::CpuProfile* profile, v8::Local<v8::Object> profilingData) {
   auto jsTraces = Nan::New<v8::Array>();
   Nan::Set(profilingData, Nan::New("stacktraces").ToLocalChecked(), jsTraces);
@@ -881,12 +615,18 @@ NAN_METHOD(CollectProfilingData) {
   ProfileTitle(profiling->profilerSeq, nextTitle, sizeof(nextTitle));
 
   profiling->activationDepth = 0;
-  int64_t newWallStart = MicroSecondsSinceEpoch() * 1000L;
   int64_t newStartTime = HrTime();
+  int64_t newWallStart = MicroSecondsSinceEpoch() * 1000L;
 
   V8StartProfiling(profiling->profiler, nextTitle);
+  int64_t profilerStopBegin = HrTime();
+  int64_t profilerStartDuration = profilerStopBegin - newStartTime;
+
   v8::CpuProfile* profile =
     profiling->profiler->StopProfiling(Nan::New(prevTitle).ToLocalChecked());
+  int64_t profilerStopEnd = HrTime();
+  int64_t profilerStopDuration = profilerStopEnd - profilerStopBegin;
+
   if (!profile) {
     // profile with this title might've already be ended using a previous stop call
     profiling->startTime = newStartTime;
@@ -898,46 +638,18 @@ NAN_METHOD(CollectProfilingData) {
   info.GetReturnValue().Set(jsProfilingData);
 
   ProfilingBuildStacktraces(profiling, profile, jsProfilingData);
-  ProfilingRecordDebugInfo(profiling, jsProfilingData);
-  ProfilingReset(profiling);
-  profile->Delete();
+  int64_t profilerProcessingDuration = HrTime() - profilerStopEnd;
 
-  profiling->startTime = newStartTime;
-  profiling->wallStartTime = newWallStart;
-  profiling->sampleCutoffPoint = HrTime();
-}
+  Nan::Set(
+    jsProfilingData, Nan::New("profilerStartDuration").ToLocalChecked(),
+    Nan::New<v8::Number>((double)profilerStartDuration));
+  Nan::Set(
+    jsProfilingData, Nan::New("profilerStopDuration").ToLocalChecked(),
+    Nan::New<v8::Number>((double)profilerStopDuration));
+  Nan::Set(
+    jsProfilingData, Nan::New("profilerProcessingDuration").ToLocalChecked(),
+    Nan::New<v8::Number>((double)profilerProcessingDuration));
 
-NAN_METHOD(CollectProfilingDataRaw) {
-  info.GetReturnValue().SetNull();
-  if (!profiling) {
-    return;
-  }
-
-  char prevTitle[64];
-  ProfileTitle(profiling->profilerSeq, prevTitle, sizeof(prevTitle));
-  profiling->profilerSeq++;
-  char nextTitle[64];
-  ProfileTitle(profiling->profilerSeq, nextTitle, sizeof(nextTitle));
-
-  profiling->activationDepth = 0;
-  int64_t newStartTime = HrTime();
-  int64_t newWallStart = MicroSecondsSinceEpoch() * 1000L;
-
-  V8StartProfiling(profiling->profiler, nextTitle);
-
-  v8::CpuProfile* profile =
-    profiling->profiler->StopProfiling(Nan::New(prevTitle).ToLocalChecked());
-  if (!profile) {
-    // profile with this title might've already be ended using a previous stop call
-    profiling->startTime = newStartTime;
-    profiling->wallStartTime = newWallStart;
-    return;
-  }
-
-  auto jsProfilingData = Nan::New<v8::Object>();
-  info.GetReturnValue().Set(jsProfilingData);
-
-  ProfilingBuildRawStacktraces(profiling, profile, jsProfilingData);
   ProfilingRecordDebugInfo(profiling, jsProfilingData);
   ProfilingReset(profiling);
   profile->Delete();
@@ -966,7 +678,7 @@ NAN_METHOD(StopProfiling) {
   auto jsProfilingData = Nan::New<v8::Object>();
   info.GetReturnValue().Set(jsProfilingData);
 
-  ProfilingBuildRawStacktraces(profiling, profile, jsProfilingData);
+  ProfilingBuildStacktraces(profiling, profile, jsProfilingData);
   ProfilingRecordDebugInfo(profiling, jsProfilingData);
   ProfilingReset(profiling);
   profile->Delete();
@@ -1095,10 +807,6 @@ void Initialize(v8::Local<v8::Object> target) {
   Nan::Set(
     profilingModule, Nan::New("collect").ToLocalChecked(),
     Nan::GetFunction(Nan::New<v8::FunctionTemplate>(CollectProfilingData)).ToLocalChecked());
-
-  Nan::Set(
-    profilingModule, Nan::New("collectRaw").ToLocalChecked(),
-    Nan::GetFunction(Nan::New<v8::FunctionTemplate>(CollectProfilingDataRaw)).ToLocalChecked());
 
   Nan::Set(
     profilingModule, Nan::New("enterContext").ToLocalChecked(),

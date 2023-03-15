@@ -21,7 +21,7 @@ import { diag } from '@opentelemetry/api';
 import { getNonEmptyEnvVar } from '../utils';
 
 import { perftools } from './proto/profile';
-import type { HeapProfile, RawProfilingData } from './types';
+import type { CpuProfile, HeapProfile } from './types';
 
 const gzipPromise = promisify(gzip);
 
@@ -143,10 +143,7 @@ class Serializer {
     });
   }
 
-  serializeCpuProfile(
-    profile: RawProfilingData,
-    options: PProfSerializationOptions
-  ) {
+  serializeCpuProfile(profile: CpuProfile, options: PProfSerializationOptions) {
     const { stacktraces } = profile;
 
     const STR = {
@@ -207,7 +204,7 @@ class Serializer {
 }
 
 export const serialize = (
-  profile: RawProfilingData,
+  profile: CpuProfile,
   options: PProfSerializationOptions
 ) => {
   return new Serializer().serializeCpuProfile(profile, options);

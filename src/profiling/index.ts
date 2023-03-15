@@ -72,9 +72,9 @@ function extCollectHeapProfile(
   return extension.collectHeapProfile();
 }
 
-function extCollectSamples(extension: ProfilingExtension) {
-  diag.debug('profiling: Collecting samples');
-  return extension.collectRaw();
+function extCollectCpuProfile(extension: ProfilingExtension) {
+  diag.debug('profiling: Collecting CPU profile');
+  return extension.collect();
 }
 
 export function defaultExporterFactory(
@@ -133,11 +133,11 @@ export function startProfiling(opts: StartProfilingOptions = {}) {
   extStartProfiling(extension, startOptions);
 
   const cpuSamplesCollectInterval = setInterval(() => {
-    const profilingData = extCollectSamples(extension);
+    const cpuProfile = extCollectCpuProfile(extension);
 
-    if (profilingData) {
+    if (cpuProfile) {
       for (const exporter of exporters) {
-        exporter.send(profilingData);
+        exporter.send(cpuProfile);
       }
     }
   }, options.collectionDuration);

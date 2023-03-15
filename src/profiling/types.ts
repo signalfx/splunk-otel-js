@@ -20,22 +20,26 @@ export interface ProfilingStartOptions {
   recordDebugInfo: boolean;
 }
 
-interface GenericProfilingStacktrace<StackTraceType> {
+export interface ProfilingStacktrace {
   /** Timestamp of the sample (nanoseconds since Unix epoch). */
   timestamp: string;
   /** Formatted stacktrace. */
-  stacktrace: StackTraceType;
+  stacktrace: ProfilingStackFrame[];
   traceId: Buffer;
   spanId: Buffer;
 }
 
-interface GenericProfilingData<T> {
+export interface CpuProfile {
   /** Timestamp when profiling was started (nanoseconds since Unix epoch). */
   startTimeNanos: string;
-  stacktraces: GenericProfilingStacktrace<T>[];
+  stacktraces: ProfilingStacktrace[];
+
+  profilerStartDuration: number;
+  profilerStopDuration: number;
+  profilerProcessingDuration: number;
 }
 
-export interface RawProfilingStackFrame extends Array<string | number> {
+export interface ProfilingStackFrame extends Array<string | number> {
   /** filename */
   0: string;
   /** function name */
@@ -45,9 +49,6 @@ export interface RawProfilingStackFrame extends Array<string | number> {
   /** column number */
   3: number;
 }
-
-export type RawProfilingData = GenericProfilingData<RawProfilingStackFrame[]>;
-export type ProfilingData = GenericProfilingData<string>;
 
 export interface HeapProfileNode {
   name: string;
@@ -69,9 +70,8 @@ export interface HeapProfile {
 
 export interface ProfilingExtension {
   start(options?: ProfilingStartOptions): void;
-  stop(): RawProfilingData;
-  collect(): ProfilingData;
-  collectRaw(): RawProfilingData;
+  stop(): CpuProfile;
+  collect(): CpuProfile;
   enterContext(context: unknown, traceId: string, spanId: string): void;
   exitContext(context: unknown): void;
   startMemoryProfiling(options?: MemoryProfilingOptions): void;
@@ -103,7 +103,7 @@ export interface ProfilingOptions {
 export type StartProfilingOptions = Partial<ProfilingOptions>;
 
 export interface ProfilingExporter {
-  send(profile: RawProfilingData): void;
+  send(profile: CpuProfile): void;
   sendHeapProfile(profile: HeapProfile): void;
 }
 

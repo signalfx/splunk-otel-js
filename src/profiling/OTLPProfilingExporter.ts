@@ -16,7 +16,7 @@
 import * as protoLoader from '@grpc/proto-loader';
 import * as grpc from '@grpc/grpc-js';
 import * as path from 'path';
-import { HeapProfile, RawProfilingData, ProfilingExporter } from './types';
+import { CpuProfile, HeapProfile, ProfilingExporter } from './types';
 import { diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
@@ -123,7 +123,7 @@ export class OTLPProfilingExporter implements ProfilingExporter {
     }
   }
 
-  send(profile: RawProfilingData) {
+  send(profile: CpuProfile) {
     const { stacktraces } = profile;
     diag.debug(`profiling: Exporting ${stacktraces?.length} samples`);
     const { callstackInterval } = this._options;
