@@ -638,7 +638,7 @@ NAN_METHOD(CollectProfilingData) {
   info.GetReturnValue().Set(jsProfilingData);
 
   ProfilingBuildStacktraces(profiling, profile, jsProfilingData);
-  int64_t profilerProcessingDuration = HrTime() - profilerStopEnd;
+  int64_t profilerProcessingStepDuration = HrTime() - profilerStopEnd;
 
   Nan::Set(
     jsProfilingData, Nan::New("profilerStartDuration").ToLocalChecked(),
@@ -647,8 +647,8 @@ NAN_METHOD(CollectProfilingData) {
     jsProfilingData, Nan::New("profilerStopDuration").ToLocalChecked(),
     Nan::New<v8::Number>((double)profilerStopDuration));
   Nan::Set(
-    jsProfilingData, Nan::New("profilerProcessingDuration").ToLocalChecked(),
-    Nan::New<v8::Number>((double)profilerProcessingDuration));
+    jsProfilingData, Nan::New("profilerProcessingStepDuration").ToLocalChecked(),
+    Nan::New<v8::Number>((double)profilerProcessingStepDuration));
 
   ProfilingRecordDebugInfo(profiling, jsProfilingData);
   ProfilingReset(profiling);

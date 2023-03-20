@@ -23,6 +23,10 @@ import {
   getEnvNumber,
   getNonEmptyEnvVar,
 } from '../utils';
+import {
+  recordCpuProfilerMetrics,
+  recordHeapProfilerMetrics,
+} from '../metrics/debug_metrics';
 import { detect as detectResource } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import {
@@ -136,6 +140,8 @@ export function startProfiling(opts: StartProfilingOptions = {}) {
     const cpuProfile = extCollectCpuProfile(extension);
 
     if (cpuProfile) {
+      recordCpuProfilerMetrics(cpuProfile);
+
       for (const exporter of exporters) {
         exporter.send(cpuProfile);
       }
@@ -150,6 +156,8 @@ export function startProfiling(opts: StartProfilingOptions = {}) {
     memSamplesCollectInterval = setInterval(() => {
       const heapProfile = extCollectHeapProfile(extension);
       if (heapProfile) {
+        recordHeapProfilerMetrics(heapProfile);
+
         for (const exporter of exporters) {
           exporter.sendHeapProfile(heapProfile);
         }

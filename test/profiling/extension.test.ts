@@ -65,11 +65,20 @@ describe('profiling native extension', () => {
 
     assert.strictEqual(typeof result.profilerStartDuration, 'number');
     assert.strictEqual(typeof result.profilerStopDuration, 'number');
-    assert.strictEqual(typeof result.profilerProcessingDuration, 'number');
+    assert.strictEqual(typeof result.profilerProcessingStepDuration, 'number');
 
-    assert(result.profilerStartDuration > 0);
-    assert(result.profilerStopDuration > 0);
-    assert(result.profilerProcessingDuration > 0);
+    assert(
+      result.profilerStartDuration > 0,
+      'expected profilerStartDuration > 0'
+    );
+    assert(
+      result.profilerStopDuration > 0,
+      'expected profilerStopDuration > 0'
+    );
+    assert(
+      result.profilerProcessingStepDuration > 0,
+      'expected profilerProcessingDuration > 0'
+    );
 
     assert(
       stacktraces.length >= expectedStacktraceCount,
@@ -116,6 +125,19 @@ describe('profiling native extension', () => {
     assert(
       Date.now() - profile.timestamp <= 60_000,
       'not a feasible heap profile timestamp'
+    );
+
+    assert.strictEqual(typeof profile.profilerCollectDuration, 'number');
+    assert.strictEqual(typeof profile.profilerProcessingStepDuration, 'number');
+
+    assert(
+      profile.profilerCollectDuration > 0,
+      'expected profilerCollectDuration > 0'
+    );
+
+    assert(
+      profile.profilerProcessingStepDuration > 0,
+      'expected profilerProcessingDuration > 0'
     );
 
     const { treeMap, samples } = profile;

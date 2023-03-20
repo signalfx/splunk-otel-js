@@ -36,7 +36,7 @@ export interface CpuProfile {
 
   profilerStartDuration: number;
   profilerStopDuration: number;
-  profilerProcessingDuration: number;
+  profilerProcessingStepDuration: number;
 }
 
 export interface ProfilingStackFrame extends Array<string | number> {
@@ -66,6 +66,8 @@ export interface HeapProfile {
   samples: AllocationSample[];
   treeMap: { [nodeId: string]: HeapProfileNode };
   timestamp: number;
+  profilerCollectDuration: number;
+  profilerProcessingStepDuration: number;
 }
 
 export interface ProfilingExtension {
