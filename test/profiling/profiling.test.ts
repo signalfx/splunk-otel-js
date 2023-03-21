@@ -30,9 +30,9 @@ import {
 } from '../../src/profiling';
 import { start, stop } from '../../src';
 import {
+  CpuProfile,
   HeapProfile,
   ProfilingExporter,
-  RawProfilingData,
 } from '../../src/profiling/types';
 import { ProfilingContextManager } from '../../src/profiling/ProfilingContextManager';
 import { detect as detectResource } from '../../src/resource';
@@ -97,8 +97,8 @@ describe('profiling', () => {
       let sendCallCount = 0;
       const stacktracesReceived = [];
       const exporter: ProfilingExporter = {
-        send(profilingData: RawProfilingData) {
-          const { stacktraces } = profilingData;
+        send(cpuProfile: CpuProfile) {
+          const { stacktraces } = cpuProfile;
           sendCallCount += 1;
           stacktracesReceived.push(...stacktraces);
         },
@@ -160,7 +160,7 @@ describe('profiling', () => {
     it('exports heap profiles', async () => {
       let sendCallCount = 0;
       const exporter: ProfilingExporter = {
-        send(_profilingData: RawProfilingData) {},
+        send(_cpuProfile: CpuProfile) {},
         sendHeapProfile(profile: HeapProfile) {
           sendCallCount += 1;
         },

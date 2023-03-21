@@ -29,7 +29,7 @@ import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
 import { OTLPMetricExporter as OTLPHttpProtoMetricExporter } from '@opentelemetry/exporter-metrics-otlp-proto';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
-import * as utils from './utils';
+import { cleanEnvironment, TestMetricReader } from './utils';
 import { hrtime } from 'process';
 import { startMetrics, _setDefaultOptions } from '../src/metrics';
 
@@ -58,19 +58,6 @@ const emptyStats = () => ({
     process_weak_callbacks: emptyGcCounter(),
   },
 });
-
-class TestMetricReader extends MetricReader {
-  constructor(public temporality: AggregationTemporality) {
-    super();
-  }
-  selectAggregationTemporality(
-    instrumentType: InstrumentType
-  ): AggregationTemporality {
-    return this.temporality;
-  }
-  protected async onForceFlush() {}
-  protected async onShutdown() {}
-}
 
 describe('metrics', () => {
   describe('native counters collection', () => {
@@ -116,8 +103,8 @@ describe('metrics', () => {
   });
 
   describe('options', () => {
-    beforeEach(utils.cleanEnvironment);
-    after(utils.cleanEnvironment);
+    beforeEach(cleanEnvironment);
+    after(cleanEnvironment);
 
     it('has expected defaults', () => {
       const options = _setDefaultOptions();
@@ -135,6 +122,7 @@ describe('metrics', () => {
           OTLPMetricExporter,
         'Expected the default metric exporter to be OTLP gRPC'
       );
+      assert.deepEqual(options.debugMetricsEnabled, false);
     });
 
     it('is possible to set options via env vars', () => {
@@ -144,6 +132,7 @@ describe('metrics', () => {
       process.env.OTEL_RESOURCE_ATTRIBUTES = 'key1=val1,key2=val2';
       process.env.SPLUNK_RUNTIME_METRICS_ENABLED = 'true';
       process.env.SPLUNK_RUNTIME_METRICS_COLLECTION_INTERVAL = '1200';
+      process.env.SPLUNK_DEBUG_METRICS_ENABLED = 'true';
 
       const options = _setDefaultOptions();
       assert.deepEqual(options.serviceName, 'bigmetric');
@@ -157,6 +146,7 @@ describe('metrics', () => {
       );
       assert.deepEqual(options.runtimeMetricsEnabled, true);
       assert.deepEqual(options.runtimeMetricsCollectionIntervalMillis, 1200);
+      assert.deepEqual(options.debugMetricsEnabled, true);
     });
   });
 
@@ -164,11 +154,11 @@ describe('metrics', () => {
     let reader: TestMetricReader;
 
     beforeEach(() => {
-      utils.cleanEnvironment();
+      cleanEnvironment();
       reader = new TestMetricReader(AggregationTemporality.CUMULATIVE);
     });
 
-    after(utils.cleanEnvironment);
+    after(cleanEnvironment);
 
     // Custom metrics and runtime metrics are done with 1 test as OTel meter provider can't be reset
     it('is possible to use metrics', async () => {

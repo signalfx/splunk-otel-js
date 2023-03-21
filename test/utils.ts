@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+import {
+  AggregationTemporality,
+  InstrumentType,
+  MetricReader,
+} from '@opentelemetry/sdk-metrics';
+
 const isConfigVarEntry = (key) => {
   const lowercased = key.toLowerCase();
   return (
@@ -44,3 +50,16 @@ export const spinMs = (ms: number) => {
   const start = Date.now();
   while (Date.now() - start < ms) {}
 };
+
+export class TestMetricReader extends MetricReader {
+  constructor(public temporality: AggregationTemporality) {
+    super();
+  }
+  selectAggregationTemporality(
+    instrumentType: InstrumentType
+  ): AggregationTemporality {
+    return this.temporality;
+  }
+  protected async onForceFlush() {}
+  protected async onShutdown() {}
+}

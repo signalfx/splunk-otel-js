@@ -45,7 +45,7 @@ describe('profiling native extension', () => {
     assert.equal(extension.stop(), null);
   });
 
-  it('is possible to collect stacktraces', () => {
+  it('is possible to collect a cpu profile', () => {
     // returns null if no profiling started
     assert.equal(extension.collect(), null);
 
@@ -55,7 +55,7 @@ describe('profiling native extension', () => {
       recordDebugInfo: false,
     });
 
-    utils.spinMs(1_000);
+    utils.spinMs(200);
 
     const result = extension.collect();
     // The types might not be what is declared in typescript, a sanity check.
@@ -63,46 +63,22 @@ describe('profiling native extension', () => {
     const { stacktraces, startTimeNanos } = result;
     assertNanoSecondString(startTimeNanos);
 
+    assert.strictEqual(typeof result.profilerStartDuration, 'number');
+    assert.strictEqual(typeof result.profilerStopDuration, 'number');
+    assert.strictEqual(typeof result.profilerProcessingStepDuration, 'number');
+
     assert(
-      stacktraces.length >= expectedStacktraceCount,
-      `expected at least ${expectedStacktraceCount} stacktraces, got ${stacktraces.length}`
+      result.profilerStartDuration > 0,
+      'expected profilerStartDuration > 0'
     );
-
-    for (const { stacktrace, timestamp } of stacktraces) {
-      // Don't bother checking for span and trace ID here.
-      assert.equal(typeof stacktrace, 'string');
-      assertNanoSecondString(timestamp);
-
-      // The first two lines are intentionally empty,
-      // as we don't have information about the thread state.
-      const lines = stacktrace.split('\n');
-      assert.deepEqual(lines[0], '');
-      assert.deepEqual(lines[1], '');
-      const stacklines = lines.slice(2, -1);
-
-      for (const stackline of stacklines) {
-        assert(/.+\(.+:\d+:\d+\)/.test(stackline), stackline);
-      }
-    }
-  });
-
-  it('is possible to collect raw data on stacktraces', () => {
-    // returns null if no profiling started
-    assert.equal(extension.collectRaw(), null);
-
-    // Use a lower interval to make sure we capture something
-    extension.start({
-      samplingIntervalMicroseconds: 1_000,
-      recordDebugInfo: false,
-    });
-
-    utils.spinMs(200);
-
-    const result = extension.collectRaw();
-    // The types might not be what is declared in typescript, a sanity check.
-    assert.equal(typeof result, 'object');
-    const { stacktraces, startTimeNanos } = result;
-    assertNanoSecondString(startTimeNanos);
+    assert(
+      result.profilerStopDuration > 0,
+      'expected profilerStopDuration > 0'
+    );
+    assert(
+      result.profilerProcessingStepDuration > 0,
+      'expected profilerProcessingDuration > 0'
+    );
 
     assert(
       stacktraces.length >= expectedStacktraceCount,
@@ -149,6 +125,19 @@ describe('profiling native extension', () => {
     assert(
       Date.now() - profile.timestamp <= 60_000,
       'not a feasible heap profile timestamp'
+    );
+
+    assert.strictEqual(typeof profile.profilerCollectDuration, 'number');
+    assert.strictEqual(typeof profile.profilerProcessingStepDuration, 'number');
+
+    assert(
+      profile.profilerCollectDuration > 0,
+      'expected profilerCollectDuration > 0'
+    );
+
+    assert(
+      profile.profilerProcessingStepDuration > 0,
+      'expected profilerProcessingDuration > 0'
     );
 
     const { treeMap, samples } = profile;

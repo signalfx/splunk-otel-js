@@ -23,6 +23,10 @@ import {
   getEnvNumber,
   getNonEmptyEnvVar,
 } from '../utils';
+import {
+  recordCpuProfilerMetrics,
+  recordHeapProfilerMetrics,
+} from '../metrics/debug_metrics';
 import { detect as detectResource } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import {
@@ -72,9 +76,9 @@ function extCollectHeapProfile(
   return extension.collectHeapProfile();
 }
 
-function extCollectSamples(extension: ProfilingExtension) {
-  diag.debug('profiling: Collecting samples');
-  return extension.collectRaw();
+function extCollectCpuProfile(extension: ProfilingExtension) {
+  diag.debug('profiling: Collecting CPU profile');
+  return extension.collect();
 }
 
 export function defaultExporterFactory(
@@ -133,11 +137,13 @@ export function startProfiling(opts: StartProfilingOptions = {}) {
   extStartProfiling(extension, startOptions);
 
   const cpuSamplesCollectInterval = setInterval(() => {
-    const profilingData = extCollectSamples(extension);
+    const cpuProfile = extCollectCpuProfile(extension);
 
-    if (profilingData) {
+    if (cpuProfile) {
+      recordCpuProfilerMetrics(cpuProfile);
+
       for (const exporter of exporters) {
-        exporter.send(profilingData);
+        exporter.send(cpuProfile);
       }
     }
   }, options.collectionDuration);
@@ -150,6 +156,8 @@ export function startProfiling(opts: StartProfilingOptions = {}) {
     memSamplesCollectInterval = setInterval(() => {
       const heapProfile = extCollectHeapProfile(extension);
       if (heapProfile) {
+        recordHeapProfilerMetrics(heapProfile);
+
         for (const exporter of exporters) {
           exporter.sendHeapProfile(heapProfile);
         }

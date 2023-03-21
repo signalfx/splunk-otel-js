@@ -108,12 +108,14 @@ NAN_METHOD(CollectHeapProfile) {
     return;
   }
 
+  int64_t allocationProfileStart = HrTime();
   v8::AllocationProfile* profile = profiler->GetAllocationProfile();
 
   if (!profile) {
     return;
   }
 
+  int64_t sampleProcessingStart = HrTime();
   auto jsResult = Nan::New<v8::Object>();
   auto jsSamples = Nan::New<v8::Array>();
   auto jsNodeTree = Nan::New<v8::Object>();
@@ -185,11 +187,19 @@ NAN_METHOD(CollectHeapProfile) {
     }
   }
 
+  int64_t sampleProcessingEnd = HrTime();
+
   Nan::Set(jsResult, Nan::New<v8::String>("treeMap").ToLocalChecked(), jsNodeTree);
   Nan::Set(jsResult, Nan::New<v8::String>("samples").ToLocalChecked(), jsSamples);
   Nan::Set(
     jsResult, Nan::New<v8::String>("timestamp").ToLocalChecked(),
     Nan::New<v8::Number>(MilliSecondsSinceEpoch()));
+  Nan::Set(
+    jsResult, Nan::New<v8::String>("profilerCollectDuration").ToLocalChecked(),
+    Nan::New<v8::Number>((double)(sampleProcessingStart - allocationProfileStart)));
+  Nan::Set(
+    jsResult, Nan::New<v8::String>("profilerProcessingStepDuration").ToLocalChecked(),
+    Nan::New<v8::Number>((double)(sampleProcessingEnd - sampleProcessingStart)));
 
   info.GetReturnValue().Set(jsResult);
 

@@ -34,6 +34,7 @@ import {
   getEnvValueByPrecedence,
   getNonEmptyEnvVar,
 } from '../utils';
+import { enableDebugMetrics, getDebugMetricsViews } from './debug_metrics';
 import * as util from 'util';
 import { detect as detectResource } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
@@ -51,6 +52,7 @@ interface MetricsOptions {
   views?: View[];
   exportIntervalMillis: number;
   metricReaderFactory: MetricReaderFactory;
+  debugMetricsEnabled: boolean;
   runtimeMetricsEnabled: boolean;
   runtimeMetricsCollectionIntervalMillis: number;
 }
@@ -237,6 +239,7 @@ export const allowedMetricsOptions = [
   'runtimeMetricsEnabled',
   'runtimeMetricsCollectionIntervalMillis',
   'serviceName',
+  'debugMetricsEnabled',
 ];
 
 export function startMetrics(opts: StartMetricsOptions = {}) {
@@ -244,9 +247,13 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
 
   const options = _setDefaultOptions(opts);
 
+  const debugMetricsViews: View[] = options.debugMetricsEnabled
+    ? getDebugMetricsViews()
+    : [];
+
   const provider = new MeterProvider({
     resource: options.resource,
-    views: options.views,
+    views: [...(options.views || []), ...debugMetricsViews],
   });
 
   const metricReaders = options.metricReaderFactory(options);
@@ -261,6 +268,10 @@ export function startMetrics(opts: StartMetricsOptions = {}) {
     metrics.disable();
     await provider.forceFlush();
     await provider.shutdown();
+  }
+
+  if (options.debugMetricsEnabled) {
+    enableDebugMetrics();
   }
 
   if (!options.runtimeMetricsEnabled) {
@@ -425,6 +436,9 @@ export function _setDefaultOptions(
     exportIntervalMillis:
       options.exportIntervalMillis ||
       getEnvNumber('OTEL_METRIC_EXPORT_INTERVAL', 30_000),
+    debugMetricsEnabled:
+      options.debugMetricsEnabled ??
+      getEnvBoolean('SPLUNK_DEBUG_METRICS_ENABLED', false),
     runtimeMetricsEnabled:
       options.runtimeMetricsEnabled ??
       getEnvBoolean('SPLUNK_RUNTIME_METRICS_ENABLED', true),
