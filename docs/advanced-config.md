@@ -104,6 +104,7 @@ The following config options can be set by passing them as tracing arguments to 
 | n/a<br>`metrics.resourceFactory`                                |                         | Experimental | Callback which allows to filter the default resource or provide a custom one. The function takes one argument of type `Resource` which is the resource pre-filled by the SDK containing the `service.name`, environment, host and process attributes. |
 | `SPLUNK_RUNTIME_METRICS_ENABLED`<br>`metrics.runtimeMetricsEnabled` | `true`                 | Experimental | Enable collecting and exporting of runtime metrics.
 | `SPLUNK_RUNTIME_METRICS_COLLECTION_INTERVAL`<br>`metrics.runtimeMetricsCollectionIntervalMillis`  | `5000`                 | Experimental | The interval, in milliseconds, during which GC and event loop statistics are collected. After the collection is done, the values become available to the metric exporter.
+| `SPLUNK_DEBUG_METRICS_ENABLED`<br>`metrics.debugMetricsEnabled` | `false`                 | Experimental | Enable collection of various internal metrics (e.g. the profiler's internal performance). Only useful when troubleshooting issues and should not be switched on otherwise.
 
 ### Profiling
 
