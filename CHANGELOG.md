@@ -1,15 +1,34 @@
 # Change Log - @splunk/otel
 
+## 2.2.0
+
+March 22, 2023
+
+- Fixed `SPLUNK_REALM` environment variable taking precedence over endpoint supplied programmatically. `endpoint` now correctly overrides the endpoint created via `SPLUNK_REALM` and when both are set logs a warning. [#668](https://github.com/signalfx/splunk-otel-js/pull/668)
+- Empty environment variables are now considered as not defined. [#693](https://github.com/signalfx/splunk-otel-js/pull/693)
+- New configuration option: `SPLUNK_DEBUG_METRICS_ENABLED` / `metrics.debugMetricsEnabled`. [#700](https://github.com/signalfx/splunk-otel-js/pull/700) When set, extra set of internal troubleshooting metrics are produced. This should only be enabled to assist debugging. Defaults to `false`. Currently debug metrics for the CPU and memory profiler are produced, each being a histogram:
+  - `splunk.profiler.cpu.start.duration`
+  - `splunk.profiler.cpu.stop.duration`
+  - `splunk.profiler.cpu.process.duration`
+  - `splunk.profiler.heap.collect.duration`
+  - `splunk.profiler.heap.process.duration`
+- Upgrade to OpenTelemetry `1.10.1` / `0.35.1`. The full changes can be seen at OpenTelemetry JS releases:
+  - [`1.9.0`](https://github.com/open-telemetry/opentelemetry-js/releases/tag/v1.9.0)
+  - [`1.9.1`](https://github.com/open-telemetry/opentelemetry-js/releases/tag/v1.9.1)
+  - [`1.10.0`](https://github.com/open-telemetry/opentelemetry-js/releases/tag/v1.10.0)
+  - [`0.35.0`](https://github.com/open-telemetry/opentelemetry-js/releases/tag/experimental%2Fv0.35.0)
+  - [`0.35.1`](https://github.com/open-telemetry/opentelemetry-js/releases/tag/experimental%2Fv0.35.1)
+
 ## 2.1.0
 
-1st of December, 2022
+December 1, 2022
 
 - Deduce the service name from `package.json` if it is not explicitly configured. [#625](https://github.com/signalfx/splunk-otel-js/pull/625)
 - Fix console metric exporter omitting datapoint specific attributes. [#626](https://github.com/signalfx/splunk-otel-js/pull/626)
 
 ## 2.0.0
 
-22nd of November, 2022
+November 22, 2022
 
 For a list of major changes and features in `2.0.0` see the notes for [`2.0.0-rc1`](CHANGELOG.md#200-rc1).
 
@@ -27,13 +46,13 @@ Additional changes in this release:
 
 ## 2.0.0-rc2
 
-31st of October, 2022
+October 31, 2022
 
 - Omit setting the default endpoint for metrics, as OpenTelemetry OTLP metrics exporters already have their own default configuration [#592](https://github.com/signalfx/splunk-otel-js/pull/592)
 
 ## 2.0.0-rc1
 
-28th of October, 2022
+October 28, 2022
 
 - ### Deprecate `startTracing`, `startMetrics`, `startProfiling` functions
 
