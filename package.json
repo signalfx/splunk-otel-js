@@ -102,7 +102,7 @@
     "@opentelemetry/exporter-metrics-otlp-proto": "^0.36.1",
     "@opentelemetry/exporter-trace-otlp-grpc": "^0.36.1",
     "@opentelemetry/exporter-trace-otlp-proto": "^0.36.1",
-    "@opentelemetry/instrumentation": "^0.35.1",
+    "@opentelemetry/instrumentation": "^0.36.1",
     "@opentelemetry/instrumentation-amqplib": "^0.32.2",
     "@opentelemetry/instrumentation-aws-sdk": "^0.34.0",
     "@opentelemetry/instrumentation-bunyan": "^0.31.1",
