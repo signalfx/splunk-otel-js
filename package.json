@@ -116,7 +116,7 @@
     "@opentelemetry/instrumentation-graphql": "^0.33.2",
     "@opentelemetry/instrumentation-grpc": "^0.35.1",
     "@opentelemetry/instrumentation-hapi": "^0.31.1",
-    "@opentelemetry/instrumentation-http": "^0.35.1",
+    "@opentelemetry/instrumentation-http": "^0.37.0",
     "@opentelemetry/instrumentation-ioredis": "^0.34.0",
     "@opentelemetry/instrumentation-knex": "^0.31.1",
     "@opentelemetry/instrumentation-koa": "^0.34.2",
