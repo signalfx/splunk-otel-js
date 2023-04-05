@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import * as sinon from 'sinon';
 import * as assert from 'assert';
 import * as rewire from 'rewire';
 
@@ -23,14 +22,8 @@ import * as loader from '../src/instrumentations/loader';
 
 describe('instrumentations', () => {
   it('loads instrumentations if they are installed', () => {
-    const loadStub = sinon.stub(loader, 'load');
-    try {
-      const inst = instrumentations.getInstrumentations();
-      sinon.assert.callCount(loadStub, 36);
-    } finally {
-      loadStub.reset();
-      loadStub.restore();
-    }
+    const loadedInstrumentations = instrumentations.getInstrumentations();
+    assert.equal(loadedInstrumentations.length, 36);
   });
 
   it('loader silently fails when instrumentation is not installed', () => {
