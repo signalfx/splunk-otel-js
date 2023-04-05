@@ -1,5 +1,11 @@
 # Change Log - @splunk/otel
 
+## 2.2.1
+
+April 5, 2023
+
+- Fixed [`@opentelemetry/instrumentation-mongoose`](https://www.npmjs.com/package/@opentelemetry/instrumentation-mongoose) not being loaded. [#715](https://github.com/signalfx/splunk-otel-js/pull/715)
+
 ## 2.2.0
 
 March 22, 2023
