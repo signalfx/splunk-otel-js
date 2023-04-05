@@ -39,6 +39,7 @@ const bundledInstrumentations: [string, string][] = [
   ['@opentelemetry/instrumentation-koa', 'KoaInstrumentation'],
   ['@opentelemetry/instrumentation-memcached', 'MemcachedInstrumentation'],
   ['@opentelemetry/instrumentation-mongodb', 'MongoDBInstrumentation'],
+  ['@opentelemetry/instrumentation-mongoose', 'MongooseInstrumentation'],
   ['@opentelemetry/instrumentation-mysql', 'MySQLInstrumentation'],
   ['@opentelemetry/instrumentation-mysql2', 'MySQL2Instrumentation'],
   ['@opentelemetry/instrumentation-nestjs-core', 'NestInstrumentation'],
@@ -56,7 +57,6 @@ const bundledInstrumentations: [string, string][] = [
     'ElasticsearchInstrumentation',
   ],
   ['opentelemetry-instrumentation-kafkajs', 'KafkaJsInstrumentation'],
-  ['opentelemetry-instrumentation-mongoose', 'MongooseInstrumentation'],
   ['opentelemetry-instrumentation-sequelize', 'SequelizeInstrumentation'],
   ['opentelemetry-instrumentation-typeorm', 'TypeormInstrumentation'],
 ];
