@@ -20,6 +20,7 @@ import { OTLPProfilingExporter } from '../../src/profiling/OTLPProfilingExporter
 import { Resource } from '@opentelemetry/resources';
 import * as utils from '../utils';
 import * as grpc from '@grpc/grpc-js';
+import { cpuProfile, heapProfile } from './profiles';
 
 describe('profiling OTLP exporter', () => {
   describe('configuration', () => {
@@ -61,6 +62,92 @@ describe('profiling OTLP exporter', () => {
         exporter['_client'].getChannel()['internalChannel']['credentials'],
         grpc.ChannelCredentials.createSsl()
       );
+    });
+  });
+
+  describe('exporting', () => {
+    const sandbox = sinon.createSandbox();
+
+    beforeEach(() => {
+      sandbox.restore();
+    });
+
+    it('attaches common attributes when exporting CPU profiles', (done) => {
+      const exporter = new OTLPProfilingExporter({
+        endpoint: 'http://foobar:8181',
+        callstackInterval: 1000,
+        resource: new Resource({ service: 'foo' }),
+      });
+
+      sandbox.replace(exporter['_client'], 'export', (payload: unknown) => {
+        const { resourceLogs } = payload as any;
+        assert.deepStrictEqual(resourceLogs.length, 1);
+        const { instrumentationLibraryLogs, resource } = resourceLogs[0];
+        assert.deepStrictEqual(resource.attributes, [
+          { key: 'telemetry.sdk.language', value: { stringValue: 'node' } },
+          { key: 'service', value: { stringValue: 'foo' } },
+        ]);
+        assert.deepStrictEqual(instrumentationLibraryLogs.length, 1);
+        const { logs } = instrumentationLibraryLogs[0];
+        assert.deepStrictEqual(logs.length, 1);
+        const log = logs[0];
+
+        assert.deepStrictEqual(log.attributes, [
+          {
+            key: 'profiling.data.format',
+            value: { stringValue: 'pprof-gzip-base64' },
+          },
+          { key: 'profiling.data.type', value: { stringValue: 'cpu' } },
+          {
+            key: 'com.splunk.sourcetype',
+            value: { stringValue: 'otel.profiling' },
+          },
+          { key: 'profiling.data.total.frame.count', value: { intValue: 1 } },
+        ]);
+
+        done();
+      });
+
+      exporter.send(cpuProfile);
+    });
+
+    it('attaches common attributes when exporting heap profiles', (done) => {
+      const exporter = new OTLPProfilingExporter({
+        endpoint: 'http://foobar:8181',
+        callstackInterval: 1000,
+        resource: new Resource({ service: 'foo' }),
+      });
+
+      sandbox.replace(exporter['_client'], 'export', (payload: unknown) => {
+        const { resourceLogs } = payload as any;
+        assert.deepStrictEqual(resourceLogs.length, 1);
+        const { instrumentationLibraryLogs, resource } = resourceLogs[0];
+        assert.deepStrictEqual(resource.attributes, [
+          { key: 'telemetry.sdk.language', value: { stringValue: 'node' } },
+          { key: 'service', value: { stringValue: 'foo' } },
+        ]);
+        assert.deepStrictEqual(instrumentationLibraryLogs.length, 1);
+        const { logs } = instrumentationLibraryLogs[0];
+        assert.deepStrictEqual(logs.length, 1);
+        const log = logs[0];
+
+        assert.deepStrictEqual(log.attributes, [
+          {
+            key: 'profiling.data.format',
+            value: { stringValue: 'pprof-gzip-base64' },
+          },
+          { key: 'profiling.data.type', value: { stringValue: 'allocation' } },
+          {
+            key: 'com.splunk.sourcetype',
+            value: { stringValue: 'otel.profiling' },
+          },
+          { key: 'profiling.data.total.frame.count', value: { intValue: 3 } },
+        ]);
+
+        done();
+      });
+
+      exporter.sendHeapProfile(heapProfile);
     });
   });
 });
