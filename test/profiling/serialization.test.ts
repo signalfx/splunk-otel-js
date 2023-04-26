@@ -20,24 +20,9 @@ import {
   StringTable,
 } from '../../src/profiling/utils';
 import { perftools } from '../../src/profiling/proto/profile.js';
+import { cpuProfile, heapProfile } from './profiles';
 
 const proto = perftools.profiles;
-const dummyProfile = {
-  stacktraces: [
-    {
-      timestamp: '1657707471544258336',
-      stacktrace: [
-        ['/app/file.ts', 'doWork', 44],
-        ['/app/foo.ts', 'noline', 0],
-      ],
-      timepoint: '288828185919000',
-      spanId: Buffer.from('adbfe5ed33c9a3ff', 'hex'),
-      traceId: Buffer.from('10192d1c807161471ad2011522853770', 'hex'),
-    },
-  ],
-  startTimeNanos: '1657707471456450000',
-  startTimepoint: '288828098110664',
-};
 const toBuffer = (profile: any) => {
   return perftools.profiles.Profile.encode(profile).finish();
 };
@@ -78,7 +63,7 @@ describe('profiling:serialization', () => {
     });
 
     it('correctly serializes a dummy profile', () => {
-      const serializedProfile = serialize(dummyProfile, {
+      const serializedProfile = serialize(cpuProfile, {
         samplingPeriodMillis: 1_000,
       });
 
@@ -124,41 +109,6 @@ describe('profiling:serialization', () => {
     });
 
     it('correctly serializes a heap profile', () => {
-      const heapProfile = {
-        samples: [
-          { nodeId: 1, size: 128 },
-          { nodeId: 1, size: 256 },
-          { nodeId: 3, size: 512 },
-        ],
-        treeMap: {
-          1: {
-            name: 'work',
-            scriptName: '/app/foo.js',
-            lineNumber: 42,
-            parentId: 2,
-          },
-          2: {
-            name: 'schedule',
-            scriptName: '/app/foo.js',
-            lineNumber: 241,
-            parentId: 3,
-          },
-          3: {
-            name: 'runTimers',
-            scriptName: 'node:internal/timers',
-            lineNumber: -1,
-            parentId: 0,
-          },
-          4: {
-            name: 'other',
-            scriptName: '',
-            lineNumber: 10,
-            parentId: 0,
-          },
-        },
-        timestamp: Date.now(),
-      };
-
       const ts = String(heapProfile.timestamp);
       const serializedProfile = serializeHeapProfile(heapProfile);
 

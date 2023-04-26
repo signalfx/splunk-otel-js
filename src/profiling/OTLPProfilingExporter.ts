@@ -34,12 +34,19 @@ export interface OTLPExporterOptions {
 }
 
 interface LogsClient extends grpc.Client {
-  export: (request: unknown, metadata: grpc.Metadata, callback: Function) => {};
+  export: (
+    request: unknown,
+    metadata: grpc.Metadata,
+    callback: Function
+  ) => void;
 }
 
 const OTEL_PROFILING_VERSION = '0.1.0';
 
-function commonAttributes(profilingType: 'cpu' | 'allocation') {
+function commonAttributes(
+  profilingType: 'cpu' | 'allocation',
+  sampleCount: number
+) {
   return [
     {
       key: 'profiling.data.format',
@@ -52,6 +59,10 @@ function commonAttributes(profilingType: 'cpu' | 'allocation') {
     {
       key: 'com.splunk.sourcetype',
       value: { stringValue: 'otel.profiling' },
+    },
+    {
+      key: 'profiling.data.total.frame.count',
+      value: { intValue: sampleCount },
     },
   ];
 }
@@ -125,9 +136,10 @@ export class OTLPProfilingExporter implements ProfilingExporter {
 
   send(profile: CpuProfile) {
     const { stacktraces } = profile;
-    diag.debug(`profiling: Exporting ${stacktraces?.length} samples`);
+    const sampleCount = stacktraces?.length || 0;
+    diag.debug(`profiling: Exporting ${sampleCount} CPU samples`);
     const { callstackInterval } = this._options;
-    const attributes = commonAttributes('cpu');
+    const attributes = commonAttributes('cpu', sampleCount);
     encode(serialize(profile, { samplingPeriodMillis: callstackInterval }))
       .then((serializedProfile) => {
         const logs = [serializedProfile].map((st) => {
@@ -168,7 +180,9 @@ export class OTLPProfilingExporter implements ProfilingExporter {
 
   sendHeapProfile(profile: HeapProfile) {
     const serialized = serializeHeapProfile(profile);
-    const attributes = commonAttributes('allocation');
+    const sampleCount = profile.samples.length;
+    const attributes = commonAttributes('allocation', sampleCount);
+    diag.debug(`profiling: Exporting ${sampleCount} heap samples`);
     encode(serialized)
       .then((serializedProfile) => {
         const logs = [serializedProfile].map((st) => {
