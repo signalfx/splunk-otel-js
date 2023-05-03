@@ -1,5 +1,11 @@
 # Change Log - @splunk/otel
 
+## 2.2.2
+
+May 3, 2023
+
+- Internal: added frame count to profiling data. [#726](https://github.com/signalfx/splunk-otel-js/pull/726)
+
 ## 2.2.1
 
 April 5, 2023
