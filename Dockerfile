@@ -1,0 +1,14 @@
+FROM node:16 AS build
+
+WORKDIR /splunk-otel-js
+COPY . .
+RUN npm install
+RUN npm run compile
+RUN npm run prebuild:os '14.0.0' '15.0.0' '16.0.0' '17.0.1' '18.0.0'
+RUN npm pack && tar xf splunk-otel-$(npm view @splunk/otel version).tgz
+RUN npm prune --omit=dev && cp -r node_modules/ package
+
+FROM busybox
+
+COPY --from=build /splunk-otel-js/package /splunk-otel-js
+RUN chmod -R go+r /splunk-otel-js
