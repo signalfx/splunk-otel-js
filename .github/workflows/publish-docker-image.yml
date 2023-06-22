@@ -1,4 +1,4 @@
-name: publish splunk-otel-js docker image to ghcr
+name: Publish splunk-otel-js Docker image to ghcr.io
 
 on:
   release:
