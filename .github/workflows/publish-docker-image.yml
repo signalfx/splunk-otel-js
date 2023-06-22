@@ -29,8 +29,10 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-			- name: Debug
-				run: echo ${{ env.GITHUB_REF_NAME }} && echo ${{ env.MAJOR_VERSION }}
+      - name: Debug
+        run: |
+          echo ${{ env.GITHUB_REF_NAME }}
+          echo ${{ env.MAJOR_VERSION }}
       #- name: build and publish container
       #  uses: docker/build-push-action@v4.1.1
       #  with:
