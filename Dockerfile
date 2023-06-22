@@ -10,5 +10,5 @@ RUN npm prune --omit=dev && cp -r node_modules/ package
 
 FROM busybox
 
-COPY --from=build /splunk-otel-js/package /splunk-otel-js
-RUN chmod -R go+r /splunk-otel-js
+COPY --from=build /splunk-otel-js/package /autoinstrumentation
+RUN chmod -R go+r /autoinstrumentation
