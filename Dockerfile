@@ -10,5 +10,8 @@ RUN npm prune --omit=dev && cp -r node_modules/ package
 
 FROM busybox
 
+LABEL org.opencontainers.image.source="https://github.com/signalfx/splunk-otel-js"
+LABEL org.opencontainers.image.description="Splunk Distribution of OpenTelemetry Node.js Instrumentation"
+
 COPY --from=build /splunk-otel-js/package /autoinstrumentation
 RUN chmod -R go+r /autoinstrumentation
