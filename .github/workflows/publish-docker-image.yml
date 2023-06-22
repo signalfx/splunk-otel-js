@@ -1,12 +1,11 @@
 name: publish splunk-otel-js docker image to ghcr
 
 on:
-  push:
-  #release:
-  #  types: [published]
+  release:
+    types: [published]
 
 jobs:
-  build:
+  publish-image:
     runs-on: ubuntu-20.04
     permissions:
       packages: write
@@ -29,19 +28,15 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Debug
-        run: |
-          echo ${{ env.GITHUB_REF_NAME }}
-          echo ${{ env.MAJOR_VERSION }}
-      #- name: build and publish container
-      #  uses: docker/build-push-action@v4.1.1
-      #  with:
-      #    push: true
-      #    file: Dockerfile-ghcr
-      #    build-args: |
-      #      RELEASE_VER=${{ env.GITHUB_REF_NAME }}
-      #    tags: |
-      #      ghcr.io/signalfx/splunk-otel-js/splunk-otel-js:latest
-      #      ghcr.io/signalfx/splunk-otel-js/splunk-otel-js:${{ env.MAJOR_VERSION }}
-      #      ghcr.io/signalfx/splunk-otel-js/splunk-otel-js:${{ env.GITHUB_REF_NAME }}
+      - name: build and publish container
+        uses: docker/build-push-action@v4.1.1
+        with:
+          push: true
+          file: Dockerfile-ghcr
+          build-args: |
+            RELEASE_VER=${{ env.GITHUB_REF_NAME }}
+          tags: |
+            ghcr.io/signalfx/splunk-otel-js/splunk-otel-js:latest
+            ghcr.io/signalfx/splunk-otel-js/splunk-otel-js:${{ env.MAJOR_VERSION }}
+            ghcr.io/signalfx/splunk-otel-js/splunk-otel-js:${{ env.GITHUB_REF_NAME }}
 
