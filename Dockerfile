@@ -15,3 +15,4 @@ LABEL org.opencontainers.image.description="Splunk Distribution of OpenTelemetry
 
 COPY --from=build /splunk-otel-js/package /autoinstrumentation
 RUN chmod -R go+r /autoinstrumentation
+RUN cd /autoinstrumentation && ln -s ./instrument.js /autoinstrumentation/autoinstrumentation.js
