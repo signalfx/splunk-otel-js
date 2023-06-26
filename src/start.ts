@@ -18,6 +18,7 @@ import {
   getNonEmptyEnvVar,
   parseEnvBooleanString,
   parseLogLevel,
+  pick,
   toDiagLogLevel,
 } from './utils';
 import { startMetrics, StartMetricsOptions } from './metrics';
@@ -28,6 +29,9 @@ import {
 } from './profiling';
 import type { EnvVarKey, LogLevel } from './types';
 import { startTracing, stopTracing, StartTracingOptions } from './tracing';
+import { allowedTracingOptions } from './tracing/options';
+import { allowedProfilingOptions } from './profiling/types';
+import { allowedMetricsOptions } from './metrics';
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 
 interface Options {
@@ -84,7 +88,10 @@ export const start = (options: Partial<Options> = {}) => {
 
   let metricsEnabledByDefault = false;
   if (isSignalEnabled(options.profiling, 'SPLUNK_PROFILER_ENABLED', false)) {
-    const profilingOptions = Object.assign({}, restOptions, profiling);
+    const profilingOptions = Object.assign(
+      pick(restOptions, allowedProfilingOptions),
+      profiling
+    );
     running.profiling = startProfiling(profilingOptions);
 
     // HACK: memory profiling needs to enable metrics,
@@ -97,7 +104,9 @@ export const start = (options: Partial<Options> = {}) => {
   }
 
   if (isSignalEnabled(options.tracing, 'SPLUNK_TRACING_ENABLED', true)) {
-    running.tracing = startTracing(Object.assign({}, restOptions, tracing));
+    running.tracing = startTracing(
+      Object.assign(pick(restOptions, allowedTracingOptions), tracing)
+    );
   }
 
   if (
@@ -107,7 +116,9 @@ export const start = (options: Partial<Options> = {}) => {
       metricsEnabledByDefault
     )
   ) {
-    running.metrics = startMetrics(Object.assign({}, restOptions, metrics));
+    running.metrics = startMetrics(
+      Object.assign(pick(restOptions, allowedMetricsOptions), metrics)
+    );
   }
 };
 
