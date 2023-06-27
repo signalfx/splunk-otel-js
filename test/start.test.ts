@@ -162,6 +162,34 @@ describe('start', () => {
       stop();
       assertCalled(signals.stop, ['tracing']);
     });
+
+    it('does not add extra configuration arguments to signals', () => {
+      start({
+        accessToken: 'xyz',
+        endpoint: 'localhost:1111',
+        serviceName: 'test',
+        logLevel: 'debug',
+        profiling: true,
+        metrics: true,
+      });
+
+      sinon.assert.calledOnceWithExactly(signals.start.tracing, {
+        accessToken: 'xyz',
+        endpoint: 'localhost:1111',
+        serviceName: 'test',
+      });
+
+      sinon.assert.calledOnceWithExactly(signals.start.profiling, {
+        endpoint: 'localhost:1111',
+        serviceName: 'test',
+      });
+
+      sinon.assert.calledOnceWithExactly(signals.start.metrics, {
+        accessToken: 'xyz',
+        endpoint: 'localhost:1111',
+        serviceName: 'test',
+      });
+    });
   });
 
   describe('configuration', () => {

@@ -205,3 +205,17 @@ export function parseLogLevel(value: string | undefined): DiagLogLevel {
 
   return DiagLogLevel.NONE;
 }
+
+export function pick<T extends Record<string, any>, K extends string>(
+  obj: T,
+  keys: readonly K[]
+): { [P in keyof T as P extends K ? P : never]: T[P] } {
+  const result = {} as any;
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i];
+    if (key in obj) {
+      result[key] = obj[key];
+    }
+  }
+  return result;
+}
