@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-export const VERSION = '2.2.2';
+export const VERSION = '2.2.3';

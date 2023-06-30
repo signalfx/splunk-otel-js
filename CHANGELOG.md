@@ -1,5 +1,12 @@
 # Change Log - @splunk/otel
 
+## 2.2.3
+
+June 27, 2023
+
+- Fixed `logLevel` configuration option for `start` function throwing an error [#741](https://github.com/signalfx/splunk-otel-js/pull/741)
+- Added Docker image for the OpenTelemetry Operator for Kubernetes [#740](https://github.com/signalfx/splunk-otel-js/pull/740)
+
 ## 2.2.2
 
 May 3, 2023
