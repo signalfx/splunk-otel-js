@@ -129,7 +129,7 @@
     "@opentelemetry/instrumentation-net": "0.31.1",
     "@opentelemetry/instrumentation-pg": "0.35.0",
     "@opentelemetry/instrumentation-pino": "0.33.1",
-    "@opentelemetry/instrumentation-redis": "0.34.4",
+    "@opentelemetry/instrumentation-redis": "0.34.7",
     "@opentelemetry/instrumentation-redis-4": "0.34.3",
     "@opentelemetry/instrumentation-restify": "0.32.1",
     "@opentelemetry/instrumentation-router": "0.32.1",
