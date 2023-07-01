@@ -1,5 +1,11 @@
 # Change Log - @splunk/otel
 
+## 2.2.4
+
+July 1, 2023
+
+- fix: pin OpenTelemetry dependencies to avoid multiple versions of `@opentelemetry/instrumentation` packages being loaded at the same time [#745](https://github.com/signalfx/splunk-otel-js/pull/745)
+
 ## 2.2.3
 
 June 27, 2023
