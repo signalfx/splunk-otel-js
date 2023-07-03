@@ -89,7 +89,7 @@
     "sinon": "^15.0.2",
     "ts-mocha": "^10.0.0",
     "ts-node": "^10.9.1",
-    "typescript": "5.0.4",
+    "typescript": "5.1.6",
     "winston": "3.8.2"
   },
   "dependencies": {
