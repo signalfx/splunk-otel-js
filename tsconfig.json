@@ -20,12 +20,15 @@
     "strictNullChecks": true,
     "target": "es2017",
     "incremental": true,
+    "skipLibCheck": true,
     "newLine": "LF"
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.js"
   ],
-  "exclude": ["node_modules"],
+  "exclude": [
+    "node_modules"
+  ],
   "references": []
 }
