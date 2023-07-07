@@ -91,8 +91,10 @@
     "redis": "^3.1.2",
     "rewire": "^6.0.0",
     "sinon": "^15.0.2",
+    "sqlite3": "^5.1.6",
     "ts-mocha": "^10.0.0",
     "ts-node": "^10.9.1",
+    "typeorm": "^0.2.45",
     "typescript": "5.1.6",
     "winston": "3.8.2"
   },
@@ -145,10 +147,10 @@
     "@opentelemetry/sdk-trace-base": "1.14.0",
     "@opentelemetry/sdk-trace-node": "1.14.0",
     "@opentelemetry/semantic-conventions": "1.14.0",
+    "is-promise": "^4.0.0",
     "nan": "^2.17.0",
     "node-gyp-build": "^4.6.0",
     "opentelemetry-instrumentation-sequelize": "^0.35.0",
-    "opentelemetry-instrumentation-typeorm": "^0.35.0",
     "protobufjs": "^7.2.2",
     "semver": "^7.5.3"
   },

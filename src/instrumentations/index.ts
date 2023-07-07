@@ -55,7 +55,7 @@ const bundledInstrumentations: [string, string][] = [
   ['./external/elasticsearch', 'ElasticsearchInstrumentation'],
   ['./external/kafkajs', 'KafkaJsInstrumentation'],
   ['opentelemetry-instrumentation-sequelize', 'SequelizeInstrumentation'],
-  ['opentelemetry-instrumentation-typeorm', 'TypeormInstrumentation'],
+  ['./external/typeorm', 'TypeormInstrumentation'],
 ];
 
 export function getInstrumentations() {

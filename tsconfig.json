@@ -21,7 +21,9 @@
     "target": "es2017",
     "incremental": true,
     "skipLibCheck": true,
-    "newLine": "LF"
+    "newLine": "LF",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": [
     "src/**/*.ts",
