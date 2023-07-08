@@ -24,7 +24,7 @@ import {
 import { DbStatementSerializer, ResponseHook } from './types';
 import { safeExecuteInTheMiddle } from '@opentelemetry/instrumentation';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { ApiResponse } from '@elastic/elasticsearch/lib/Transport';
+import type { ApiResponse } from '@elastic/elasticsearch/lib/Transport';
 
 interface StartSpanPayload {
   tracer: Tracer;

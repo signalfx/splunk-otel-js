@@ -97,7 +97,7 @@
     "sqlite3": "^5.1.6",
     "ts-mocha": "^10.0.0",
     "ts-node": "^10.9.1",
-    "typeorm": "^0.2.45",
+    "typeorm": "^0.3.17",
     "typescript": "5.1.6",
     "winston": "3.8.2"
   },
