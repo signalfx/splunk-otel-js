@@ -42,7 +42,7 @@ import type {
   Consumer,
 } from 'kafkajs';
 import { KafkaJsInstrumentationConfig } from './types';
-import { VERSION } from './version';
+import { VERSION } from '../../../version';
 import { bufferTextMapGetter } from './propagtor';
 import {
   InstrumentationBase,
@@ -61,7 +61,7 @@ export class KafkaJsInstrumentation extends InstrumentationBase<
 
   constructor(config: KafkaJsInstrumentationConfig = {}) {
     super(
-      'opentelemetry-instrumentation-kafkajs',
+      'splunk-opentelemetry-instrumentation-kafkajs',
       VERSION,
       Object.assign({}, config)
     );

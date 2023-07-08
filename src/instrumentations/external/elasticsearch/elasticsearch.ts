@@ -23,7 +23,7 @@ import {
   InstrumentationNodeModuleDefinition,
   InstrumentationNodeModuleFile,
 } from '@opentelemetry/instrumentation';
-import { VERSION } from './version';
+import { VERSION } from '../../../version';
 import { AttributeNames } from './enums';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import {
@@ -47,7 +47,7 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<
 
   constructor(config: ElasticsearchInstrumentationConfig = {}) {
     super(
-      'opentelemetry-instrumentation-elasticsearch',
+      'splunk-opentelemetry-instrumentation-elasticsearch',
       VERSION,
       Object.assign({}, config)
     );

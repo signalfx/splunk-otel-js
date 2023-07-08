@@ -32,7 +32,7 @@ import {
   isTypeormInternalTracingSuppressed,
   suppressTypeormInternalTracing,
 } from './utils';
-import { VERSION } from './version';
+import { VERSION } from '../../../version';
 import type * as typeorm from 'typeorm';
 import {
   InstrumentationBase,
@@ -88,7 +88,7 @@ export class TypeormInstrumentation extends InstrumentationBase<unknown> {
   protected override _config!: TypeormInstrumentationConfig;
   constructor(config: TypeormInstrumentationConfig = {}) {
     super(
-      'opentelemetry-instrumentation-typeorm',
+      'splunk-opentelemetry-instrumentation-typeorm',
       VERSION,
       Object.assign({}, config)
     );
@@ -277,7 +277,7 @@ export class TypeormInstrumentation extends InstrumentationBase<unknown> {
           : traceContext;
 
         return context.with(contextWithSuppressTracing, () =>
-          self._endSpan(() => original.apply(this, arguments), span)
+          self._endSpan(() => original.apply(this, args), span)
         );
       };
     };
@@ -287,19 +287,19 @@ export class TypeormInstrumentation extends InstrumentationBase<unknown> {
     const self = this;
     return (original: Function) => {
       return function (
-        this: typeorm.SelectQueryBuilder<unknown>,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        this: typeorm.SelectQueryBuilder<any>,
         ...args: unknown[]
       ) {
         if (isTypeormInternalTracingSuppressed(context.active())) {
           return original.apply(this, args);
         }
-        const queryBuilder: typeorm.QueryBuilder<unknown> = this;
-        const sql = queryBuilder.getQuery();
-        const parameters = queryBuilder.getParameters();
+        const sql = this.getQuery();
+        const parameters = this.getParameters();
         const mainTableName = this.getMainTableName();
-        const operation = queryBuilder.expressionMap.queryType;
+        const operation = this.expressionMap.queryType;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const connectionOptions: any = queryBuilder?.connection?.options;
+        const connectionOptions: any = this.connection?.options;
         const attributes = {
           [SemanticAttributes.DB_SYSTEM]: connectionOptions.type,
           [SemanticAttributes.DB_USER]: connectionOptions.username,
@@ -338,7 +338,7 @@ export class TypeormInstrumentation extends InstrumentationBase<unknown> {
           : traceContext;
 
         return context.with(contextWithSuppressTracing, () =>
-          self._endSpan(() => original.apply(this, arguments), span)
+          self._endSpan(() => original.apply(this, args), span)
         );
       };
     };
@@ -398,7 +398,7 @@ export class TypeormInstrumentation extends InstrumentationBase<unknown> {
           : traceContext;
 
         return context.with(contextWithSuppressTracing, () =>
-          self._endSpan(() => original.apply(this, arguments), span)
+          self._endSpan(() => original.apply(this, args), span)
         );
       };
     };

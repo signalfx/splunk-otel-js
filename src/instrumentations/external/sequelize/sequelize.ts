@@ -28,7 +28,7 @@ import {
 } from '@opentelemetry/semantic-conventions';
 import type * as sequelize from 'sequelize';
 import { SequelizeInstrumentationConfig } from './types';
-import { VERSION } from './version';
+import { VERSION } from '../../../version';
 import { extractTableFromQuery } from './utils';
 import {
   InstrumentationBase,
@@ -48,7 +48,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<
 
   constructor(config: SequelizeInstrumentationConfig = {}) {
     super(
-      'opentelemetry-instrumentation-sequelize',
+      'splunk-opentelemetry-instrumentation-sequelize',
       VERSION,
       Object.assign({}, config)
     );
@@ -217,40 +217,43 @@ export class SequelizeInstrumentation extends InstrumentationBase<
           );
         }
 
-        return context
-          .with(
-            self._config.suppressInternalInstrumentation
-              ? suppressTracing(activeContextWithSpan)
-              : activeContextWithSpan,
-            () => original.apply(this, args)
-          )
-          .then((response: unknown) => {
-            const responseHook = self._config?.responseHook;
-            if (responseHook !== undefined) {
-              safeExecuteInTheMiddle(
-                () => responseHook(newSpan, response),
-                (e) => {
-                  if (e)
-                    diag.error(
-                      'sequelize instrumentation: responseHook error',
-                      e
-                    );
-                },
-                true
-              );
-            }
-            return response;
-          })
-          .catch((err: Error) => {
-            newSpan.setStatus({
-              code: SpanStatusCode.ERROR,
-              message: err.message,
-            });
-            throw err;
-          })
-          .finally(() => {
-            newSpan.end();
-          });
+        return (
+          context
+            .with(
+              self._config.suppressInternalInstrumentation
+                ? suppressTracing(activeContextWithSpan)
+                : activeContextWithSpan,
+              () => original.apply(this, args)
+            )
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .then((response: any) => {
+              const responseHook = self._config?.responseHook;
+              if (responseHook !== undefined) {
+                safeExecuteInTheMiddle(
+                  () => responseHook(newSpan, response),
+                  (e) => {
+                    if (e)
+                      diag.error(
+                        'sequelize instrumentation: responseHook error',
+                        e
+                      );
+                  },
+                  true
+                );
+              }
+              return response;
+            })
+            .catch((err: Error) => {
+              newSpan.setStatus({
+                code: SpanStatusCode.ERROR,
+                message: err.message,
+              });
+              throw err;
+            })
+            .finally(() => {
+              newSpan.end();
+            })
+        );
       };
     };
   }
