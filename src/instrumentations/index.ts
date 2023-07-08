@@ -54,7 +54,7 @@ const bundledInstrumentations: [string, string][] = [
   ['@opentelemetry/instrumentation-winston', 'WinstonInstrumentation'],
   ['./external/elasticsearch', 'ElasticsearchInstrumentation'],
   ['./external/kafkajs', 'KafkaJsInstrumentation'],
-  ['opentelemetry-instrumentation-sequelize', 'SequelizeInstrumentation'],
+  ['./external/sequelize', 'SequelizeInstrumentation'],
   ['./external/typeorm', 'TypeormInstrumentation'],
 ];
 
