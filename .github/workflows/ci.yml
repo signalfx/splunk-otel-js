@@ -6,7 +6,7 @@ permissions: read-all
 
 jobs:
   prebuilds-linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
@@ -17,7 +17,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - uses: actions/setup-node@v3
-      - run: apt update
       - name: Test python version
         run: python3 --version
       - name: Install npm dependencies
