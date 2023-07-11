@@ -136,8 +136,6 @@ jobs:
     steps:
       - name: Setup container
         run: ${{ matrix.cmd }}
-      - run: python --version
-      - run: python3 --version
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install npm dependencies
