@@ -139,10 +139,12 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+      - run: python --version
+      - run: python3 --version
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install npm dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts --no-optional
       - name: Compile native
         run: npm run prebuild:current
       - name: Run tests
