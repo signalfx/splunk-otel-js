@@ -58,12 +58,12 @@ import {
   KafkaMessage,
 } from 'kafkajs';
 import { DummyPropagation } from './DummyPropagation';
-import { W3CBaggagePropagator, CompositePropagator } from '@opentelemetry/core';
+import { W3CTraceContextPropagator, W3CBaggagePropagator, CompositePropagator } from '@opentelemetry/core';
 
 describe('instrumentation-kafkajs', () => {
   propagation.setGlobalPropagator(
     new CompositePropagator({
-      propagators: [new DummyPropagation(), new W3CBaggagePropagator()],
+      propagators: [new DummyPropagation(), new W3CBaggagePropagator(), new W3CTraceContextPropagator()],
     })
   );
 
