@@ -70,8 +70,6 @@ describe('elasticsearch instrumentation', () => {
       index: 'the-simpsons',
     });
 
-    await new Promise(resolve => setTimeout(resolve, 5000));
-
     const spans = getTestSpans();
     assert.strictEqual(spans?.length, 2);
     assert.deepStrictEqual(spans[0].attributes, {
@@ -99,7 +97,6 @@ describe('elasticsearch instrumentation', () => {
     esNock.get('/_cluster/settings').reply(200, {});
 
     await client.cluster.getSettings();
-    await new Promise(resolve => setTimeout(resolve, 5000));
     const spans = getTestSpans();
 
     assert.strictEqual(spans?.length, 1);
