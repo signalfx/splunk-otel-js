@@ -55,3 +55,33 @@ export const mochaHooks = {
     done();
   },
 };
+
+export class MockSqlite3Db {
+  constructor(_db, a, b) {
+    const callback = typeof b === 'function' ? b : a;
+    setImmediate(() => callback?.(null));
+  }
+
+  run(query, a, b) {
+    this._noop(query, a, b);
+  }
+
+  all(query, a, b) {
+    this._noop(query, a, b);
+  }
+
+  close(callback) {
+    if (typeof callback === 'function') {
+      callback(null);
+    }
+  }
+
+  _noop(_query, a, b) {
+    const callback = typeof b === 'function' ? b : a;
+    setImmediate(() => callback?.call({ changes: 0, lastID: 0 }, null, []));
+  }
+}
+
+export const sqlite3MockModule = {
+  Database: MockSqlite3Db,
+};

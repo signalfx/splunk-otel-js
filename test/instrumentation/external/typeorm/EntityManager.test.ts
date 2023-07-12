@@ -21,7 +21,7 @@ import { setInstrumentation, getTestSpans } from '../setup';
 
 const instrumentation = new TypeormInstrumentation();
 import * as typeorm from 'typeorm';
-import { defaultOptions, User } from './utils';
+import { defaultOptions, MockSqliteDriver, User } from './utils';
 
 describe('EntityManager', () => {
   before(() => {
@@ -180,6 +180,7 @@ describe('EntityManager', () => {
       database: 'connection2.db',
       entities: [User],
       synchronize: true,
+      driver: MockSqliteDriver,
     };
 
     it('appends matching connection details to span', async () => {

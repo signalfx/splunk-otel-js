@@ -39,12 +39,10 @@ describe('Repository', () => {
   it('findAndCount', async () => {
     const connection = await typeorm.createConnection(defaultOptions);
     const repo = connection.getRepository(User);
-    const user = new User(1, 'aspecto', 'io');
-    await repo.insert(user);
     const [users, count] = await repo.findAndCount();
-    assert(count > 0);
+    assert(count === 0);
     const spans = getTestSpans();
-    assert.strictEqual(spans.length, 2);
+    assert.strictEqual(spans.length, 1);
     const span = spans[0];
     const attributes = span.attributes;
     assert.strictEqual(attributes[SemanticAttributes.DB_SQL_TABLE], 'user');

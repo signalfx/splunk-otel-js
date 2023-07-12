@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import * as typeorm from 'typeorm';
+import { sqlite3MockModule } from '../setup';
 
 @typeorm.Entity()
 export class User {
@@ -33,6 +34,12 @@ export class User {
   }
 }
 
+export const MockSqliteDriver = {
+  verbose: () => {
+    return sqlite3MockModule;
+  },
+};
+
 // type is typeorm.ConnectionOptions for <0.3.0
 // and typeorm.DataSourceOptions for >=0.3.0
 export const defaultOptions: any = {
@@ -41,6 +48,7 @@ export const defaultOptions: any = {
   dropSchema: true,
   synchronize: true,
   entities: [User],
+  driver: MockSqliteDriver,
 };
 
 export const rawQueryOptions: any = {
@@ -50,4 +58,5 @@ export const rawQueryOptions: any = {
   synchronize: true,
   entities: [User],
   name: 'rawQuery',
+  driver: MockSqliteDriver,
 };

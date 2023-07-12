@@ -25,7 +25,7 @@ import {
   ROOT_CONTEXT,
 } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { setInstrumentation, getTestSpans } from '../setup';
+import { getTestSpans, setInstrumentation, sqlite3MockModule } from '../setup';
 
 const instrumentation = new SequelizeInstrumentation();
 
@@ -353,6 +353,7 @@ describe('instrumentation-sequelize', () => {
   describe('sqlite', () => {
     const instance = new sequelize.Sequelize('sqlite:memory', {
       logging: false,
+      dialectModule: sqlite3MockModule,
     });
     instance.define('User', {
       firstName: { type: sequelize.DataTypes.STRING },
