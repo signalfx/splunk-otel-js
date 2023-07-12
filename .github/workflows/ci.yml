@@ -6,19 +6,17 @@ permissions: read-all
 
 jobs:
   prebuilds-linux:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        container: ['node:14-buster']
+        container: ['node:14']
         node_api_target: ['14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0']
     container: ${{ matrix.container }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
       - uses: actions/setup-node@v3
-      - name: Test python version
-        run: python3 --version
       - name: Install npm dependencies
         run: npm ci --ignore-scripts --no-optional
       - name: Prebuild
