@@ -23,7 +23,7 @@ import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
 import { Instrumentation } from '@opentelemetry/instrumentation';
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 
-diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ERROR);
+diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 
 const exporter = new InMemorySpanExporter();
 const provider: NodeTracerProvider = new NodeTracerProvider({
