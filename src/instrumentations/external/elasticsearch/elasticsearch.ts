@@ -24,7 +24,6 @@ import {
   InstrumentationNodeModuleFile,
 } from '@opentelemetry/instrumentation';
 import { VERSION } from '../../../version';
-import { AttributeNames } from './enums';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import {
   startSpan,
@@ -35,6 +34,10 @@ import {
   getIndexName,
 } from './utils';
 import { ELASTICSEARCH_API_FILES } from './helpers';
+
+enum AttributeNames {
+  ELASTICSEARCH_INDICES = 'elasticsearch.request.indices',
+}
 
 export class ElasticsearchInstrumentation extends InstrumentationBase<
   typeof elasticsearch
