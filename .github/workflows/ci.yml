@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v3
       - uses: actions/setup-node@v3
       - name: Install npm dependencies
-        run: npm ci --ignore-scripts
+        run: npm ci --ignore-scripts --no-optional
       - name: Prebuild
         run: npm run prebuild:os ${{ matrix.node_api_target }}
       - name: upload prebuilds
@@ -137,7 +137,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install npm dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts --no-optional
       - name: Compile native
         run: npm run prebuild:current
       - name: Run tests

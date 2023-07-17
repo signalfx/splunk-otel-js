@@ -20,12 +20,17 @@
     "strictNullChecks": true,
     "target": "es2017",
     "incremental": true,
-    "newLine": "LF"
+    "skipLibCheck": true,
+    "newLine": "LF",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.js"
   ],
-  "exclude": ["node_modules"],
+  "exclude": [
+    "node_modules"
+  ],
   "references": []
 }
