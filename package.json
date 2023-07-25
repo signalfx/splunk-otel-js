@@ -98,7 +98,7 @@
     "ts-node": "^10.9.1",
     "typeorm": "^0.3.17",
     "typescript": "5.1.6",
-    "winston": "3.8.2"
+    "winston": "3.10.0"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.8.19",
