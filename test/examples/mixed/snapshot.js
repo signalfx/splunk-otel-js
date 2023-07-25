@@ -4,7 +4,7 @@ module.exports = [
     traceId: '0Iqbr5g8SjiaX3WlJBQyTA==',
     id: 'U9O4F1SzkzY=',
     startTime: '2022-06-03T13:06:01.752053248Z',
-    name: 'HTTP GET',
+    name: 'GET',
     kind: 'server',
     parentSpanId: undefined,
     parent: undefined,

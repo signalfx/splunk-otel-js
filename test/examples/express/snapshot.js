@@ -97,7 +97,7 @@ module.exports = [
     id: 'HrySxOwH51s=',
     startTime: '2023-01-30T12:04:44.270Z',
     hrStartTime: 1675080284270000128n,
-    name: 'HTTP GET',
+    name: 'GET',
     kind: 'client',
     parentSpanId: 'QqCreRFO344=',
     parent: { id: 'QqCreRFO344=', traceId: 'huH9quA+Ku9Q9QZsUNSJwA==' },
