@@ -114,7 +114,7 @@ describe('profiling', () => {
         profiling: {
           serviceName: 'slow-service',
           callstackInterval: 50,
-          collectionDuration: 1000,
+          collectionDuration: 500,
           exporterFactory: () => [exporter],
         },
       });
@@ -131,7 +131,7 @@ describe('profiling', () => {
       });
 
       // let runtime empty the task-queue and disable profiling
-      await sleep(10);
+      await sleep(1000);
       await stop();
 
       // It might be possible all stacktraces will not be available,
