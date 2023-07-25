@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import * as protoLoader from '@grpc/proto-loader';
-import * as grpc from '@grpc/grpc-js';
+import type * as grpc from '@grpc/grpc-js';
 import * as path from 'path';
 import { CpuProfile, HeapProfile, ProfilingExporter } from './types';
 import { diag } from '@opentelemetry/api';
@@ -71,6 +71,7 @@ export class OTLPProfilingExporter implements ProfilingExporter {
   protected _client: LogsClient;
   protected _options: OTLPExporterOptions;
   protected _resourceAttributes;
+  protected _grpc: typeof grpc;
 
   constructor(options: OTLPExporterOptions) {
     this._options = options;
@@ -90,10 +91,11 @@ export class OTLPProfilingExporter implements ProfilingExporter {
       }
     );
 
-    const { host, credentials } = parseEndpoint(options.endpoint);
+    this._grpc = require('@grpc/grpc-js');
+    const { host, credentials } = parseEndpoint(options.endpoint, this._grpc);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const packageObject: any = grpc.loadPackageDefinition(packageDef);
+    const packageObject: any = this._grpc.loadPackageDefinition(packageDef);
     this._client =
       new packageObject.opentelemetry.proto.collector.logs.v1.LogsService(
         host,
@@ -167,11 +169,15 @@ export class OTLPProfilingExporter implements ProfilingExporter {
         const payload = {
           resourceLogs,
         };
-        this._client.export(payload, new grpc.Metadata(), (err: unknown) => {
-          if (err) {
-            diag.error('Error exporting profiling data', err);
+        this._client.export(
+          payload,
+          new this._grpc.Metadata(),
+          (err: unknown) => {
+            if (err) {
+              diag.error('Error exporting profiling data', err);
+            }
           }
-        });
+        );
       })
       .catch((err: unknown) => {
         diag.error('Error exporting profiling data', err);
@@ -210,11 +216,15 @@ export class OTLPProfilingExporter implements ProfilingExporter {
         const payload = {
           resourceLogs,
         };
-        this._client.export(payload, new grpc.Metadata(), (err: unknown) => {
-          if (err) {
-            diag.error('Error exporting profiling data', err);
+        this._client.export(
+          payload,
+          new this._grpc.Metadata(),
+          (err: unknown) => {
+            if (err) {
+              diag.error('Error exporting profiling data', err);
+            }
           }
-        });
+        );
       })
       .catch((err: unknown) => {
         diag.error('Error exporting profiling data', err);

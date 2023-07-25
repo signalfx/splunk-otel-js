@@ -22,9 +22,9 @@ import {
   PeriodicExportingMetricReader,
   View,
 } from '@opentelemetry/sdk-metrics';
-import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
 import { OTLPMetricExporter as OTLPHttpProtoMetricExporter } from '@opentelemetry/exporter-metrics-otlp-proto';
-import { Metadata } from '@grpc/grpc-js';
+import type * as grpc from '@grpc/grpc-js';
+import type * as OtlpGrpc from '@opentelemetry/exporter-metrics-otlp-grpc';
 import {
   assertNoExtraneousProperties,
   defaultServiceName,
@@ -163,11 +163,13 @@ function createOtlpExporter(options: MetricsOptions) {
 
   switch (protocol) {
     case 'grpc': {
-      const metadata = new Metadata();
+      const grpcModule: typeof grpc = require('@grpc/grpc-js');
+      const otlpGrpc: typeof OtlpGrpc = require('@opentelemetry/exporter-metrics-otlp-grpc');
+      const metadata = new grpcModule.Metadata();
       if (options.accessToken) {
         metadata.set('X-SF-TOKEN', options.accessToken);
       }
-      return new OTLPMetricExporter({
+      return new otlpGrpc.OTLPMetricExporter({
         url: endpoint,
         metadata,
       });
