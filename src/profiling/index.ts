@@ -125,8 +125,6 @@ export function startProfiling(opts: StartProfilingOptions = {}) {
     profilingContextManagerEnabled = true;
   }
 
-  const exporters = options.exporterFactory(options);
-
   const samplingIntervalMicroseconds = options.callstackInterval * 1_000;
   const startOptions = {
     samplingIntervalMicroseconds,
@@ -136,36 +134,45 @@ export function startProfiling(opts: StartProfilingOptions = {}) {
 
   extStartProfiling(extension, startOptions);
 
-  const cpuSamplesCollectInterval = setInterval(() => {
-    const cpuProfile = extCollectCpuProfile(extension);
+  let cpuSamplesCollectInterval: NodeJS.Timer;
+  let memSamplesCollectInterval: NodeJS.Timer;
+  let exporters: ProfilingExporter[] = [];
 
-    if (cpuProfile) {
-      recordCpuProfilerMetrics(cpuProfile);
+  // Tracing needs to be started after profiling, setting up the profiling exporter
+  // causes @grpc/grpc-js to be loaded, but to avoid any loads before tracing's setup
+  // has finished, load it next event loop.
+  setImmediate(() => {
+    exporters = options.exporterFactory(options);
+    cpuSamplesCollectInterval = setInterval(() => {
+      const cpuProfile = extCollectCpuProfile(extension);
 
-      for (const exporter of exporters) {
-        exporter.send(cpuProfile);
-      }
-    }
-  }, options.collectionDuration);
-
-  cpuSamplesCollectInterval.unref();
-
-  let memSamplesCollectInterval: NodeJS.Timer | undefined;
-  if (options.memoryProfilingEnabled) {
-    extStartMemoryProfiling(extension, options.memoryProfilingOptions);
-    memSamplesCollectInterval = setInterval(() => {
-      const heapProfile = extCollectHeapProfile(extension);
-      if (heapProfile) {
-        recordHeapProfilerMetrics(heapProfile);
+      if (cpuProfile) {
+        recordCpuProfilerMetrics(cpuProfile);
 
         for (const exporter of exporters) {
-          exporter.sendHeapProfile(heapProfile);
+          exporter.send(cpuProfile);
         }
       }
     }, options.collectionDuration);
 
-    memSamplesCollectInterval.unref();
-  }
+    cpuSamplesCollectInterval.unref();
+
+    if (options.memoryProfilingEnabled) {
+      extStartMemoryProfiling(extension, options.memoryProfilingOptions);
+      memSamplesCollectInterval = setInterval(() => {
+        const heapProfile = extCollectHeapProfile(extension);
+        if (heapProfile) {
+          recordHeapProfilerMetrics(heapProfile);
+
+          for (const exporter of exporters) {
+            exporter.sendHeapProfile(heapProfile);
+          }
+        }
+      }, options.collectionDuration);
+
+      memSamplesCollectInterval.unref();
+    }
+  });
 
   return {
     stop: () => {

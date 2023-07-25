@@ -16,7 +16,7 @@
 import * as fs from 'fs';
 import { gzip } from 'zlib';
 import { promisify } from 'util';
-import * as grpc from '@grpc/grpc-js';
+import type * as GrpcModule from '@grpc/grpc-js';
 import { diag } from '@opentelemetry/api';
 import { getNonEmptyEnvVar } from '../utils';
 
@@ -239,9 +239,12 @@ function maybeReadPath(location: string | undefined): Buffer | undefined {
   return readContentSync(location);
 }
 
-export function parseEndpoint(endpoint: string): {
+export function parseEndpoint(
+  endpoint: string,
+  grpc: typeof GrpcModule
+): {
   host: string;
-  credentials: grpc.ChannelCredentials;
+  credentials: GrpcModule.ChannelCredentials;
 } {
   let host = endpoint;
   let credentials = grpc.ChannelCredentials.createInsecure();
