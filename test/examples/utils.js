@@ -163,7 +163,7 @@ function compareSpans(actual, expected) {
   } catch (e) {
     e.actualSpan = util.inspect(actual);
     e.expectedSpan = expected;
-    e.message = `At span[${idx}] "${actual.name}": ${e.message}`;
+    e.message = `Span mismatch "${actual.name}": ${e.message}`;
     throw e;
   }
 }
