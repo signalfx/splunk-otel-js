@@ -36,21 +36,9 @@ const assertFunction = (api, memberName) => {
   );
 };
 
-/**
- * The intention here is to test consistent behavior and shape across our APIs
- * Currently there's none of it, which is fine because only tracing is stable
- * and that's why most of those tests are currently skipped. For now this
- * communicates the intention and progress of merging the API surface.
- */
-
 describe('API', () => {
   describe('global', () => {
     const api = splunk;
-
-    it.skip('should expose start and stop', () => {
-      assertFunction(api, 'start');
-      assertFunction(api, 'stop');
-    });
 
     it('should export signal-specific start', () => {
       assertFunction(api, 'startTracing');
@@ -67,12 +55,6 @@ describe('API', () => {
     // Since there's a lot of case-by-case logic in the tests, will mimic a
     // would-be-loop-iteration. will perhaps not need these local vars eventually.
     const api = tracing;
-
-    it.skip('should expose start and stop', () => {
-      // We'd eventually want to have consistency in our APIs internally
-      assertFunction(api, 'start');
-      assertFunction(api, 'stop');
-    });
 
     it('should export signal-specific start', () => {
       assertFunction(api, 'startTracing');
@@ -97,58 +79,18 @@ describe('API', () => {
   describe('metrics', () => {
     const api = metrics;
 
-    it.skip('should expose start and stop', () => {
-      // We'd eventually want to have consistency in our APIs internally
-      assertFunction(api, 'start');
-      assertFunction(api, 'stop');
-    });
-
     it('should export signal-specific start', () => {
       assertFunction(api, 'startMetrics');
     });
 
-    it.skip('should export signal-specific stop', () => {
-      assertFunction(api, 'stopMetrics');
-    });
-
-    it.skip('should throw if start is called multiple times', () => {
-      api.startMetrics();
-      assert.throws(() => api.startMetrics());
-      api.stopMetrics();
-    });
-
-    it.skip('should do nothing if stop is called without start (even multiple times)', () => {
-      api.stopMetrics();
-      api.stopMetrics();
-    });
   });
 
   describe('profiling', () => {
     const api = profiling;
 
-    it.skip('should expose start and stop', () => {
-      // We'd eventually want to have consistency in our APIs internally
-      assertFunction(api, 'start');
-      assertFunction(api, 'stop');
-    });
-
     it('should export signal-specific start', () => {
       assertFunction(api, 'startProfiling');
     });
 
-    it.skip('should export signal-specific stop', () => {
-      assertFunction(api, 'stopProfiling');
-    });
-
-    it.skip('should throw if start is called multiple times', () => {
-      api.startProfiling();
-      assert.throws(() => api.startProfiling());
-      api.stopProfiling();
-    });
-
-    it.skip('should do nothing if stop is called without start (even multiple times)', () => {
-      api.stopProfiling();
-      api.stopProfiling();
-    });
   });
 });

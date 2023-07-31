@@ -28,6 +28,7 @@ import { Instrumentation } from '@opentelemetry/instrumentation';
 
 describe('instrumentations', () => {
   beforeEach(cleanEnvironment);
+  after(cleanEnvironment);
 
   it('loads instrumentations if they are installed', () => {
     const loadedInstrumentations = getInstrumentations();
