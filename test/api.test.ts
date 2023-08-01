@@ -82,7 +82,6 @@ describe('API', () => {
     it('should export signal-specific start', () => {
       assertFunction(api, 'startMetrics');
     });
-
   });
 
   describe('profiling', () => {
@@ -91,6 +90,5 @@ describe('API', () => {
     it('should export signal-specific start', () => {
       assertFunction(api, 'startProfiling');
     });
-
   });
 });

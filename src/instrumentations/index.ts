@@ -207,22 +207,18 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
   },
 ];
 
+function envKey(info: InstrumentationInfo) {
+  return `OTEL_INSTRUMENTATION_${info.shortName.toUpperCase()}_ENABLED` as EnvVarKey;
+}
+
 function getInstrumentationsToLoad() {
-  if (getEnvBoolean('OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED', true)) {
-    return bundledInstrumentations;
-  }
-
-  const toLoad = [];
-
-  for (const desc of bundledInstrumentations) {
-    const envVar =
-      `OTEL_INSTRUMENTATION_${desc.shortName.toUpperCase()}_ENABLED` as EnvVarKey;
-    if (getEnvBoolean(envVar, false)) {
-      toLoad.push(desc);
-    }
-  }
-
-  return toLoad;
+  const enabledByDefault = getEnvBoolean(
+    'OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED',
+    true
+  );
+  return bundledInstrumentations.filter((info) =>
+    getEnvBoolean(envKey(info), enabledByDefault)
+  );
 }
 
 export function getInstrumentations() {

@@ -86,4 +86,17 @@ describe('instrumentations', () => {
     const instrumentations = getInstrumentations();
     assert.equal(instrumentations.length, 2);
   });
+
+  it('can disable a specific instrumentation', () => {
+    process.env.OTEL_INSTRUMENTATION_PG_ENABLED = 'false';
+    const loadedInstrumentations = getInstrumentations();
+    assert.equal(
+      loadedInstrumentations.find(
+        (instr) =>
+          instr.instrumentationName === '@opentelemetry/instrumentation-pg'
+      ),
+      undefined
+    );
+    assert.equal(loadedInstrumentations.length, 35);
+  });
 });
