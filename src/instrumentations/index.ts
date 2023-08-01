@@ -33,7 +33,7 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
   {
     module: '@opentelemetry/instrumentation-aws-sdk',
     name: 'AwsInstrumentation',
-    shortName: 'aws-sdk',
+    shortName: 'aws_sdk',
   },
   {
     module: '@opentelemetry/instrumentation-bunyan',
@@ -43,7 +43,7 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
   {
     module: '@opentelemetry/instrumentation-cassandra-driver',
     name: 'CassandraDriverInstrumentation',
-    shortName: 'cassandra-driver',
+    shortName: 'cassandra_driver',
   },
   {
     module: '@opentelemetry/instrumentation-connect',
@@ -73,7 +73,7 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
   {
     module: '@opentelemetry/instrumentation-generic-pool',
     name: 'GenericPoolInstrumentation',
-    shortName: 'generic-pool',
+    shortName: 'generic_pool',
   },
   {
     module: '@opentelemetry/instrumentation-graphql',
@@ -138,7 +138,7 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
   {
     module: '@opentelemetry/instrumentation-nestjs-core',
     name: 'NestInstrumentation',
-    shortName: 'nestjs-core',
+    shortName: 'nestjs_core',
   },
   {
     module: '@opentelemetry/instrumentation-net',
@@ -163,7 +163,7 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
   {
     module: '@opentelemetry/instrumentation-redis-4',
     name: 'RedisInstrumentation',
-    shortName: 'redis-4',
+    shortName: 'redis_4',
   },
   {
     module: '@opentelemetry/instrumentation-restify',

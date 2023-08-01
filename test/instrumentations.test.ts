@@ -74,7 +74,11 @@ describe('instrumentations', () => {
       const instrumentations = getInstrumentations();
       assert.equal(instrumentations.length, 1);
       const instrumentation: Instrumentation = instrumentations[0];
-      assert(instrumentation.instrumentationName.includes(bundled.shortName));
+      assert(
+        instrumentation.instrumentationName.includes(
+          bundled.shortName.replace('_', '-')
+        )
+      );
       cleanEnvironment();
     }
   });
@@ -88,12 +92,12 @@ describe('instrumentations', () => {
   });
 
   it('can disable a specific instrumentation', () => {
-    process.env.OTEL_INSTRUMENTATION_PG_ENABLED = 'false';
+    process.env.OTEL_INSTRUMENTATION_REDIS_4_ENABLED = 'false';
     const loadedInstrumentations = getInstrumentations();
     assert.equal(
       loadedInstrumentations.find(
         (instr) =>
-          instr.instrumentationName === '@opentelemetry/instrumentation-pg'
+          instr.instrumentationName === '@opentelemetry/instrumentation-redis-4'
       ),
       undefined
     );
