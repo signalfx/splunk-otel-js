@@ -17,12 +17,21 @@
 import * as assert from 'assert';
 import * as rewire from 'rewire';
 
-import * as instrumentations from '../src/instrumentations';
+import {
+  bundledInstrumentations,
+  getInstrumentations,
+} from '../src/instrumentations';
 import * as loader from '../src/instrumentations/loader';
 
+import { cleanEnvironment } from './utils';
+import { Instrumentation } from '@opentelemetry/instrumentation';
+
 describe('instrumentations', () => {
+  beforeEach(cleanEnvironment);
+  after(cleanEnvironment);
+
   it('loads instrumentations if they are installed', () => {
-    const loadedInstrumentations = instrumentations.getInstrumentations();
+    const loadedInstrumentations = getInstrumentations();
     assert.equal(loadedInstrumentations.length, 36);
   });
 
@@ -49,5 +58,49 @@ describe('instrumentations', () => {
     assert.strictEqual(got, HttpInstrumentation);
 
     revert();
+  });
+
+  it('does not load instrumentations if OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED is false', () => {
+    process.env.OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED = 'false';
+    assert.equal(getInstrumentations().length, 0);
+  });
+
+  it('can load instrumentations one at a time via env vars', () => {
+    for (const bundled of bundledInstrumentations) {
+      process.env.OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED = 'false';
+      process.env[
+        `OTEL_INSTRUMENTATION_${bundled.shortName.toUpperCase()}_ENABLED`
+      ] = 'true';
+      const instrumentations = getInstrumentations();
+      assert.equal(instrumentations.length, 1);
+      const instrumentation: Instrumentation = instrumentations[0];
+      assert(
+        instrumentation.instrumentationName.includes(
+          bundled.shortName.replace('_', '-')
+        )
+      );
+      cleanEnvironment();
+    }
+  });
+
+  it('can load multiple instrumentations via env vars', () => {
+    process.env.OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED = 'false';
+    process.env.OTEL_INSTRUMENTATION_REDIS_ENABLED = 'true';
+    process.env.OTEL_INSTRUMENTATION_PG_ENABLED = 'true';
+    const instrumentations = getInstrumentations();
+    assert.equal(instrumentations.length, 2);
+  });
+
+  it('can disable a specific instrumentation', () => {
+    process.env.OTEL_INSTRUMENTATION_REDIS_4_ENABLED = 'false';
+    const loadedInstrumentations = getInstrumentations();
+    assert.equal(
+      loadedInstrumentations.find(
+        (instr) =>
+          instr.instrumentationName === '@opentelemetry/instrumentation-redis-4'
+      ),
+      undefined
+    );
+    assert.equal(loadedInstrumentations.length, 35);
   });
 });
