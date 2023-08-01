@@ -1,5 +1,13 @@
 # Change Log - @splunk/otel
 
+## 2.3.0
+
+August 1, 2023
+
+- Upgrade to OpenTelemetry `1.15.1` / `0.41.1`. [#761](https://github.com/signalfx/splunk-otel-js/pull/761)
+- Fix confusing error message regarding `grpc`: `@opentelemetry/instrumentation-grpc Module @grpc/grpc-js has been loaded before @opentelemetry/instrumentation-grpc so it might not work, please initialize it before requiring @grpc/grpc-js`. `grpc` is internally now lazily loaded. [#762](https://github.com/signalfx/splunk-otel-js/pull/762)
+- Allow enabling and disabling instrumentations via environment variables by introducing `OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED` and `OTEL_INSTRUMENTATION_[NAME]_ENABLED`. [#769](https://github.com/signalfx/splunk-otel-js/pull/769)
+
 ## 2.2.4
 
 July 1, 2023
