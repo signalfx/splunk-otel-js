@@ -12,6 +12,9 @@ jobs:
       matrix:
         container: ['node:14.0.0']
         node_api_target: ['14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0']
+        include:
+          - container: 'node:16.0.0'
+            node_api_target: '20.0.0'
     container: ${{ matrix.container }}
     steps:
       - name: Checkout
@@ -32,7 +35,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-2019, macos-11]
-        node_api_target: ['14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0']
+        node_api_target: ['14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0', '20.0.0']
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -86,7 +89,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ['ubuntu-latest', 'windows-2019', 'macos-latest']
-        nodejs: ['14', '16', '17', '18']
+        nodejs: ['14', '16', '17', '18', '20']
     steps:
       - name: Checkout
         uses: actions/checkout@v3

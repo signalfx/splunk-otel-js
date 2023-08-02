@@ -1,6 +1,9 @@
 {
   "targets": [{
     "target_name": "metrics",
+    "variables": {
+      "cppstd_ver": "<!(node -pe \"parseInt(process.versions.node.split('.')[0]) >= 20 ? 17 : 11\")"
+    },
     "sources": [
       "src/native_ext/util/arena.cpp",
       "src/native_ext/util/hex.cpp",
@@ -17,12 +20,13 @@
     "conditions": [
       ["OS == 'linux'", {
         "cflags": [
-          "-std=c++11",
+          "-std=c++<(cppstd_ver)",
           "-Wall",
           "-Werror"
         ],
         "cflags_cc": [
-          "-Wno-attributes"
+          "-Wno-attributes",
+          "-Wno-deprecated-declarations"
         ]
       }],
       ["OS == 'win'", {
@@ -31,16 +35,24 @@
         ],
         "defines": [
           "NOMINMAX"
-        ]
+        ],
+        "msvs_settings": {
+          "VCCLCompilerTool": {
+            "AdditionalOptions": [
+              "-std:c++<(cppstd_ver)"
+            ]
+          }
+        }
       }],
       ["OS == 'mac'", {
         "xcode_settings": {
           "MACOSX_DEPLOYMENT_TARGET": "10.10",
           "OTHER_CFLAGS": [
-            "-std=c++14",
+            "-std=c++17",
             "-stdlib=libc++",
             "-Wall",
-            "-Werror"
+            "-Werror",
+            "-Wno-deprecated-declarations"
           ]
         },
       }],
