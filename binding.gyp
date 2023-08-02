@@ -2,7 +2,7 @@
   "targets": [{
     "target_name": "metrics",
     "variables": {
-      "cppstd_ver_linux": "<!(node -pe \"parseInt(process.versions.node.split('.')[0]) >= 20 ? 17 : 11\")",
+      "cppstd_ver": "<!(node -pe \"parseInt(process.versions.node.split('.')[0]) >= 20 ? 17 : 11\")",
       "cppstd_ver_mac": "<!(node -pe \"parseInt(process.versions.node.split('.')[0]) >= 20 ? 17 : 14\")"
     },
     "sources": [
@@ -21,7 +21,7 @@
     "conditions": [
       ["OS == 'linux'", {
         "cflags": [
-          "-std=c++<(cppstd_ver_linux)",
+          "-std=c++<(cppstd_ver)",
           "-Wall",
           "-Werror"
         ],
@@ -36,7 +36,14 @@
         ],
         "defines": [
           "NOMINMAX"
-        ]
+        ],
+        "msvs_settings": {
+          "VCCLCompilerTool": {
+            "AdditionalOptions": [
+              "-std:c++<(cppstd_ver)"
+            ]
+          }
+        }
       }],
       ["OS == 'mac'", {
         "xcode_settings": {
