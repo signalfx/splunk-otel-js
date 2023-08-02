@@ -22,7 +22,8 @@
           "-Werror"
         ],
         "cflags_cc": [
-          "-Wno-attributes"
+          "-Wno-attributes",
+          "-Wno-deprecated-declarations"
         ]
       }],
       ["OS == 'win'", {
