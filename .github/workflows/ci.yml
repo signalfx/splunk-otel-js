@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        container: ['node:14.0.0']
+        container: ['node:16.0.0']
         node_api_target: ['14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0', '20.0.0']
     container: ${{ matrix.container }}
     steps:
