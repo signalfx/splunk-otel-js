@@ -17,7 +17,7 @@
     "conditions": [
       ["OS == 'linux'", {
         "cflags": [
-          "-std=c++11",
+          "-std=c++17",
           "-Wall",
           "-Werror"
         ],
@@ -38,7 +38,7 @@
         "xcode_settings": {
           "MACOSX_DEPLOYMENT_TARGET": "10.10",
           "OTHER_CFLAGS": [
-            "-std=c++14",
+            "-std=c++17",
             "-stdlib=libc++",
             "-Wall",
             "-Werror"
