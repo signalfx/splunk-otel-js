@@ -2,7 +2,7 @@
   "targets": [{
     "target_name": "metrics",
     "variables": {
-      "cppstd_ver": '<!(node -e "console.log(parseInt(process.versions.node.split('.')[0]) >= 20 ? '17' : '11')")'
+      "cppstd_ver": "<!(node -pe \"parseInt(process.versions.node.split('.')[0]) >= 20 ? '17' : '11'\")"
     },
     "sources": [
       "src/native_ext/util/arena.cpp",
