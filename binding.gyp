@@ -41,7 +41,8 @@
             "-std=c++17",
             "-stdlib=libc++",
             "-Wall",
-            "-Werror"
+            "-Werror",
+            "-Wno-deprecated-declarations"
           ]
         },
       }],
