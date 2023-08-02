@@ -2,7 +2,7 @@
   "targets": [{
     "target_name": "metrics",
     "variables": {
-      "cppstd_ver_linux": "<!(node -pe \"parseInt(process.versions.node.split('.')[0]) >= 20 ? '17' : '11'\")"
+      "cppstd_ver_linux": "<!(node -pe \"parseInt(process.versions.node.split('.')[0]) >= 20 ? '17' : '11'\")",
       "cppstd_ver_mac": "<!(node -pe \"parseInt(process.versions.node.split('.')[0]) >= 20 ? '17' : '14'\")"
     },
     "sources": [
