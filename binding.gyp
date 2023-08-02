@@ -2,8 +2,7 @@
   "targets": [{
     "target_name": "metrics",
     "variables": {
-      "cppstd_ver": "<!(node -pe \"parseInt(process.versions.node.split('.')[0]) >= 20 ? 17 : 11\")",
-      "cppstd_ver_mac": "<!(node -pe \"parseInt(process.versions.node.split('.')[0]) >= 20 ? 17 : 14\")"
+      "cppstd_ver": "<!(node -pe \"parseInt(process.versions.node.split('.')[0]) >= 20 ? 17 : 11\")"
     },
     "sources": [
       "src/native_ext/util/arena.cpp",
@@ -49,7 +48,7 @@
         "xcode_settings": {
           "MACOSX_DEPLOYMENT_TARGET": "10.10",
           "OTHER_CFLAGS": [
-            "-std=c++<(cppstd_ver_mac)",
+            "-std=c++17",
             "-stdlib=libc++",
             "-Wall",
             "-Werror",
