@@ -1,5 +1,11 @@
 # Change Log - @splunk/otel
 
+## 2.3.1
+
+August 2, 2023
+
+- Support Node.js 20 [#771](https://github.com/signalfx/splunk-otel-js/pull/771)
+
 ## 2.3.0
 
 August 1, 2023
