@@ -1,5 +1,11 @@
 # Change Log - @splunk/otel
 
+## 2.3.2
+
+August 9, 2023
+
+- Upgrade to OpenTelemetry `1.15.2` / `0.41.2`. [#778](https://github.com/signalfx/splunk-otel-js/pull/778)
+
 ## 2.3.1
 
 August 2, 2023
