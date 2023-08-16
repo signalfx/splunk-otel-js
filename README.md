@@ -91,4 +91,4 @@ distribution of [OpenTelemetry JS](https://github.com/open-telemetry/opentelemet
 It is licensed under the terms of the Apache Software License version 2.0. See [the
 license file](./LICENSE) for more details.
 
->ℹ️&nbsp;&nbsp;SignalFx was acquired by Splunk in October 2019. See [Splunk SignalFx](https://www.splunk.com/en_us/investor-relations/acquisitions/signalfx.html) for more information.
+>ℹ️&nbsp;&nbsp;SignalFx was acquired by Splunk in October 2019. See [Splunk SignalFx](https://www.splunk.com/en_us/about-splunk/acquisitions/signalfx.html) for more information.

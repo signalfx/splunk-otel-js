@@ -87,8 +87,15 @@ export function startTracing(opts: StartTracingOptions = {}): boolean {
     tracingContextManagerEnabled = true;
   }
 
-  // tracer provider
+  // Workaround for https://github.com/open-telemetry/opentelemetry-js/issues/3422
+  const envTracesExporter = process.env.OTEL_TRACES_EXPORTER;
+  if (envTracesExporter !== undefined) {
+    process.env.OTEL_TRACES_EXPORTER = '';
+  }
   const provider = new NodeTracerProvider(options.tracerConfig);
+  if (envTracesExporter !== undefined) {
+    process.env.OTEL_TRACES_EXPORTER = envTracesExporter;
+  }
 
   configureInstrumentations(options);
 
