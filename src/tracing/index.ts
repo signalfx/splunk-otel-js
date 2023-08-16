@@ -89,7 +89,7 @@ export function startTracing(opts: StartTracingOptions = {}): boolean {
 
   // Workaround for https://github.com/open-telemetry/opentelemetry-js/issues/3422
   const envTracesExporter = process.env.OTEL_TRACES_EXPORTER;
-  process.env.OTEL_TRACES_EXPORTER = undefined;
+  process.env.OTEL_TRACES_EXPORTER = '';
   const provider = new NodeTracerProvider(options.tracerConfig);
   process.env.OTEL_TRACES_EXPORTER = envTracesExporter;
 
