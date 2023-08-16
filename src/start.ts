@@ -28,11 +28,21 @@ import {
   _setDefaultOptions as setDefaultProfilingOptions,
 } from './profiling';
 import type { EnvVarKey, LogLevel } from './types';
-import { startTracing, stopTracing, StartTracingOptions } from './tracing';
+import {
+  getLoadedInstrumentations,
+  startTracing,
+  stopTracing,
+  StartTracingOptions,
+} from './tracing';
 import { allowedTracingOptions } from './tracing/options';
 import { allowedProfilingOptions } from './profiling/types';
 import { allowedMetricsOptions } from './metrics';
-import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
+import {
+  diag,
+  DiagConsoleLogger,
+  DiagLogLevel,
+  metrics as metricsApi,
+} from '@opentelemetry/api';
 
 interface Options {
   accessToken: string;
@@ -119,6 +129,11 @@ export const start = (options: Partial<Options> = {}) => {
     running.metrics = startMetrics(
       Object.assign(pick(restOptions, allowedMetricsOptions), metrics)
     );
+  }
+
+  const meterProvider = metricsApi.getMeterProvider();
+  for (const instrumentation of getLoadedInstrumentations()) {
+    instrumentation.setMeterProvider(meterProvider);
   }
 };
 
