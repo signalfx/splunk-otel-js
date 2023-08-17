@@ -15,6 +15,7 @@
  */
 import {
   assertNoExtraneousProperties,
+  getEnvBoolean,
   getNonEmptyEnvVar,
   parseEnvBooleanString,
   parseLogLevel,
@@ -42,6 +43,9 @@ import {
   DiagConsoleLogger,
   DiagLogLevel,
   metrics as metricsApi,
+  MeterOptions,
+  MeterProvider,
+  createNoopMeter,
 } from '@opentelemetry/api';
 
 interface Options {
@@ -131,11 +135,25 @@ export const start = (options: Partial<Options> = {}) => {
     );
   }
 
-  const meterProvider = metricsApi.getMeterProvider();
+  const meterProvider = getEnvBoolean(
+    'SPLUNK_INSTRUMENTATION_METRICS_ENABLED',
+    false
+  )
+    ? metricsApi.getMeterProvider()
+    : createNoopMeterProvider();
   for (const instrumentation of getLoadedInstrumentations()) {
     instrumentation.setMeterProvider(meterProvider);
   }
 };
+
+function createNoopMeterProvider(): MeterProvider {
+  const meter = createNoopMeter();
+  return {
+    getMeter(_name: string, _version?: string, _options?: MeterOptions) {
+      return meter;
+    },
+  };
+}
 
 export const stop = async () => {
   const promises = [];
