@@ -15,6 +15,7 @@
  */
 import {
   assertNoExtraneousProperties,
+  getEnvBoolean,
   getNonEmptyEnvVar,
   parseEnvBooleanString,
   parseLogLevel,
@@ -28,11 +29,24 @@ import {
   _setDefaultOptions as setDefaultProfilingOptions,
 } from './profiling';
 import type { EnvVarKey, LogLevel } from './types';
-import { startTracing, stopTracing, StartTracingOptions } from './tracing';
+import {
+  getLoadedInstrumentations,
+  startTracing,
+  stopTracing,
+  StartTracingOptions,
+} from './tracing';
 import { allowedTracingOptions } from './tracing/options';
 import { allowedProfilingOptions } from './profiling/types';
 import { allowedMetricsOptions } from './metrics';
-import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
+import {
+  diag,
+  DiagConsoleLogger,
+  DiagLogLevel,
+  metrics as metricsApi,
+  MeterOptions,
+  MeterProvider,
+  createNoopMeter,
+} from '@opentelemetry/api';
 
 interface Options {
   accessToken: string;
@@ -120,7 +134,26 @@ export const start = (options: Partial<Options> = {}) => {
       Object.assign(pick(restOptions, allowedMetricsOptions), metrics)
     );
   }
+
+  const meterProvider = getEnvBoolean(
+    'SPLUNK_INSTRUMENTATION_METRICS_ENABLED',
+    false
+  )
+    ? metricsApi.getMeterProvider()
+    : createNoopMeterProvider();
+  for (const instrumentation of getLoadedInstrumentations()) {
+    instrumentation.setMeterProvider(meterProvider);
+  }
 };
+
+function createNoopMeterProvider(): MeterProvider {
+  const meter = createNoopMeter();
+  return {
+    getMeter(_name: string, _version?: string, _options?: MeterOptions) {
+      return meter;
+    },
+  };
+}
 
 export const stop = async () => {
   const promises = [];

@@ -26,7 +26,11 @@ import {
   TracerProvider,
 } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
-import { registerInstrumentations } from '@opentelemetry/instrumentation';
+import {
+  Instrumentation,
+  InstrumentationOption,
+  registerInstrumentations,
+} from '@opentelemetry/instrumentation';
 import {
   AsyncHooksContextManager,
   AsyncLocalStorageContextManager,
@@ -56,11 +60,36 @@ const allowDoubleStart = parseEnvBooleanString(
 );
 let isStarted = false;
 let tracingContextManagerEnabled = false;
+let _instrumentations: Instrumentation[] = [];
 
 let unregisterInstrumentations: (() => void) | null = null;
 
 export function isTracingContextManagerEnabled(): boolean {
   return tracingContextManagerEnabled;
+}
+
+export function getLoadedInstrumentations() {
+  return _instrumentations;
+}
+
+function setLoadedInstrumentations(instrumentations: InstrumentationOption[]) {
+  _instrumentations = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function storeInstrumentation(instrumentation: any) {
+    if (typeof instrumentation['setMeterProvider'] === 'function') {
+      _instrumentations.push(instrumentation);
+    }
+  }
+
+  for (const option of instrumentations) {
+    if (Array.isArray(option)) {
+      for (const instrumentation of option) {
+        storeInstrumentation(instrumentation);
+      }
+    } else {
+      storeInstrumentation(option);
+    }
+  }
 }
 
 export type StartTracingOptions = Partial<Options>;
@@ -104,6 +133,8 @@ export function startTracing(opts: StartTracingOptions = {}): boolean {
     tracerProvider: provider,
     instrumentations: options.instrumentations,
   });
+
+  setLoadedInstrumentations(options.instrumentations);
 
   // processors
   let processors = options.spanProcessorFactory(options);
