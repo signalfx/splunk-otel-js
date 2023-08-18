@@ -1,5 +1,12 @@
 # Change Log - @splunk/otel
 
+## 2.4.0
+
+August 18, 2023
+
+- Fix the error message about an unavailable exporter (e.g. `Exporter "otlp" requested through environment variable is unavailable.`) when `OTEL_TRACES_EXPORTER` is set. Workaround for https://github.com/open-telemetry/opentelemetry-js/issues/3422. [#783](https://github.com/signalfx/splunk-otel-js/pull/783)
+- Explicitly set a meter provider for instrumentations. `NoopMeterProvider` is set by default. If metrics are enabled and `SPLUNK_INSTRUMENTATION_METRICS_ENABLED` is set to true, instrumentation specific metrics will be emitted, for example `http.server.duration` from the `http` instrumentation. [#784](https://github.com/signalfx/splunk-otel-js/pull/784)
+
 ## 2.3.2
 
 August 9, 2023
