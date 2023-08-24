@@ -80,7 +80,7 @@ You can find more instrumentation packages in the [OpenTelemetry Registry](https
 
 ## Troubleshooting
 
-For troubleshooting issues with the Splunk Distribution of OpenTelemetry JS, see [TroTroubleshoot Node.js instrumentation for Splunk Observability Cloud](https://quickdraw.splunk.com/redirect/?product=Observability&version=current&location=nodejs.application.tshoot) in the official documentation.
+For troubleshooting issues with the Splunk Distribution of OpenTelemetry JS, see [Troubleshoot Node.js instrumentation for Splunk Observability Cloud](https://quickdraw.splunk.com/redirect/?product=Observability&version=current&location=nodejs.application.tshoot) in the official documentation.
 
 > Examples and developer documentation for version 1.x is available at [/tree/1.x](https://github.com/signalfx/splunk-otel-js/tree/1.x).
 
