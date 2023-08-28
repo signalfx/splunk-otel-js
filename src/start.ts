@@ -153,7 +153,9 @@ function createNoopMeterProvider() {
     },
     // AWS Lambda instrumentation check for the existence of forceFlush,
     // if it does not exist, an error is logged for each span.
-    forceFlush() {},
+    forceFlush() {
+      return Promise.resolve();
+    },
   };
 }
 
