@@ -1,5 +1,11 @@
 # Change Log - @splunk/otel
 
+## 2.4.1
+
+August 28, 2023
+
+- Add missing `forceFlush` method to the `NoopMeterProvider`. Some instrumentations (AWS Lambda) logged an error when `forceFlush` was unavailable. [#788](https://github.com/signalfx/splunk-otel-js/pull/788) [#791](https://github.com/signalfx/splunk-otel-js/pull/791)
+
 ## 2.4.0
 
 August 18, 2023
