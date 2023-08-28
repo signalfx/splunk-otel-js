@@ -44,7 +44,6 @@ import {
   DiagLogLevel,
   metrics as metricsApi,
   MeterOptions,
-  MeterProvider,
   createNoopMeter,
 } from '@opentelemetry/api';
 
@@ -146,12 +145,15 @@ export const start = (options: Partial<Options> = {}) => {
   }
 };
 
-function createNoopMeterProvider(): MeterProvider {
+function createNoopMeterProvider() {
   const meter = createNoopMeter();
   return {
     getMeter(_name: string, _version?: string, _options?: MeterOptions) {
       return meter;
     },
+    // AWS Lambda instrumentation check for the existence of forceFlush,
+    // if it does not exist, an error is logged for each span.
+    forceFlush() {},
   };
 }
 
