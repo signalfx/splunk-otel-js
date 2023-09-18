@@ -21,6 +21,9 @@ service:
     traces:
       receivers: [otlp]
       exporters: [httpsink, logging/debug]
+    metrics:
+      receivers: [otlp]
+      exporters: [logging/debug]
     logs/profiling:
       receivers: [otlp]
       exporters: [logging/debug]
