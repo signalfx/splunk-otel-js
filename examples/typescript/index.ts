@@ -6,7 +6,7 @@ start({
   // Set up the OpenTelemetry metrics pipeline and start collecting runtime metrics.
   metrics: {
     runtimeMetricsEnabled: true,
-  }
+  },
 });
 
 // Load libraries after calling start()
@@ -18,7 +18,7 @@ const requestCounter = meter.createCounter('requests');
 
 const app = express();
 
-app.get("/", (req, res) => {
+app.get('/', (req, res) => {
   requestCounter.add(1);
   const randomValue = tracer.startActiveSpan('calculate-random', (span) => {
     const result = (Math.random() * 42) | 0;
