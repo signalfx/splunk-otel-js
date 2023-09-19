@@ -1,0 +1,15 @@
+services:
+  app:
+    working_dir: /home/node/app/examples/typescript
+    env_file: ./typescript/app.env
+    command: npm run start
+    depends_on:
+      - collector
+  test:
+    command: node ./typescript
+    environment:
+      REQ_URL: http://app/
+      COLLECTOR_URL: http://collector:8378
+    depends_on:
+      - app
+      - collector

@@ -23,6 +23,8 @@ jobs:
             name: 'Log injection'
           - target: '-f profiling.override.yml'
             name: 'Profiling'
+          - target: '-f typescript.override.yml'
+            name: 'TypeScript'
     name: e2e published ${{ matrix.name }}
     steps:
       - name: Checkout
