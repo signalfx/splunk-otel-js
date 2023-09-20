@@ -1,5 +1,11 @@
 # Change Log - @splunk/otel
 
+## 2.4.2
+
+September 20, 2023
+
+- Add support for `OTEL_METRICS_EXPORTER=none`. [#801](https://github.com/signalfx/splunk-otel-js/pull/801)
+
 ## 2.4.1
 
 August 28, 2023
