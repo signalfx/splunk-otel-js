@@ -57,6 +57,12 @@ describe('metrics options', () => {
       assert(readers[1]['_exporter'] instanceof ConsoleMetricExporter);
     });
 
+    it('does not create an exporter for none value', () => {
+      process.env.OTEL_METRICS_EXPORTER = 'none';
+      const options = _setDefaultOptions();
+      assert.deepStrictEqual(options.metricReaderFactory(options), []);
+    });
+
     it('throws on invalid key', () => {
       process.env.OTEL_METRICS_EXPORTER = 'invalid-key';
 
