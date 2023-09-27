@@ -43,7 +43,7 @@ import type {
 } from 'kafkajs';
 import { KafkaJsInstrumentationConfig } from './types';
 import { VERSION } from '../../../version';
-import { bufferTextMapGetter } from './propagtor';
+import { bufferTextMapGetter } from './propagator';
 import {
   InstrumentationBase,
   InstrumentationModuleDefinition,

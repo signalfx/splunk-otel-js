@@ -22,7 +22,19 @@ adding toString() to make sure string is returned
 */
 export const bufferTextMapGetter: TextMapGetter = {
   get(carrier, key) {
-    return carrier?.[key]?.toString();
+    if (carrier === undefined) {
+      return undefined;
+    }
+
+    const keys = Object.keys(carrier);
+
+    for (const carrierKey of keys) {
+      if (carrierKey.toLowerCase() === key) {
+        return carrier[carrierKey]?.toString();
+      }
+    }
+
+    return undefined;
   },
 
   keys(carrier) {
