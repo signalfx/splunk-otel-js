@@ -154,7 +154,7 @@ jobs:
       matrix:
         container: ['centos:7', 'centos:8']
         nodejs: [14, 16, 18, 20]
-        cmd: 'yum install https://rpm.nodesource.com/pub_${NODE_VERSION}.x/nodistro/repo/nodesource-release-nodistro-1.noarch.rpm -y && yum install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1'
+        cmd: ['yum install https://rpm.nodesource.com/pub_${NODE_VERSION}.x/nodistro/repo/nodesource-release-nodistro-1.noarch.rpm -y && yum install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1']
         exclude:
           - container: 'centos:7'
             nodejs: 18
