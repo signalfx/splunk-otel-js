@@ -154,6 +154,7 @@ jobs:
       matrix:
         container: ['centos:7', 'centos:8']
         nodejs: [14, 16, 18, 20]
+        cmd: 'yum install https://rpm.nodesource.com/pub_${NODE_VERSION}.x/nodistro/repo/nodesource-release-nodistro-1.noarch.rpm -y && yum install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1'
         exclude:
           - container: 'centos:7'
             nodejs: 18
@@ -161,13 +162,17 @@ jobs:
             nodejs: 20
           - container: 'centos:8'
             nodejs: 14
+        include:
+          - container: 'centos:7'
+            nodejs: 14
+            cmd: 'curl -sL https://rpm.nodesource.com/setup_14.x | bash - && yum install -y nodejs'
     name: Centos check - ${{ matrix.container }} - Node.js ${{ matrix.nodejs }}
     container: ${{ matrix.container }}
     env:
       NODE_VERSION: ${{ matrix.nodejs }}
     steps:
       - name: Setup container
-        run: curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && yum install -y nodejs
+        run: ${{ matrix.cmd }}
       - name: Checkout
         uses: actions/checkout@v3
       - name: Download
