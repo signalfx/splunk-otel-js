@@ -153,11 +153,14 @@ jobs:
       fail-fast: false
       matrix:
         container: ['centos:7', 'centos:8']
-        include:
+        nodejs: [14, 16, 18, 20]
+        exclude:
           - container: 'centos:7'
-            nodejs: [14, 16]
+            nodejs: 18
+          - container: 'centos:7'
+            nodejs: 20
           - container: 'centos:8'
-            nodejs: [16, 18, 20]
+            nodejs: 14
     name: Centos check - ${{ matrix.container }} - Node.js ${{ matrix.nodejs }}
     container: ${{ matrix.container }}
     env:
