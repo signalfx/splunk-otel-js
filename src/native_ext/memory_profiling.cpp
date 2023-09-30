@@ -16,8 +16,8 @@ enum MemoryProfilingStringIndex {
   V8String_MAX
 };
 
-struct BFSNode {
-  BFSNode(v8::AllocationProfile::Node* node, uint32_t parentId) : node(node), parentId(parentId) {}
+struct DFSNode {
+  DFSNode(v8::AllocationProfile::Node* node, uint32_t parentId) : node(node), parentId(parentId) {}
   v8::AllocationProfile::Node* node;
   uint32_t parentId;
 };
@@ -31,7 +31,7 @@ struct MemoryProfiling {
   uint64_t generation = 0;
   // Used to keep track which were the new samples added to the allocation profile.
   khash_t(SampleId) * tracking;
-  tinystl::vector<BFSNode> stack;
+  tinystl::vector<DFSNode> stack;
   bool v8ProfilerRunning = false;
 };
 
@@ -157,16 +157,16 @@ NAN_METHOD(CollectHeapProfile) {
   stash.strings[V8String_LineNumber] = Nan::New<v8::String>("lineNumber").ToLocalChecked();
   stash.strings[V8String_ParentId] = Nan::New<v8::String>("parentId").ToLocalChecked();
 
-  tinystl::vector<BFSNode>& stack = profiling.stack;
+  tinystl::vector<DFSNode>& stack = profiling.stack;
   stack.clear();
 
   // Cut off the root node
   for (v8::AllocationProfile::Node* child : root->children) {
-    stack.push_back(BFSNode{child, root->node_id});
+    stack.push_back(DFSNode{child, root->node_id});
   }
 
   while (!stack.empty()) {
-    BFSNode graphNode = stack.back();
+    DFSNode graphNode = stack.back();
     stack.pop_back();
 
     v8::AllocationProfile::Node* node = graphNode.node;
@@ -175,7 +175,7 @@ NAN_METHOD(CollectHeapProfile) {
     Nan::Set(jsNodeTree, Nan::New<v8::Uint32>(node->node_id), jsNode);
 
     for (v8::AllocationProfile::Node* child : node->children) {
-      stack.push_back(BFSNode{child, node->node_id});
+      stack.push_back(DFSNode{child, node->node_id});
     }
   }
 
