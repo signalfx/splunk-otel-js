@@ -152,17 +152,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        nodejs: [14, 16]
+        container: ['centos:7', 'centos:8']
         include:
           - container: 'centos:7'
-          - cmd: 'curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && yum install -y nodejs'
+            nodejs: [14, 16]
+          - container: 'centos:8'
+            nodejs: [16, 18, 20]
     name: Centos check - ${{ matrix.container }} - Node.js ${{ matrix.nodejs }}
     container: ${{ matrix.container }}
     env:
       NODE_VERSION: ${{ matrix.nodejs }}
     steps:
       - name: Setup container
-        run: ${{ matrix.cmd }}
+        run: curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && yum install -y nodejs
       - name: Checkout
         uses: actions/checkout@v3
       - name: Download
@@ -170,7 +172,7 @@ jobs:
       - name: copy prebuilds
         run: |
           mkdir -p prebuilds
-          #cp -r prebuilds-linux/* prebuilds
+          cp -r prebuilds-linux/* prebuilds
       - name: Install npm dependencies
         run: npm ci --ignore-scripts --no-optional --loglevel verbose
       - name: Run tests
