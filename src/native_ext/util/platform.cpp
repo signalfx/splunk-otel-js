@@ -21,9 +21,6 @@ int64_t HrTime() { return uv_hrtime(); }
 #endif
 
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#define _WIN32_WINNT 0x0600
-#include <windows.h>
 #include <sysinfoapi.h>
 int64_t MicroSecondsSinceEpoch() {
   FILETIME ft;
@@ -33,7 +30,6 @@ int64_t MicroSecondsSinceEpoch() {
   t -= 116444736000000000LL;
   return t / 10LL;
 }
-#undef WIN32_LEAN_AND_MEAN
 #else
 #include <time.h>
 int64_t MicroSecondsSinceEpoch() {

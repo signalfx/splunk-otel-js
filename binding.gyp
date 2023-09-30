@@ -34,7 +34,8 @@
           "/WX"
         ],
         "defines": [
-          "NOMINMAX"
+          "NOMINMAX",
+          "_WIN32_WINNT=0x0602"
         ],
         "msvs_settings": {
           "VCCLCompilerTool": {
