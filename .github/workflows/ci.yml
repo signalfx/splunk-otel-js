@@ -152,15 +152,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        container: ['centos:8']
-        nodejs: [16, 18, 20]
-        cmd: ['yum install https://rpm.nodesource.com/pub_${NODE_VERSION}.x/nodistro/repo/nodesource-release-nodistro-1.noarch.rpm -y && yum install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1']
+        container: ['centos:7']
+        nodejs: [14, 16]
         include:
           - container: 'centos:7'
             nodejs: 14
             cmd: 'curl -sL https://rpm.nodesource.com/setup_14.x | bash - && yum install -y nodejs'
           - container: 'centos:7'
             nodejs: 16
+            cmd: 'yum install https://rpm.nodesource.com/pub_16.x/nodistro/repo/nodesource-release-nodistro-1.noarch.rpm -y && yum install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1'
     name: Centos check - ${{ matrix.container }} - Node.js ${{ matrix.nodejs }}
     container: ${{ matrix.container }}
     env:
