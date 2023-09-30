@@ -2,7 +2,7 @@
 #include "khash.h"
 #include "util/platform.h"
 #include <v8-profiler.h>
-#include <vector>
+#include "tinystl/vector.h"
 
 namespace Splunk {
 namespace Profiling {
@@ -31,11 +31,11 @@ struct MemoryProfiling {
   uint64_t generation = 0;
   // Used to keep track which were the new samples added to the allocation profile.
   khash_t(SampleId) * tracking;
-  std::vector<BFSNode> stack;
-  bool isRunning = false;
+  tinystl::vector<BFSNode> stack;
+  bool v8ProfilerRunning = false;
 };
 
-MemoryProfiling* profiling = nullptr;
+MemoryProfiling profiling;
 
 struct StringStash {
   v8::Local<v8::String> strings[V8String_MAX];
@@ -54,11 +54,7 @@ ToJsHeapNode(v8::AllocationProfile::Node* node, uint32_t parentId, StringStash* 
 } // namespace
 
 NAN_METHOD(StartMemoryProfiling) {
-  if (!profiling) {
-    profiling = new MemoryProfiling();
-  }
-
-  if (profiling->isRunning) {
+  if (profiling.v8ProfilerRunning) {
     return;
   }
 
@@ -88,17 +84,13 @@ NAN_METHOD(StartMemoryProfiling) {
     }
   }
 
-  profiling->isRunning = profiler->StartSamplingHeapProfiler(sampleIntervalBytes, maxStackDepth);
+  profiling.v8ProfilerRunning = profiler->StartSamplingHeapProfiler(sampleIntervalBytes, maxStackDepth);
 }
 
 NAN_METHOD(CollectHeapProfile) {
   info.GetReturnValue().SetNull();
 
-  if (!profiling) {
-    return;
-  }
-
-  if (!profiling->isRunning) {
+  if (!profiling.v8ProfilerRunning) {
     return;
   }
 
@@ -123,12 +115,12 @@ NAN_METHOD(CollectHeapProfile) {
 
   v8::AllocationProfile::Node* root = profile->GetRootNode();
 
-  const std::vector<v8::AllocationProfile::Sample>& samples = profile->GetSamples();
+  const auto& samples = profile->GetSamples();
 
-  profiling->generation++;
-  uint64_t generation = profiling->generation;
+  profiling.generation++;
+  uint64_t generation = profiling.generation;
 
-  khash_t(SampleId)* tracking = profiling->tracking;
+  khash_t(SampleId)* tracking = profiling.tracking;
 
   for (const auto& sample : samples) {
     if (kh_get(SampleId, tracking, sample.sample_id) == kh_end(tracking)) {
@@ -165,12 +157,12 @@ NAN_METHOD(CollectHeapProfile) {
   stash.strings[V8String_LineNumber] = Nan::New<v8::String>("lineNumber").ToLocalChecked();
   stash.strings[V8String_ParentId] = Nan::New<v8::String>("parentId").ToLocalChecked();
 
-  std::vector<BFSNode>& stack = profiling->stack;
+  tinystl::vector<BFSNode>& stack = profiling.stack;
   stack.clear();
 
   // Cut off the root node
   for (v8::AllocationProfile::Node* child : root->children) {
-    stack.emplace_back(child, root->node_id);
+    stack.push_back(BFSNode{child, root->node_id});
   }
 
   while (!stack.empty()) {
@@ -183,7 +175,7 @@ NAN_METHOD(CollectHeapProfile) {
     Nan::Set(jsNodeTree, Nan::New<v8::Uint32>(node->node_id), jsNode);
 
     for (v8::AllocationProfile::Node* child : node->children) {
-      stack.emplace_back(child, node->node_id);
+      stack.push_back(BFSNode{child, node->node_id});
     }
   }
 
@@ -207,22 +199,17 @@ NAN_METHOD(CollectHeapProfile) {
 }
 
 NAN_METHOD(StopMemoryProfiling) {
-  if (!profiling) {
+  if (!profiling.v8ProfilerRunning) {
     return;
   }
 
-  if (profiling->isRunning) {
-    v8::HeapProfiler* profiler = info.GetIsolate()->GetHeapProfiler();
+  v8::HeapProfiler* profiler = info.GetIsolate()->GetHeapProfiler();
 
-    if (!profiler) {
-      return;
-    }
-
-    profiler->StopSamplingHeapProfiler();
+  if (!profiler) {
+    return;
   }
 
-  delete profiling;
-  profiling = nullptr;
+  profiler->StopSamplingHeapProfiler();
 }
 
 } // namespace Profiling
