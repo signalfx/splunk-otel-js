@@ -44,9 +44,18 @@ int32_t GetGcStatsIndex(v8::GCType type) {
       return -1;
   }
 }
+
+enum GcType {
+  GcTypeAll,
+  GcTypeScavenge,
+  GcTypeMarkSweepCompact,
+  GcTypeIncrementalMarking,
+  GcTypeProcessWeakCallbacks,
+};
+
 struct GcCounters {
-  GcCounters(const std::string& type) : type(type) {}
-  std::string type;
+  GcCounters(GcType type) : type(type) {}
+  GcType type;
   Counters time;
   Counters amount;
 };
@@ -72,11 +81,11 @@ const size_t kGcTypes = 5;
 struct {
   Counters eventLoop;
   GcCounters gcCounters[kGcTypes] = {
-    {"all"},
-    {"scavenge"},
-    {"mark_sweep_compact"},
-    {"incremental_marking"},
-    {"process_weak_callbacks"}};
+    {GcTypeAll},
+    {GcTypeScavenge},
+    {GcTypeMarkSweepCompact},
+    {GcTypeIncrementalMarking},
+    {GcTypeProcessWeakCallbacks}};
 } stats;
 
 void EventLoopPrepareCallback(uv_prepare_t* handle) {
@@ -102,7 +111,7 @@ void EventLoopCheckCallback(uv_check_t* handle) {
 #endif
 }
 void WriteCounters(
-  v8::Local<v8::Object>& parent, const std::string& key, const Counters& counters) {
+  v8::Local<v8::Object>& parent, const char* key, const Counters& counters) {
   auto obj = Nan::New<v8::Object>();
   Nan::Set(obj, Nan::New("min").ToLocalChecked(), Nan::New<v8::Number>(double(counters.min)));
   Nan::Set(obj, Nan::New("max").ToLocalChecked(), Nan::New<v8::Number>(double(counters.max)));
@@ -111,6 +120,16 @@ void WriteCounters(
   Nan::Set(obj, Nan::New("sum").ToLocalChecked(), Nan::New<v8::Number>(double(counters.sum)));
   Nan::Set(obj, Nan::New("count").ToLocalChecked(), Nan::New<v8::Number>(double(counters.count)));
   Nan::Set(parent, Nan::New(key).ToLocalChecked(), obj);
+}
+
+Nan::MaybeLocal<v8::String> GcTypeString(GcType type) {
+  switch (type) {
+    case GcTypeScavenge: return Nan::New("scavenge");
+    case GcTypeMarkSweepCompact: return Nan::New("mark_sweep_compact");
+    case GcTypeIncrementalMarking: return Nan::New("incremental_marking");
+    case GcTypeProcessWeakCallbacks: return Nan::New("process_weak_callbacks");
+    default: return Nan::New("all");
+  }
 }
 
 NAN_GC_CALLBACK(GcPrologue) {
@@ -151,7 +170,7 @@ NAN_METHOD(CollectCounters) {
     auto typeObj = Nan::New<v8::Object>();
     WriteCounters(typeObj, "collected", gcStats.amount);
     WriteCounters(typeObj, "duration", gcStats.time);
-    Nan::Set(gcObj, Nan::New(gcStats.type).ToLocalChecked(), typeObj);
+    Nan::Set(gcObj, GcTypeString(gcStats.type).ToLocalChecked(), typeObj);
   }
 
   Nan::Set(obj, Nan::New("gc").ToLocalChecked(), gcObj);

@@ -1,5 +1,4 @@
 #include "platform.h"
-#include <chrono>
 #include <uv.h>
 
 #ifdef __APPLE__
@@ -7,14 +6,6 @@
 #endif
 
 namespace Splunk {
-
-namespace {
-template <typename Duration>
-int64_t SinceEpoch() {
-  return std::chrono::duration_cast<Duration>(std::chrono::system_clock::now().time_since_epoch())
-    .count();
-}
-} // namespace
 
 #ifdef __APPLE__
 int64_t HrTime() {
@@ -29,8 +20,28 @@ int64_t HrTime() {
 int64_t HrTime() { return uv_hrtime(); }
 #endif
 
-int64_t MicroSecondsSinceEpoch() { return SinceEpoch<std::chrono::microseconds>(); }
+#ifdef _WIN32
+#include <sysinfoapi.h>
+int64_t MicroSecondsSinceEpoch() {
+  FILETIME ft;
+  GetSystemTimePreciseAsFileTime(&ft);
 
-int64_t MilliSecondsSinceEpoch() { return SinceEpoch<std::chrono::milliseconds>(); }
+  int64_t t = (int64_t) ft.dwHighDateTime << 32 | ft.dwLowDateTime;
+  t -= 116444736000000000LL;
+  return t / 10LL;
+}
+#else
+#include <time.h>
+int64_t MicroSecondsSinceEpoch() {
+  struct timespec ts;
+  if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
+    return ts.tv_sec * 1000000LL + ts.tv_nsec / 1000LL;
+  }
+
+  return 0;
+}
+#endif
+
+int64_t MilliSecondsSinceEpoch() { return MicroSecondsSinceEpoch() / 1000; }
 
 } // namespace Splunk
