@@ -1,5 +1,9 @@
 # Change Log - @splunk/otel
 
+## 2.4.4
+
+- Support older libc++ ABIs. This should remove the need for a compilation step on CentOS 7 when running npm install. [#806](https://github.com/signalfx/splunk-otel-js/pull/806)
+
 ## 2.4.3
 
 - Compare kafka header values case insensitively. Fixed split traces when b3 propagation is used over kafka headers and the producer does not use lowercase keys. [#804](https://github.com/signalfx/splunk-otel-js/pull/804)
