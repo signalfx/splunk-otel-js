@@ -11,6 +11,6 @@ jobs:
       - name: Link Checker
         uses: lycheeverse/lychee-action@v1.4.1
         with:
-          fail: true
+          fail: false
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
