@@ -3,6 +3,7 @@ name: Publish splunk-otel-js Docker image to ghcr.io
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   publish-image:
@@ -33,6 +34,7 @@ jobs:
         with:
           push: true
           file: Dockerfile
+          platforms: linux/amd64,linux/arm64,linux/ppc64
           build-args: |
             RELEASE_VER=${{ env.GITHUB_REF_NAME }}
           tags: |
