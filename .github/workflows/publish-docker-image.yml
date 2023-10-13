@@ -34,7 +34,7 @@ jobs:
         with:
           push: true
           file: Dockerfile
-          platforms: linux/amd64,linux/arm64,linux/ppc64
+          platforms: linux/amd64,linux/arm64,linux/ppc64le
           build-args: |
             RELEASE_VER=${{ env.GITHUB_REF_NAME }}
           tags: |
