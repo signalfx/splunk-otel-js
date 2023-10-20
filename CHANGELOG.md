@@ -1,5 +1,9 @@
 # Change Log - @splunk/otel
 
+## 2.5.0
+
+- Upgrade to OpenTelemetry `1.17.1` / `0.44.0`. [#822](https://github.com/signalfx/splunk-otel-js/pull/822)
+
 ## 2.4.4
 
 - Support older libc++ ABIs. This should remove the need for a compilation step on CentOS 7 when running npm install. [#806](https://github.com/signalfx/splunk-otel-js/pull/806)
