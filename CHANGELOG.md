@@ -1,5 +1,9 @@
 # Change Log - @splunk/otel
 
+## 2.5.1
+
+- Prebuild the native module for Node.js 21. [#838](https://github.com/signalfx/splunk-otel-js/pull/838)
+
 ## 2.5.0
 
 - Upgrade to OpenTelemetry `1.17.1` / `0.44.0`. [#822](https://github.com/signalfx/splunk-otel-js/pull/822)
@@ -180,20 +184,20 @@ October 28, 2022
   The deprecated functions are still available, but using them will log a deprecation message.
 
 - ### Replace SignalFx metrics with OpenTelemetry metrics
-  
+
   SignalFx metrics SDK has been removed and replaced with OpenTelemetry Metrics SDKs.
   The internal SignalFx client is no longer available to users, if you have been using custom metrics with the SignalFx client provided by Splunk OpenTelemetry JS distribution, see the [Migrate from the SignalFx Tracing Library for NodeJS](https://quickdraw.splunk.com/redirect/?product=Observability&version=current&location=nodejs.application.migrate) in the official documentation.
 
   Runtime metric names are now using [OpenTelemetry conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/runtime-environment-metrics.md), the following is a list of changed metric names:
-  
+
   | SignalFx (no longer available) | OpenTelemetry                               |
   | ------------------------------ | ------------------------------------------- |
   | `nodejs.memory.heap.total`     | `process.runtime.nodejs.memory.heap.total`  |
   | `nodejs.memory.heap.used`      | `process.runtime.nodejs.memory.heap.used`   |
   | `nodejs.memory.rss`            | `process.runtime.nodejs.memory.rss`         |
   | `nodejs.memory.gc.size`        | `process.runtime.nodejs.memory.gc.size`     |
-  | `nodejs.memory.gc.pause`       | `process.runtime.nodejs.memory.gc.pause`    | 
-  | `nodejs.memory.gc.count`       | `process.runtime.nodejs.memory.gc.count`    | 
+  | `nodejs.memory.gc.pause`       | `process.runtime.nodejs.memory.gc.pause`    |
+  | `nodejs.memory.gc.count`       | `process.runtime.nodejs.memory.gc.count`    |
   | `nodejs.event_loop.lag.max`    | `process.runtime.nodejs.event_loop.lag.max` |
   | `nodejs.event_loop.lag.min`    | `process.runtime.nodejs.event_loop.lag.min` |
 
