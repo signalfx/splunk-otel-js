@@ -63,7 +63,7 @@
   },
   "devDependencies": {
     "@commitlint/cli": "^17.4.4",
-    "@commitlint/config-conventional": "^17.4.4",
+    "@commitlint/config-conventional": "^18.4.2",
     "@elastic/elasticsearch": "^7.17.11",
     "@types/bunyan": "1.8.8",
     "@types/mocha": "10.0.1",
