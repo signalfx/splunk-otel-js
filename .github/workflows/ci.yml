@@ -31,6 +31,32 @@ jobs:
         with:
           name: prebuilds-linux
           path: prebuilds
+  prebuilds-linux-arm64:
+    runs-on: [self-hosted, Linux, ARM64]
+    strategy:
+      fail-fast: false
+      matrix:
+        container: ['node:14.0.0']
+        node_api_target: ['14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0']
+        include:
+          - container: 'node:16.0.0'
+            node_api_target: '20.0.0'
+          - container: 'node:16.0.0'
+            node_api_target: '21.2.0'
+    container: ${{ matrix.container }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - name: Install npm dependencies
+        run: npm ci --ignore-scripts --no-optional
+      - name: Prebuild
+        run: npm run prebuild:os ${{ matrix.node_api_target }}
+      - name: upload prebuilds
+        uses: actions/upload-artifact@v3
+        with:
+          name: prebuilds-linux-arm64
+          path: prebuilds
 
   prebuilds-macos-windows:
     strategy:
