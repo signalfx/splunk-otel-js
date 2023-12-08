@@ -160,7 +160,7 @@ jobs:
       matrix:
         os: ['ARM64']
         nodejs: ['14', '16', '17', '18', '20', '21']
-    container: node:${{ nodejs }}
+    container: node:${{ matrix.nodejs }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
