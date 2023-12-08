@@ -20,7 +20,7 @@ jobs:
     container: ${{ matrix.container }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - uses: actions/setup-node@v3
       - name: Install npm dependencies
         run: npm ci --ignore-scripts --no-optional
@@ -46,7 +46,7 @@ jobs:
     container: ${{ matrix.container }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - uses: actions/setup-node@v3
       - name: Install npm dependencies
         run: npm ci --ignore-scripts --no-optional
@@ -70,7 +70,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python_version }}
@@ -92,7 +92,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
@@ -135,8 +135,12 @@ jobs:
             nodejs: '14'
             python_version: '3.10'
     steps:
+      - name: chown user
+        if: ${{ matrix.os == 'ARM64' }}
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python_version }}
@@ -157,7 +161,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 1
       - uses: actions/setup-node@v3
@@ -185,7 +189,7 @@ jobs:
       - name: Setup container
         run: ${{ matrix.cmd }}
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install npm dependencies
         run: npm ci --ignore-scripts --no-optional
       - name: Compile native
@@ -216,7 +220,7 @@ jobs:
       - name: Setup container
         run: ${{ matrix.cmd }}
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Download
         uses: actions/download-artifact@v3
       - name: copy prebuilds
@@ -249,7 +253,7 @@ jobs:
     name: e2e local ${{ matrix.name }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Test ${{ matrix.name }} example
         working-directory: test/examples
         run: docker-compose -f e2e.docker-compose.yml ${{ matrix.target }} up --exit-code-from test
