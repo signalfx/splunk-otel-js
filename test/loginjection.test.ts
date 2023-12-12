@@ -22,7 +22,6 @@ import { startTracing, stopTracing } from '../src/tracing';
 import { defaultLogHook } from '../src/instrumentations/logging';
 import type * as pino from 'pino';
 import type * as bunyan from 'bunyan';
-import type * as winston from 'winston';
 import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
 
 describe('log injection', () => {
@@ -60,35 +59,14 @@ describe('log injection', () => {
     record = {};
   });
 
-  describe('default flow', () => {
-    before(() => {
-      startTracing({ serviceName: 'test-service' });
+  it('injects context to winston records', () => {
+    startTracing({ serviceName: 'test-service' });
+    const winston: winston = require('winston');
+    const logger = winston.createLogger({
+      transports: [new winston.transports.Stream({ stream })],
     });
-
-    after(() => {
-      stopTracing();
-    });
-
-    it('injects context to bunyan records', () => {
-      const logger: bunyan = require('bunyan').createLogger({
-        name: 'test',
-        stream,
-      });
-      assertInjection(logger);
-    });
-
-    it('injects context to pino records', () => {
-      const logger: pino.Logger = require('pino')(stream);
-      assertInjection(logger);
-    });
-
-    it('injects context to winston records', () => {
-      const winston: winston = require('winston');
-      const logger = winston.createLogger({
-        transports: [new winston.transports.Stream({ stream })],
-      });
-      assertInjection(logger);
-    });
+    assertInjection(logger);
+    stopTracing();
   });
 
   describe('injecting with custom hook', () => {

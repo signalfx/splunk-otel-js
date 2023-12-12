@@ -16,6 +16,8 @@
 
 import { Span } from '@opentelemetry/sdk-trace-base';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import type { BunyanInstrumentation } from '@opentelemetry/instrumentation-bunyan';
+import { getEnvBoolean } from '../utils';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type LogRecord = Record<string, any>;
@@ -58,4 +60,13 @@ export function configureLogInjection(
     config.logHook = defaultLogHook;
     return instrumentation.setConfig(config);
   }
+}
+
+export function disableLogSending(instrumentation: BunyanInstrumentation) {
+  const enabled = getEnvBoolean('SPLUNK_AUTOMATIC_LOG_COLLECTION', false);
+  instrumentation.setConfig(
+    Object.assign({}, instrumentation.getConfig(), {
+      disableLogSending: !enabled,
+    })
+  );
 }

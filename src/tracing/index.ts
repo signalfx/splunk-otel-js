@@ -37,7 +37,10 @@ import {
 } from '@opentelemetry/context-async-hooks';
 
 import { configureHttpInstrumentation } from '../instrumentations/http';
-import { configureLogInjection } from '../instrumentations/logging';
+import {
+  configureLogInjection,
+  disableLogSending,
+} from '../instrumentations/logging';
 import { allowedTracingOptions, Options, _setDefaultOptions } from './options';
 import { configureRedisInstrumentation } from '../instrumentations/redis';
 import {
@@ -221,6 +224,9 @@ function configureInstrumentations(options: Options) {
         configureRedisInstrumentation(instr, options);
         break;
       case '@opentelemetry/instrumentation-bunyan':
+        disableLogSending(instr);
+        configureLogInjection(instr);
+        break;
       case '@opentelemetry/instrumentation-pino':
       case '@opentelemetry/instrumentation-winston':
         configureLogInjection(instr);
