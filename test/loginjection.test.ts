@@ -59,6 +59,34 @@ describe('log injection', () => {
     record = {};
   });
 
+  describe('injecting version and environment', () => {
+    before(() => {
+      process.env.OTEL_RESOURCE_ATTRIBUTES =
+        'service.version=1,deployment.environment=test';
+    });
+
+    after(() => {
+      delete process.env.OTEL_RESOURCE_ATTRIBUTES;
+    });
+
+    it('injects service version and service environment if available', () => {
+      startTracing({ serviceName: 'test-service' });
+
+      const logger: bunyan = require('bunyan').createLogger({
+        name: 'test',
+        stream,
+      });
+
+      assertInjection(logger, [
+        ['service.name', 'test-service'],
+        ['service.version', '1'],
+        ['service.environment', 'test'],
+      ]);
+
+      stopTracing();
+    });
+  });
+
   it('injects context to winston records', () => {
     startTracing({ serviceName: 'test-service' });
     const winston: winston = require('winston');
@@ -117,34 +145,6 @@ describe('log injection', () => {
         ['service.name', 'test-service'],
         [MY_ATTRIBUTE, MY_VALUE],
       ]);
-    });
-  });
-
-  describe('injecting version and environment', () => {
-    before(() => {
-      process.env.OTEL_RESOURCE_ATTRIBUTES =
-        'service.version=1,deployment.environment=test';
-    });
-
-    after(() => {
-      delete process.env.OTEL_RESOURCE_ATTRIBUTES;
-    });
-
-    it('injects service version and service environment if available', () => {
-      startTracing({ serviceName: 'test-service' });
-
-      const logger: bunyan = require('bunyan').createLogger({
-        name: 'test',
-        stream,
-      });
-
-      assertInjection(logger, [
-        ['service.name', 'test-service'],
-        ['service.version', '1'],
-        ['service.environment', 'test'],
-      ]);
-
-      stopTracing();
     });
   });
 });
