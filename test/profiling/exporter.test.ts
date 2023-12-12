@@ -18,6 +18,7 @@ import * as assert from 'assert';
 import * as sinon from 'sinon';
 import { OTLPProfilingExporter } from '../../src/profiling/OTLPProfilingExporter';
 import { Resource } from '@opentelemetry/resources';
+import { VERSION } from '@opentelemetry/core';
 import * as utils from '../utils';
 import * as grpc from '@grpc/grpc-js';
 import { cpuProfile, heapProfile } from './profiles';
@@ -85,6 +86,7 @@ describe('profiling OTLP exporter', () => {
         const { instrumentationLibraryLogs, resource } = resourceLogs[0];
         assert.deepStrictEqual(resource.attributes, [
           { key: 'telemetry.sdk.language', value: { stringValue: 'node' } },
+          { key: 'telemetry.sdk.version', value: { stringValue: VERSION } },
           { key: 'service', value: { stringValue: 'foo' } },
         ]);
         assert.deepStrictEqual(instrumentationLibraryLogs.length, 1);
@@ -124,6 +126,7 @@ describe('profiling OTLP exporter', () => {
         const { instrumentationLibraryLogs, resource } = resourceLogs[0];
         assert.deepStrictEqual(resource.attributes, [
           { key: 'telemetry.sdk.language', value: { stringValue: 'node' } },
+          { key: 'telemetry.sdk.version', value: { stringValue: VERSION } },
           { key: 'service', value: { stringValue: 'foo' } },
         ]);
         assert.deepStrictEqual(instrumentationLibraryLogs.length, 1);
