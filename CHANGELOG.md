@@ -1,5 +1,11 @@
 # Change Log - @splunk/otel
 
+## 2.6.0
+
+- Add missing telemetry.sdk.version to profiling payloads. #[854](https://github.com/signalfx/splunk-otel-js/pull/854)
+- Upgrade to OpenTelemetry `1.18.1` / `0.45.1`. [#852](https://github.com/signalfx/splunk-otel-js/pull/852)
+- Add Linux ARM64 prebuilt binaries. [#850](https://github.com/signalfx/splunk-otel-js/pull/850)
+
 ## 2.5.1
 
 - Prebuild the native module for Node.js 21. [#838](https://github.com/signalfx/splunk-otel-js/pull/838)
