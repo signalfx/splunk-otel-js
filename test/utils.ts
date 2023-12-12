@@ -19,6 +19,10 @@ import {
   InstrumentType,
   MetricReader,
 } from '@opentelemetry/sdk-metrics';
+import * as assert from 'assert';
+import * as util from 'util';
+import { Writable } from 'stream';
+import { context, trace } from '@opentelemetry/api';
 
 const isConfigVarEntry = (key) => {
   const lowercased = key.toLowerCase();
@@ -62,4 +66,43 @@ export class TestMetricReader extends MetricReader {
   }
   protected async onForceFlush() {}
   protected async onShutdown() {}
+}
+
+export class TestLogStream {
+  public stream: Writable;
+  public record = {};
+
+  constructor() {
+    this.stream = new Writable({
+      write: (chunk) => {
+        this.record = JSON.parse(chunk);
+      },
+    });
+  }
+}
+
+export function assertInjection(
+  stream: TestLogStream,
+  logger: any,
+  extra = [['service.name', 'test-service']]
+) {
+  const span = trace.getTracer('test').startSpan('main');
+  let traceId;
+  let spanId;
+  context.with(trace.setSpan(context.active(), span), () => {
+    traceId = span.spanContext().traceId;
+    spanId = span.spanContext().spanId;
+    logger.info('my-log-message');
+  });
+
+  assert.strictEqual(stream.record['trace_id'], traceId);
+  assert.strictEqual(stream.record['span_id'], spanId);
+
+  for (const [key, value] of extra || []) {
+    assert.strictEqual(
+      stream.record[key],
+      value,
+      `Invalid value for "${key}": ${util.inspect(stream.record[key])}`
+    );
+  }
 }
