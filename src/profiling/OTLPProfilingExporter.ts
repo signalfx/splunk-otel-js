@@ -19,6 +19,7 @@ import * as path from 'path';
 import { CpuProfile, HeapProfile, ProfilingExporter } from './types';
 import { diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
+import { VERSION } from '@opentelemetry/core';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import {
   parseEndpoint,
@@ -104,6 +105,7 @@ export class OTLPProfilingExporter implements ProfilingExporter {
 
     const resource = new Resource({
       [SemanticResourceAttributes.TELEMETRY_SDK_LANGUAGE]: 'node',
+      [SemanticResourceAttributes.TELEMETRY_SDK_VERSION]: VERSION,
     }).merge(options.resource);
 
     this._resourceAttributes = [];
