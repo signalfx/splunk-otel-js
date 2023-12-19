@@ -152,7 +152,7 @@
     "is-promise": "^4.0.0",
     "nan": "^2.18.0",
     "node-gyp-build": "^4.7.1",
-    "protobufjs": "^7.2.4",
+    "protobufjs": "^7.2.5",
     "semver": "^7.5.4"
   },
   "peerDependencies": {
