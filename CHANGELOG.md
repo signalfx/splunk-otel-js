@@ -1,5 +1,10 @@
 # Change Log - @splunk/otel
 
+## 2.6.1
+
+- Fix potential memory leak when CPU profiling is active. [#858](https://github.com/signalfx/splunk-otel-js/pull/858)
+- Upgrade to protobuf.js 7.2.5. [#859](https://github.com/signalfx/splunk-otel-js/pull/859)
+
 ## 2.6.0
 
 - Add missing telemetry.sdk.version to profiling payloads. #[854](https://github.com/signalfx/splunk-otel-js/pull/854)
