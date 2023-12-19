@@ -379,6 +379,7 @@ NAN_METHOD(StartProfiling) {
   char title[64];
   ProfileTitle(profiling->profilerSeq, title, sizeof(title));
 
+
   profiling->activationDepth = 0;
   profiling->startTime = HrTime();
   profiling->wallStartTime = MicroSecondsSinceEpoch() * 1000L;
@@ -610,7 +611,7 @@ NAN_METHOD(CollectProfilingData) {
 
   char prevTitle[64];
   ProfileTitle(profiling->profilerSeq, prevTitle, sizeof(prevTitle));
-  profiling->profilerSeq++;
+  profiling->profilerSeq = (profiling->profilerSeq + 1) % 2;
   char nextTitle[64];
   ProfileTitle(profiling->profilerSeq, nextTitle, sizeof(nextTitle));
 
