@@ -1,5 +1,5 @@
-> The official Splunk documentation for this page is [Configure the Splunk Distribution of OTel JS](https://quickdraw.splunk.com/redirect/?product=Observability&version=current&location=nodejs.application.config). 
-> 
+> The official Splunk documentation for this page is [Configure the Splunk Distribution of OTel JS](https://quickdraw.splunk.com/redirect/?product=Observability&version=current&location=nodejs.application.config).
+>
 > For instructions on how to contribute to the docs, see [CONTRIBUTING.md](../CONTRIBUTING.md#documentation).
 
 # Advanced Configuration
@@ -55,15 +55,15 @@ This distribution supports all the configuration options supported by the compon
 | --------------------------------------------------------------- | ----------------------- | ------- | ---
 | `OTEL_ATTRIBUTE_COUNT_LIMIT`                                    |                         | Stable  | Maximum allowed span attribute count
 | `OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT`                             | `12000`\*               | Stable  | Maximum allowed attribute value size
-| `OTEL_EXPORTER_OTLP_ENDPOINT`<br>`endpoint`                     | `http://localhost:4317` | Stable  | The OTLP endpoint to export to. Only OTLP over gRPC is supported.
+| `OTEL_EXPORTER_OTLP_ENDPOINT`<br>`endpoint`                     | `http://localhost:4317` | Stable  | The OTLP endpoint to export to.
 | `OTEL_LOG_LEVEL`                                                |                         | Stable  | Log level to use in diagnostics logging. **Does not set the logger.**
 | `OTEL_PROPAGATORS`<br>`tracing.propagators`                     | `tracecontext,baggage`  | Stable  | Comma-delimited list of propagators to use. Valid keys: `baggage`, `tracecontext`, `b3multi`, `b3`.
 | `OTEL_RESOURCE_ATTRIBUTES`                                      |                         | Stable  | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
 | `OTEL_SERVICE_NAME`<br>`serviceName`                            | `unnamed-node-service`  | Stable  | The service name of this Node service.
 | `OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT`                               | `128`                   | Stable  | Maximum allowed span attribute count
 | `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT`                        |                         | Stable  | Maximum allowed attribute value size. Empty value is treated as infinity
-| `OTEL_SPAN_EVENT_COUNT_LIMIT`                                   | `128`                   | Stable  | 
-| `OTEL_SPAN_LINK_COUNT_LIMIT`                                    | `1000`\*                | Stable  | 
+| `OTEL_SPAN_EVENT_COUNT_LIMIT`                                   | `128`                   | Stable  |
+| `OTEL_SPAN_LINK_COUNT_LIMIT`                                    | `1000`\*                | Stable  |
 | `OTEL_TRACES_EXPORTER`<br>`tracing.spanExporterFactory`         | `otlp`                  | Stable  | Chooses the trace exporters. Shortcut for setting `spanExporterFactory`. Comma-delimited list of exporters. Currently supported values: `otlp`, `console`.
 | `OTEL_TRACES_SAMPLER`                                           | `parentbased_always_on` | Stable  | Sampler to be used for traces. See [Sampling](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling)
 | `OTEL_TRACES_SAMPLER_ARG`                                       |                         | Stable  | String value to be used as the sampler argument. Only be used if OTEL_TRACES_SAMPLER is set.

@@ -27,6 +27,7 @@ export {
 } from './metrics/ConsoleMetricExporter';
 import { startProfiling as _startProfiling } from './profiling';
 export { start, stop } from './start';
+export { listEnvVars } from './utils';
 
 export const startMetrics = deprecate(
   _startMetrics,
