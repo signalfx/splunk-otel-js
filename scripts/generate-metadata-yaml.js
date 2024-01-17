@@ -107,6 +107,55 @@ async function readMeVersions(instrumentationName) {
     });
 }
 
+class LineWriter {
+  constructor() {
+    this.lines = [];
+    this.indent = 0;
+    this.indents = [];
+  }
+
+  pushIndent(indent) {
+    this.indent += indent;
+    this.indents.push(indent);
+  }
+
+  popIndent(n) {
+    if (this.indents.length > 0) {
+
+      if (n === undefined) {
+        n = 1;
+      }
+
+      for (let i = 0; i < Math.min(this.indents.length, n); i++) {
+        this.indent -= this.indents.pop();
+      }
+    }
+  }
+
+  push(lines) {
+    if (!Array.isArray(lines)) {
+      lines = [lines];
+    }
+
+    if (this.indent > 0) {
+      const indent = " ".repeat(this.indent);
+      for (const line of lines) {
+        this.lines.push(indent + line);
+      }
+
+      return;
+    }
+
+    for (const line of lines) {
+      this.lines.push(line);
+    }
+  }
+
+  join() {
+    return this.lines.join("\n");
+  }
+}
+
 async function getSupportedLibraryVersions(instrumentations) {
   const versions = await Promise.all(instrumentations.map(i => getSupportedVersion(i)));
 
@@ -124,52 +173,59 @@ function getSettingsList() {
   return listEnvVars();
 }
 
-function populateSettings(lines) {
+function populateSettings(writer) {
   const settings = getSettingsList();
-  lines.push("settings:");
+  writer.push("settings:");
 
   function addSetting(setting) {
-    lines.push(`- name: ${setting.name}`);
-    lines.push(`  description: ${setting.description}`);
-    lines.push(`  default: ${setting.default}`);
-    lines.push(`  type: ${setting.type}`);
-    lines.push(`  category: ${setting.category}`);
+    writer.push(`- env: ${setting.name}`);
+    writer.pushIndent(2);
+    writer.push([
+      `description: ${setting.description}`,
+      `default: ${setting.default}`,
+      `type: ${setting.type}`,
+      `category: ${setting.category}`,
+    ]);
+    writer.popIndent();
   }
 
   for (const setting of settings) {
     addSetting(setting);
   }
-
-  return lines;
 }
 
-async function populateInstrumentations(lines) {
+async function populateInstrumentations(writer) {
   const versions = await getSupportedLibraryVersions(LOADED_INSTRUMENTATIONS);
 
+  writer.push("instrumentations:");
+  writer.pushIndent(2);
   for (const instrumentation of INSTRUMENTATIONS) {
-    lines.push(
-      "- keys:",
-      `  - "${instrumentation.name}"`,
-      "  instrumented_components:",
-      `  - name: "${instrumentation.target}"`,
-      `    supported_versions: "${versions[instrumentation.name]}"`,
-      `  support: ${instrumentation.support ?? "community"}`,
-    );
+    writer.push("- keys:");
+    writer.pushIndent(2);
+    writer.push(`- "${instrumentation.name}"`);
+    writer.push("instrumented_components:");
+    writer.pushIndent(2);
+    writer.push(`- name: "${instrumentation.target}"`);
+    writer.pushIndent(2);
+    writer.push(`supported_versions: "${versions[instrumentation.name]}"`);
+    writer.popIndent(2);
+    writer.push(`support: ${instrumentation.support ?? "community"}`,);
+    writer.popIndent();
   }
-
-  return lines;
+  writer.popIndent();
 }
 
 async function genMetadata() {
-  let lines = [
+  const writer = new LineWriter();
+  writer.push([
     "component: Splunk Distribution of OpenTelemetry JavaScript",
     `version: ${require("../package.json").version}`,
-  ];
+  ]);
 
-  lines = populateSettings(lines);
-  lines = await populateInstrumentations(lines);
+  populateSettings(writer);
+  await populateInstrumentations(writer);
 
-  const yaml = lines.join("\n");
+  const yaml = writer.join();
   process.stdout.write(yaml);
   process.stdout.write("\n");
 }
