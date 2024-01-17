@@ -215,6 +215,70 @@ async function populateInstrumentations(writer) {
   writer.popIndent();
 }
 
+function populateResourceDetectors(writer) {
+  const detectors = [
+    {
+      key: "PROCESS",
+      description: "Process info detector",
+      attributes: [
+        "process.pid",
+        "process.executable.path",
+        "process.runtime.version",
+        "process.runtime.name",
+      ],
+    },
+    {
+      key: "OS",
+      description: "Operating system detector",
+      attributes: [
+        "os.type",
+        "os.description",
+      ],
+    },
+    {
+      key: "HOST",
+      description: "Host detector",
+      attributes: [
+        "host.name",
+        "host.arch"
+      ],
+    },
+    {
+      key: "CONTAINER",
+      description: "Container ID detector",
+      attributes: [
+        "container.id",
+      ],
+    },
+    {
+      key: "DISTRO",
+      description: "Distribution version detector",
+      attributes: [
+        "splunk.distro.version",
+      ],
+    }
+  ];
+
+  writer.push("resource_detectors:");
+  writer.pushIndent(2);
+
+  for (const detector of detectors) {
+    writer.push(`- key: ${detector.key}`);
+    writer.pushIndent(2);
+    writer.push(`description: ${detector.description}`),
+    writer.push("attributes:")
+    writer.pushIndent(2);
+
+    for (const attr of detector.attributes) {
+      writer.push(`- id: ${attr}`);
+    }
+
+    writer.popIndent();
+    writer.push("support: supported");
+    writer.popIndent();
+  }
+}
+
 async function genMetadata() {
   const writer = new LineWriter();
   writer.push([
@@ -224,6 +288,7 @@ async function genMetadata() {
 
   populateSettings(writer);
   await populateInstrumentations(writer);
+  populateResourceDetectors(writer);
 
   const yaml = writer.join();
   process.stdout.write(yaml);
