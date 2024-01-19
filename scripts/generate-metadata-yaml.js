@@ -1,5 +1,5 @@
-const { join } = require("path");
-const { readFile } = require("node:fs/promises");
+const { join, dirname } = require("path");
+const { access, readFile, constants } = require("node:fs/promises");
 
 const { getInstrumentations } = require('../lib/instrumentations');
 
@@ -277,6 +277,66 @@ function populateResourceDetectors(writer) {
     writer.push("support: supported");
     writer.popIndent();
   }
+
+  writer.popIndent();
+}
+
+async function findPackageJson(packageName, maxDepth) {
+  if (maxDepth === undefined) {
+    maxDepth = 3;
+  }
+
+  let basepath = dirname(require.resolve(packageName));
+  for (let i = 0; i < maxDepth; i++) {
+    const packageJsonPath = join(basepath, "package.json");
+    try {
+      await access(packageJsonPath, constants.F_OK);
+      return packageJsonPath;
+    } catch (e) {
+      basepath = join(basepath, "..");
+    }
+  }
+
+  return undefined;
+}
+
+function isExperimental(dependency, version) {
+  return dependency.startsWith("@opentelemetry") && version.startsWith("0");
+}
+
+async function populateDependencyInfo(dependency, version, writer) {
+    const status = isExperimental(dependency, version) ? "experimental" : "stable";
+
+    const pkgJsonPath = await findPackageJson(dependency);
+
+    let url = undefined;
+
+    if (pkgJsonPath) {
+      const pkgJson = JSON.parse(await readFile(pkgJsonPath, { encoding: "utf-8" }));
+      url = pkgJson.homepage;
+    }
+
+    writer.push(`- name: "${dependency}"`);
+    writer.pushIndent(2);
+    writer.push(`version: "${version}"`);
+    writer.push(`stability: ${status}`);
+
+    if (url) {
+      writer.push(`source_href: "${url}"`);
+    }
+
+    writer.popIndent();
+}
+
+async function populateDependencies(writer) {
+  const deps = require(join(__dirname, "../package.json")).dependencies;
+  writer.push("dependencies:")
+  writer.pushIndent(2);
+
+  const promises = Object.keys(deps).map(dep => populateDependencyInfo(dep, deps[dep], writer));
+  await Promise.all(promises);
+
+  writer.popIndent();
 }
 
 async function genMetadata() {
@@ -289,6 +349,7 @@ async function genMetadata() {
   populateSettings(writer);
   await populateInstrumentations(writer);
   populateResourceDetectors(writer);
+  await populateDependencies(writer);
 
   const yaml = writer.join();
   process.stdout.write(yaml);
