@@ -181,11 +181,18 @@ jobs:
           fetch-depth: 1
       - uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 18
       - name: Install npm dependencies
         run: npm ci
       - name: Build
         run: npm run compile
+      - name: Generate metadata YAML
+        run: node scripts/generate-metadata-yaml.js > splunk-otel-js-metadata.yaml
+      - name: Upload metadata yaml
+        uses: actions/upload-artifact@v3
+        with:
+          name: splunk-otel-js-metadata.yaml
+          path: splunk-otel-js-metadata.yaml
 
   centos-build-check:
     runs-on: ubuntu-latest

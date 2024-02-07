@@ -46,6 +46,11 @@ import {
   MeterOptions,
   createNoopMeter,
 } from '@opentelemetry/api';
+import {
+  StartLoggingOptions,
+  allowedLoggingOptions,
+  startLogging,
+} from './logging';
 
 interface Options {
   accessToken: string;
@@ -56,18 +61,21 @@ interface Options {
   metrics: boolean | StartMetricsOptions;
   profiling: boolean | StartProfilingOptions;
   tracing: boolean | StartTracingOptions;
+  logging: boolean | StartLoggingOptions;
 }
 
 interface RunningState {
   metrics: ReturnType<typeof startMetrics> | null;
   profiling: ReturnType<typeof startProfiling> | null;
   tracing: ReturnType<typeof startTracing> | null;
+  logging: ReturnType<typeof startLogging> | null;
 }
 
 const running: RunningState = {
   metrics: null,
   profiling: null,
   tracing: null,
+  logging: null,
 };
 
 function isSignalEnabled<T>(
@@ -79,10 +87,15 @@ function isSignalEnabled<T>(
 }
 
 export const start = (options: Partial<Options> = {}) => {
-  if (running.metrics || running.profiling || running.tracing) {
+  if (
+    running.logging ||
+    running.metrics ||
+    running.profiling ||
+    running.tracing
+  ) {
     throw new Error('Splunk APM already started');
   }
-  const { metrics, profiling, tracing, ...restOptions } = options;
+  const { metrics, profiling, tracing, logging, ...restOptions } = options;
 
   assertNoExtraneousProperties(restOptions, [
     'accessToken',
@@ -119,6 +132,14 @@ export const start = (options: Partial<Options> = {}) => {
   if (isSignalEnabled(options.tracing, 'SPLUNK_TRACING_ENABLED', true)) {
     running.tracing = startTracing(
       Object.assign(pick(restOptions, allowedTracingOptions), tracing)
+    );
+  }
+
+  if (
+    isSignalEnabled(options.logging, 'SPLUNK_AUTOMATIC_LOG_COLLECTION', false)
+  ) {
+    running.logging = startLogging(
+      Object.assign(pick(restOptions, allowedLoggingOptions), logging)
     );
   }
 
@@ -161,6 +182,11 @@ function createNoopMeterProvider() {
 
 export const stop = async () => {
   const promises = [];
+
+  if (running.logging) {
+    promises.push(running.logging.stop());
+    running.logging = null;
+  }
 
   if (running.metrics) {
     promises.push(running.metrics.stop());

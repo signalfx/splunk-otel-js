@@ -1,5 +1,10 @@
 # Change Log - @splunk/otel
 
+## 2.7.0
+
+- Upgrade to OpenTelemetry `1.21.0` / `0.48.0`. [#874](https://github.com/signalfx/splunk-otel-js/pull/874)
+- GraphQL instrumentation: spans for resolvers are no longer generated. This brings in significant performance improvements for queries hitting lots of resolvers. `SPLUNK_GRAPHQL_RESOLVE_SPANS_ENABLED=true` environment variable can be used to unignore resolve spans.
+
 ## 2.6.1
 
 - Fix potential memory leak when CPU profiling is active. [#858](https://github.com/signalfx/splunk-otel-js/pull/858)

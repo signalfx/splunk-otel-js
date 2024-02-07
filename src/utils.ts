@@ -219,3 +219,253 @@ export function pick<T extends Record<string, any>, K extends string>(
   }
   return result;
 }
+
+export function listEnvVars() {
+  return [
+    {
+      name: 'OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT',
+      description: 'Maximum allowed attribute value size',
+      default: '12000',
+      type: 'number',
+      category: 'instrumentation',
+    },
+    {
+      name: 'OTEL_BSP_SCHEDULE_DELAY',
+      description:
+        'The delay in milliseconds between 2 consecutive bath span processor exports.',
+      default: '500',
+      type: 'number',
+      category: 'instrumentation',
+    },
+    {
+      name: 'OTEL_EXPORTER_OTLP_CERTIFICATE',
+      description:
+        "Path to a certificate to use when verifying a server's TLS credentials.",
+      default: '',
+      type: 'string',
+      category: 'exporter',
+    },
+    {
+      name: 'OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE',
+      description:
+        "Path to a certificate to use when verifying a client's TLS credentials.",
+      default: '',
+      type: 'string',
+      category: 'exporter',
+    },
+    {
+      name: 'OTEL_EXPORTER_OTLP_CLIENT_KEY',
+      description:
+        "Path to client's private key to use in mTLS communication in PEM format.",
+      default: '',
+      type: 'string',
+      category: 'exporter',
+    },
+    {
+      name: 'OTEL_EXPORTER_OTLP_ENDPOINT',
+      description: 'The OTLP endpoint to export to.',
+      default: 'http://localhost:4317',
+      type: 'string',
+      category: 'exporter',
+    },
+    {
+      name: 'OTEL_EXPORTER_OTLP_TRACES_PROTOCOL',
+      description:
+        'Chooses the trace exporter protocol. Allowed values are grpc and http/protobuf',
+      default: 'grpc',
+      type: 'string',
+      category: 'exporter',
+    },
+    {
+      name: 'OTEL_EXPORTER_OTLP_METRICS_PROTOCOL',
+      description:
+        'Chooses the metric exporter protocol. Allowed values are grpc and http/protobuf',
+      default: 'grpc',
+      type: 'string',
+      category: 'exporter',
+    },
+    {
+      name: 'OTEL_EXPORTER_OTLP_PROTOCOL',
+      description: 'The protocol to use for OTLP exports.',
+      default: 'grpc',
+      type: 'string',
+      category: 'exporter',
+    },
+    {
+      name: 'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT',
+      description: 'The traces OTLP endpoint to export to.',
+      default: 'http://localhost:4317',
+      type: 'string',
+      category: 'exporter',
+    },
+    {
+      name: 'OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED',
+      description:
+        'Whether to activate all the embedded instrumentations. When you set this setting to false, use OTEL_INSTRUMENTATION_<NAME>_ENABLED=true to selectively turn on instrumentations.',
+      default: 'true',
+      type: 'boolean',
+      category: 'instrumentation',
+    },
+    {
+      name: 'OTEL_LOG_LEVEL',
+      description:
+        'Log level for the OpenTelemetry diagnostic console logger. To activate debug logging, set the debug value. Available values are error, info, debug, and verbose.',
+      default: 'none',
+      type: 'string',
+      category: 'general',
+    },
+    {
+      name: 'OTEL_METRIC_EXPORT_INTERVAL',
+      description:
+        'The interval, in milliseconds, of metrics collection and exporting.',
+      default: '30000',
+      type: 'number',
+      category: 'exporter',
+    },
+    {
+      name: 'OTEL_METRICS_EXPORTER',
+      description:
+        'Comma-separated list of metrics exporter to use. To output to the console, set the variable to console. If set to none, metric exports are turned off.',
+      default: 'otlp',
+      type: 'string',
+      category: 'exporter',
+    },
+    {
+      name: 'OTEL_PROPAGATORS',
+      description: 'Comma-separated list of propagators you want to use.',
+      default: 'tracecontext,baggage',
+      type: 'string',
+      category: 'general',
+    },
+    {
+      name: 'OTEL_SERVICE_NAME',
+      description:
+        'Name of the service or application you’re instrumenting. Takes precedence over the service name defined in the OTEL_RESOURCE_ATTRIBUTES variable.',
+      default: 'unnamed-node-service',
+      type: 'string',
+      category: 'general',
+    },
+    {
+      name: 'OTEL_SPAN_LINK_COUNT_LIMIT',
+      description: 'Maximum number of links per span.',
+      default: '1000',
+      type: 'number',
+      category: 'general',
+    },
+    {
+      name: 'OTEL_TRACES_EXPORTER',
+      description:
+        'Comma-separated list of trace exporters to use. To output to the console, set the variable to console.',
+      default: 'otlp',
+      type: 'string',
+      category: 'exporter',
+    },
+    {
+      name: 'SPLUNK_ACCESS_TOKEN',
+      description:
+        'A Splunk authentication token that lets exporters send data directly to Splunk Observability Cloud. Required if you need to send data to the Splunk Observability Cloud ingest endpoint.',
+      default: '',
+      type: 'string',
+      category: 'general',
+    },
+    {
+      name: 'SPLUNK_INSTRUMENTATION_METRICS_ENABLED',
+      description:
+        'Emit metrics from instrumentation (e.g. http.server.duration)',
+      default: 'false',
+      type: 'boolean',
+      category: 'instrumentation',
+    },
+    {
+      name: 'SPLUNK_METRICS_ENABLED',
+      description: 'Activates metrics collection.',
+      default: 'false',
+      type: 'boolean',
+      category: 'general',
+    },
+    {
+      name: 'SPLUNK_METRICS_ENDPOINT',
+      description:
+        'The metrics endpoint. Takes precedence over OTEL_EXPORTER_OTLP_METRICS_ENDPOINT. When SPLUNK_REALM is used, the default value is https://ingest.<realm>.signalfx.com/v2/datapoint/otlp.',
+      default: '',
+      type: 'string',
+      category: 'general',
+    },
+    {
+      name: 'SPLUNK_PROFILER_CALL_STACK_INTERVAL',
+      description:
+        'Frequency with which call stacks are sampled, in milliseconds.',
+      default: '1000',
+      type: 'number',
+      category: 'profiler',
+    },
+    {
+      name: 'SPLUNK_PROFILER_ENABLED',
+      description: 'Activates AlwaysOn CPU profiling.',
+      default: 'false',
+      type: 'boolean',
+      category: 'profiler',
+    },
+    {
+      name: 'SPLUNK_PROFILER_LOGS_ENDPOINT',
+      description: 'The collector endpoint for profiler logs.',
+      default: 'http://localhost:4317',
+      type: 'string',
+      category: 'profiler',
+    },
+    {
+      name: 'SPLUNK_PROFILER_MEMORY_ENABLED',
+      description: 'Activates memory profiling for AlwaysOn Profiling.',
+      default: 'false',
+      type: 'string',
+      category: 'profiler',
+    },
+    {
+      name: 'SPLUNK_REALM',
+      description:
+        'The name of your organization’s realm, for example, us0. When you set the realm, telemetry is sent directly to the ingest endpoint of Splunk Observability Cloud, bypassing the Splunk Distribution of OpenTelemetry Collector.',
+      default: '',
+      type: 'string',
+      category: 'general',
+    },
+    {
+      name: 'SPLUNK_REDIS_INCLUDE_COMMAND_ARGS',
+      description:
+        'Whether to include the full Redis query in db.statement span attributes when using the Redis instrumentation.',
+      default: 'false',
+      type: 'boolean',
+      category: 'instrumentation',
+    },
+    {
+      name: 'SPLUNK_RUNTIME_METRICS_COLLECTION_INTERVAL',
+      description:
+        'The interval, in milliseconds, during which GC and event loop statistics are collected.',
+      default: '5000',
+      type: 'number',
+      category: 'instrumentation',
+    },
+    {
+      name: 'SPLUNK_RUNTIME_METRICS_ENABLED',
+      description:
+        'Activates the collection and export of runtime metrics. Runtime metrics are only sent if the SPLUNK_METRICS_ENABLED environment variable is set to true or if memory profiling is activated.',
+      default: 'true',
+      type: 'boolean',
+      category: 'instrumentation',
+    },
+    {
+      name: 'SPLUNK_TRACE_RESPONSE_HEADER_ENABLED',
+      description:
+        'Activates the addition of server trace information to HTTP response headers.',
+      default: 'true',
+      type: 'boolean',
+      category: 'general',
+    },
+    {
+      name: 'SPLUNK_TRACING_ENABLED',
+      description: 'Enables tracing.',
+      default: 'true',
+      type: 'boolean',
+      category: 'instrumentation',
+    },
+  ];
+}

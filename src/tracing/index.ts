@@ -36,6 +36,7 @@ import {
   AsyncLocalStorageContextManager,
 } from '@opentelemetry/context-async-hooks';
 
+import { configureGraphQlInstrumentation } from '../instrumentations/graphql';
 import { configureHttpInstrumentation } from '../instrumentations/http';
 import {
   configureLogInjection,
@@ -217,6 +218,9 @@ function configureInstrumentations(options: Options) {
     const instr = instrumentation as any;
 
     switch (instr['instrumentationName']) {
+      case '@opentelemetry/instrumentation-graphql':
+        configureGraphQlInstrumentation(instr, options);
+        break;
       case '@opentelemetry/instrumentation-http':
         configureHttpInstrumentation(instr, options);
         break;

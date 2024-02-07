@@ -19,6 +19,7 @@ import * as sinon from 'sinon';
 import * as metrics from '../src/metrics';
 import * as profiling from '../src/profiling';
 import * as tracing from '../src/tracing';
+import * as logging from '../src/logging';
 import { start, stop } from '../src';
 import { Resource } from '@opentelemetry/resources';
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
@@ -72,11 +73,12 @@ describe('start', () => {
 
   const assertCalled = (
     fns,
-    signals: ('tracing' | 'metrics' | 'profiling')[]
+    signals: ('tracing' | 'metrics' | 'profiling' | 'logging')[]
   ) => {
     const metrics = signals.includes('metrics');
     const tracing = signals.includes('tracing');
     const profiling = signals.includes('profiling');
+    const logging = signals.includes('logging');
 
     if (metrics) {
       sinon.assert.calledOnce(fns.metrics);
@@ -93,18 +95,27 @@ describe('start', () => {
     } else {
       sinon.assert.notCalled(fns.tracing);
     }
+    if (logging) {
+      sinon.assert.calledOnce(fns.logging);
+    } else {
+      sinon.assert.notCalled(fns.logging);
+    }
   };
 
   beforeEach(utils.cleanEnvironment);
 
   beforeEach(() => {
     signals.stop = {
+      logging: sinon.spy(),
       metrics: sinon.spy(),
       profiling: sinon.spy(),
       tracing: sinon.stub(tracing, 'stopTracing').callsFake(() => {}),
     };
 
     signals.start = {
+      logging: sinon.stub(logging, 'startLogging').callsFake(() => {
+        return { stop: signals.stop.logging };
+      }),
       metrics: sinon.stub(metrics, 'startMetrics').callsFake(() => {
         return { stop: signals.stop.metrics };
       }),
@@ -134,23 +145,25 @@ describe('start', () => {
         metrics: true,
         profiling: true,
         tracing: false,
+        logging: true,
       });
-      assertCalled(signals.start, ['metrics', 'profiling']);
+      assertCalled(signals.start, ['metrics', 'profiling', 'logging']);
 
       stop();
-      assertCalled(signals.stop, ['metrics', 'profiling']);
+      assertCalled(signals.stop, ['metrics', 'profiling', 'logging']);
     });
 
     it('should allow toggling signals via env', () => {
       process.env.SPLUNK_METRICS_ENABLED = 'y';
       process.env.SPLUNK_PROFILER_ENABLED = '1';
       process.env.SPLUNK_TRACING_ENABLED = 'no';
+      process.env.SPLUNK_AUTOMATIC_LOG_COLLECTION = 'true';
 
       start();
-      assertCalled(signals.start, ['profiling', 'metrics']);
+      assertCalled(signals.start, ['profiling', 'metrics', 'logging']);
 
       stop();
-      assertCalled(signals.stop, ['profiling', 'metrics']);
+      assertCalled(signals.stop, ['profiling', 'metrics', 'logging']);
     });
 
     it('should throw if start called multiple times', () => {
@@ -171,6 +184,7 @@ describe('start', () => {
         logLevel: 'debug',
         profiling: true,
         metrics: true,
+        logging: true,
       });
 
       sinon.assert.calledOnceWithExactly(signals.start.tracing, {
@@ -189,6 +203,12 @@ describe('start', () => {
         endpoint: 'localhost:1111',
         serviceName: 'test',
       });
+
+      sinon.assert.calledOnceWithExactly(signals.start.logging, {
+        accessToken: 'xyz',
+        endpoint: 'localhost:1111',
+        serviceName: 'test',
+      });
     });
   });
 
@@ -199,9 +219,15 @@ describe('start', () => {
         profiling: {},
         tracing: {},
         metrics: {},
+        logging: {},
       });
 
-      assertCalled(signals.start, ['tracing', 'profiling', 'metrics']);
+      assertCalled(signals.start, [
+        'tracing',
+        'profiling',
+        'metrics',
+        'logging',
+      ]);
     });
 
     it('works if all the configuration options are passed', () => {
