@@ -90,7 +90,7 @@ export function _setDefaultOptions(
 
   if (!serviceName) {
     diag.warn(
-      'service.name attribute is not set, your service is unnamed and will be difficult to identify. ' +
+      'service.name attribute for logging is not set, your service is unnamed and will be difficult to identify. ' +
         'Set your service name using the OTEL_RESOURCE_ATTRIBUTES environment variable. ' +
         'E.g. OTEL_RESOURCE_ATTRIBUTES="service.name=<YOUR_SERVICE_NAME_HERE>"'
     );
