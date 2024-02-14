@@ -68,7 +68,7 @@
     "@types/bunyan": "1.8.8",
     "@types/mocha": "10.0.1",
     "@types/semver": "^7.5.0",
-    "@types/shimmer": "1.0.2",
+    "@types/shimmer": "1.0.5",
     "@types/sinon": "^10.0.2",
     "@typescript-eslint/eslint-plugin": "^5.54.1",
     "@typescript-eslint/parser": "^5.57.0",
