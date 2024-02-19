@@ -97,7 +97,7 @@
     "ts-mocha": "^10.0.0",
     "ts-node": "^10.9.1",
     "typeorm": "^0.3.17",
-    "typescript": "5.1.6",
+    "typescript": "5.3.3",
     "winston": "3.10.0"
   },
   "dependencies": {
