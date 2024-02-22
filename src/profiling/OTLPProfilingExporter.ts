@@ -16,7 +16,12 @@
 import * as protoLoader from '@grpc/proto-loader';
 import type * as grpc from '@grpc/grpc-js';
 import * as path from 'path';
-import { CpuProfile, HeapProfile, ProfilingExporter } from './types';
+import {
+  CpuProfile,
+  HeapProfile,
+  ProfilingExporter,
+  ProfilingStacktrace,
+} from './types';
 import { diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import { VERSION } from '@opentelemetry/core';
@@ -66,6 +71,16 @@ function commonAttributes(
       value: { intValue: sampleCount },
     },
   ];
+}
+
+function countSamples(stacktraces: ProfilingStacktrace[]) {
+  let sampleCount = 0;
+
+  for (const profilingStacktrace of stacktraces) {
+    sampleCount += profilingStacktrace.stacktrace.length;
+  }
+
+  return sampleCount;
 }
 
 export class OTLPProfilingExporter implements ProfilingExporter {
@@ -140,7 +155,9 @@ export class OTLPProfilingExporter implements ProfilingExporter {
 
   send(profile: CpuProfile) {
     const { stacktraces } = profile;
-    const sampleCount = stacktraces?.length || 0;
+
+    const sampleCount = countSamples(stacktraces);
+
     diag.debug(`profiling: Exporting ${sampleCount} CPU samples`);
     const { callstackInterval } = this._options;
     const attributes = commonAttributes('cpu', sampleCount);

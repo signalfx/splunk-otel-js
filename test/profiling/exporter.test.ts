@@ -104,7 +104,7 @@ describe('profiling OTLP exporter', () => {
             key: 'com.splunk.sourcetype',
             value: { stringValue: 'otel.profiling' },
           },
-          { key: 'profiling.data.total.frame.count', value: { intValue: 1 } },
+          { key: 'profiling.data.total.frame.count', value: { intValue: 2 } },
         ]);
 
         done();
