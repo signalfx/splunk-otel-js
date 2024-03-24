@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { Options, CaptureHttpUriParameters } from '../tracing/options';
+import { CaptureHttpUriParameters } from '../tracing/options';
+import { StartTracingOptions } from '../tracing';
 import { IncomingMessage, ServerResponse } from 'http';
 import {
   HttpInstrumentationConfig,
@@ -27,7 +28,7 @@ import * as Url from 'url';
 
 type IncomingHttpRequestHook = (span: Span, request: IncomingMessage) => void;
 
-function shouldAddRequestHook(options: Options): boolean {
+function shouldAddRequestHook(options: StartTracingOptions): boolean {
   if (
     Array.isArray(options.captureHttpRequestUriParams) &&
     options.captureHttpRequestUriParams.length === 0
@@ -86,7 +87,7 @@ function captureUriParamByFunction(
 }
 
 function createHttpRequestHook(
-  options: Options
+  options: StartTracingOptions
 ): HttpRequestCustomAttributeFunction {
   const incomingRequestHooks: IncomingHttpRequestHook[] = [];
 
@@ -94,7 +95,7 @@ function createHttpRequestHook(
     incomingRequestHooks.push(
       captureUriParamByKeys(options.captureHttpRequestUriParams)
     );
-  } else {
+  } else if (options.captureHttpRequestUriParams) {
     incomingRequestHooks.push(
       captureUriParamByFunction(options.captureHttpRequestUriParams)
     );
@@ -118,10 +119,14 @@ function createHttpRequestHook(
 export function configureHttpInstrumentation(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   instrumentation: any,
-  options: Options
+  options: StartTracingOptions
 ) {
   if (!options.serverTimingEnabled) {
     return;
+  }
+
+  if (options.captureHttpRequestUriParams === undefined) {
+    options.captureHttpRequestUriParams = [];
   }
 
   if (

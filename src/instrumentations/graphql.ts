@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Options } from '../tracing/options';
+import { StartTracingOptions } from '../tracing';
 import { getEnvBoolean } from '../utils';
 import type {
   GraphQLInstrumentation,
@@ -24,7 +24,7 @@ import type {
 export function configureGraphQlInstrumentation(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   instrumentation: any,
-  _options: Options
+  _options: StartTracingOptions
 ) {
   if (getEnvBoolean('SPLUNK_GRAPHQL_RESOLVE_SPANS_ENABLED', false)) {
     return;

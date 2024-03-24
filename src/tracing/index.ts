@@ -35,15 +35,7 @@ import {
   AsyncHooksContextManager,
   AsyncLocalStorageContextManager,
 } from '@opentelemetry/context-async-hooks';
-
-import { configureGraphQlInstrumentation } from '../instrumentations/graphql';
-import { configureHttpInstrumentation } from '../instrumentations/http';
-import {
-  configureLogInjection,
-  disableLogSending,
-} from '../instrumentations/logging';
 import { allowedTracingOptions, Options, _setDefaultOptions } from './options';
-import { configureRedisInstrumentation } from '../instrumentations/redis';
 import {
   assertNoExtraneousProperties,
   getNonEmptyEnvVar,
@@ -104,7 +96,6 @@ export function startTracing(opts: StartTracingOptions = {}): boolean {
   assertNoExtraneousProperties(opts, allowedTracingOptions);
 
   const options = _setDefaultOptions(opts);
-
   // propagator
   propagation.setGlobalPropagator(options.propagatorFactory(options));
 
@@ -129,8 +120,6 @@ export function startTracing(opts: StartTracingOptions = {}): boolean {
   if (envTracesExporter !== undefined) {
     process.env.OTEL_TRACES_EXPORTER = envTracesExporter;
   }
-
-  configureInstrumentations(options);
 
   // instrumentations
   unregisterInstrumentations = registerInstrumentations({
@@ -210,31 +199,4 @@ async function shutdownGlobalTracerProvider() {
       reportedConstructor?.name ?? reportedConstructor
     }) does not implement shutdown()`
   );
-}
-
-function configureInstrumentations(options: Options) {
-  for (const instrumentation of options.instrumentations) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const instr = instrumentation as any;
-
-    switch (instr['instrumentationName']) {
-      case '@opentelemetry/instrumentation-graphql':
-        configureGraphQlInstrumentation(instr, options);
-        break;
-      case '@opentelemetry/instrumentation-http':
-        configureHttpInstrumentation(instr, options);
-        break;
-      case '@opentelemetry/instrumentation-redis':
-        configureRedisInstrumentation(instr, options);
-        break;
-      case '@opentelemetry/instrumentation-bunyan':
-        disableLogSending(instr);
-        configureLogInjection(instr);
-        break;
-      case '@opentelemetry/instrumentation-pino':
-      case '@opentelemetry/instrumentation-winston':
-        configureLogInjection(instr);
-        break;
-    }
-  }
 }

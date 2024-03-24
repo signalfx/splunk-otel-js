@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 import {
-  assertNoExtraneousProperties,
   getEnvBoolean,
   getNonEmptyEnvVar,
   parseEnvBooleanString,
   parseLogLevel,
-  pick,
   toDiagLogLevel,
 } from './utils';
 import { startMetrics, StartMetricsOptions } from './metrics';
@@ -35,9 +33,7 @@ import {
   stopTracing,
   StartTracingOptions,
 } from './tracing';
-import { allowedTracingOptions } from './tracing/options';
-import { allowedProfilingOptions } from './profiling/types';
-import { allowedMetricsOptions } from './metrics';
+import { parseOptionsAndConfigureInstrumentations } from './instrumentations';
 import {
   diag,
   DiagConsoleLogger,
@@ -46,13 +42,9 @@ import {
   MeterOptions,
   createNoopMeter,
 } from '@opentelemetry/api';
-import {
-  StartLoggingOptions,
-  allowedLoggingOptions,
-  startLogging,
-} from './logging';
+import { StartLoggingOptions, startLogging } from './logging';
 
-interface Options {
+export interface Options {
   accessToken: string;
   endpoint: string;
   serviceName: string;
@@ -95,15 +87,6 @@ export const start = (options: Partial<Options> = {}) => {
   ) {
     throw new Error('Splunk APM already started');
   }
-  const { metrics, profiling, tracing, logging, ...restOptions } = options;
-
-  assertNoExtraneousProperties(restOptions, [
-    'accessToken',
-    'endpoint',
-    'serviceName',
-    'logLevel',
-  ]);
-
   const logLevel = options.logLevel
     ? toDiagLogLevel(options.logLevel)
     : parseLogLevel(getNonEmptyEnvVar('OTEL_LOG_LEVEL'));
@@ -112,12 +95,11 @@ export const start = (options: Partial<Options> = {}) => {
     diag.setLogger(new DiagConsoleLogger(), logLevel);
   }
 
+  const { tracingOptions, loggingOptions, profilingOptions, metricsOptions } =
+    parseOptionsAndConfigureInstrumentations(options);
+
   let metricsEnabledByDefault = false;
   if (isSignalEnabled(options.profiling, 'SPLUNK_PROFILER_ENABLED', false)) {
-    const profilingOptions = Object.assign(
-      pick(restOptions, allowedProfilingOptions),
-      profiling
-    );
     running.profiling = startProfiling(profilingOptions);
 
     // HACK: memory profiling needs to enable metrics,
@@ -130,17 +112,13 @@ export const start = (options: Partial<Options> = {}) => {
   }
 
   if (isSignalEnabled(options.tracing, 'SPLUNK_TRACING_ENABLED', true)) {
-    running.tracing = startTracing(
-      Object.assign(pick(restOptions, allowedTracingOptions), tracing)
-    );
+    running.tracing = startTracing(tracingOptions);
   }
 
   if (
     isSignalEnabled(options.logging, 'SPLUNK_AUTOMATIC_LOG_COLLECTION', false)
   ) {
-    running.logging = startLogging(
-      Object.assign(pick(restOptions, allowedLoggingOptions), logging)
-    );
+    running.logging = startLogging(loggingOptions);
   }
 
   if (
@@ -150,9 +128,7 @@ export const start = (options: Partial<Options> = {}) => {
       metricsEnabledByDefault
     )
   ) {
-    running.metrics = startMetrics(
-      Object.assign(pick(restOptions, allowedMetricsOptions), metrics)
-    );
+    running.metrics = startMetrics(metricsOptions);
   }
 
   const meterProvider = getEnvBoolean(

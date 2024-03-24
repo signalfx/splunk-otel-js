@@ -31,10 +31,10 @@ import { getNonEmptyEnvVar, getEnvArray, defaultServiceName } from '../utils';
 import { detect as detectResource } from '../resource';
 
 type LogRecordProcessorFactory = (
-  options: LoggingOptions
+  options: Options
 ) => LogRecordProcessor | LogRecordProcessor[];
 
-interface LoggingOptions {
+export interface Options {
   accessToken?: string;
   realm?: string;
   serviceName: string;
@@ -51,7 +51,7 @@ export const allowedLoggingOptions = [
   'logRecordProcessorFactory',
 ];
 
-export type StartLoggingOptions = Partial<Omit<LoggingOptions, 'resource'>>;
+export type StartLoggingOptions = Partial<Omit<Options, 'resource'>>;
 
 export function startLogging(opts: StartLoggingOptions = {}) {
   const options = _setDefaultOptions(opts);
@@ -78,9 +78,7 @@ export function startLogging(opts: StartLoggingOptions = {}) {
   };
 }
 
-export function _setDefaultOptions(
-  options: StartLoggingOptions = {}
-): LoggingOptions {
+export function _setDefaultOptions(options: StartLoggingOptions = {}): Options {
   let resource = detectResource();
 
   const serviceName =
@@ -122,7 +120,7 @@ function areValidExporterTypes(types: string[]): boolean {
   return types.every((t) => SUPPORTED_EXPORTER_TYPES.includes(t));
 }
 
-function createExporters(options: LoggingOptions) {
+function createExporters(options: Options) {
   const logExporters: string[] = getEnvArray('OTEL_LOGS_EXPORTER', ['otlp']);
 
   if (!areValidExporterTypes(logExporters)) {
@@ -150,7 +148,7 @@ function createExporters(options: LoggingOptions) {
 }
 
 export function defaultlogRecordProcessorFactory(
-  options: LoggingOptions
+  options: Options
 ): LogRecordProcessor[] {
   let exporters = createExporters(options);
 

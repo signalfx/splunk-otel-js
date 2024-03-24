@@ -17,6 +17,7 @@
 import * as assert from 'assert';
 import { startTracing, stopTracing } from '../src/tracing';
 import { defaultSpanProcessorFactory } from '../src/tracing/options';
+import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
 import * as utils from './utils';
 import {
   InMemorySpanExporter,
@@ -70,7 +71,10 @@ describe('Capturing URI parameters', () => {
   });
 
   it('no uri parameters are captured by default', async () => {
-    startTracing(testOpts());
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
+      tracing: testOpts(),
+    });
+    startTracing(tracingOptions);
     setupServer();
     const [span] = await doRequest(SERVER_URL);
     for (const key of Object.keys(span.attributes)) {
@@ -79,10 +83,13 @@ describe('Capturing URI parameters', () => {
   });
 
   it('uri parameters can be captured by keys', async () => {
-    startTracing({
-      captureHttpRequestUriParams: ['sortBy', 'order', 'yes'],
-      ...testOpts(),
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
+      tracing: {
+        captureHttpRequestUriParams: ['sortBy', 'order', 'yes'],
+        ...testOpts(),
+      },
     });
+    startTracing(tracingOptions);
     setupServer();
     const [span] = await doRequest(
       `${SERVER_URL}/foo?sortBy=name&order=asc&order=desc&quux=123&yes`
@@ -99,19 +106,21 @@ describe('Capturing URI parameters', () => {
   });
 
   it('uri parameters can be captured by user supplied function', async () => {
-    startTracing({
-      captureHttpRequestUriParams: (span, params) => {
-        const value = params['order'];
-        if (value === undefined) {
-          return;
-        }
-
-        const values = Array.isArray(value) ? value : [value];
-
-        span.setAttribute('http.request.param.order', values);
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
+      tracing: {
+        captureHttpRequestUriParams: (span, params) => {
+          const value = params['order'];
+          if (value === undefined) {
+            return;
+          }
+          const values = Array.isArray(value) ? value : [value];
+          span.setAttribute('http.request.param.order', values);
+        },
+        ...testOpts(),
       },
-      ...testOpts(),
     });
+    startTracing(tracingOptions);
+
     setupServer();
     const [span] = await doRequest(
       `${SERVER_URL}/foo?sortBy=name&order=asc&quux=123`
@@ -124,10 +133,13 @@ describe('Capturing URI parameters', () => {
   });
 
   it('uri parameter keys are normalized', async () => {
-    startTracing({
-      captureHttpRequestUriParams: ["'();:@&=+$,/?#[]b ar._&-~-&123!*"],
-      ...testOpts(),
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
+      tracing: {
+        captureHttpRequestUriParams: ["'();:@&=+$,/?#[]b ar._&-~-&123!*"],
+        ...testOpts(),
+      },
     });
+    startTracing(tracingOptions);
     setupServer();
     const [span] = await doRequest(
       `${SERVER_URL}/foo?%27()%3B%3A%40%26%3D%2B%24%2C%2F%3F%23%5B%5Db%20ar._%26-~-%26123!*=42`

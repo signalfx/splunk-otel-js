@@ -25,6 +25,7 @@ import * as utils from '../utils';
 import * as net from 'net';
 import type * as Redis from 'redis';
 import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
+import { parseOptionsAndConfigureInstrumentations } from '../../src/instrumentations';
 
 describe('Redis instrumentation', () => {
   let redisServer;
@@ -71,7 +72,10 @@ describe('Redis instrumentation', () => {
 
   it('db statement is not added when SPLUNK_REDIS_INCLUDE_COMMAND_ARGS is false', (done) => {
     process.env.SPLUNK_REDIS_INCLUDE_COMMAND_ARGS = 'false';
-    startTracing(testOpts());
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
+      tracing: testOpts(),
+    });
+    startTracing(tracingOptions);
     const client = require('redis').createClient({
       no_ready_check: true,
     });
@@ -89,7 +93,10 @@ describe('Redis instrumentation', () => {
 
   it('db statement is fully added when setting SPLUNK_REDIS_INCLUDE_COMMAND_ARGS env var', (done) => {
     process.env.SPLUNK_REDIS_INCLUDE_COMMAND_ARGS = 'true';
-    startTracing(testOpts());
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
+      tracing: testOpts(),
+    });
+    startTracing(tracingOptions);
     const client = require('redis').createClient({
       no_ready_check: true,
     });
