@@ -22,7 +22,7 @@ import {
 import { InstrumentationOption } from '@opentelemetry/instrumentation';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
-// import { getInstrumentations } from '../instrumentations';
+import { getInstrumentations } from '../instrumentations';
 import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 // eslint-disable-next-line node/no-extraneous-import
 import type * as OtlpGrpc from '@opentelemetry/exporter-trace-otlp-grpc';
@@ -33,6 +33,7 @@ import {
   getEnvArray,
   getEnvValueByPrecedence,
   getNonEmptyEnvVar,
+  getEnvBoolean,
 } from '../utils';
 import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
@@ -106,12 +107,12 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     }
   }
 
-  // if (options.serverTimingEnabled === undefined) {
-  //   options.serverTimingEnabled = getEnvBoolean(
-  //     'SPLUNK_TRACE_RESPONSE_HEADER_ENABLED',
-  //     true
-  //   );
-  // }
+  if (options.serverTimingEnabled === undefined) {
+    options.serverTimingEnabled = getEnvBoolean(
+      'SPLUNK_TRACE_RESPONSE_HEADER_ENABLED',
+      true
+    );
+  }
 
   const extraTracerConfig = options.tracerConfig || {};
 
@@ -154,20 +155,20 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   options.propagatorFactory =
     options.propagatorFactory || defaultPropagatorFactory;
 
-  // // instrumentations
-  // if (options.instrumentations === undefined) {
-  //   options.instrumentations = getInstrumentations();
-  // }
+  // instrumentations
+  if (options.instrumentations === undefined) {
+    options.instrumentations = getInstrumentations();
+  }
 
-  // if (options.instrumentations.length === 0) {
-  //   diag.warn(
-  //     'No instrumentations set to be loaded. Install an instrumentation package to enable auto-instrumentation.'
-  //   );
-  // }
+  if (options.instrumentations.length === 0) {
+    diag.warn(
+      'No instrumentations set to be loaded. Install an instrumentation package to enable auto-instrumentation.'
+    );
+  }
 
-  // if (options.captureHttpRequestUriParams === undefined) {
-  //   options.captureHttpRequestUriParams = [];
-  // }
+  if (options.captureHttpRequestUriParams === undefined) {
+    options.captureHttpRequestUriParams = [];
+  }
 
   return {
     realm: options.realm,
@@ -177,7 +178,8 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     ),
     accessToken: options.accessToken,
     serverTimingEnabled: options.serverTimingEnabled,
-    instrumentations: options.instrumentations || [],
+    captureHttpRequestUriParams: options.captureHttpRequestUriParams,
+    instrumentations: options.instrumentations,
     tracerConfig: tracerConfig,
     spanExporterFactory: options.spanExporterFactory,
     spanProcessorFactory: options.spanProcessorFactory,

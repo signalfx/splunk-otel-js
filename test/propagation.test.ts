@@ -33,6 +33,7 @@ import {
 import { SYNTHETIC_RUN_ID_FIELD } from '../src/tracing/SplunkBatchSpanProcessor';
 import { defaultSpanProcessorFactory } from '../src/tracing/options';
 import * as utils from './utils';
+import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
 
 function assertIncludes(arr: string[], item: string) {
   assert(Array.isArray(arr), `Expected an array got ${util.inspect(arr)}`);
@@ -53,7 +54,8 @@ describe('propagation', () => {
   afterEach(stopTracing);
 
   it('must be set to w3c by default', () => {
-    startTracing();
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations();
+    startTracing(tracingOptions);
     assertIncludes(propagation.fields(), 'traceparent');
     assertIncludes(propagation.fields(), 'tracestate');
     assertIncludes(propagation.fields(), 'baggage');
@@ -84,7 +86,8 @@ describe('propagation', () => {
 
   it('has an option for b3multi', () => {
     process.env.OTEL_PROPAGATORS = 'b3multi';
-    startTracing();
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations();
+    startTracing(tracingOptions);
     assertIncludes(propagation.fields(), 'x-b3-traceid');
     assertIncludes(propagation.fields(), 'x-b3-spanid');
     assertIncludes(propagation.fields(), 'x-b3-sampled');
@@ -110,7 +113,8 @@ describe('propagation', () => {
 
   it('has an option for b3', () => {
     process.env.OTEL_PROPAGATORS = 'b3';
-    startTracing();
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations();
+    startTracing(tracingOptions);
     assertIncludes(propagation.fields(), 'b3');
 
     const tracer = trace.getTracer('test-tracer');
@@ -131,7 +135,8 @@ describe('propagation', () => {
   });
 
   it('must extract synthetic run id', () => {
-    startTracing();
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations();
+    startTracing(tracingOptions);
     assertIncludes(propagation.fields(), 'baggage');
 
     const syntheticsTraceId = new RandomIdGenerator().generateTraceId();
@@ -152,12 +157,16 @@ describe('propagation', () => {
   it('must attach synthetic run id to exported spans', async () => {
     const exporter = new InMemorySpanExporter();
     let spanProcessor: SpanProcessor;
-    startTracing({
-      spanExporterFactory: () => exporter,
-      spanProcessorFactory: (options) => {
-        return ([spanProcessor] = defaultSpanProcessorFactory(options));
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
+      tracing: {
+        spanExporterFactory: () => exporter,
+        spanProcessorFactory: (options) => {
+          return ([spanProcessor] = defaultSpanProcessorFactory(options));
+        },
       },
     });
+
+    startTracing(tracingOptions);
 
     assertIncludes(propagation.fields(), 'baggage');
 

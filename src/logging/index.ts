@@ -53,8 +53,7 @@ export const allowedLoggingOptions = [
 
 export type StartLoggingOptions = Partial<Omit<Options, 'resource'>>;
 
-export function startLogging(opts: StartLoggingOptions = {}) {
-  const options = _setDefaultOptions(opts);
+export function startLogging(options: Options) {
   const loggerProvider = new LoggerProvider({
     resource: options.resource,
   });

@@ -174,7 +174,7 @@ describe('options', () => {
         options.propagatorFactory,
         defaultPropagatorFactory
       );
-      // assert.deepStrictEqual(options.captureHttpRequestUriParams, []); //FIXME
+      assert.deepStrictEqual(options.captureHttpRequestUriParams, []);
 
       const exporters = options.spanExporterFactory(options);
 
@@ -236,7 +236,8 @@ describe('options', () => {
       endpoint: 'custom-endpoint',
       serviceName: 'custom-service-name',
       accessToken: 'custom-access-token',
-      serverTimingEnabled: undefined, //FIXME
+      serverTimingEnabled: true,
+      captureHttpRequestUriParams: [],
       instrumentations: [testInstrumentation],
       tracerConfig: {
         resource: new Resource({ attr1: 'value' }),

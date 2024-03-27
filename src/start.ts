@@ -21,11 +21,7 @@ import {
   toDiagLogLevel,
 } from './utils';
 import { startMetrics, StartMetricsOptions } from './metrics';
-import {
-  startProfiling,
-  StartProfilingOptions,
-  _setDefaultOptions as setDefaultProfilingOptions,
-} from './profiling';
+import { startProfiling, StartProfilingOptions } from './profiling';
 import type { EnvVarKey, LogLevel } from './types';
 import {
   getLoadedInstrumentations,
@@ -101,12 +97,7 @@ export const start = (options: Partial<Options> = {}) => {
   let metricsEnabledByDefault = false;
   if (isSignalEnabled(options.profiling, 'SPLUNK_PROFILER_ENABLED', false)) {
     running.profiling = startProfiling(profilingOptions);
-
-    // HACK: memory profiling needs to enable metrics,
-    // run the default option function to see whether memory profiling is enabled
-    const materializedOptions = setDefaultProfilingOptions(profilingOptions);
-
-    if (materializedOptions.memoryProfilingEnabled) {
+    if (profilingOptions.memoryProfilingEnabled) {
       metricsEnabledByDefault = true;
     }
   }

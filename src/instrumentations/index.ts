@@ -17,21 +17,28 @@
 import { load } from './loader';
 import { getEnvBoolean, assertNoExtraneousProperties, pick } from '../utils';
 import type { EnvVarKey } from '../types';
-import type { StartTracingOptions } from '../tracing';
 import {
   allowedTracingOptions,
   Options as TracingOptions,
+  _setDefaultOptions as setDefaultTracingOptions,
 } from '../tracing/options';
+
 import type { StartLoggingOptions } from '../logging';
-import { allowedLoggingOptions } from '../logging';
+import {
+  allowedLoggingOptions,
+  _setDefaultOptions as setDefaultLoggingOptions,
+} from '../logging';
 import { allowedProfilingOptions } from '../profiling/types';
-import { allowedMetricsOptions } from '../metrics';
+import { _setDefaultOptions as setDefaultProfilingOptions } from '../profiling';
+import {
+  allowedMetricsOptions,
+  _setDefaultOptions as setDefaultMetricsOptions,
+} from '../metrics';
 import type { Options as StartOptions } from '../start';
 import { configureGraphQlInstrumentation } from './graphql';
 import { configureHttpInstrumentation } from './http';
 import { configureLogInjection, disableLogSending } from './logging';
 import { configureRedisInstrumentation } from './redis';
-import { diag } from '@opentelemetry/api';
 
 type InstrumentationInfo = {
   module: string;
@@ -40,7 +47,7 @@ type InstrumentationInfo = {
 };
 
 interface Options {
-  tracing: StartTracingOptions;
+  tracing: TracingOptions;
   logging: StartLoggingOptions;
 }
 
@@ -295,43 +302,53 @@ export function parseOptionsAndConfigureInstrumentations(
     'logLevel',
   ]);
 
-  const profilingOptions = Object.assign(
+  const startProfilingOptions = Object.assign(
     pick(restOptions, allowedProfilingOptions),
     profiling
   );
 
-  const loggingOptions = Object.assign(
+  assertNoExtraneousProperties(startProfilingOptions, allowedProfilingOptions);
+  const profilingOptions = setDefaultProfilingOptions(startProfilingOptions);
+
+  const startLoggingOptions = Object.assign(
     pick(restOptions, allowedLoggingOptions),
     logging
   );
 
-  const tracingOptions = Object.assign(
-    // { instrumentations: [] as Instrumentation[] },
+  const loggingOptions = setDefaultLoggingOptions(startLoggingOptions);
+
+  const startTracingOptions = Object.assign(
     pick(restOptions, allowedTracingOptions),
     tracing
   ) as Partial<TracingOptions>;
 
-  if (tracingOptions.serverTimingEnabled === undefined) {
-    tracingOptions.serverTimingEnabled = getEnvBoolean(
-      'SPLUNK_TRACE_RESPONSE_HEADER_ENABLED',
-      true
-    );
-  }
+  // if (startTracingOptions.serverTimingEnabled === undefined) {
+  //   startTracingOptions.serverTimingEnabled = getEnvBoolean(
+  //     'SPLUNK_TRACE_RESPONSE_HEADER_ENABLED',
+  //     true
+  //   );
+  // }
 
-  if (tracingOptions.instrumentations === undefined) {
-    tracingOptions.instrumentations = getInstrumentations();
-  }
+  // if (startTracingOptions.instrumentations === undefined) {
+  //   startTracingOptions.instrumentations = getInstrumentations();
+  // }
 
-  if (tracingOptions.instrumentations.length === 0) {
-    diag.warn(
-      'No instrumentations set to be loaded. Install an instrumentation package to enable auto-instrumentation.'
-    );
-  }
+  // if (startTracingOptions.instrumentations.length === 0) {
+  //   diag.warn(
+  //     'No instrumentations set to be loaded. Install an instrumentation package to enable auto-instrumentation.'
+  //   );
+  // }
 
-  const metricsOptions = Object.assign(
+  assertNoExtraneousProperties(startTracingOptions, allowedTracingOptions);
+  const tracingOptions = setDefaultTracingOptions(startTracingOptions);
+
+  const startMetricsOptions = Object.assign(
     pick(restOptions, allowedMetricsOptions),
     metrics
   );
+
+  assertNoExtraneousProperties(startMetricsOptions, allowedMetricsOptions);
+  const metricsOptions = setDefaultMetricsOptions(startMetricsOptions);
 
   configureInstrumentations({
     tracing: tracingOptions,

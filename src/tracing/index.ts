@@ -35,12 +35,8 @@ import {
   AsyncHooksContextManager,
   AsyncLocalStorageContextManager,
 } from '@opentelemetry/context-async-hooks';
-import { allowedTracingOptions, Options, _setDefaultOptions } from './options';
-import {
-  assertNoExtraneousProperties,
-  getNonEmptyEnvVar,
-  parseEnvBooleanString,
-} from '../utils';
+import { Options } from './options';
+import { getNonEmptyEnvVar, parseEnvBooleanString } from '../utils';
 import { isProfilingContextManagerSet } from '../profiling';
 
 /**
@@ -89,13 +85,10 @@ function setLoadedInstrumentations(instrumentations: InstrumentationOption[]) {
 }
 
 export type StartTracingOptions = Partial<Options>;
-export function startTracing(opts: StartTracingOptions = {}): boolean {
+export function startTracing(options: Options): boolean {
   assert(!isStarted, 'Splunk APM already started');
   isStarted = true;
 
-  assertNoExtraneousProperties(opts, allowedTracingOptions);
-
-  const options = _setDefaultOptions(opts);
   // propagator
   propagation.setGlobalPropagator(options.propagatorFactory(options));
 
