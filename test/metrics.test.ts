@@ -32,6 +32,7 @@ import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions'
 import { cleanEnvironment, TestMetricReader } from './utils';
 import { hrtime } from 'process';
 import { startMetrics, _setDefaultOptions } from '../src/metrics';
+import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
 
 function emptyCounter() {
   return {
@@ -165,21 +166,24 @@ describe('metrics', () => {
       const resource = new Resource({
         [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: 'test',
       });
-
-      startMetrics({
-        serviceName: 'foo',
-        resourceFactory: (defaultResource: Resource) => {
-          return defaultResource.merge(resource);
-        },
-        views: [
-          new View({ name: 'clicks.xyz', instrumentName: 'test-counter' }),
-        ],
-        runtimeMetricsEnabled: true,
-        runtimeMetricsCollectionIntervalMillis: 1,
-        metricReaderFactory: () => {
-          return [reader];
+      const { metricsOptions } = parseOptionsAndConfigureInstrumentations({
+        metrics: {
+          serviceName: 'foo',
+          resourceFactory: (defaultResource: Resource) => {
+            return defaultResource.merge(resource);
+          },
+          views: [
+            new View({ name: 'clicks.xyz', instrumentName: 'test-counter' }),
+          ],
+          runtimeMetricsEnabled: true,
+          runtimeMetricsCollectionIntervalMillis: 1,
+          metricReaderFactory: () => {
+            return [reader];
+          },
         },
       });
+
+      startMetrics(metricsOptions);
 
       const counter = metrics.getMeter('custom').createCounter('test-counter');
       counter.add(42);

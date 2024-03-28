@@ -16,6 +16,7 @@
 
 import { startTracing, stopTracing } from '../src/tracing';
 import { TestLogStream, assertInjection } from './utils';
+import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
 
 describe('winston log injection', () => {
   let logStream: TestLogStream;
@@ -25,7 +26,10 @@ describe('winston log injection', () => {
   });
 
   it('injects context to winston records', () => {
-    startTracing({ serviceName: 'test-service' });
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
+      tracing: { serviceName: 'test-service' },
+    });
+    startTracing(tracingOptions);
     const winston = require('winston');
     const logger = winston.createLogger({
       transports: [new winston.transports.Stream({ stream: logStream.stream })],

@@ -26,7 +26,6 @@ import { OTLPMetricExporter as OTLPHttpProtoMetricExporter } from '@opentelemetr
 import type * as grpc from '@grpc/grpc-js';
 import type * as OtlpGrpc from '@opentelemetry/exporter-metrics-otlp-grpc';
 import {
-  assertNoExtraneousProperties,
   defaultServiceName,
   getEnvArray,
   getEnvBoolean,
@@ -43,7 +42,7 @@ import { ConsoleMetricExporter } from './ConsoleMetricExporter';
 export type MetricReaderFactory = (options: MetricsOptions) => MetricReader[];
 export type ResourceFactory = (resource: Resource) => Resource;
 
-interface MetricsOptions {
+export interface MetricsOptions {
   accessToken: string;
   realm?: string;
   serviceName: string;
@@ -244,11 +243,7 @@ export const allowedMetricsOptions = [
   'debugMetricsEnabled',
 ];
 
-export function startMetrics(opts: StartMetricsOptions = {}) {
-  assertNoExtraneousProperties(opts, allowedMetricsOptions);
-
-  const options = _setDefaultOptions(opts);
-
+export function startMetrics(options: MetricsOptions) {
   const debugMetricsViews: View[] = options.debugMetricsEnabled
     ? getDebugMetricsViews()
     : [];

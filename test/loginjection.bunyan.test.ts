@@ -16,6 +16,7 @@
 
 import { TestLogStream, assertInjection } from './utils';
 import { startTracing, stopTracing } from '../src/tracing';
+import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
 import type * as bunyan from 'bunyan';
 
 describe('log injection', () => {
@@ -36,7 +37,10 @@ describe('log injection', () => {
     });
 
     it('injects service version and service environment if available', () => {
-      startTracing({ serviceName: 'test-service' });
+      const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
+        tracing: { serviceName: 'test-service' },
+      });
+      startTracing(tracingOptions);
 
       const logger: bunyan = require('bunyan').createLogger({
         name: 'test',

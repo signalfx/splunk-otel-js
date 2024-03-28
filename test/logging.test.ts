@@ -22,11 +22,13 @@ import {
   SimpleLogRecordProcessor,
   ConsoleLogRecordExporter,
 } from '@opentelemetry/sdk-logs';
+import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
 
 describe('logging', () => {
   describe('startLogging', () => {
     it('sets logprovider', () => {
-      startLogging();
+      const { loggingOptions } = parseOptionsAndConfigureInstrumentations();
+      startLogging(loggingOptions);
       const provider = logsAPI.logs.getLoggerProvider();
       assert(provider instanceof LoggerProvider);
     });

@@ -19,6 +19,7 @@ import { context, trace } from '@opentelemetry/api';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { startTracing, stopTracing } from '../src/tracing';
 import * as utils from './utils';
+import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
 
 const PORT = 9111;
 const SERVER_URL = `http://localhost:${PORT}`;
@@ -59,45 +60,54 @@ describe('servertiming', () => {
   }
 
   it('injects server timing by default', (done) => {
-    startTracing({});
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations();
+    startTracing(tracingOptions);
     testHeadersAdded(done);
   });
 
   it('can be enabled via environment variables', (done) => {
     process.env.SPLUNK_TRACE_RESPONSE_HEADER_ENABLED = 'true';
-    startTracing({});
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations();
+    startTracing(tracingOptions);
     testHeadersAdded(() => {
       done();
     });
   });
 
   it('injects server timing header with current context', (done) => {
-    startTracing({ serverTimingEnabled: true });
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
+      tracing: { serverTimingEnabled: true },
+    });
+    startTracing(tracingOptions);
     testHeadersAdded(done);
   });
 
   it('works with user provided http instrumentation config', (done) => {
-    startTracing({
-      serverTimingEnabled: true,
-      instrumentations: [new HttpInstrumentation({})],
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
+      tracing: {
+        serverTimingEnabled: true,
+        instrumentations: [new HttpInstrumentation({})],
+      },
     });
-
+    startTracing(tracingOptions);
     testHeadersAdded(done);
   });
 
   it('leaves user hooks unchanged', (done) => {
     let userHookCalled = false;
-
-    startTracing({
-      serverTimingEnabled: true,
-      instrumentations: [
-        new HttpInstrumentation({
-          responseHook: (span, response) => {
-            userHookCalled = true;
-          },
-        }),
-      ],
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
+      tracing: {
+        serverTimingEnabled: true,
+        instrumentations: [
+          new HttpInstrumentation({
+            responseHook: (span, response) => {
+              userHookCalled = true;
+            },
+          }),
+        ],
+      },
     });
+    startTracing(tracingOptions);
 
     const http = require('http');
     let spanContext;

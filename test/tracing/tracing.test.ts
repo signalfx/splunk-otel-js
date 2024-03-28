@@ -27,6 +27,7 @@ import {
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 
+import { parseOptionsAndConfigureInstrumentations } from '../../src/instrumentations';
 import { startTracing, stopTracing } from '../../src/tracing';
 import * as utils from '../utils';
 
@@ -70,7 +71,8 @@ describe('tracing:otlp', () => {
   }
 
   it('setups tracing with defaults', () => {
-    startTracing();
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations();
+    startTracing(tracingOptions);
     assertTracingPipeline('localhost:4317', 'unnamed-node-service', '');
     stopTracing();
   });
@@ -79,11 +81,15 @@ describe('tracing:otlp', () => {
     const endpoint = 'custom-endpoint:1111';
     const serviceName = 'test-node-service';
     const accessToken = '1234';
-    startTracing({
-      endpoint,
-      serviceName,
-      accessToken,
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
+      tracing: {
+        endpoint,
+        serviceName,
+        accessToken,
+      },
     });
+
+    startTracing(tracingOptions);
     assertTracingPipeline(endpoint, serviceName, accessToken);
     stopTracing();
   });
@@ -97,17 +103,22 @@ describe('tracing:otlp', () => {
     process.env.OTEL_SERVICE_NAME = serviceName;
     process.env.SPLUNK_ACCESS_TOKEN = accessToken;
 
-    startTracing();
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations();
+    startTracing(tracingOptions);
     assertTracingPipeline(url, serviceName, accessToken);
     stopTracing();
   });
 
   it('sets up tracing with a single processor', () => {
-    startTracing({
-      spanProcessorFactory: () => {
-        return new SimpleSpanProcessor(new ConsoleSpanExporter());
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
+      tracing: {
+        spanProcessorFactory: () => {
+          return new SimpleSpanProcessor(new ConsoleSpanExporter());
+        },
       },
     });
+
+    startTracing(tracingOptions);
 
     sinon.assert.calledOnce(addSpanProcessorMock);
     const p1 = addSpanProcessorMock.getCall(0).args[0];
@@ -119,14 +130,18 @@ describe('tracing:otlp', () => {
   });
 
   it('sets up tracing with multiple processors', () => {
-    startTracing({
-      spanProcessorFactory: function (options) {
-        return [
-          new SimpleSpanProcessor(new ConsoleSpanExporter()),
-          new BatchSpanProcessor(new InMemorySpanExporter()),
-        ];
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
+      tracing: {
+        spanProcessorFactory: function (options) {
+          return [
+            new SimpleSpanProcessor(new ConsoleSpanExporter()),
+            new BatchSpanProcessor(new InMemorySpanExporter()),
+          ];
+        },
       },
     });
+
+    startTracing(tracingOptions);
 
     sinon.assert.calledTwice(addSpanProcessorMock);
     const p1 = addSpanProcessorMock.getCall(0).args[0];
@@ -156,9 +171,13 @@ describe('tracing:otlp', () => {
     const exportFn = sinon.spy(exporter, 'export');
     const shutdownFn = sinon.spy(exporter, 'shutdown');
 
-    startTracing({
-      spanExporterFactory: () => exporter,
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
+      tracing: {
+        spanExporterFactory: () => exporter,
+      },
     });
+
+    startTracing(tracingOptions);
 
     const storedTracer = trace.getTracer('test-tracer');
     createSpan();

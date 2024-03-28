@@ -19,12 +19,12 @@ import type {
   RedisInstrumentationConfig,
 } from '@opentelemetry/instrumentation-redis';
 import { getEnvBoolean } from '../utils';
-import { Options } from '../tracing/options';
+import { StartTracingOptions } from '../tracing';
 
 export function configureRedisInstrumentation(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   instrumentation: any,
-  _options: Options
+  _options: StartTracingOptions
 ) {
   const redisInstrumentation = instrumentation as RedisInstrumentation;
   if (getEnvBoolean('SPLUNK_REDIS_INCLUDE_COMMAND_ARGS', false)) {
