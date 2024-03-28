@@ -16,7 +16,7 @@
     "lint": "eslint . --ext .ts",
     "lint:commits": "commitlint",
     "test": "npm run test:unit && npm run test:debug-metrics && npm run test:instrumentations",
-    "test:unit": "cross-env TEST_ALLOW_DOUBLE_START=y nyc ts-mocha --exclude 'test/instrumentation/external/**/*.test.ts' --exclude 'test/separate_process/*' --timeout 60s --parallel --jobs 4 -p tsconfig.json 'test/**/*.test.ts'",
+    "test:unit": "cross-env TEST_ALLOW_DOUBLE_START=y nyc ts-mocha --exclude 'test/instrumentation/external/**/*.test.ts' --exclude 'test/separate_process/*' --timeout 60s --parallel --jobs 8 -p tsconfig.json 'test/**/*.test.ts'",
     "test:debug-metrics": "nyc --no-clean ts-mocha --timeout 10000 -p tsconfig.json 'test/separate_process/debug_metrics.test.ts'",
     "test:instrumentations": "nyc ts-mocha --require test/instrumentation/external/setup.ts --jobs 1 'test/instrumentation/external/**/*.test.ts'",
     "prebuild:current": "node scripts/prebuild-current.js",
