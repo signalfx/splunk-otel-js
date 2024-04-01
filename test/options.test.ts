@@ -141,11 +141,10 @@ describe('options', () => {
           delete options.tracerConfig.resource.attributes[processAttribute];
         });
 
-      // FIXME
-      // assert.deepStrictEqual(
-      //   Object.keys(options).sort(),
-      //   allowedTracingOptions.sort()
-      // );
+      assert.deepStrictEqual(
+        Object.keys(options).sort(),
+        allowedTracingOptions.sort()
+      );
 
       assert.deepStrictEqual(options.realm, undefined);
 
@@ -158,7 +157,7 @@ describe('options', () => {
       // since tests run at the source directory, it is detected as such.
       assert.deepStrictEqual(options.serviceName, '@splunk/otel');
       assert.deepStrictEqual(options.accessToken, '');
-      // assert.deepStrictEqual(options.serverTimingEnabled, true); //FIXME
+      assert.deepStrictEqual(options.serverTimingEnabled, true);
       assert.deepStrictEqual(options.instrumentations, []);
       assert.deepStrictEqual(options.tracerConfig, {
         resource: new Resource({
@@ -186,11 +185,6 @@ describe('options', () => {
       assert(exporter instanceof OTLPTraceExporter);
 
       sinon.assert.calledWithMatch(logger.warn, MATCH_SERVICE_NAME_WARNING);
-      // FIXME
-      // sinon.assert.calledWithMatch(
-      //   logger.warn,
-      //   MATCH_NO_INSTRUMENTATIONS_WARNING
-      // );
     });
 
     it('reads the container when setting default options', () => {

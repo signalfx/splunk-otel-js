@@ -65,10 +65,10 @@ export interface Options {
   endpoint?: string;
   serviceName: string;
   // Tracing-specific configuration options:
-  captureHttpRequestUriParams?: string[] | CaptureHttpUriParameters;
+  captureHttpRequestUriParams: string[] | CaptureHttpUriParameters;
   instrumentations: InstrumentationOption[];
   propagatorFactory: PropagatorFactory;
-  serverTimingEnabled?: boolean;
+  serverTimingEnabled: boolean;
   spanExporterFactory: SpanExporterFactory;
   spanProcessorFactory: SpanProcessorFactory;
   tracerConfig: NodeTracerConfig;

@@ -262,7 +262,6 @@ export function getInstrumentations() {
 }
 
 export function configureInstrumentations(options: Options) {
-  // parse options
   const instrumentations = options.tracing.instrumentations || [];
   for (const instrumentation of instrumentations) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -321,23 +320,6 @@ export function parseOptionsAndConfigureInstrumentations(
     pick(restOptions, allowedTracingOptions),
     tracing
   ) as Partial<TracingOptions>;
-
-  // if (startTracingOptions.serverTimingEnabled === undefined) {
-  //   startTracingOptions.serverTimingEnabled = getEnvBoolean(
-  //     'SPLUNK_TRACE_RESPONSE_HEADER_ENABLED',
-  //     true
-  //   );
-  // }
-
-  // if (startTracingOptions.instrumentations === undefined) {
-  //   startTracingOptions.instrumentations = getInstrumentations();
-  // }
-
-  // if (startTracingOptions.instrumentations.length === 0) {
-  //   diag.warn(
-  //     'No instrumentations set to be loaded. Install an instrumentation package to enable auto-instrumentation.'
-  //   );
-  // }
 
   assertNoExtraneousProperties(startTracingOptions, allowedTracingOptions);
   const tracingOptions = setDefaultTracingOptions(startTracingOptions);

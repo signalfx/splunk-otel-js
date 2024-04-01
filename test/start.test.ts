@@ -188,7 +188,6 @@ describe('start', () => {
         logging: true,
       });
 
-      // FIXME
       sinon.assert.calledOnceWithMatch(signals.start.tracing, {
         accessToken: 'xyz',
         endpoint: 'localhost:1111',
@@ -209,7 +208,7 @@ describe('start', () => {
       });
 
       sinon.assert.calledOnceWithMatch(signals.start.logging, {
-        // accessToken: 'xyz', // FIXME logging doenst use accessToken atm cause no ingest
+        // accessToken: 'xyz', // FIXME logging doesn't use accessToken atm cause no ingest
         endpoint: 'localhost:1111',
         serviceName: 'test',
       });
