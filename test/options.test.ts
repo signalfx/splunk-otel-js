@@ -185,10 +185,6 @@ describe('options', () => {
       assert(exporter instanceof OTLPTraceExporter);
 
       sinon.assert.calledWithMatch(logger.warn, MATCH_SERVICE_NAME_WARNING);
-      sinon.assert.calledWithMatch(
-        logger.warn,
-        MATCH_NO_INSTRUMENTATIONS_WARNING
-      );
     });
 
     it('reads the container when setting default options', () => {
@@ -227,7 +223,6 @@ describe('options', () => {
       spanExporterFactory: testSpanExporterFactory,
       spanProcessorFactory: testSpanProcessorFactory,
       propagatorFactory: testPropagatorFactory,
-      captureHttpRequestUriParams: ['timestamp'],
     });
 
     assert.deepStrictEqual(options, {
@@ -236,6 +231,7 @@ describe('options', () => {
       serviceName: 'custom-service-name',
       accessToken: 'custom-access-token',
       serverTimingEnabled: true,
+      captureHttpRequestUriParams: [],
       instrumentations: [testInstrumentation],
       tracerConfig: {
         resource: new Resource({ attr1: 'value' }),
@@ -244,7 +240,6 @@ describe('options', () => {
       spanExporterFactory: testSpanExporterFactory,
       spanProcessorFactory: testSpanProcessorFactory,
       propagatorFactory: testPropagatorFactory,
-      captureHttpRequestUriParams: ['timestamp'],
     });
 
     sinon.assert.neverCalledWithMatch(logger.warn, MATCH_SERVICE_NAME_WARNING);

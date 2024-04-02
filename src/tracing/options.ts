@@ -31,9 +31,9 @@ import { detect as detectResource } from '../resource';
 import {
   defaultServiceName,
   getEnvArray,
-  getEnvBoolean,
   getEnvValueByPrecedence,
   getNonEmptyEnvVar,
+  getEnvBoolean,
 } from '../utils';
 import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
@@ -178,12 +178,12 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     ),
     accessToken: options.accessToken,
     serverTimingEnabled: options.serverTimingEnabled,
+    captureHttpRequestUriParams: options.captureHttpRequestUriParams,
     instrumentations: options.instrumentations,
     tracerConfig: tracerConfig,
     spanExporterFactory: options.spanExporterFactory,
     spanProcessorFactory: options.spanProcessorFactory,
     propagatorFactory: options.propagatorFactory,
-    captureHttpRequestUriParams: options.captureHttpRequestUriParams,
   };
 }
 

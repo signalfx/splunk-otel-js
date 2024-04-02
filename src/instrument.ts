@@ -27,6 +27,7 @@ import { startMetrics } from './metrics';
 import { startProfiling } from './profiling';
 import { startTracing } from './tracing';
 import { startLogging } from './logging';
+import { parseOptionsAndConfigureInstrumentations } from './instrumentations';
 
 function boot() {
   const logLevel = parseLogLevel(getNonEmptyEnvVar('OTEL_LOG_LEVEL'));
@@ -46,21 +47,24 @@ function boot() {
     }
   }
 
+  const { tracingOptions, loggingOptions, profilingOptions, metricsOptions } =
+    parseOptionsAndConfigureInstrumentations();
+
   if (getEnvBoolean('SPLUNK_PROFILER_ENABLED', false)) {
-    startProfiling();
+    startProfiling(profilingOptions);
   }
 
-  startTracing();
+  startTracing(tracingOptions);
 
   if (getEnvBoolean('SPLUNK_AUTOMATIC_LOG_COLLECTION', false)) {
-    startLogging();
+    startLogging(loggingOptions);
   }
 
   if (
     getEnvBoolean('SPLUNK_METRICS_ENABLED', false) ||
     getEnvBoolean('SPLUNK_PROFILER_MEMORY_ENABLED', false)
   ) {
-    startMetrics();
+    startMetrics(metricsOptions);
   }
 }
 

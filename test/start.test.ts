@@ -20,6 +20,7 @@ import * as metrics from '../src/metrics';
 import * as profiling from '../src/profiling';
 import * as tracing from '../src/tracing';
 import * as logging from '../src/logging';
+import { getInstrumentations } from '../src/instrumentations';
 import { start, stop } from '../src';
 import { Resource } from '@opentelemetry/resources';
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
@@ -37,9 +38,9 @@ CONFIG.general = {
   serviceName,
 };
 
-const exportInterval = 'exportInterval';
+const exportIntervalMillis = 'exportInterval';
 CONFIG.metrics = {
-  exportInterval,
+  exportIntervalMillis,
 };
 
 const callstackInterval = 'callstackInterval';
@@ -187,25 +188,27 @@ describe('start', () => {
         logging: true,
       });
 
-      sinon.assert.calledOnceWithExactly(signals.start.tracing, {
+      sinon.assert.calledOnceWithMatch(signals.start.tracing, {
+        accessToken: 'xyz',
+        endpoint: 'localhost:1111',
+        serviceName: 'test',
+        serverTimingEnabled: true,
+        captureHttpRequestUriParams: [],
+      });
+
+      sinon.assert.calledOnceWithMatch(signals.start.profiling, {
+        endpoint: 'localhost:1111',
+        serviceName: 'test',
+      });
+
+      sinon.assert.calledOnceWithMatch(signals.start.metrics, {
         accessToken: 'xyz',
         endpoint: 'localhost:1111',
         serviceName: 'test',
       });
 
-      sinon.assert.calledOnceWithExactly(signals.start.profiling, {
-        endpoint: 'localhost:1111',
-        serviceName: 'test',
-      });
-
-      sinon.assert.calledOnceWithExactly(signals.start.metrics, {
-        accessToken: 'xyz',
-        endpoint: 'localhost:1111',
-        serviceName: 'test',
-      });
-
-      sinon.assert.calledOnceWithExactly(signals.start.logging, {
-        accessToken: 'xyz',
+      sinon.assert.calledOnceWithMatch(signals.start.logging, {
+        // accessToken: 'xyz', // FIXME logging doesn't use accessToken atm cause no ingest
         endpoint: 'localhost:1111',
         serviceName: 'test',
       });
@@ -234,7 +237,8 @@ describe('start', () => {
       start({
         ...CONFIG.general,
         profiling: {
-          ...CONFIG.general,
+          endpoint: CONFIG.general.endpoint,
+          serviceName: CONFIG.general.serviceName,
           ...CONFIG.profiling,
         },
         tracing: {

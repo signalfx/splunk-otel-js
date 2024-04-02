@@ -21,6 +21,7 @@ import * as splunk from '../src';
 import * as tracing from '../src/tracing';
 import * as metrics from '../src/metrics';
 import * as profiling from '../src/profiling';
+import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
 
 const SIGNALS = {
   tracing,
@@ -65,8 +66,9 @@ describe('API', () => {
     });
 
     it('should throw if start is called multiple times', () => {
-      api.startTracing();
-      assert.throws(() => api.startTracing());
+      const { tracingOptions } = parseOptionsAndConfigureInstrumentations();
+      api.startTracing(tracingOptions);
+      assert.throws(() => api.startTracing(tracingOptions));
       api.stopTracing();
     });
 

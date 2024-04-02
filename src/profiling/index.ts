@@ -17,7 +17,6 @@
 import { context, diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import {
-  assertNoExtraneousProperties,
   defaultServiceName,
   getEnvBoolean,
   getEnvNumber,
@@ -37,7 +36,6 @@ import {
   ProfilingOptions,
   StartProfilingOptions,
   ProfilingStartOptions,
-  allowedProfilingOptions,
 } from './types';
 import { ProfilingContextManager } from './ProfilingContextManager';
 import { OTLPProfilingExporter } from './OTLPProfilingExporter';
@@ -101,11 +99,7 @@ export function isProfilingContextManagerSet(): boolean {
   return profilingContextManagerEnabled;
 }
 
-export function startProfiling(opts: StartProfilingOptions = {}) {
-  assertNoExtraneousProperties(opts, allowedProfilingOptions);
-
-  const options = _setDefaultOptions(opts);
-
+export function startProfiling(options: ProfilingOptions) {
   const extension = loadExtension();
 
   if (extension === undefined) {

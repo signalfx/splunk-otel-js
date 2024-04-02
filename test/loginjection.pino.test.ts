@@ -19,7 +19,7 @@ import { startTracing, stopTracing } from '../src/tracing';
 import { TestLogStream, assertInjection } from './utils';
 import { defaultLogHook } from '../src/instrumentations/logging';
 import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
-
+import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
 describe('pino with with custom hooks', () => {
   let logStream: TestLogStream;
 
@@ -33,16 +33,19 @@ describe('pino with with custom hooks', () => {
   it('is possible to opt out from injecting resource attributes', () => {
     const MY_VALUE = 'myValue';
     const MY_ATTRIBUTE = 'myAttribute';
-    startTracing({
-      serviceName: 'test-service',
-      instrumentations: [
-        new PinoInstrumentation({
-          logHook: (span, logRecord) => {
-            logRecord[MY_ATTRIBUTE] = MY_VALUE;
-          },
-        }),
-      ],
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
+      tracing: {
+        serviceName: 'test-service',
+        instrumentations: [
+          new PinoInstrumentation({
+            logHook: (span, logRecord) => {
+              logRecord[MY_ATTRIBUTE] = MY_VALUE;
+            },
+          }),
+        ],
+      },
     });
+    startTracing(tracingOptions);
 
     const logger: pino.Logger = require('pino')(logStream.stream);
 
@@ -55,17 +58,20 @@ describe('pino with with custom hooks', () => {
   it('is easy enough do do both', () => {
     const MY_VALUE = 'myValueBoth';
     const MY_ATTRIBUTE = 'myAttributeBoth';
-    startTracing({
-      serviceName: 'test-service',
-      instrumentations: [
-        new PinoInstrumentation({
-          logHook: (span, logRecord) => {
-            defaultLogHook(span, logRecord);
-            logRecord[MY_ATTRIBUTE] = MY_VALUE;
-          },
-        }),
-      ],
+    const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
+      tracing: {
+        serviceName: 'test-service',
+        instrumentations: [
+          new PinoInstrumentation({
+            logHook: (span, logRecord) => {
+              defaultLogHook(span, logRecord);
+              logRecord[MY_ATTRIBUTE] = MY_VALUE;
+            },
+          }),
+        ],
+      },
     });
+    startTracing(tracingOptions);
 
     const logger: pino.Logger = require('pino')(logStream.stream);
 
