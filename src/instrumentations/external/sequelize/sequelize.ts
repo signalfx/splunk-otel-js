@@ -173,6 +173,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<
         }
 
         const attributes: Record<string, any> = {
+          [SemanticAttributes.DB_SYSTEM]: sequelizeInstance.getDialect(),
           [SemanticAttributes.DB_USER]: config?.username,
           [SemanticAttributes.NET_PEER_NAME]: config?.host,
           [SemanticAttributes.NET_PEER_PORT]: config?.port
