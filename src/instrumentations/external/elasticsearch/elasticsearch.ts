@@ -39,9 +39,7 @@ enum AttributeNames {
   ELASTICSEARCH_INDICES = 'elasticsearch.request.indices',
 }
 
-export class ElasticsearchInstrumentation extends InstrumentationBase<
-  typeof elasticsearch
-> {
+export class ElasticsearchInstrumentation extends InstrumentationBase {
   static readonly component = '@elastic/elasticsearch';
 
   protected override _config: ElasticsearchInstrumentationConfig = {};
@@ -60,11 +58,10 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<
     this._config = Object.assign({}, config);
   }
 
-  protected init(): InstrumentationModuleDefinition<typeof elasticsearch> {
+  protected init(): InstrumentationModuleDefinition {
     const apiModuleFiles = ELASTICSEARCH_API_FILES.map(
       ({ path, operationClassName }) =>
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        new InstrumentationNodeModuleFile<any>(
+        new InstrumentationNodeModuleFile(
           `@elastic/elasticsearch/api/${path}`,
           ['>=5 <8'],
           (moduleExports, moduleVersion) => {
@@ -110,9 +107,7 @@ export class ElasticsearchInstrumentation extends InstrumentationBase<
         )
     );
 
-    const module = new InstrumentationNodeModuleDefinition<
-      typeof elasticsearch
-    >(
+    const module = new InstrumentationNodeModuleDefinition(
       ElasticsearchInstrumentation.component,
       ['*'],
       undefined,
