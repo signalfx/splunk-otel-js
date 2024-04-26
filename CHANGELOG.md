@@ -1,5 +1,9 @@
 # Change Log - @splunk/otel
 
+## 2.8.0
+
+- Upgrade to OpenTelemetry `1.24.0` / `0.51.0`. [#902](https://github.com/signalfx/splunk-otel-js/pull/902)
+
 ## 2.7.1
 
 - Fix reporting of `profiling.data.total.frame.count`. [#886](https://github.com/signalfx/splunk-otel-js/pull/886)
