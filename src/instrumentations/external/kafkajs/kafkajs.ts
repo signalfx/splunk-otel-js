@@ -46,15 +46,12 @@ import { VERSION } from '../../../version';
 import { bufferTextMapGetter } from './propagator';
 import {
   InstrumentationBase,
-  InstrumentationModuleDefinition,
   InstrumentationNodeModuleDefinition,
   safeExecuteInTheMiddle,
   isWrapped,
 } from '@opentelemetry/instrumentation';
 
-export class KafkaJsInstrumentation extends InstrumentationBase<
-  typeof kafkaJs
-> {
+export class KafkaJsInstrumentation extends InstrumentationBase {
   static readonly component = 'kafkajs';
   protected override _config!: KafkaJsInstrumentationConfig;
   private moduleVersion?: string;
@@ -71,10 +68,8 @@ export class KafkaJsInstrumentation extends InstrumentationBase<
     this._config = Object.assign({}, config);
   }
 
-  protected init(): InstrumentationModuleDefinition<typeof kafkaJs> {
-    const unpatch: InstrumentationModuleDefinition<
-      typeof kafkaJs
-    >['unpatch'] = (moduleExports) => {
+  protected init() {
+    const unpatch = (moduleExports: typeof kafkaJs) => {
       diag.debug('kafkajs instrumentation: un-patching');
       if (isWrapped(moduleExports?.Kafka?.prototype.producer)) {
         this._unwrap(moduleExports.Kafka.prototype, 'producer');
@@ -83,31 +78,29 @@ export class KafkaJsInstrumentation extends InstrumentationBase<
         this._unwrap(moduleExports.Kafka.prototype, 'consumer');
       }
     };
-    const module: InstrumentationModuleDefinition<typeof kafkaJs> =
-      new InstrumentationNodeModuleDefinition<typeof kafkaJs>(
-        KafkaJsInstrumentation.component,
-        ['*'],
-        (moduleExports, moduleVersion) => {
-          diag.debug('kafkajs instrumentation: applying patch');
-          this.moduleVersion = moduleVersion;
+    const module = new InstrumentationNodeModuleDefinition(
+      KafkaJsInstrumentation.component,
+      ['*'],
+      (moduleExports, moduleVersion) => {
+        diag.debug('kafkajs instrumentation: applying patch');
+        this.moduleVersion = moduleVersion;
 
-          unpatch(moduleExports);
-          this._wrap(
-            moduleExports?.Kafka?.prototype,
-            'producer',
-            this._getProducerPatch()
-          );
-          this._wrap(
-            moduleExports?.Kafka?.prototype,
-            'consumer',
-            this._getConsumerPatch()
-          );
+        unpatch(moduleExports);
+        this._wrap(
+          moduleExports?.Kafka?.prototype,
+          'producer',
+          this._getProducerPatch()
+        );
+        this._wrap(
+          moduleExports?.Kafka?.prototype,
+          'consumer',
+          this._getConsumerPatch()
+        );
 
-          return moduleExports;
-        },
-        unpatch
-      );
-    module.includePrerelease = true;
+        return moduleExports;
+      },
+      unpatch
+    );
     return module;
   }
 

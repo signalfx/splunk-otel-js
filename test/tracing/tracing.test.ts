@@ -65,7 +65,10 @@ describe('tracing:otlp', () => {
 
     if (accessToken) {
       // gRPC not yet supported in ingest
-      assert.equal(exporter.metadata.get('x-sf-token'), accessToken);
+      assert.equal(
+        exporter['_transport']['_parameters']['metadata']().get('x-sf-token'),
+        accessToken
+      );
     }
   }
 
