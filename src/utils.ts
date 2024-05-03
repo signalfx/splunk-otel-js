@@ -313,7 +313,7 @@ export function listEnvVars() {
       name: 'OTEL_INSTRUMENTATION_<NAME>_ENABLED',
       property: '',
       description:
-        'When set to true, this setting activates a specific instrumentation, as defined by replacing <NAME> with the name of the instrumentation. The name isn't case sensitive.',
+        'When set to true, this setting activates a specific instrumentation, as defined by replacing <NAME> with the name of the instrumentation. The name is not case sensitive.',
       default: 'true',
       type: 'boolean',
       category: 'instrumentation',
