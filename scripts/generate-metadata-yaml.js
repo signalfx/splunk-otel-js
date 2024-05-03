@@ -181,6 +181,7 @@ function populateSettings(writer) {
     writer.push(`- env: ${setting.name}`);
     writer.pushIndent(2);
     writer.push([
+      `property: ${setting.property}`,
       `description: ${setting.description}`,
       `default: ${setting.default}`,
       `type: ${setting.type}`,
