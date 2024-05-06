@@ -178,14 +178,14 @@ function populateSettings(writer) {
   writer.push("settings:");
 
   function addSetting(setting) {
-    writer.push(`- env: ${setting.name}`);
+    writer.push(`- env: "${setting.name}"`);
     writer.pushIndent(2);
     writer.push([
-      `property: ${setting.property}`,
-      `description: ${setting.description}`,
-      `default: ${setting.default}`,
-      `type: ${setting.type}`,
-      `category: ${setting.category}`,
+      `property: "${setting.property}"`,
+      `description: "${setting.description}"`,
+      `default: "${setting.default}"`,
+      `type: "${setting.type}"`,
+      `category: "${setting.category}"`,
     ]);
     writer.popIndent();
   }
@@ -210,7 +210,7 @@ async function populateInstrumentations(writer) {
     writer.pushIndent(2);
     writer.push(`supported_versions: "${versions[instrumentation.name]}"`);
     writer.popIndent(2);
-    writer.push(`support: ${instrumentation.support ?? "community"}`,);
+    writer.push(`support: "${instrumentation.support ?? "community"}"`,);
     writer.popIndent();
   }
   writer.popIndent();
@@ -264,18 +264,18 @@ function populateResourceDetectors(writer) {
   writer.pushIndent(2);
 
   for (const detector of detectors) {
-    writer.push(`- key: ${detector.key}`);
+    writer.push(`- key: "${detector.key}"`);
     writer.pushIndent(2);
-    writer.push(`description: ${detector.description}`),
+    writer.push(`description: "${detector.description}"`),
     writer.push("attributes:")
     writer.pushIndent(2);
 
     for (const attr of detector.attributes) {
-      writer.push(`- id: ${attr}`);
+      writer.push(`- id: "${attr}"`);
     }
 
     writer.popIndent();
-    writer.push("support: supported");
+    writer.push(`support: "supported"`);
     writer.popIndent();
   }
 
@@ -320,7 +320,7 @@ async function populateDependencyInfo(dependency, version, writer) {
     writer.push(`- name: "${dependency}"`);
     writer.pushIndent(2);
     writer.push(`version: "${version}"`);
-    writer.push(`stability: ${status}`);
+    writer.push(`stability: "${status}"`);
 
     if (url) {
       writer.push(`source_href: "${url}"`);
