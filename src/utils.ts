@@ -304,16 +304,16 @@ export function listEnvVars() {
       name: 'OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED',
       property: '',
       description:
-        'Whether to activate all the embedded instrumentations. When you set this setting to false, use OTEL_INSTRUMENTATION_<NAME>_ENABLED=true to selectively turn on instrumentations.',
+        'Whether to activate all the embedded instrumentations. When you set this setting to false, use OTEL_INSTRUMENTATION_NAME_ENABLED=true to selectively turn on instrumentations.',
       default: 'true',
       type: 'boolean',
       category: 'instrumentation',
     },
     {
-      name: 'OTEL_INSTRUMENTATION_<NAME>_ENABLED',
+      name: 'OTEL_INSTRUMENTATION_NAME_ENABLED',
       property: '',
       description:
-        'When set to true, this setting activates a specific instrumentation, as defined by replacing <NAME> with the name of the instrumentation. The name is not case sensitive.',
+        'When set to true, this setting activates a specific instrumentation, as defined by replacing NAME with the name of the instrumentation. The name is not case sensitive.',
       default: 'true',
       type: 'boolean',
       category: 'instrumentation',
@@ -332,7 +332,7 @@ export function listEnvVars() {
       property: 'metrics.endpoint',
       description:
         'The metrics endpoint. Takes precedence over the value set in OTEL_EXPORTER_OTLP_ENDPOINT.',
-      default: 'https://ingest.<realm>.signalfx.com/v2/datapoint/otlp',
+      default: 'https://ingest.your_realm.signalfx.com/v2/datapoint/otlp',
       type: 'number',
       category: 'metrics',
     },
@@ -410,7 +410,7 @@ export function listEnvVars() {
       name: 'SPLUNK_METRICS_ENDPOINT',
       property: 'metrics.endpoint',
       description:
-        'The metrics endpoint. Takes precedence over OTEL_EXPORTER_OTLP_METRICS_ENDPOINT. When SPLUNK_REALM is used, the default value is https://ingest.<realm>.signalfx.com/v2/datapoint/otlp.',
+        'The metrics endpoint. Takes precedence over OTEL_EXPORTER_OTLP_METRICS_ENDPOINT. When SPLUNK_REALM is used, the default value is https://ingest.your_realm.signalfx.com/v2/datapoint/otlp.',
       default: '',
       type: 'string',
       category: 'metrics',
