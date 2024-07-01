@@ -75,7 +75,9 @@ export function getLoadedInstrumentations() {
   return _instrumentations;
 }
 
-function setLoadedInstrumentations(instrumentations: (Instrumentation | Instrumentation[])[]) {
+function setLoadedInstrumentations(
+  instrumentations: (Instrumentation | Instrumentation[])[]
+) {
   _instrumentations = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function storeInstrumentation(instrumentation: any) {
