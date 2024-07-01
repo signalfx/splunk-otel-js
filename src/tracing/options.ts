@@ -19,7 +19,7 @@ import {
   SpanExporter,
   SpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
-import { InstrumentationOption } from '@opentelemetry/instrumentation';
+import { Instrumentation } from '@opentelemetry/instrumentation';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
 import { getInstrumentations } from '../instrumentations';
@@ -66,7 +66,7 @@ export interface Options {
   serviceName: string;
   // Tracing-specific configuration options:
   captureHttpRequestUriParams: string[] | CaptureHttpUriParameters;
-  instrumentations: InstrumentationOption[];
+  instrumentations: (Instrumentation | Instrumentation[])[];
   propagatorFactory: PropagatorFactory;
   serverTimingEnabled: boolean;
   spanExporterFactory: SpanExporterFactory;
