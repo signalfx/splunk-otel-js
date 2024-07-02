@@ -126,7 +126,7 @@ export function configureHttpInstrumentation(
 
   if (
     typeof instrumentation['setConfig'] !== 'function' ||
-    typeof instrumentation['_getConfig'] !== 'function'
+    typeof instrumentation['getConfig'] !== 'function'
   ) {
     return;
   }
@@ -157,7 +157,7 @@ export function configureHttpInstrumentation(
     );
   };
 
-  let config = instrumentation._getConfig() as HttpInstrumentationConfig;
+  let config = instrumentation.getConfig() as HttpInstrumentationConfig;
 
   if (config === undefined) {
     config = {};
