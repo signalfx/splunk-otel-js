@@ -214,7 +214,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        nodejs: [16]
+        nodejs: [18]
         include:
           - container: 'centos:7'
           - cmd: 'curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && yum install -y nodejs gcc-c++ make'
@@ -241,10 +241,10 @@ jobs:
       fail-fast: false
       matrix:
         container: ['centos:7']
-        nodejs: [16]
+        nodejs: [18]
         include:
           - container: 'centos:7'
-            nodejs: 16
+            nodejs: 18
             cmd: 'curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && yum install -y nodejs gcc-c++ make'
             #cmd: 'yum install https://rpm.nodesource.com/pub_16.x/nodistro/repo/nodesource-release-nodistro-1.noarch.rpm -y && yum install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1'
     name: Centos check - ${{ matrix.container }} - Node.js ${{ matrix.nodejs }}
