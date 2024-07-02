@@ -217,14 +217,18 @@ jobs:
         nodejs: [18]
         include:
           - container: 'centos:8'
-          - cmd: 'curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && dnf install -y nodejs gcc-c++ make'
+          - cmd: 'curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && yum install -y nodejs gcc-c++ make'
     name: CentOS build check - ${{ matrix.container }} - Node.js ${{ matrix.nodejs }}
     container: ${{ matrix.container }}
     env:
       NODE_VERSION: ${{ matrix.nodejs }}
     steps:
       - name: Setup container
-        run: ${{ matrix.cmd }}
+        run: |
+          sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+          sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+          yum update -y
+          ${{ matrix.cmd }}
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install npm dependencies
@@ -245,14 +249,18 @@ jobs:
         include:
           - container: 'centos:8'
             nodejs: 18
-            cmd: 'curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && dnf install -y nodejs gcc-c++ make'
+            cmd: 'curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && yum install -y nodejs gcc-c++ make'
     name: Centos check - ${{ matrix.container }} - Node.js ${{ matrix.nodejs }}
     container: ${{ matrix.container }}
     env:
       NODE_VERSION: ${{ matrix.nodejs }}
     steps:
       - name: Setup container
-        run: ${{ matrix.cmd }}
+        run: |
+          sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+          sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+          yum update -y
+          ${{ matrix.cmd }}
       - name: Checkout
         uses: actions/checkout@v3
       - name: Download
