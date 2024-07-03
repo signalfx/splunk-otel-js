@@ -214,9 +214,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        nodejs: [18]
+        nodejs: [14]
         include:
-          - container: 'centos:8'
+          - container: 'centos:7'
           - cmd: 'curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && yum install -y nodejs gcc-c++ make'
     name: CentOS build check - ${{ matrix.container }} - Node.js ${{ matrix.nodejs }}
     container: ${{ matrix.container }}
@@ -244,12 +244,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        container: ['centos:8']
-        nodejs: [18]
-        include:
-          - container: 'centos:8'
-            nodejs: 18
-            cmd: 'curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && yum install -y nodejs gcc-c++ make'
+        container: ['centos:7']
+        nodejs: [14, 16]
     name: Centos check - ${{ matrix.container }} - Node.js ${{ matrix.nodejs }}
     container: ${{ matrix.container }}
     env:
@@ -260,7 +256,7 @@ jobs:
           sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
           sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
           yum update -y
-          ${{ matrix.cmd }}
+          curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && yum install -y nodejs gcc-c++ make'
       - name: Checkout
         uses: actions/checkout@v3
       - name: Download
