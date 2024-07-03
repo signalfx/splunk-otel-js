@@ -62,10 +62,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2019, macos-11]
+        os: [windows-2019, macos-12]
         node_api_target: ['14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0', '20.0.0', '21.2.0']
         include:
-          - os: macos-11
+          - os: macos-12
             python_version: '3.11'
     runs-on: ${{ matrix.os }}
     steps:
@@ -224,7 +224,11 @@ jobs:
       NODE_VERSION: ${{ matrix.nodejs }}
     steps:
       - name: Setup container
-        run: ${{ matrix.cmd }}
+        run: |
+          sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+          sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+          yum update -y
+          ${{ matrix.cmd }}
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install npm dependencies
@@ -242,20 +246,17 @@ jobs:
       matrix:
         container: ['centos:7']
         nodejs: [14, 16]
-        include:
-          - container: 'centos:7'
-            nodejs: 14
-            cmd: 'curl -sL https://rpm.nodesource.com/setup_14.x | bash - && yum install -y nodejs'
-          - container: 'centos:7'
-            nodejs: 16
-            cmd: 'yum install https://rpm.nodesource.com/pub_16.x/nodistro/repo/nodesource-release-nodistro-1.noarch.rpm -y && yum install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1'
     name: Centos check - ${{ matrix.container }} - Node.js ${{ matrix.nodejs }}
     container: ${{ matrix.container }}
     env:
       NODE_VERSION: ${{ matrix.nodejs }}
     steps:
       - name: Setup container
-        run: ${{ matrix.cmd }}
+        run: |
+          sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+          sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+          yum update -y
+          curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && yum install -y nodejs gcc-c++ make
       - name: Checkout
         uses: actions/checkout@v3
       - name: Download
