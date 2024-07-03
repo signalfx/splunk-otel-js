@@ -101,6 +101,11 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
     shortName: 'ioredis',
   },
   {
+    module: '@opentelemetry/instrumentation-kafkajs',
+    name: 'KafkaJsInstrumentation',
+    shortName: 'kafkajs',
+  },
+  {
     module: '@opentelemetry/instrumentation-knex',
     name: 'KnexInstrumentation',
     shortName: 'knex',
@@ -189,11 +194,6 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
     module: './external/elasticsearch',
     name: 'ElasticsearchInstrumentation',
     shortName: 'elasticsearch',
-  },
-  {
-    module: './external/kafkajs',
-    name: 'KafkaJsInstrumentation',
-    shortName: 'kafkajs',
   },
   {
     module: './external/sequelize',
