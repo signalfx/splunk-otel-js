@@ -7,7 +7,7 @@ const LOADED_INSTRUMENTATIONS = getInstrumentations();
 
 const KNOWN_TARGET_LIBRARY_VERSIONS = new Map([
   ["splunk-opentelemetry-instrumentation-elasticsearch", [">=5 <8"]],
-  ["splunk-opentelemetry-instrumentation-kafkajs", ["*"]],
+  ["splunk-opentelemetry-instrumentation-kafkajs", [">=0.1.0 <3"]],
   ["splunk-opentelemetry-instrumentation-sequelize", ["*"]],
   ["splunk-opentelemetry-instrumentation-typeorm", [">0.2.28"]],
   ["@opentelemetry/instrumentation-dns", ["*"]],
@@ -35,6 +35,7 @@ const INSTRUMENTATIONS = [
   { name: "@opentelemetry/instrumentation-hapi", target: "hapi", },
   { name: "@opentelemetry/instrumentation-http", target: "http", },
   { name: "@opentelemetry/instrumentation-ioredis", target: "ioredis", },
+  { name: "@opentelemetry/instrumentation-kafkajs", target: "kafkajs", },
   { name: "@opentelemetry/instrumentation-knex", target: "knex", },
   { name: "@opentelemetry/instrumentation-koa", target: "koa", },
   { name: "@opentelemetry/instrumentation-memcached", target: "memcached", },
@@ -53,7 +54,6 @@ const INSTRUMENTATIONS = [
   { name: "@opentelemetry/instrumentation-tedious", target: "tedious", },
   { name: "@opentelemetry/instrumentation-winston", target: "winston", },
   { name: "splunk-opentelemetry-instrumentation-elasticsearch", target: "@elastic/elasticsearch", support: "supported", },
-  { name: "splunk-opentelemetry-instrumentation-kafkajs", target: "kafkajs", support: "supported", },
   { name: "splunk-opentelemetry-instrumentation-sequelize", target: "sequelize", support: "supported", },
   { name: "splunk-opentelemetry-instrumentation-typeorm", target: "typeorm", support: "supported", },
 ];

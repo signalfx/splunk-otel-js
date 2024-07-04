@@ -1,6 +1,6 @@
 Splunk's Distribution of OpenTelemetry for Node.js
 Copyright 2023 Splunk Inc.
 
-Parts of the library, such as elasticsearch, kafkajs, sequelize and typeorm instrumentations,
+Parts of the library, such as elasticsearch, sequelize and typeorm instrumentations,
 are copied and derived from instrumentations (https://github.com/aspecto-io/opentelemetry-ext-js) created by Aspecto
 (https://www.aspecto.io/).

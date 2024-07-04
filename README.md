@@ -54,6 +54,7 @@ By default, the following instrumentations are active:
 * [`@opentelemetry/instrumentation-hapi`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-hapi)
 * [`@opentelemetry/instrumentation-http`](https://github.com/open-telemetry/opentelemetry-js/tree/main/experimental/packages/opentelemetry-instrumentation-http)
 * [`@opentelemetry/instrumentation-ioredis`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-ioredis)
+* [`@opentelemetry/instrumentation-kafkajs`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/instrumentation-kafkajs)
 * [`@opentelemetry/instrumentation-knex`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-knex)
 * [`@opentelemetry/instrumentation-koa`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-koa)
 * [`@opentelemetry/instrumentation-memcached`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-memcached)
@@ -72,7 +73,6 @@ By default, the following instrumentations are active:
 * [`@opentelemetry/instrumentation-tedious`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/instrumentation-tedious)
 * [`@opentelemetry/instrumentation-winston`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/plugins/node/opentelemetry-instrumentation-winston)
 * [`opentelemetry-instrumentation-elasticsearch`](https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-elasticsearch)
-* [`opentelemetry-instrumentation-kafkajs`](https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-kafkajs)
 * [`opentelemetry-instrumentation-sequelize`](https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-sequelize)
 * [`opentelemetry-instrumentation-typeorm`](https://github.com/aspecto-io/opentelemetry-ext-js/tree/master/packages/instrumentation-typeorm)
 
