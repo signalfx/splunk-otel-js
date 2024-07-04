@@ -167,6 +167,7 @@ export class SequelizeInstrumentation extends InstrumentationBase {
           else tableName = extractTableFromQuery(statement);
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const attributes: Record<string, any> = {
           [SemanticAttributes.DB_SYSTEM]: sequelizeInstance.getDialect(),
           [SemanticAttributes.DB_USER]: config?.username,

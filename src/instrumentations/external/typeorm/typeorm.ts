@@ -216,6 +216,7 @@ export class TypeormInstrumentation extends InstrumentationBase {
           return original.apply(this, args);
         }
         const connectionOptions = this?.connection?.options ?? {};
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const attributes: Record<string, any> = {
           [SemanticAttributes.DB_SYSTEM]: connectionOptions.type,
           [SemanticAttributes.DB_USER]: connectionOptions.username,
@@ -294,6 +295,7 @@ export class TypeormInstrumentation extends InstrumentationBase {
         const operation = this.expressionMap.queryType;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const connectionOptions: any = this.connection?.options;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const attributes: Record<string, any> = {
           [SemanticAttributes.DB_SYSTEM]: connectionOptions.type,
           [SemanticAttributes.DB_USER]: connectionOptions.username,
