@@ -187,6 +187,7 @@ interface ShutDownableTracerProvider extends TracerProvider {
 function isShutDownable(
   tracerProvider: TracerProvider
 ): tracerProvider is ShutDownableTracerProvider {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return typeof (tracerProvider as any).shutdown === 'function';
 }
 

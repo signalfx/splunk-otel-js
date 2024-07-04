@@ -154,6 +154,7 @@ const formatStringSet = (set: Set<string> | string[]) => {
 };
 
 export function assertNoExtraneousProperties(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   obj: Record<string, any>,
   expectedProps: string[]
 ) {
@@ -206,10 +207,12 @@ export function parseLogLevel(value: string | undefined): DiagLogLevel {
   return DiagLogLevel.NONE;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function pick<T extends Record<string, any>, K extends string>(
   obj: T,
   keys: readonly K[]
 ): { [P in keyof T as P extends K ? P : never]: T[P] } {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result = {} as any;
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i];
