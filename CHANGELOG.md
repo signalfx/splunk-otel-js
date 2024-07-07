@@ -1,5 +1,10 @@
 # Change Log - @splunk/otel
 
+## 2.9.0
+
+- Upgrade to OpenTelemetry `1.25.1` / `0.52.1`. [#912](https://github.com/signalfx/splunk-otel-js/pull/912)
+- Use kafkajs instrumentation from upstream. [#913](https://github.com/signalfx/splunk-otel-js/pull/913)
+
 ## 2.8.0
 
 - Upgrade to OpenTelemetry `1.24.0` / `0.51.0`. [#902](https://github.com/signalfx/splunk-otel-js/pull/902)
