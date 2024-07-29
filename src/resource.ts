@@ -15,11 +15,10 @@
  */
 
 import { diag } from '@opentelemetry/api';
-import { Resource } from '@opentelemetry/resources';
+import { Resource, envDetectorSync } from '@opentelemetry/resources';
 
 import { distroDetector } from './detectors/DistroDetector';
 import { dockerCGroupV1Detector } from './detectors/DockerCGroupV1Detector';
-import { envDetector } from './detectors/EnvDetector';
 import { hostDetector } from './detectors/HostDetector';
 import { osDetector } from './detectors/OSDetector';
 import { processDetector } from './detectors/ProcessDetector';
@@ -27,7 +26,7 @@ import { processDetector } from './detectors/ProcessDetector';
 const detectors = [
   distroDetector,
   dockerCGroupV1Detector,
-  envDetector,
+  envDetectorSync,
   hostDetector,
   osDetector,
   processDetector,

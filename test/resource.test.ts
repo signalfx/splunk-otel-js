@@ -16,8 +16,6 @@
 
 import * as assert from 'assert';
 
-import * as otel from '@opentelemetry/api';
-import { EnvDetector } from '../src/detectors/EnvDetector';
 import { DockerCGroupV1Detector } from '../src/detectors/DockerCGroupV1Detector';
 import { detect } from '../src/resource';
 import * as utils from './utils';
@@ -25,42 +23,6 @@ import * as utils from './utils';
 describe('resource detector', () => {
   beforeEach(() => {
     utils.cleanEnvironment();
-  });
-
-  describe('EnvDetector', () => {
-    it('ignores missing attributes', () => {
-      const resource = new EnvDetector().detect();
-      assert.deepStrictEqual(resource.attributes, {});
-    });
-
-    it('ignores wrongly formatted env string', () => {
-      process.env.OTEL_RESOURCE_ATTRIBUTES = 'kkkkkkkkkkk';
-      const resource = new EnvDetector().detect();
-      assert.deepStrictEqual(resource.attributes, {});
-    });
-
-    it('ignores missing attr keys', () => {
-      process.env.OTEL_RESOURCE_ATTRIBUTES = '=v';
-      const resource = new EnvDetector().detect();
-      assert.deepStrictEqual(resource.attributes, {});
-    });
-
-    it('ignores unsupported value chars', () => {
-      process.env.OTEL_RESOURCE_ATTRIBUTES = 'k2=␟';
-      const resource = new EnvDetector().detect();
-      assert.deepStrictEqual(resource.attributes, {});
-    });
-
-    it('parses properly formatted attributes', () => {
-      process.env.OTEL_RESOURCE_ATTRIBUTES =
-        'k=v,key1=val1,service.name=node-svc';
-      const resource = new EnvDetector().detect();
-      assert.deepStrictEqual(resource.attributes, {
-        k: 'v',
-        key1: 'val1',
-        'service.name': 'node-svc',
-      });
-    });
   });
 
   describe('DockerCGroupV1Detector', () => {
@@ -120,10 +82,12 @@ describe('resource detector', () => {
 
   describe('resource.detect', () => {
     it('catches resource attributes from the env', () => {
-      process.env.OTEL_RESOURCE_ATTRIBUTES = 'k=v,service.name=node-svc';
+      process.env.OTEL_RESOURCE_ATTRIBUTES =
+        'k=v,service.name=node-svc,x=a%20b';
 
       const resource = detect();
       assert.strictEqual(resource.attributes['k'], 'v');
+      assert.strictEqual(resource.attributes['x'], 'a b');
       assert.strictEqual(resource.attributes['service.name'], 'node-svc');
     });
 
