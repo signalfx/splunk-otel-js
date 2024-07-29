@@ -20,11 +20,11 @@ import {
   envDetectorSync,
   hostDetectorSync,
   osDetectorSync,
+  processDetectorSync,
 } from '@opentelemetry/resources';
 
 import { distroDetector } from './detectors/DistroDetector';
 import { dockerCGroupV1Detector } from './detectors/DockerCGroupV1Detector';
-import { processDetector } from './detectors/ProcessDetector';
 
 const detectors = [
   distroDetector,
@@ -32,7 +32,7 @@ const detectors = [
   envDetectorSync,
   hostDetectorSync,
   osDetectorSync,
-  processDetector,
+  processDetectorSync,
 ];
 
 export const detect = (): Resource => {
