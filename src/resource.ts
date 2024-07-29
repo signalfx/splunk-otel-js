@@ -24,11 +24,11 @@ import {
 } from '@opentelemetry/resources';
 
 import { distroDetector } from './detectors/DistroDetector';
-import { dockerCGroupV1Detector } from './detectors/DockerCGroupV1Detector';
+import { containerDetector } from './detectors/ContainerDetector';
 
 const detectors = [
   distroDetector,
-  dockerCGroupV1Detector,
+  containerDetector,
   envDetectorSync,
   hostDetectorSync,
   osDetectorSync,

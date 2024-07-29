@@ -16,20 +16,32 @@
 
 import * as assert from 'assert';
 
-import { DockerCGroupV1Detector } from '../src/detectors/DockerCGroupV1Detector';
+import { ContainerDetector } from '../src/detectors/ContainerDetector';
 import { detect } from '../src/resource';
+import * as fs from 'fs';
+import * as sinon from 'sinon';
 import * as utils from './utils';
+import { SEMRESATTRS_CONTAINER_ID } from '@opentelemetry/semantic-conventions';
 
 describe('resource detector', () => {
   beforeEach(() => {
     utils.cleanEnvironment();
   });
 
-  describe('DockerCGroupV1Detector', () => {
+  describe('ContainerDetector', () => {
+    let sandbox: sinon.SinonSandbox;
+
+    before(() => {
+      sandbox = sinon.createSandbox();
+    });
+
+    after(() => {
+      sandbox.restore();
+    });
+
     const invalidCases = [
       '13:name=systemd:/podruntime/docker/kubepods/ac679f8a8319c8cf7d38e1adf263bc08d23zzzz',
     ];
-    const expectedId = 'ac679f8a8319c8cf7d38e1adf263bc08d23';
     const testCases = [
       [
         '13:name=systemd:/podruntime/docker/kubepods/ac679f8a8319c8cf7d38e1adf263bc08d23.slice',
@@ -70,12 +82,22 @@ describe('resource detector', () => {
     ];
 
     it('parses all the known test cases correctly', () => {
-      const detector = new DockerCGroupV1Detector();
+      const detector = new ContainerDetector();
       testCases.forEach(([testCase, result]) => {
-        assert.equal(detector['_parseFile'](testCase), result);
+        const stub = sinon.stub(fs, 'readFileSync').returns(testCase);
+        assert.strictEqual(
+          detector.detect().attributes[SEMRESATTRS_CONTAINER_ID],
+          result
+        );
+        stub.restore();
       });
       invalidCases.forEach(([testCase, result]) => {
-        assert.equal(detector['_parseFile'](testCase), null);
+        const stub = sinon.stub(fs, 'readFileSync').returns(testCase);
+        assert.strictEqual(
+          detector.detect().attributes[SEMRESATTRS_CONTAINER_ID],
+          undefined
+        );
+        stub.restore();
       });
     });
   });
