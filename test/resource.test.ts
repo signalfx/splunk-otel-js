@@ -119,5 +119,11 @@ describe('resource detector', () => {
       assert.strictEqual(typeof resource.attributes['os.type'], 'string');
       assert.strictEqual(typeof resource.attributes['os.version'], 'string');
     });
+
+    it('catches host attributes', () => {
+      const resource = detect();
+      assert.strictEqual(typeof resource.attributes['host.name'], 'string');
+      assert.strictEqual(typeof resource.attributes['host.arch'], 'string');
+    });
   });
 });
