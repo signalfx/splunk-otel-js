@@ -14,195 +14,194 @@
  * limitations under the License.
  */
 
-import { load } from './loader';
 import { getEnvBoolean } from '../utils';
 import type { EnvVarKey } from '../types';
+import { AmqplibInstrumentation } from '@opentelemetry/instrumentation-amqplib';
+import { AwsInstrumentation } from '@opentelemetry/instrumentation-aws-sdk';
+import { BunyanInstrumentation } from '@opentelemetry/instrumentation-bunyan';
+import { CassandraDriverInstrumentation } from '@opentelemetry/instrumentation-cassandra-driver';
+import { ConnectInstrumentation } from '@opentelemetry/instrumentation-connect';
+import { DataloaderInstrumentation } from '@opentelemetry/instrumentation-dataloader';
+import { DnsInstrumentation } from '@opentelemetry/instrumentation-dns';
+import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
+import { FastifyInstrumentation } from '@opentelemetry/instrumentation-fastify';
+import { GenericPoolInstrumentation } from '@opentelemetry/instrumentation-generic-pool';
+import { GraphQLInstrumentation } from '@opentelemetry/instrumentation-graphql';
+import { GrpcInstrumentation } from '@opentelemetry/instrumentation-grpc';
+import { HapiInstrumentation } from '@opentelemetry/instrumentation-hapi';
+import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
+import { IORedisInstrumentation } from '@opentelemetry/instrumentation-ioredis';
+import { KafkaJsInstrumentation } from '@opentelemetry/instrumentation-kafkajs';
+import { KnexInstrumentation } from '@opentelemetry/instrumentation-knex';
+import { KoaInstrumentation } from '@opentelemetry/instrumentation-koa';
+import { MemcachedInstrumentation } from '@opentelemetry/instrumentation-memcached';
+import { MongoDBInstrumentation } from '@opentelemetry/instrumentation-mongodb';
+import { MongooseInstrumentation } from '@opentelemetry/instrumentation-mongoose';
+import { MySQLInstrumentation } from '@opentelemetry/instrumentation-mysql';
+import { MySQL2Instrumentation } from '@opentelemetry/instrumentation-mysql2';
+import { NestInstrumentation } from '@opentelemetry/instrumentation-nestjs-core';
+import { NetInstrumentation } from '@opentelemetry/instrumentation-net';
+import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
+import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
+import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
+import { RedisInstrumentation as Redis4Instrumentation } from '@opentelemetry/instrumentation-redis-4';
+import { RestifyInstrumentation } from '@opentelemetry/instrumentation-restify';
+import { RouterInstrumentation } from '@opentelemetry/instrumentation-router';
+import { TediousInstrumentation } from '@opentelemetry/instrumentation-tedious';
+import { WinstonInstrumentation } from '@opentelemetry/instrumentation-winston';
+import { ElasticsearchInstrumentation } from './external/elasticsearch';
+import { SequelizeInstrumentation } from './external/sequelize';
+import { TypeormInstrumentation } from './external/typeorm';
+import type { Instrumentation } from '@opentelemetry/instrumentation';
 
 type InstrumentationInfo = {
-  module: string;
-  name: string;
   shortName: string;
+  create: () => Instrumentation;
 };
 
 export const bundledInstrumentations: InstrumentationInfo[] = [
   {
-    module: '@opentelemetry/instrumentation-amqplib',
-    name: 'AmqplibInstrumentation',
+    create: () => new AmqplibInstrumentation(),
     shortName: 'amqplib',
   },
   {
-    module: '@opentelemetry/instrumentation-aws-sdk',
-    name: 'AwsInstrumentation',
+    create: () => new AwsInstrumentation(),
     shortName: 'aws_sdk',
   },
   {
-    module: '@opentelemetry/instrumentation-bunyan',
-    name: 'BunyanInstrumentation',
+    create: () => new BunyanInstrumentation(),
     shortName: 'bunyan',
   },
   {
-    module: '@opentelemetry/instrumentation-cassandra-driver',
-    name: 'CassandraDriverInstrumentation',
+    create: () => new CassandraDriverInstrumentation(),
     shortName: 'cassandra_driver',
   },
   {
-    module: '@opentelemetry/instrumentation-connect',
-    name: 'ConnectInstrumentation',
+    create: () => new ConnectInstrumentation(),
     shortName: 'connect',
   },
   {
-    module: '@opentelemetry/instrumentation-dataloader',
-    name: 'DataloaderInstrumentation',
+    create: () => new DataloaderInstrumentation(),
     shortName: 'dataloader',
   },
   {
-    module: '@opentelemetry/instrumentation-dns',
-    name: 'DnsInstrumentation',
+    create: () => new DnsInstrumentation(),
     shortName: 'dns',
   },
   {
-    module: '@opentelemetry/instrumentation-express',
-    name: 'ExpressInstrumentation',
+    create: () => new ExpressInstrumentation(),
     shortName: 'express',
   },
   {
-    module: '@opentelemetry/instrumentation-fastify',
-    name: 'FastifyInstrumentation',
+    create: () => new FastifyInstrumentation(),
     shortName: 'fastify',
   },
   {
-    module: '@opentelemetry/instrumentation-generic-pool',
-    name: 'GenericPoolInstrumentation',
+    create: () => new GenericPoolInstrumentation(),
     shortName: 'generic_pool',
   },
   {
-    module: '@opentelemetry/instrumentation-graphql',
-    name: 'GraphQLInstrumentation',
+    create: () => new GraphQLInstrumentation(),
     shortName: 'graphql',
   },
   {
-    module: '@opentelemetry/instrumentation-grpc',
-    name: 'GrpcInstrumentation',
+    create: () => new GrpcInstrumentation(),
     shortName: 'grpc',
   },
   {
-    module: '@opentelemetry/instrumentation-hapi',
-    name: 'HapiInstrumentation',
+    create: () => new HapiInstrumentation(),
     shortName: 'hapi',
   },
   {
-    module: '@opentelemetry/instrumentation-http',
-    name: 'HttpInstrumentation',
+    create: () => new HttpInstrumentation(),
     shortName: 'http',
   },
   {
-    module: '@opentelemetry/instrumentation-ioredis',
-    name: 'IORedisInstrumentation',
+    create: () => new IORedisInstrumentation(),
     shortName: 'ioredis',
   },
   {
-    module: '@opentelemetry/instrumentation-kafkajs',
-    name: 'KafkaJsInstrumentation',
+    create: () => new KafkaJsInstrumentation(),
     shortName: 'kafkajs',
   },
   {
-    module: '@opentelemetry/instrumentation-knex',
-    name: 'KnexInstrumentation',
+    create: () => new KnexInstrumentation(),
     shortName: 'knex',
   },
   {
-    module: '@opentelemetry/instrumentation-koa',
-    name: 'KoaInstrumentation',
+    create: () => new KoaInstrumentation(),
     shortName: 'koa',
   },
   {
-    module: '@opentelemetry/instrumentation-memcached',
-    name: 'MemcachedInstrumentation',
+    create: () => new MemcachedInstrumentation(),
     shortName: 'memcached',
   },
   {
-    module: '@opentelemetry/instrumentation-mongodb',
-    name: 'MongoDBInstrumentation',
+    create: () => new MongoDBInstrumentation(),
     shortName: 'mongodb',
   },
   {
-    module: '@opentelemetry/instrumentation-mongoose',
-    name: 'MongooseInstrumentation',
+    create: () => new MongooseInstrumentation(),
     shortName: 'mongoose',
   },
   {
-    module: '@opentelemetry/instrumentation-mysql',
-    name: 'MySQLInstrumentation',
+    create: () => new MySQLInstrumentation(),
     shortName: 'mysql',
   },
   {
-    module: '@opentelemetry/instrumentation-mysql2',
-    name: 'MySQL2Instrumentation',
+    create: () => new MySQL2Instrumentation(),
     shortName: 'mysql2',
   },
   {
-    module: '@opentelemetry/instrumentation-nestjs-core',
-    name: 'NestInstrumentation',
+    create: () => new NestInstrumentation(),
     shortName: 'nestjs_core',
   },
   {
-    module: '@opentelemetry/instrumentation-net',
-    name: 'NetInstrumentation',
+    create: () => new NetInstrumentation(),
     shortName: 'net',
   },
   {
-    module: '@opentelemetry/instrumentation-pg',
-    name: 'PgInstrumentation',
+    create: () => new PgInstrumentation(),
     shortName: 'pg',
   },
   {
-    module: '@opentelemetry/instrumentation-pino',
-    name: 'PinoInstrumentation',
+    create: () => new PinoInstrumentation(),
     shortName: 'pino',
   },
   {
-    module: '@opentelemetry/instrumentation-redis',
-    name: 'RedisInstrumentation',
+    create: () => new RedisInstrumentation(),
     shortName: 'redis',
   },
   {
-    module: '@opentelemetry/instrumentation-redis-4',
-    name: 'RedisInstrumentation',
+    create: () => new Redis4Instrumentation(),
     shortName: 'redis_4',
   },
   {
-    module: '@opentelemetry/instrumentation-restify',
-    name: 'RestifyInstrumentation',
+    create: () => new RestifyInstrumentation(),
     shortName: 'restify',
   },
   {
-    module: '@opentelemetry/instrumentation-router',
-    name: 'RouterInstrumentation',
+    create: () => new RouterInstrumentation(),
     shortName: 'router',
   },
   {
-    module: '@opentelemetry/instrumentation-tedious',
-    name: 'TediousInstrumentation',
+    create: () => new TediousInstrumentation(),
     shortName: 'tedious',
   },
   {
-    module: '@opentelemetry/instrumentation-winston',
-    name: 'WinstonInstrumentation',
+    create: () => new WinstonInstrumentation(),
     shortName: 'winston',
   },
   {
-    module: './external/elasticsearch',
-    name: 'ElasticsearchInstrumentation',
+    create: () => new ElasticsearchInstrumentation(),
     shortName: 'elasticsearch',
   },
   {
-    module: './external/sequelize',
-    name: 'SequelizeInstrumentation',
+    create: () => new SequelizeInstrumentation(),
     shortName: 'sequelize',
   },
   {
-    module: './external/typeorm',
-    name: 'TypeormInstrumentation',
+    create: () => new TypeormInstrumentation(),
     shortName: 'typeorm',
   },
 ];
@@ -222,14 +221,11 @@ function getInstrumentationsToLoad() {
 }
 
 export function getInstrumentations() {
-  const loaded = [];
+  const instrumentations = [];
 
   for (const desc of getInstrumentationsToLoad()) {
-    const Instrumentation = load(desc.module, desc.name);
-    if (typeof Instrumentation === 'function') {
-      loaded.push(new (Instrumentation as typeof Instrumentation)());
-    }
+    instrumentations.push(desc.create());
   }
 
-  return loaded;
+  return instrumentations;
 }
