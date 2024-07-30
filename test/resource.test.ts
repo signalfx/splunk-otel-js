@@ -16,58 +16,32 @@
 
 import * as assert from 'assert';
 
-import * as otel from '@opentelemetry/api';
-import { EnvDetector } from '../src/detectors/EnvDetector';
-import { DockerCGroupV1Detector } from '../src/detectors/DockerCGroupV1Detector';
+import { ContainerDetector } from '../src/detectors/ContainerDetector';
 import { detect } from '../src/resource';
+import * as fs from 'fs';
+import * as sinon from 'sinon';
 import * as utils from './utils';
+import { SEMRESATTRS_CONTAINER_ID } from '@opentelemetry/semantic-conventions';
 
 describe('resource detector', () => {
   beforeEach(() => {
     utils.cleanEnvironment();
   });
 
-  describe('EnvDetector', () => {
-    it('ignores missing attributes', () => {
-      const resource = new EnvDetector().detect();
-      assert.deepStrictEqual(resource.attributes, {});
+  describe('ContainerDetector', () => {
+    let sandbox: sinon.SinonSandbox;
+
+    before(() => {
+      sandbox = sinon.createSandbox();
     });
 
-    it('ignores wrongly formatted env string', () => {
-      process.env.OTEL_RESOURCE_ATTRIBUTES = 'kkkkkkkkkkk';
-      const resource = new EnvDetector().detect();
-      assert.deepStrictEqual(resource.attributes, {});
+    after(() => {
+      sandbox.restore();
     });
 
-    it('ignores missing attr keys', () => {
-      process.env.OTEL_RESOURCE_ATTRIBUTES = '=v';
-      const resource = new EnvDetector().detect();
-      assert.deepStrictEqual(resource.attributes, {});
-    });
-
-    it('ignores unsupported value chars', () => {
-      process.env.OTEL_RESOURCE_ATTRIBUTES = 'k2=␟';
-      const resource = new EnvDetector().detect();
-      assert.deepStrictEqual(resource.attributes, {});
-    });
-
-    it('parses properly formatted attributes', () => {
-      process.env.OTEL_RESOURCE_ATTRIBUTES =
-        'k=v,key1=val1,service.name=node-svc';
-      const resource = new EnvDetector().detect();
-      assert.deepStrictEqual(resource.attributes, {
-        k: 'v',
-        key1: 'val1',
-        'service.name': 'node-svc',
-      });
-    });
-  });
-
-  describe('DockerCGroupV1Detector', () => {
     const invalidCases = [
       '13:name=systemd:/podruntime/docker/kubepods/ac679f8a8319c8cf7d38e1adf263bc08d23zzzz',
     ];
-    const expectedId = 'ac679f8a8319c8cf7d38e1adf263bc08d23';
     const testCases = [
       [
         '13:name=systemd:/podruntime/docker/kubepods/ac679f8a8319c8cf7d38e1adf263bc08d23.slice',
@@ -108,22 +82,34 @@ describe('resource detector', () => {
     ];
 
     it('parses all the known test cases correctly', () => {
-      const detector = new DockerCGroupV1Detector();
+      const detector = new ContainerDetector();
       testCases.forEach(([testCase, result]) => {
-        assert.equal(detector['_parseFile'](testCase), result);
+        const stub = sinon.stub(fs, 'readFileSync').returns(testCase);
+        assert.strictEqual(
+          detector.detect().attributes[SEMRESATTRS_CONTAINER_ID],
+          result
+        );
+        stub.restore();
       });
       invalidCases.forEach(([testCase, result]) => {
-        assert.equal(detector['_parseFile'](testCase), null);
+        const stub = sinon.stub(fs, 'readFileSync').returns(testCase);
+        assert.strictEqual(
+          detector.detect().attributes[SEMRESATTRS_CONTAINER_ID],
+          undefined
+        );
+        stub.restore();
       });
     });
   });
 
   describe('resource.detect', () => {
     it('catches resource attributes from the env', () => {
-      process.env.OTEL_RESOURCE_ATTRIBUTES = 'k=v,service.name=node-svc';
+      process.env.OTEL_RESOURCE_ATTRIBUTES =
+        'k=v,service.name=node-svc,x=a%20b';
 
       const resource = detect();
       assert.strictEqual(resource.attributes['k'], 'v');
+      assert.strictEqual(resource.attributes['x'], 'a b');
       assert.strictEqual(resource.attributes['service.name'], 'node-svc');
     });
 
@@ -143,11 +129,24 @@ describe('resource detector', () => {
 
       for (const attributeName of [
         'process.executable.name',
+        'process.executable.path',
         'process.runtime.version',
         'process.runtime.name',
       ]) {
         assert.strictEqual(typeof resource.attributes[attributeName], 'string');
       }
+    });
+
+    it('detects OS attributes', () => {
+      const resource = detect();
+      assert.strictEqual(typeof resource.attributes['os.type'], 'string');
+      assert.strictEqual(typeof resource.attributes['os.version'], 'string');
+    });
+
+    it('catches host attributes', () => {
+      const resource = detect();
+      assert.strictEqual(typeof resource.attributes['host.name'], 'string');
+      assert.strictEqual(typeof resource.attributes['host.arch'], 'string');
     });
   });
 });

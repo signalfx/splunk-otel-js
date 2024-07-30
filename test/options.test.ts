@@ -18,12 +18,22 @@ import * as api from '@opentelemetry/api';
 import { W3CBaggagePropagator } from '@opentelemetry/core';
 import { InstrumentationBase } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import {
+  SEMRESATTRS_CONTAINER_ID,
+  SEMRESATTRS_HOST_ARCH,
+  SEMRESATTRS_HOST_NAME,
+  SEMRESATTRS_OS_TYPE,
+  SEMRESATTRS_OS_VERSION,
+  SEMRESATTRS_PROCESS_EXECUTABLE_NAME,
+  SEMRESATTRS_PROCESS_PID,
+  SEMRESATTRS_PROCESS_RUNTIME_NAME,
+  SEMRESATTRS_PROCESS_RUNTIME_VERSION,
+  SEMRESATTRS_SERVICE_NAME,
+} from '@opentelemetry/semantic-conventions';
 import {
   ConsoleSpanExporter,
   SimpleSpanProcessor,
   SpanExporter,
-  SpanProcessor,
   InMemorySpanExporter,
 } from '@opentelemetry/sdk-trace-base';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
@@ -39,7 +49,6 @@ import {
   _setDefaultOptions,
   allowedTracingOptions,
   defaultPropagatorFactory,
-  otlpSpanExporterFactory,
   defaultSpanProcessorFactory,
   Options,
 } from '../src/tracing/options';
@@ -104,33 +113,36 @@ describe('options', () => {
       const options = _setDefaultOptions();
 
       assertVersion(
-        options.tracerConfig.resource.attributes['splunk.distro.version']
+        options.tracerConfig.resource?.attributes['splunk.distro.version']
       );
 
       const expectedAttributes = new Set([
-        SemanticResourceAttributes.HOST_ARCH,
-        SemanticResourceAttributes.HOST_NAME,
-        SemanticResourceAttributes.OS_TYPE,
-        SemanticResourceAttributes.OS_VERSION,
-        SemanticResourceAttributes.PROCESS_EXECUTABLE_NAME,
-        SemanticResourceAttributes.PROCESS_PID,
-        SemanticResourceAttributes.PROCESS_RUNTIME_NAME,
-        SemanticResourceAttributes.PROCESS_RUNTIME_VERSION,
+        SEMRESATTRS_HOST_ARCH,
+        SEMRESATTRS_HOST_NAME,
+        SEMRESATTRS_OS_TYPE,
+        SEMRESATTRS_OS_VERSION,
+        SEMRESATTRS_PROCESS_EXECUTABLE_NAME,
+        SEMRESATTRS_PROCESS_PID,
+        SEMRESATTRS_PROCESS_RUNTIME_NAME,
+        SEMRESATTRS_PROCESS_RUNTIME_VERSION,
         'splunk.distro.version',
       ]);
 
       expectedAttributes.forEach((processAttribute) => {
         assert(
-          options.tracerConfig.resource.attributes[processAttribute],
+          options.tracerConfig.resource?.attributes[processAttribute],
           `${processAttribute} missing`
         );
       });
 
+      assert.deepStrictEqual(
+        options.tracerConfig.resource?.attributes[SEMRESATTRS_SERVICE_NAME],
+        '@splunk/otel'
+      );
+
       // Container ID is checked in a different test,
       // this avoids collisions with stubbing fs methods.
-      delete options.tracerConfig.resource.attributes[
-        SemanticResourceAttributes.CONTAINER_ID
-      ];
+      delete options.tracerConfig.resource.attributes[SEMRESATTRS_CONTAINER_ID];
 
       // resource attributes for process, host and os are different at each run, iterate through them, make sure they exist and then delete
       Object.keys(options.tracerConfig.resource.attributes)
@@ -138,7 +150,7 @@ describe('options', () => {
           return expectedAttributes.has(attribute);
         })
         .forEach((processAttribute) => {
-          delete options.tracerConfig.resource.attributes[processAttribute];
+          delete options.tracerConfig.resource?.attributes[processAttribute];
         });
 
       assert.deepStrictEqual(
@@ -159,11 +171,6 @@ describe('options', () => {
       assert.deepStrictEqual(options.accessToken, '');
       assert.deepStrictEqual(options.serverTimingEnabled, true);
       assert.deepStrictEqual(options.instrumentations, []);
-      assert.deepStrictEqual(options.tracerConfig, {
-        resource: new Resource({
-          [SemanticResourceAttributes.SERVICE_NAME]: '@splunk/otel',
-        }),
-      });
 
       assert.deepStrictEqual(
         options.spanProcessorFactory,
@@ -201,15 +208,13 @@ describe('options', () => {
         );
       const options = _setDefaultOptions();
       assertContainerId(
-        options.tracerConfig.resource.attributes[
-          SemanticResourceAttributes.CONTAINER_ID
-        ]
+        options.tracerConfig.resource?.attributes[SEMRESATTRS_CONTAINER_ID]
       );
     });
   });
 
   it('accepts and applies configuration', () => {
-    const testInstrumentation = new TestInstrumentation('inst', '1.0');
+    const testInstrumentation = new TestInstrumentation('inst', '1.0', {});
     const idGenerator = new TestIdGenerator();
 
     const options = _setDefaultOptions({
@@ -289,9 +294,7 @@ describe('options', () => {
     delete process.env.OTEL_RESOURCE_ATTRIBUTES;
 
     assert.deepStrictEqual(
-      options.tracerConfig.resource.attributes[
-        SemanticResourceAttributes.SERVICE_NAME
-      ],
+      options.tracerConfig.resource?.attributes[SEMRESATTRS_SERVICE_NAME],
       'foobar'
     );
   });
