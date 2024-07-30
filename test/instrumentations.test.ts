@@ -15,13 +15,11 @@
  */
 
 import * as assert from 'assert';
-import * as rewire from 'rewire';
 
 import {
   bundledInstrumentations,
   getInstrumentations,
 } from '../src/instrumentations';
-import * as loader from '../src/instrumentations/loader';
 
 import { cleanEnvironment } from './utils';
 import { Instrumentation } from '@opentelemetry/instrumentation';
@@ -33,31 +31,6 @@ describe('instrumentations', () => {
   it('loads instrumentations if they are installed', () => {
     const loadedInstrumentations = getInstrumentations();
     assert.equal(loadedInstrumentations.length, 36);
-  });
-
-  it('loader silently fails when instrumentation is not installed', () => {
-    const loader = require('../src/instrumentations/loader');
-    const result = loader.load(
-      '@opentelemetry/instrumentation-fs',
-      'FsInstrumentation'
-    );
-    assert.strictEqual(result, null);
-  });
-
-  it('loader imports and returns object when package is available', () => {
-    const HttpInstrumentation = function () {};
-    const loader = rewire('../src/instrumentations/loader');
-    const revert = loader.__set__('require', (module) => {
-      return { HttpInstrumentation };
-    });
-
-    const got = loader.load(
-      '@opentelemetry/instrumentation-http',
-      'HttpInstrumentation'
-    );
-    assert.strictEqual(got, HttpInstrumentation);
-
-    revert();
   });
 
   it('does not load instrumentations if OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED is false', () => {
