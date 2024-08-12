@@ -110,7 +110,7 @@
     "@opentelemetry/exporter-trace-otlp-grpc": "0.52.1",
     "@opentelemetry/exporter-trace-otlp-proto": "0.52.1",
     "@opentelemetry/instrumentation": "0.52.1",
-    "@opentelemetry/instrumentation-amqplib": "0.38.0",
+    "@opentelemetry/instrumentation-amqplib": "0.41.0",
     "@opentelemetry/instrumentation-aws-sdk": "0.42.0",
     "@opentelemetry/instrumentation-bunyan": "0.39.0",
     "@opentelemetry/instrumentation-cassandra-driver": "0.39.0",
