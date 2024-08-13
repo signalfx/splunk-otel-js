@@ -35,4 +35,4 @@ jobs:
           docker --version;
       - name: Test ${{ matrix.name }} example
         working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml ${{ matrix.target }} -f published.override.yml up --exit-code-from test
+        run: docker compose -f e2e.docker-compose.yml ${{ matrix.target }} -f published.override.yml up --exit-code-from test
