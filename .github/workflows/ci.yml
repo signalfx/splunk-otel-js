@@ -298,4 +298,4 @@ jobs:
         uses: actions/checkout@v3
       - name: Test ${{ matrix.name }} example
         working-directory: test/examples
-        run: docker-compose -f e2e.docker-compose.yml ${{ matrix.target }} up --exit-code-from test
+        run: docker compose -f e2e.docker-compose.yml ${{ matrix.target }} up --exit-code-from test
