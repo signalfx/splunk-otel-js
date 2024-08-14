@@ -16,7 +16,10 @@ const KNOWN_TARGET_LIBRARY_VERSIONS = new Map([
   ["@opentelemetry/instrumentation-grpc", ["1.x"]],
   ["@opentelemetry/instrumentation-aws-sdk",  ["2.x", "3.x"]],
   ["@opentelemetry/instrumentation-redis", ["^2.6.0", "3.x"]],
-  ["@opentelemetry/instrumentation-redis-4", ["4.x"]]
+  ["@opentelemetry/instrumentation-redis-4", ["4.x"]],
+  ["@opentelemetry/instrumentation-lru-memoizer", [">=1.3 <3"]],
+  ["@opentelemetry/instrumentation-socket.io", [">=2 <5"]],
+  ["@opentelemetry/instrumentation-undici", [">=5.12.0"]],
 ]);
 
 const INSTRUMENTATIONS = [
@@ -38,6 +41,7 @@ const INSTRUMENTATIONS = [
   { name: "@opentelemetry/instrumentation-kafkajs", target: "kafkajs", },
   { name: "@opentelemetry/instrumentation-knex", target: "knex", },
   { name: "@opentelemetry/instrumentation-koa", target: "koa", },
+  { name: "@opentelemetry/instrumentation-lru-memoizer", target: "lru-memoizer", },
   { name: "@opentelemetry/instrumentation-memcached", target: "memcached", },
   { name: "@opentelemetry/instrumentation-mongodb", target: "mongodb", },
   { name: "@opentelemetry/instrumentation-mongoose", target: "mongoose", },
@@ -51,7 +55,9 @@ const INSTRUMENTATIONS = [
   { name: "@opentelemetry/instrumentation-redis-4", target: "redis", },
   { name: "@opentelemetry/instrumentation-restify", target: "restify", },
   { name: "@opentelemetry/instrumentation-router", target: "router", },
+  { name: "@opentelemetry/instrumentation-socket.io", target: "socket.io", },
   { name: "@opentelemetry/instrumentation-tedious", target: "tedious", },
+  { name: "@opentelemetry/instrumentation-undici", target: "undici", },
   { name: "@opentelemetry/instrumentation-winston", target: "winston", },
   { name: "splunk-opentelemetry-instrumentation-elasticsearch", target: "@elastic/elasticsearch", support: "supported", },
   { name: "splunk-opentelemetry-instrumentation-sequelize", target: "sequelize", support: "supported", },

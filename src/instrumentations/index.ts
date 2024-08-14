@@ -34,6 +34,7 @@ import { IORedisInstrumentation } from '@opentelemetry/instrumentation-ioredis';
 import { KafkaJsInstrumentation } from '@opentelemetry/instrumentation-kafkajs';
 import { KnexInstrumentation } from '@opentelemetry/instrumentation-knex';
 import { KoaInstrumentation } from '@opentelemetry/instrumentation-koa';
+import { LruMemoizerInstrumentation } from '@opentelemetry/instrumentation-lru-memoizer';
 import { MemcachedInstrumentation } from '@opentelemetry/instrumentation-memcached';
 import { MongoDBInstrumentation } from '@opentelemetry/instrumentation-mongodb';
 import { MongooseInstrumentation } from '@opentelemetry/instrumentation-mongoose';
@@ -47,11 +48,13 @@ import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
 import { RedisInstrumentation as Redis4Instrumentation } from '@opentelemetry/instrumentation-redis-4';
 import { RestifyInstrumentation } from '@opentelemetry/instrumentation-restify';
 import { RouterInstrumentation } from '@opentelemetry/instrumentation-router';
+import { SocketIoInstrumentation } from '@opentelemetry/instrumentation-socket.io';
 import { TediousInstrumentation } from '@opentelemetry/instrumentation-tedious';
 import { WinstonInstrumentation } from '@opentelemetry/instrumentation-winston';
 import { ElasticsearchInstrumentation } from './external/elasticsearch';
 import { SequelizeInstrumentation } from './external/sequelize';
 import { TypeormInstrumentation } from './external/typeorm';
+import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici';
 import type { Instrumentation } from '@opentelemetry/instrumentation';
 
 type InstrumentationInfo = {
@@ -133,6 +136,10 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
     shortName: 'koa',
   },
   {
+    create: () => new LruMemoizerInstrumentation(),
+    shortName: 'lru_memoizer',
+  },
+  {
     create: () => new MemcachedInstrumentation(),
     shortName: 'memcached',
   },
@@ -185,6 +192,10 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
     shortName: 'router',
   },
   {
+    create: () => new SocketIoInstrumentation(),
+    shortName: 'socketio',
+  },
+  {
     create: () => new TediousInstrumentation(),
     shortName: 'tedious',
   },
@@ -203,6 +214,10 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
   {
     create: () => new TypeormInstrumentation(),
     shortName: 'typeorm',
+  },
+  {
+    create: () => new UndiciInstrumentation(),
+    shortName: 'undici',
   },
 ];
 
