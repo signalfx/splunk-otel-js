@@ -2,7 +2,7 @@
 
 ## 2.1.10
 
-- Bundled instrumentations for `undici`, `socket.io` and `lru-memoizer` by default. [#934](https://github.com/signalfx/splunk-otel-js/pull/934)
+- Bundle instrumentations for `undici`, `socket.io` and `lru-memoizer` by default. [#934](https://github.com/signalfx/splunk-otel-js/pull/934)
 
 ## 2.10.0
 
