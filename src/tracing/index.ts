@@ -49,6 +49,7 @@ import {
   parseEnvBooleanString,
 } from '../utils';
 import { isProfilingContextManagerSet } from '../profiling';
+import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 
 /**
  * We disallow calling `startTracing` twice because:
@@ -224,7 +225,7 @@ function configureInstrumentations(options: Options) {
         configureGraphQlInstrumentation(instr, options);
         break;
       case '@opentelemetry/instrumentation-http':
-        configureHttpInstrumentation(instr, options);
+        configureHttpInstrumentation(instr as HttpInstrumentation, options);
         break;
       case '@opentelemetry/instrumentation-redis':
         configureRedisInstrumentation(instr, options);

@@ -17,9 +17,9 @@
 import { Options, CaptureHttpUriParameters } from '../tracing/options';
 import { IncomingMessage, ServerResponse } from 'http';
 import {
-  HttpInstrumentationConfig,
   HttpResponseCustomAttributeFunction,
   HttpRequestCustomAttributeFunction,
+  HttpInstrumentation,
 } from '@opentelemetry/instrumentation-http';
 import { diag, isSpanContextValid, TraceFlags } from '@opentelemetry/api';
 import { Span } from '@opentelemetry/api';
@@ -115,18 +115,26 @@ function createHttpRequestHook(
 }
 
 export function configureHttpInstrumentation(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  instrumentation: any,
+  instrumentation: HttpInstrumentation,
   options: Options
 ) {
-  if (!options.serverTimingEnabled) {
-    return;
+  const config = instrumentation.getConfig();
+
+  if (shouldAddRequestHook(options)) {
+    const requestHook = createHttpRequestHook(options);
+    if (config.requestHook === undefined) {
+      config.requestHook = requestHook;
+    } else {
+      const original = config.requestHook;
+      config.requestHook = function (this: unknown, span, request) {
+        requestHook(span, request);
+        original.call(this, span, request);
+      };
+    }
   }
 
-  if (
-    typeof instrumentation['setConfig'] !== 'function' ||
-    typeof instrumentation['getConfig'] !== 'function'
-  ) {
+  if (!options.serverTimingEnabled) {
+    instrumentation.setConfig(config);
     return;
   }
 
@@ -156,12 +164,6 @@ export function configureHttpInstrumentation(
     );
   };
 
-  let config = instrumentation.getConfig() as HttpInstrumentationConfig;
-
-  if (config === undefined) {
-    config = {};
-  }
-
   if (config.responseHook === undefined) {
     config.responseHook = responseHook;
   } else {
@@ -172,22 +174,8 @@ export function configureHttpInstrumentation(
     };
   }
 
-  if (shouldAddRequestHook(options)) {
-    const requestHook = createHttpRequestHook(options);
-    if (config.requestHook === undefined) {
-      config.requestHook = requestHook;
-    } else {
-      const original = config.requestHook;
-      config.requestHook = function (this: unknown, span, request) {
-        requestHook(span, request);
-        original.call(this, span, request);
-      };
-    }
-  }
-
   instrumentation.setConfig(config);
 }
-
 function appendHeader(response: ServerResponse, header: string, value: string) {
   const existing = response.getHeader(header);
 

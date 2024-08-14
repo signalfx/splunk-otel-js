@@ -30,7 +30,7 @@ describe('instrumentations', () => {
 
   it('loads instrumentations if they are installed', () => {
     const loadedInstrumentations = getInstrumentations();
-    assert.equal(loadedInstrumentations.length, 36);
+    assert.equal(loadedInstrumentations.length, 39);
   });
 
   it('does not load instrumentations if OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED is false', () => {
@@ -47,10 +47,14 @@ describe('instrumentations', () => {
       const instrumentations = getInstrumentations();
       assert.equal(instrumentations.length, 1);
       const instrumentation: Instrumentation = instrumentations[0];
+      // Dots in the instrumentation name are removed in the short name, e.g. socket.io -> socketio
+      const instrumentationName = instrumentation.instrumentationName.replace(
+        '.',
+        ''
+      );
       assert(
-        instrumentation.instrumentationName.includes(
-          bundled.shortName.replace('_', '-')
-        )
+        instrumentationName.includes(bundled.shortName.replace('_', '-')),
+        instrumentation.instrumentationName
       );
       cleanEnvironment();
     }
@@ -74,6 +78,6 @@ describe('instrumentations', () => {
       ),
       undefined
     );
-    assert.equal(loadedInstrumentations.length, 35);
+    assert.equal(loadedInstrumentations.length, 38);
   });
 });
