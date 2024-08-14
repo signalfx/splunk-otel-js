@@ -1,5 +1,9 @@
 # Change Log - @splunk/otel
 
+## 2.1.10
+
+- Bundled instrumentations for `undici`, `socket.io` and `lru-memoizer` by default. [#934](https://github.com/signalfx/splunk-otel-js/pull/934)
+
 ## 2.10.0
 
 - Use environment, process, host and OS detectors from upstream. Update container detector to support cgroup v2. [#925](https://github.com/signalfx/splunk-otel-js/pull/925)
