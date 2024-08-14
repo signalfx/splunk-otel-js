@@ -1,6 +1,6 @@
 # Change Log - @splunk/otel
 
-## 2.1.10
+## 2.11.0
 
 - Bundle instrumentations for `undici`, `socket.io` and `lru-memoizer` by default. [#934](https://github.com/signalfx/splunk-otel-js/pull/934)
 
