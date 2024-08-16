@@ -154,6 +154,7 @@ const formatStringSet = (set: Set<string> | string[]) => {
 };
 
 export function assertNoExtraneousProperties(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   obj: Record<string, any>,
   expectedProps: string[]
 ) {
@@ -206,10 +207,12 @@ export function parseLogLevel(value: string | undefined): DiagLogLevel {
   return DiagLogLevel.NONE;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function pick<T extends Record<string, any>, K extends string>(
   obj: T,
   keys: readonly K[]
 ): { [P in keyof T as P extends K ? P : never]: T[P] } {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result = {} as any;
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i];
@@ -223,14 +226,8 @@ export function pick<T extends Record<string, any>, K extends string>(
 export function listEnvVars() {
   return [
     {
-      name: 'OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT',
-      description: 'Maximum allowed attribute value size',
-      default: '12000',
-      type: 'number',
-      category: 'instrumentation',
-    },
-    {
       name: 'OTEL_BSP_SCHEDULE_DELAY',
+      property: '',
       description:
         'The delay in milliseconds between 2 consecutive bath span processor exports.',
       default: '500',
@@ -239,6 +236,7 @@ export function listEnvVars() {
     },
     {
       name: 'OTEL_EXPORTER_OTLP_CERTIFICATE',
+      property: '',
       description:
         "Path to a certificate to use when verifying a server's TLS credentials.",
       default: '',
@@ -247,6 +245,7 @@ export function listEnvVars() {
     },
     {
       name: 'OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE',
+      property: '',
       description:
         "Path to a certificate to use when verifying a client's TLS credentials.",
       default: '',
@@ -255,6 +254,7 @@ export function listEnvVars() {
     },
     {
       name: 'OTEL_EXPORTER_OTLP_CLIENT_KEY',
+      property: '',
       description:
         "Path to client's private key to use in mTLS communication in PEM format.",
       default: '',
@@ -263,6 +263,7 @@ export function listEnvVars() {
     },
     {
       name: 'OTEL_EXPORTER_OTLP_ENDPOINT',
+      property: 'endpoint',
       description: 'The OTLP endpoint to export to.',
       default: 'http://localhost:4317',
       type: 'string',
@@ -270,6 +271,7 @@ export function listEnvVars() {
     },
     {
       name: 'OTEL_EXPORTER_OTLP_TRACES_PROTOCOL',
+      property: '',
       description:
         'Chooses the trace exporter protocol. Allowed values are grpc and http/protobuf',
       default: 'grpc',
@@ -278,6 +280,7 @@ export function listEnvVars() {
     },
     {
       name: 'OTEL_EXPORTER_OTLP_METRICS_PROTOCOL',
+      property: 'metrics.metricReaderFactory',
       description:
         'Chooses the metric exporter protocol. Allowed values are grpc and http/protobuf',
       default: 'grpc',
@@ -286,6 +289,7 @@ export function listEnvVars() {
     },
     {
       name: 'OTEL_EXPORTER_OTLP_PROTOCOL',
+      property: '',
       description: 'The protocol to use for OTLP exports.',
       default: 'grpc',
       type: 'string',
@@ -293,6 +297,7 @@ export function listEnvVars() {
     },
     {
       name: 'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT',
+      property: '',
       description: 'The traces OTLP endpoint to export to.',
       default: 'http://localhost:4317',
       type: 'string',
@@ -300,6 +305,7 @@ export function listEnvVars() {
     },
     {
       name: 'OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED',
+      property: '',
       description:
         'Whether to activate all the embedded instrumentations. When you set this setting to false, use OTEL_INSTRUMENTATION_<NAME>_ENABLED=true to selectively turn on instrumentations.',
       default: 'true',
@@ -307,7 +313,17 @@ export function listEnvVars() {
       category: 'instrumentation',
     },
     {
+      name: 'OTEL_INSTRUMENTATION_<NAME>_ENABLED',
+      property: '',
+      description:
+        'When set to true, this setting activates a specific instrumentation, as defined by replacing <NAME> with the name of the instrumentation. The name is not case sensitive.',
+      default: 'true',
+      type: 'boolean',
+      category: 'instrumentation',
+    },
+    {
       name: 'OTEL_LOG_LEVEL',
+      property: 'logLevel',
       description:
         'Log level for the OpenTelemetry diagnostic console logger. To activate debug logging, set the debug value. Available values are error, info, debug, and verbose.',
       default: 'none',
@@ -315,15 +331,26 @@ export function listEnvVars() {
       category: 'general',
     },
     {
+      name: 'OTEL_EXPORTER_OTLP_METRICS_ENDPOINT',
+      property: 'metrics.endpoint',
+      description:
+        'The metrics endpoint. Takes precedence over the value set in OTEL_EXPORTER_OTLP_ENDPOINT.',
+      default: 'https://ingest.<realm>.signalfx.com/v2/datapoint/otlp',
+      type: 'number',
+      category: 'metrics',
+    },
+    {
       name: 'OTEL_METRIC_EXPORT_INTERVAL',
+      property: 'metrics.exportIntervalMillis',
       description:
         'The interval, in milliseconds, of metrics collection and exporting.',
       default: '30000',
       type: 'number',
-      category: 'exporter',
+      category: 'metrics',
     },
     {
       name: 'OTEL_METRICS_EXPORTER',
+      property: 'metrics.metricReaderFactory',
       description:
         'Comma-separated list of metrics exporter to use. To output to the console, set the variable to console. If set to none, metric exports are turned off.',
       default: 'otlp',
@@ -332,13 +359,15 @@ export function listEnvVars() {
     },
     {
       name: 'OTEL_PROPAGATORS',
+      property: 'tracing.propagators',
       description: 'Comma-separated list of propagators you want to use.',
       default: 'tracecontext,baggage',
       type: 'string',
-      category: 'general',
+      category: 'propagator',
     },
     {
       name: 'OTEL_SERVICE_NAME',
+      property: 'serviceName',
       description:
         'Name of the service or application you’re instrumenting. Takes precedence over the service name defined in the OTEL_RESOURCE_ATTRIBUTES variable.',
       default: 'unnamed-node-service',
@@ -346,14 +375,8 @@ export function listEnvVars() {
       category: 'general',
     },
     {
-      name: 'OTEL_SPAN_LINK_COUNT_LIMIT',
-      description: 'Maximum number of links per span.',
-      default: '1000',
-      type: 'number',
-      category: 'general',
-    },
-    {
       name: 'OTEL_TRACES_EXPORTER',
+      property: 'tracing.spanExporterFactory',
       description:
         'Comma-separated list of trace exporters to use. To output to the console, set the variable to console.',
       default: 'otlp',
@@ -362,6 +385,7 @@ export function listEnvVars() {
     },
     {
       name: 'SPLUNK_ACCESS_TOKEN',
+      property: 'accessToken',
       description:
         'A Splunk authentication token that lets exporters send data directly to Splunk Observability Cloud. Required if you need to send data to the Splunk Observability Cloud ingest endpoint.',
       default: '',
@@ -370,37 +394,33 @@ export function listEnvVars() {
     },
     {
       name: 'SPLUNK_INSTRUMENTATION_METRICS_ENABLED',
+      property: '',
       description:
-        'Emit metrics from instrumentation (e.g. http.server.duration)',
+        'Emit metrics from instrumentation (for example, http.server.duration)',
       default: 'false',
       type: 'boolean',
       category: 'instrumentation',
     },
     {
       name: 'SPLUNK_METRICS_ENABLED',
+      property: 'Activated by calling start()',
       description: 'Activates metrics collection.',
       default: 'false',
       type: 'boolean',
-      category: 'general',
+      category: 'metrics',
     },
     {
       name: 'SPLUNK_METRICS_ENDPOINT',
+      property: 'metrics.endpoint',
       description:
         'The metrics endpoint. Takes precedence over OTEL_EXPORTER_OTLP_METRICS_ENDPOINT. When SPLUNK_REALM is used, the default value is https://ingest.<realm>.signalfx.com/v2/datapoint/otlp.',
       default: '',
       type: 'string',
-      category: 'general',
-    },
-    {
-      name: 'SPLUNK_PROFILER_CALL_STACK_INTERVAL',
-      description:
-        'Frequency with which call stacks are sampled, in milliseconds.',
-      default: '1000',
-      type: 'number',
-      category: 'profiler',
+      category: 'metrics',
     },
     {
       name: 'SPLUNK_PROFILER_ENABLED',
+      property: 'profilingEnabled',
       description: 'Activates AlwaysOn CPU profiling.',
       default: 'false',
       type: 'boolean',
@@ -408,6 +428,7 @@ export function listEnvVars() {
     },
     {
       name: 'SPLUNK_PROFILER_LOGS_ENDPOINT',
+      property: 'profiling.endpoint',
       description: 'The collector endpoint for profiler logs.',
       default: 'http://localhost:4317',
       type: 'string',
@@ -415,13 +436,24 @@ export function listEnvVars() {
     },
     {
       name: 'SPLUNK_PROFILER_MEMORY_ENABLED',
+      property: 'profiling.memoryProfilingEnabled',
       description: 'Activates memory profiling for AlwaysOn Profiling.',
       default: 'false',
       type: 'string',
       category: 'profiler',
     },
     {
+      name: 'SPLUNK_PROFILER_CALL_STACK_INTERVAL',
+      property: 'profiling.callstackInterval',
+      description:
+        'Frequency with which call stacks are sampled, in milliseconds.',
+      default: '1000',
+      type: 'number',
+      category: 'profiler',
+    },
+    {
       name: 'SPLUNK_REALM',
+      property: 'realm',
       description:
         'The name of your organization’s realm, for example, us0. When you set the realm, telemetry is sent directly to the ingest endpoint of Splunk Observability Cloud, bypassing the Splunk Distribution of OpenTelemetry Collector.',
       default: '',
@@ -430,6 +462,7 @@ export function listEnvVars() {
     },
     {
       name: 'SPLUNK_REDIS_INCLUDE_COMMAND_ARGS',
+      property: '',
       description:
         'Whether to include the full Redis query in db.statement span attributes when using the Redis instrumentation.',
       default: 'false',
@@ -437,23 +470,44 @@ export function listEnvVars() {
       category: 'instrumentation',
     },
     {
-      name: 'SPLUNK_RUNTIME_METRICS_COLLECTION_INTERVAL',
+      name: 'SPLUNK_GRAPHQL_RESOLVE_SPANS_ENABLED',
+      property: '',
       description:
-        'The interval, in milliseconds, during which GC and event loop statistics are collected.',
-      default: '5000',
-      type: 'number',
-      category: 'instrumentation',
-    },
-    {
-      name: 'SPLUNK_RUNTIME_METRICS_ENABLED',
-      description:
-        'Activates the collection and export of runtime metrics. Runtime metrics are only sent if the SPLUNK_METRICS_ENABLED environment variable is set to true or if memory profiling is activated.',
-      default: 'true',
+        'Starting from version 2.7.0 of the instrumentation, GraphQL spans for resolvers are no longer generated. To collect resolve spans, set this environment variable to true. The default value is false.',
+      default: 'false',
       type: 'boolean',
       category: 'instrumentation',
     },
     {
+      name: 'SPLUNK_RUNTIME_METRICS_COLLECTION_INTERVAL',
+      property: 'metrics.runtimeMetricsCollectionIntervalMillis',
+      description:
+        'The interval, in milliseconds, during which GC and event loop statistics are collected.',
+      default: '5000',
+      type: 'number',
+      category: 'metrics',
+    },
+    {
+      name: 'SPLUNK_RUNTIME_METRICS_ENABLED',
+      property: 'metrics.runtimeMetricsEnabled',
+      description:
+        'Activates the collection and export of runtime metrics. Runtime metrics are only sent if the SPLUNK_METRICS_ENABLED environment variable is set to true or if memory profiling is activated.',
+      default: 'true',
+      type: 'boolean',
+      category: 'metrics',
+    },
+    {
+      name: 'SPLUNK_DEBUG_METRICS_ENABLED',
+      property: 'metrics.debugMetricsEnabled',
+      description:
+        'Activates the collection and export of internal debug metrics for troubleshooting. Debug metrics are only sent if the SPLUNK_METRICS_ENABLED environment variable is set to true.',
+      default: 'true',
+      type: 'boolean',
+      category: 'metrics',
+    },
+    {
       name: 'SPLUNK_TRACE_RESPONSE_HEADER_ENABLED',
+      property: 'tracing.serverTimingEnabled',
       description:
         'Activates the addition of server trace information to HTTP response headers.',
       default: 'true',
@@ -462,6 +516,7 @@ export function listEnvVars() {
     },
     {
       name: 'SPLUNK_TRACING_ENABLED',
+      property: '',
       description: 'Enables tracing.',
       default: 'true',
       type: 'boolean',

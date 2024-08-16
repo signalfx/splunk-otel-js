@@ -28,7 +28,6 @@ import {
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import {
   Instrumentation,
-  InstrumentationOption,
   registerInstrumentations,
 } from '@opentelemetry/instrumentation';
 import {
@@ -64,7 +63,9 @@ export function getLoadedInstrumentations() {
   return _instrumentations;
 }
 
-function setLoadedInstrumentations(instrumentations: InstrumentationOption[]) {
+function setLoadedInstrumentations(
+  instrumentations: (Instrumentation | Instrumentation[])[]
+) {
   _instrumentations = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function storeInstrumentation(instrumentation: any) {
@@ -168,6 +169,7 @@ interface ShutDownableTracerProvider extends TracerProvider {
 function isShutDownable(
   tracerProvider: TracerProvider
 ): tracerProvider is ShutDownableTracerProvider {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return typeof (tracerProvider as any).shutdown === 'function';
 }
 

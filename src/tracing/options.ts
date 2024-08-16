@@ -19,12 +19,11 @@ import {
   SpanExporter,
   SpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
-import { InstrumentationOption } from '@opentelemetry/instrumentation';
+import { Instrumentation } from '@opentelemetry/instrumentation';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
 import { getInstrumentations } from '../instrumentations';
 import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
-// eslint-disable-next-line node/no-extraneous-import
 import type * as OtlpGrpc from '@opentelemetry/exporter-trace-otlp-grpc';
 import type * as grpc from '@grpc/grpc-js';
 import { detect as detectResource } from '../resource';
@@ -66,7 +65,7 @@ export interface Options {
   serviceName: string;
   // Tracing-specific configuration options:
   captureHttpRequestUriParams: string[] | CaptureHttpUriParameters;
-  instrumentations: InstrumentationOption[];
+  instrumentations: (Instrumentation | Instrumentation[])[];
   propagatorFactory: PropagatorFactory;
   serverTimingEnabled: boolean;
   spanExporterFactory: SpanExporterFactory;

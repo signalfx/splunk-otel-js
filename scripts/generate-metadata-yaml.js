@@ -7,7 +7,7 @@ const LOADED_INSTRUMENTATIONS = getInstrumentations();
 
 const KNOWN_TARGET_LIBRARY_VERSIONS = new Map([
   ["splunk-opentelemetry-instrumentation-elasticsearch", [">=5 <8"]],
-  ["splunk-opentelemetry-instrumentation-kafkajs", ["*"]],
+  ["splunk-opentelemetry-instrumentation-kafkajs", [">=0.1.0 <3"]],
   ["splunk-opentelemetry-instrumentation-sequelize", ["*"]],
   ["splunk-opentelemetry-instrumentation-typeorm", [">0.2.28"]],
   ["@opentelemetry/instrumentation-dns", ["*"]],
@@ -16,7 +16,10 @@ const KNOWN_TARGET_LIBRARY_VERSIONS = new Map([
   ["@opentelemetry/instrumentation-grpc", ["1.x"]],
   ["@opentelemetry/instrumentation-aws-sdk",  ["2.x", "3.x"]],
   ["@opentelemetry/instrumentation-redis", ["^2.6.0", "3.x"]],
-  ["@opentelemetry/instrumentation-redis-4", ["4.x"]]
+  ["@opentelemetry/instrumentation-redis-4", ["4.x"]],
+  ["@opentelemetry/instrumentation-lru-memoizer", [">=1.3 <3"]],
+  ["@opentelemetry/instrumentation-socket.io", [">=2 <5"]],
+  ["@opentelemetry/instrumentation-undici", [">=5.12.0"]],
 ]);
 
 const INSTRUMENTATIONS = [
@@ -35,8 +38,10 @@ const INSTRUMENTATIONS = [
   { name: "@opentelemetry/instrumentation-hapi", target: "hapi", },
   { name: "@opentelemetry/instrumentation-http", target: "http", },
   { name: "@opentelemetry/instrumentation-ioredis", target: "ioredis", },
+  { name: "@opentelemetry/instrumentation-kafkajs", target: "kafkajs", },
   { name: "@opentelemetry/instrumentation-knex", target: "knex", },
   { name: "@opentelemetry/instrumentation-koa", target: "koa", },
+  { name: "@opentelemetry/instrumentation-lru-memoizer", target: "lru-memoizer", },
   { name: "@opentelemetry/instrumentation-memcached", target: "memcached", },
   { name: "@opentelemetry/instrumentation-mongodb", target: "mongodb", },
   { name: "@opentelemetry/instrumentation-mongoose", target: "mongoose", },
@@ -50,10 +55,11 @@ const INSTRUMENTATIONS = [
   { name: "@opentelemetry/instrumentation-redis-4", target: "redis", },
   { name: "@opentelemetry/instrumentation-restify", target: "restify", },
   { name: "@opentelemetry/instrumentation-router", target: "router", },
+  { name: "@opentelemetry/instrumentation-socket.io", target: "socket.io", },
   { name: "@opentelemetry/instrumentation-tedious", target: "tedious", },
+  { name: "@opentelemetry/instrumentation-undici", target: "undici", },
   { name: "@opentelemetry/instrumentation-winston", target: "winston", },
   { name: "splunk-opentelemetry-instrumentation-elasticsearch", target: "@elastic/elasticsearch", support: "supported", },
-  { name: "splunk-opentelemetry-instrumentation-kafkajs", target: "kafkajs", support: "supported", },
   { name: "splunk-opentelemetry-instrumentation-sequelize", target: "sequelize", support: "supported", },
   { name: "splunk-opentelemetry-instrumentation-typeorm", target: "typeorm", support: "supported", },
 ];
@@ -178,13 +184,14 @@ function populateSettings(writer) {
   writer.push("settings:");
 
   function addSetting(setting) {
-    writer.push(`- env: ${setting.name}`);
+    writer.push(`- env: "${setting.name}"`);
     writer.pushIndent(2);
     writer.push([
-      `description: ${setting.description}`,
-      `default: ${setting.default}`,
-      `type: ${setting.type}`,
-      `category: ${setting.category}`,
+      `property: "${setting.property}"`,
+      `description: "${setting.description}"`,
+      `default: "${setting.default}"`,
+      `type: "${setting.type}"`,
+      `category: "${setting.category}"`,
     ]);
     writer.popIndent();
   }
@@ -209,7 +216,7 @@ async function populateInstrumentations(writer) {
     writer.pushIndent(2);
     writer.push(`supported_versions: "${versions[instrumentation.name]}"`);
     writer.popIndent(2);
-    writer.push(`support: ${instrumentation.support ?? "community"}`,);
+    writer.push(`support: "${instrumentation.support ?? "community"}"`,);
     writer.popIndent();
   }
   writer.popIndent();
@@ -263,18 +270,18 @@ function populateResourceDetectors(writer) {
   writer.pushIndent(2);
 
   for (const detector of detectors) {
-    writer.push(`- key: ${detector.key}`);
+    writer.push(`- key: "${detector.key}"`);
     writer.pushIndent(2);
-    writer.push(`description: ${detector.description}`),
+    writer.push(`description: "${detector.description}"`),
     writer.push("attributes:")
     writer.pushIndent(2);
 
     for (const attr of detector.attributes) {
-      writer.push(`- id: ${attr}`);
+      writer.push(`- id: "${attr}"`);
     }
 
     writer.popIndent();
-    writer.push("support: supported");
+    writer.push(`support: "supported"`);
     writer.popIndent();
   }
 
@@ -319,7 +326,7 @@ async function populateDependencyInfo(dependency, version, writer) {
     writer.push(`- name: "${dependency}"`);
     writer.pushIndent(2);
     writer.push(`version: "${version}"`);
-    writer.push(`stability: ${status}`);
+    writer.push(`stability: "${status}"`);
 
     if (url) {
       writer.push(`source_href: "${url}"`);

@@ -36,7 +36,6 @@ import { VERSION } from '../../../version';
 import type * as typeorm from 'typeorm';
 import {
   InstrumentationBase,
-  InstrumentationModuleDefinition,
   InstrumentationNodeModuleDefinition,
   InstrumentationNodeModuleFile,
   isWrapped,
@@ -84,7 +83,7 @@ const entityManagerMethods: EntityManagerMethods[] = [
   ...functionsUsingQueryBuilder,
 ];
 
-export class TypeormInstrumentation extends InstrumentationBase<unknown> {
+export class TypeormInstrumentation extends InstrumentationBase {
   protected override _config!: TypeormInstrumentationConfig;
   constructor(config: TypeormInstrumentationConfig = {}) {
     super(
@@ -94,9 +93,8 @@ export class TypeormInstrumentation extends InstrumentationBase<unknown> {
     );
   }
 
-  protected init(): InstrumentationModuleDefinition<unknown> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const selectQueryBuilder = new InstrumentationNodeModuleFile<any>(
+  protected init() {
+    const selectQueryBuilder = new InstrumentationNodeModuleFile(
       'typeorm/query-builder/SelectQueryBuilder.js',
       ['>0.2.28'],
       (moduleExports) => {
@@ -123,8 +121,7 @@ export class TypeormInstrumentation extends InstrumentationBase<unknown> {
       }
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const connection = new InstrumentationNodeModuleFile<any>(
+    const connection = new InstrumentationNodeModuleFile(
       'typeorm/connection/Connection.js',
       ['>0.2.28 <0.3.0'],
       (moduleExports) => {
@@ -147,8 +144,7 @@ export class TypeormInstrumentation extends InstrumentationBase<unknown> {
       }
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const dataSource = new InstrumentationNodeModuleFile<any>(
+    const dataSource = new InstrumentationNodeModuleFile(
       'typeorm/data-source/DataSource.js',
       ['>=0.3.0'],
       (moduleExports) => {
@@ -171,8 +167,7 @@ export class TypeormInstrumentation extends InstrumentationBase<unknown> {
       }
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const entityManager = new InstrumentationNodeModuleFile<any>(
+    const entityManager = new InstrumentationNodeModuleFile(
       'typeorm/entity-manager/EntityManager.js',
       ['>0.2.28'],
       (moduleExports, moduleVersion) => {
@@ -199,8 +194,7 @@ export class TypeormInstrumentation extends InstrumentationBase<unknown> {
       }
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const module = new InstrumentationNodeModuleDefinition<any>(
+    const module = new InstrumentationNodeModuleDefinition(
       'typeorm',
       ['>0.2.28'],
       undefined,
@@ -222,7 +216,8 @@ export class TypeormInstrumentation extends InstrumentationBase<unknown> {
           return original.apply(this, args);
         }
         const connectionOptions = this?.connection?.options ?? {};
-        const attributes = {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const attributes: Record<string, any> = {
           [SemanticAttributes.DB_SYSTEM]: connectionOptions.type,
           [SemanticAttributes.DB_USER]: connectionOptions.username,
           [SemanticAttributes.NET_PEER_NAME]: connectionOptions.host,
@@ -300,7 +295,8 @@ export class TypeormInstrumentation extends InstrumentationBase<unknown> {
         const operation = this.expressionMap.queryType;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const connectionOptions: any = this.connection?.options;
-        const attributes = {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const attributes: Record<string, any> = {
           [SemanticAttributes.DB_SYSTEM]: connectionOptions.type,
           [SemanticAttributes.DB_USER]: connectionOptions.username,
           [SemanticAttributes.NET_PEER_NAME]: connectionOptions.host,

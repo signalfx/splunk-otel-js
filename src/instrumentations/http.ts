@@ -18,9 +18,9 @@ import { CaptureHttpUriParameters } from '../tracing/options';
 import { Options as TracingOptions } from '../tracing/options';
 import { IncomingMessage, ServerResponse } from 'http';
 import {
-  HttpInstrumentationConfig,
   HttpResponseCustomAttributeFunction,
   HttpRequestCustomAttributeFunction,
+  HttpInstrumentation,
 } from '@opentelemetry/instrumentation-http';
 import { diag, isSpanContextValid, TraceFlags } from '@opentelemetry/api';
 import { Span } from '@opentelemetry/api';
@@ -46,7 +46,6 @@ function parseUrlParams(request: IncomingMessage) {
 
   try {
     // As long as Node <11 is supported, need to use the legacy API.
-    // eslint-disable-next-line node/no-deprecated-api
     return Url.parse(request.url || '', true).query;
   } catch (err) {
     diag.debug(`error parsing url '${request.url}`, err);
@@ -121,14 +120,23 @@ export function configureHttpInstrumentation(
   instrumentation: any,
   options: TracingOptions
 ) {
-  if (!options.serverTimingEnabled) {
-    return;
+  const config = instrumentation.getConfig();
+
+  if (shouldAddRequestHook(options)) {
+    const requestHook = createHttpRequestHook(options);
+    if (config.requestHook === undefined) {
+      config.requestHook = requestHook;
+    } else {
+      const original = config.requestHook;
+      config.requestHook = function (this: unknown, span, request) {
+        requestHook(span, request);
+        original.call(this, span, request);
+      };
+    }
   }
 
-  if (
-    typeof instrumentation['setConfig'] !== 'function' ||
-    typeof instrumentation['_getConfig'] !== 'function'
-  ) {
+  if (!options.serverTimingEnabled) {
+    instrumentation.setConfig(config);
     return;
   }
 
@@ -158,12 +166,6 @@ export function configureHttpInstrumentation(
     );
   };
 
-  let config = instrumentation._getConfig() as HttpInstrumentationConfig;
-
-  if (config === undefined) {
-    config = {};
-  }
-
   if (config.responseHook === undefined) {
     config.responseHook = responseHook;
   } else {
@@ -174,22 +176,8 @@ export function configureHttpInstrumentation(
     };
   }
 
-  if (shouldAddRequestHook(options)) {
-    const requestHook = createHttpRequestHook(options);
-    if (config.requestHook === undefined) {
-      config.requestHook = requestHook;
-    } else {
-      const original = config.requestHook;
-      config.requestHook = function (this: unknown, span, request) {
-        requestHook(span, request);
-        original.call(this, span, request);
-      };
-    }
-  }
-
   instrumentation.setConfig(config);
 }
-
 function appendHeader(response: ServerResponse, header: string, value: string) {
   const existing = response.getHeader(header);
 

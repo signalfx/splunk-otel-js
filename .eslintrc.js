@@ -35,7 +35,7 @@ module.exports = {
       "singleQuote": true,
       "arrowParens": "always"
     }],
-    "node/no-deprecated-api": ["warn"],
+    "n/no-deprecated-api": ["warn"],
     "header/header": [2, "block", [
         "",
         " * Copyright Splunk Inc.",

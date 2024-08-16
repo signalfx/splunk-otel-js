@@ -1,5 +1,23 @@
 # Change Log - @splunk/otel
 
+## 2.11.0
+
+- Bundle instrumentations for `undici`, `socket.io` and `lru-memoizer` by default. [#934](https://github.com/signalfx/splunk-otel-js/pull/934)
+
+## 2.10.0
+
+- Use environment, process, host and OS detectors from upstream. Update container detector to support cgroup v2. [#925](https://github.com/signalfx/splunk-otel-js/pull/925)
+- Use explicit imports when loading instrumentations [#926](https://github.com/signalfx/splunk-otel-js/pull/926)
+
+## 2.9.0
+
+- Upgrade to OpenTelemetry `1.25.1` / `0.52.1`. [#912](https://github.com/signalfx/splunk-otel-js/pull/912)
+- Use kafkajs instrumentation from upstream. [#913](https://github.com/signalfx/splunk-otel-js/pull/913)
+
+## 2.8.0
+
+- Upgrade to OpenTelemetry `1.24.0` / `0.51.0`. [#902](https://github.com/signalfx/splunk-otel-js/pull/902)
+
 ## 2.7.1
 
 - Fix reporting of `profiling.data.total.frame.count`. [#886](https://github.com/signalfx/splunk-otel-js/pull/886)

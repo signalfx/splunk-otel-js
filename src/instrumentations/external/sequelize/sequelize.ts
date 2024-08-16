@@ -32,16 +32,13 @@ import { VERSION } from '../../../version';
 import { extractTableFromQuery } from './utils';
 import {
   InstrumentationBase,
-  InstrumentationModuleDefinition,
   InstrumentationNodeModuleDefinition,
   InstrumentationNodeModuleFile,
   isWrapped,
   safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
 
-export class SequelizeInstrumentation extends InstrumentationBase<
-  typeof sequelize
-> {
+export class SequelizeInstrumentation extends InstrumentationBase {
   static readonly component = 'sequelize';
   protected override _config!: SequelizeInstrumentationConfig;
   private moduleVersion?: string;
@@ -58,7 +55,7 @@ export class SequelizeInstrumentation extends InstrumentationBase<
     this._config = Object.assign({}, config);
   }
 
-  protected init(): InstrumentationModuleDefinition<typeof sequelize> {
+  protected init() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const unpatchConnectionManager = (moduleExports: any) => {
       if (
@@ -71,35 +68,33 @@ export class SequelizeInstrumentation extends InstrumentationBase<
       }
       return moduleExports;
     };
-    const connectionManagerInstrumentation =
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      new InstrumentationNodeModuleFile<any>(
-        'sequelize/lib/dialects/abstract/connection-manager.js',
-        ['*'],
-        (moduleExports) => {
-          if (moduleExports === undefined || moduleExports === null) {
-            return moduleExports;
-          }
-          diag.debug(
-            `sequelize instrumentation: applying patch to sequelize ConnectionManager`
-          );
-          unpatchConnectionManager(moduleExports);
-          this._wrap(
-            moduleExports.ConnectionManager.prototype,
-            'getConnection',
-            this._getConnectionPatch()
-          );
+    const connectionManagerInstrumentation = new InstrumentationNodeModuleFile(
+      'sequelize/lib/dialects/abstract/connection-manager.js',
+      ['*'],
+      (moduleExports) => {
+        if (moduleExports === undefined || moduleExports === null) {
           return moduleExports;
-        },
-        unpatchConnectionManager
-      );
+        }
+        diag.debug(
+          `sequelize instrumentation: applying patch to sequelize ConnectionManager`
+        );
+        unpatchConnectionManager(moduleExports);
+        this._wrap(
+          moduleExports.ConnectionManager.prototype,
+          'getConnection',
+          this._getConnectionPatch()
+        );
+        return moduleExports;
+      },
+      unpatchConnectionManager
+    );
 
     const unpatch = (moduleExports: typeof sequelize) => {
       if (isWrapped(moduleExports.Sequelize.prototype.query)) {
         this._unwrap(moduleExports.Sequelize.prototype, 'query');
       }
     };
-    const module = new InstrumentationNodeModuleDefinition<typeof sequelize>(
+    const module = new InstrumentationNodeModuleDefinition(
       SequelizeInstrumentation.component,
       ['*'],
       (moduleExports, moduleVersion) => {
@@ -172,7 +167,8 @@ export class SequelizeInstrumentation extends InstrumentationBase<
           else tableName = extractTableFromQuery(statement);
         }
 
-        const attributes = {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const attributes: Record<string, any> = {
           [SemanticAttributes.DB_SYSTEM]: sequelizeInstance.getDialect(),
           [SemanticAttributes.DB_USER]: config?.username,
           [SemanticAttributes.NET_PEER_NAME]: config?.host,

@@ -15,13 +15,11 @@
  */
 
 import * as assert from 'assert';
-import * as rewire from 'rewire';
 
 import {
   bundledInstrumentations,
   getInstrumentations,
 } from '../src/instrumentations';
-import * as loader from '../src/instrumentations/loader';
 
 import { cleanEnvironment } from './utils';
 import { Instrumentation } from '@opentelemetry/instrumentation';
@@ -32,32 +30,7 @@ describe('instrumentations', () => {
 
   it('loads instrumentations if they are installed', () => {
     const loadedInstrumentations = getInstrumentations();
-    assert.equal(loadedInstrumentations.length, 36);
-  });
-
-  it('loader silently fails when instrumentation is not installed', () => {
-    const loader = require('../src/instrumentations/loader');
-    const result = loader.load(
-      '@opentelemetry/instrumentation-fs',
-      'FsInstrumentation'
-    );
-    assert.strictEqual(result, null);
-  });
-
-  it('loader imports and returns object when package is available', () => {
-    const HttpInstrumentation = function () {};
-    const loader = rewire('../src/instrumentations/loader');
-    const revert = loader.__set__('require', (module) => {
-      return { HttpInstrumentation };
-    });
-
-    const got = loader.load(
-      '@opentelemetry/instrumentation-http',
-      'HttpInstrumentation'
-    );
-    assert.strictEqual(got, HttpInstrumentation);
-
-    revert();
+    assert.equal(loadedInstrumentations.length, 39);
   });
 
   it('does not load instrumentations if OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED is false', () => {
@@ -74,10 +47,14 @@ describe('instrumentations', () => {
       const instrumentations = getInstrumentations();
       assert.equal(instrumentations.length, 1);
       const instrumentation: Instrumentation = instrumentations[0];
+      // Dots in the instrumentation name are removed in the short name, e.g. socket.io -> socketio
+      const instrumentationName = instrumentation.instrumentationName.replace(
+        '.',
+        ''
+      );
       assert(
-        instrumentation.instrumentationName.includes(
-          bundled.shortName.replace('_', '-')
-        )
+        instrumentationName.includes(bundled.shortName.replace('_', '-')),
+        instrumentation.instrumentationName
       );
       cleanEnvironment();
     }
@@ -101,6 +78,6 @@ describe('instrumentations', () => {
       ),
       undefined
     );
-    assert.equal(loadedInstrumentations.length, 35);
+    assert.equal(loadedInstrumentations.length, 38);
   });
 });
