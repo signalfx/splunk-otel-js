@@ -116,8 +116,7 @@ function createHttpRequestHook(
 }
 
 export function configureHttpInstrumentation(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  instrumentation: any,
+  instrumentation: HttpInstrumentation,
   options: TracingOptions
 ) {
   const config = instrumentation.getConfig();

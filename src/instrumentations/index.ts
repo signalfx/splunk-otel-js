@@ -289,11 +289,9 @@ export function configureInstrumentations(options: Options) {
         configureRedisInstrumentation(instr, options.tracing);
         break;
       case '@opentelemetry/instrumentation-bunyan':
-        disableLogSending(instr);
-        configureLogInjection(instr);
-        break;
       case '@opentelemetry/instrumentation-pino':
       case '@opentelemetry/instrumentation-winston':
+        disableLogSending(instr);
         configureLogInjection(instr);
         break;
     }
