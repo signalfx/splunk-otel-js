@@ -39,9 +39,9 @@ import * as util from 'util';
 import { detect as detectResource } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { ConsoleMetricExporter } from './ConsoleMetricExporter';
+import type { ResourceFactory } from '../types';
 
 export type MetricReaderFactory = (options: MetricsOptions) => MetricReader[];
-export type ResourceFactory = (resource: Resource) => Resource;
 
 interface MetricsOptions {
   accessToken: string;

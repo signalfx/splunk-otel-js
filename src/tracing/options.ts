@@ -35,7 +35,7 @@ import {
   getNonEmptyEnvVar,
 } from '../utils';
 import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { SEMRESATTRS_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { diag, Span, TextMapPropagator } from '@opentelemetry/api';
 import {
   CompositePropagator,
@@ -44,6 +44,7 @@ import {
 } from '@opentelemetry/core';
 import { SplunkBatchSpanProcessor } from './SplunkBatchSpanProcessor';
 import { Resource } from '@opentelemetry/resources';
+import type { ResourceFactory } from '../types';
 
 type SpanExporterFactory = (options: Options) => SpanExporter | SpanExporter[];
 
@@ -67,6 +68,7 @@ export interface Options {
   captureHttpRequestUriParams: string[] | CaptureHttpUriParameters;
   instrumentations: (Instrumentation | Instrumentation[])[];
   propagatorFactory: PropagatorFactory;
+  resourceFactory: ResourceFactory;
   serverTimingEnabled: boolean;
   spanExporterFactory: SpanExporterFactory;
   spanProcessorFactory: SpanProcessorFactory;
@@ -80,6 +82,7 @@ export const allowedTracingOptions = [
   'endpoint',
   'instrumentations',
   'propagatorFactory',
+  'resourceFactory',
   'serverTimingEnabled',
   'serviceName',
   'spanExporterFactory',
@@ -115,12 +118,15 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   const extraTracerConfig = options.tracerConfig || {};
 
-  let resource = detectResource();
+  const envResource = detectResource();
+
+  const resourceFactory = options.resourceFactory || ((r: Resource) => r);
+  let resource = resourceFactory(envResource);
 
   const serviceName =
     options.serviceName ||
     getNonEmptyEnvVar('OTEL_SERVICE_NAME') ||
-    resource.attributes[SemanticResourceAttributes.SERVICE_NAME];
+    resource.attributes[SEMRESATTRS_SERVICE_NAME];
 
   if (!serviceName) {
     diag.warn(
@@ -132,8 +138,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   resource = resource.merge(
     new Resource({
-      [SemanticResourceAttributes.SERVICE_NAME]:
-        serviceName || defaultServiceName(),
+      [SEMRESATTRS_SERVICE_NAME]: serviceName || defaultServiceName(),
     })
   );
 
@@ -172,9 +177,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   return {
     realm: options.realm,
     endpoint: options.endpoint,
-    serviceName: String(
-      resource.attributes[SemanticResourceAttributes.SERVICE_NAME]
-    ),
+    serviceName: String(resource.attributes[SEMRESATTRS_SERVICE_NAME]),
     accessToken: options.accessToken,
     serverTimingEnabled: options.serverTimingEnabled,
     instrumentations: options.instrumentations,
@@ -182,6 +185,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     spanExporterFactory: options.spanExporterFactory,
     spanProcessorFactory: options.spanProcessorFactory,
     propagatorFactory: options.propagatorFactory,
+    resourceFactory,
     captureHttpRequestUriParams: options.captureHttpRequestUriParams,
   };
 }

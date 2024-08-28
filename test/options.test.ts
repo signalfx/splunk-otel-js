@@ -217,6 +217,10 @@ describe('options', () => {
     const testInstrumentation = new TestInstrumentation('inst', '1.0', {});
     const idGenerator = new TestIdGenerator();
 
+    const resourceFactory = (resource: Resource) => {
+      return resource;
+    };
+
     const options = _setDefaultOptions({
       realm: 'rlm',
       endpoint: 'custom-endpoint',
@@ -224,11 +228,10 @@ describe('options', () => {
       accessToken: 'custom-access-token',
       instrumentations: [testInstrumentation],
       tracerConfig: {
-        resource: new Resource({
-          attr1: 'value',
-        }),
+        resource: new Resource({ attr1: 'value1' }),
         idGenerator: idGenerator,
       },
+      resourceFactory,
       spanExporterFactory: testSpanExporterFactory,
       spanProcessorFactory: testSpanProcessorFactory,
       propagatorFactory: testPropagatorFactory,
@@ -242,8 +245,9 @@ describe('options', () => {
       accessToken: 'custom-access-token',
       serverTimingEnabled: true,
       instrumentations: [testInstrumentation],
+      resourceFactory,
       tracerConfig: {
-        resource: new Resource({ attr1: 'value' }),
+        resource: new Resource({ attr1: 'value1' }),
         idGenerator: idGenerator,
       },
       spanExporterFactory: testSpanExporterFactory,
@@ -257,6 +261,22 @@ describe('options', () => {
       logger.warn,
       MATCH_NO_INSTRUMENTATIONS_WARNING
     );
+  });
+
+  it('is possible to provide additional resource attributes', () => {
+    const options = _setDefaultOptions({
+      resourceFactory: (resource) => {
+        return resource.merge(
+          new Resource({ 'splunk.distro.version': 'v9001', abc: 42 })
+        );
+      },
+    });
+
+    assert.strictEqual(
+      options.tracerConfig.resource?.attributes['splunk.distro.version'],
+      'v9001'
+    );
+    assert.strictEqual(options.tracerConfig.resource?.attributes['abc'], 42);
   });
 
   describe('OTEL_TRACES_EXPORTER', () => {
