@@ -147,19 +147,16 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     ...extraTracerConfig,
   };
 
-  const exporterTypes = getExporterTypes(options);
-
-  // factories
   if (options.spanExporterFactory === undefined) {
-    options.spanExporterFactory = resolveTraceExporters(exporterTypes);
+    options.spanExporterFactory = defaultSpanExporterFactory(options);
   }
+
   options.spanProcessorFactory =
     options.spanProcessorFactory || defaultSpanProcessorFactory;
 
   options.propagatorFactory =
     options.propagatorFactory || defaultPropagatorFactory;
 
-  // instrumentations
   if (options.instrumentations === undefined) {
     options.instrumentations = getInstrumentations();
   }
@@ -190,13 +187,14 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   };
 }
 
-const SUPPORTED_EXPORTER_TYPES = ['console', 'otlp'];
+const SUPPORTED_EXPORTER_TYPES = ['console', 'otlp', 'none'];
 
-type ExporterType = (typeof SUPPORTED_EXPORTER_TYPES)[number];
+export type ExporterType = (typeof SUPPORTED_EXPORTER_TYPES)[number];
 
 const SpanExporterMap: Record<ExporterType, SpanExporterFactory> = {
   console: consoleSpanExporterFactory,
   otlp: otlpSpanExporterFactory,
+  none: () => [],
 };
 
 function containsSupportedRealmExporter(exporterTypes: string[]) {
@@ -239,11 +237,14 @@ function getExporterTypes(options: Partial<Options>): ExporterType[] {
   return traceExporters;
 }
 
-function resolveTraceExporters(
-  exporterTypes: ExporterType[]
+export function defaultSpanExporterFactory(
+  options: Partial<Options>
 ): SpanExporterFactory {
-  const factories = exporterTypes.map((t) => SpanExporterMap[t]);
-  return (options) => factories.flatMap((factory) => factory(options));
+  const exporterTypes = getExporterTypes(options);
+  return (options) => {
+    const factories = exporterTypes.map((t) => SpanExporterMap[t]);
+    return factories.flatMap((factory) => factory(options));
+  };
 }
 
 export function otlpSpanExporterFactory(options: Options): SpanExporter {

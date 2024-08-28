@@ -116,13 +116,13 @@ export function _setDefaultOptions(
   };
 }
 
-const SUPPORTED_EXPORTER_TYPES = ['console', 'otlp'];
+const SUPPORTED_EXPORTER_TYPES = ['console', 'otlp', 'none'];
 
 function areValidExporterTypes(types: string[]): boolean {
   return types.every((t) => SUPPORTED_EXPORTER_TYPES.includes(t));
 }
 
-function createExporters(options: LoggingOptions) {
+export function createExporters(options: LoggingOptions) {
   const logExporters: string[] = getEnvArray('OTEL_LOGS_EXPORTER', ['otlp']);
 
   if (!areValidExporterTypes(logExporters)) {

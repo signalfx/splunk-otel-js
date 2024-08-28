@@ -280,6 +280,8 @@ describe('options', () => {
   });
 
   describe('OTEL_TRACES_EXPORTER', () => {
+    beforeEach(utils.cleanEnvironment);
+
     it('accepts a single key', () => {
       process.env.OTEL_TRACES_EXPORTER = 'console';
       const options = _setDefaultOptions();
@@ -288,6 +290,15 @@ describe('options', () => {
       assert(Array.isArray(exporters));
       assert.deepStrictEqual(exporters.length, 1);
       assert(exporters[0] instanceof ConsoleSpanExporter);
+    });
+
+    it('can be set to none', () => {
+      process.env.OTEL_TRACES_EXPORTER = 'none';
+      const options = _setDefaultOptions();
+      const exporters = options.spanExporterFactory(options);
+
+      assert(Array.isArray(exporters));
+      assert.deepStrictEqual(exporters.length, 0);
     });
 
     it('accepts multiple keys', () => {
@@ -404,9 +415,7 @@ describe('options', () => {
   });
 
   describe('OTLP span exporter factory', () => {
-    beforeEach(() => {
-      beforeEach(utils.cleanEnvironment);
-    });
+    beforeEach(utils.cleanEnvironment);
 
     it('throws when called with an unsupported OTLP protocol', () => {
       process.env.OTEL_EXPORTER_OTLP_TRACES_PROTOCOL = 'http/json';
