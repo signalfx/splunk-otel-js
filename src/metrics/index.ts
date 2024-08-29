@@ -134,7 +134,7 @@ function areValidExporterTypes(types: string[]): boolean {
   return types.every((t) => SUPPORTED_EXPORTER_TYPES.includes(t));
 }
 
-function createOtlpExporter(options: MetricsOptions) {
+export function createOtlpExporter(options: MetricsOptions) {
   let protocol = getEnvValueByPrecedence([
     'OTEL_EXPORTER_OTLP_METRICS_PROTOCOL',
     'OTEL_EXPORTER_OTLP_PROTOCOL',
