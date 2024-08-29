@@ -317,16 +317,6 @@ export function consoleSpanExporterFactory(): SpanExporter {
   return new ConsoleSpanExporter();
 }
 
-// Temporary workaround until https://github.com/open-telemetry/opentelemetry-js/issues/3094 is resolved
-function getBatchSpanProcessorConfig() {
-  // OTel uses its own parsed environment, we can just use the default env if the BSP delay is unset.
-  if (getNonEmptyEnvVar('OTEL_BSP_SCHEDULE_DELAY') !== undefined) {
-    return undefined;
-  }
-
-  return { scheduledDelayMillis: 500 };
-}
-
 export function defaultSpanProcessorFactory(options: Options): SpanProcessor[] {
   let exporters = options.spanExporterFactory(options);
 
@@ -334,10 +324,7 @@ export function defaultSpanProcessorFactory(options: Options): SpanProcessor[] {
     exporters = [exporters];
   }
 
-  return exporters.map(
-    (exporter) =>
-      new SplunkBatchSpanProcessor(exporter, getBatchSpanProcessorConfig())
-  );
+  return exporters.map((exporter) => new SplunkBatchSpanProcessor(exporter));
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
