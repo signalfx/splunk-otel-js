@@ -14,42 +14,45 @@
  * limitations under the License.
  */
 
-import { Span } from '@opentelemetry/sdk-trace-base';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import type { BunyanInstrumentation } from '@opentelemetry/instrumentation-bunyan';
+import { Span } from '@opentelemetry/api';
+import { Span as SdkSpan } from '@opentelemetry/sdk-trace-base';
+import {
+  SEMRESATTRS_SERVICE_NAME,
+  SEMRESATTRS_SERVICE_VERSION,
+  SEMRESATTRS_DEPLOYMENT_ENVIRONMENT,
+} from '@opentelemetry/semantic-conventions';
+import { BunyanInstrumentation } from '@opentelemetry/instrumentation-bunyan';
 import { getEnvBoolean } from '../utils';
+import { WinstonInstrumentation } from '@opentelemetry/instrumentation-winston';
+import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type LogRecord = Record<string, any>;
 
 export const defaultLogHook = (span: Span, record: LogRecord) => {
-  record['service.name'] =
-    span.resource.attributes[SemanticResourceAttributes.SERVICE_NAME];
+  const sdkSpan = span as SdkSpan;
 
-  const version =
-    span.resource.attributes[SemanticResourceAttributes.SERVICE_VERSION];
+  record['service.name'] =
+    sdkSpan.resource.attributes[SEMRESATTRS_SERVICE_NAME];
+
+  const version = sdkSpan.resource.attributes[SEMRESATTRS_SERVICE_VERSION];
   if (version !== undefined) {
     record['service.version'] = version;
   }
 
   const environment =
-    span.resource.attributes[SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT];
+    sdkSpan.resource.attributes[SEMRESATTRS_DEPLOYMENT_ENVIRONMENT];
   if (environment !== undefined) {
     record['service.environment'] = environment;
   }
 };
 
 export function configureLogInjection(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  instrumentation: any
+  instrumentation:
+    | WinstonInstrumentation
+    | BunyanInstrumentation
+    | PinoInstrumentation
 ) {
-  if (
-    typeof instrumentation['setConfig'] !== 'function' ||
-    typeof instrumentation['getConfig'] !== 'function'
-  ) {
-    return;
-  }
-
   const config = instrumentation.getConfig();
 
   if (config === undefined) {
@@ -62,7 +65,9 @@ export function configureLogInjection(
   }
 }
 
-export function disableLogSending(instrumentation: BunyanInstrumentation) {
+export function disableLogSending(
+  instrumentation: WinstonInstrumentation | BunyanInstrumentation
+) {
   const enabled = getEnvBoolean('SPLUNK_AUTOMATIC_LOG_COLLECTION', false);
   instrumentation.setConfig(
     Object.assign({}, instrumentation.getConfig(), {

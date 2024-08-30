@@ -22,20 +22,17 @@ import type {
 } from '@opentelemetry/instrumentation-graphql';
 
 export function configureGraphQlInstrumentation(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  instrumentation: any,
+  instrumentation: GraphQLInstrumentation,
   _options: Options
 ) {
   if (getEnvBoolean('SPLUNK_GRAPHQL_RESOLVE_SPANS_ENABLED', false)) {
     return;
   }
 
-  const qglInstrumentation = instrumentation as GraphQLInstrumentation;
-
   const config: GraphQLInstrumentationConfig = {
-    ...qglInstrumentation.getConfig(),
+    ...instrumentation.getConfig(),
     ignoreResolveSpans: true,
   };
 
-  qglInstrumentation.setConfig(config);
+  instrumentation.setConfig(config);
 }
