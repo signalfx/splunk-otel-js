@@ -14,23 +14,17 @@
  * limitations under the License.
  */
 
-import type {
-  RedisInstrumentation,
-  RedisInstrumentationConfig,
-} from '@opentelemetry/instrumentation-redis';
+import type { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
 import { getEnvBoolean } from '../utils';
 import { Options } from '../tracing/options';
 
 export function configureRedisInstrumentation(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  instrumentation: any,
+  instrumentation: RedisInstrumentation,
   _options: Options
 ) {
-  const redisInstrumentation = instrumentation as RedisInstrumentation;
   if (getEnvBoolean('SPLUNK_REDIS_INCLUDE_COMMAND_ARGS', false)) {
-    const config =
-      redisInstrumentation.getConfig() as RedisInstrumentationConfig;
-    redisInstrumentation.setConfig({
+    const config = instrumentation.getConfig();
+    instrumentation.setConfig({
       ...config,
       dbStatementSerializer: (cmd, args) => {
         if (args.length === 0) return cmd;

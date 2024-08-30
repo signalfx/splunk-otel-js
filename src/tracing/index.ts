@@ -49,10 +49,12 @@ import {
   parseEnvBooleanString,
 } from '../utils';
 import { isProfilingContextManagerSet } from '../profiling';
-import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
-import { BunyanInstrumentation } from '@opentelemetry/instrumentation-bunyan';
-import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
-import { WinstonInstrumentation } from '@opentelemetry/instrumentation-winston';
+import type { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
+import type { BunyanInstrumentation } from '@opentelemetry/instrumentation-bunyan';
+import type { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
+import type { WinstonInstrumentation } from '@opentelemetry/instrumentation-winston';
+import type { GraphQLInstrumentation } from '@opentelemetry/instrumentation-graphql';
+import type { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
 
 /**
  * We disallow calling `startTracing` twice because:
@@ -218,40 +220,58 @@ async function shutdownGlobalTracerProvider() {
   );
 }
 
-function configureInstrumentations(options: Options) {
-  for (const instrumentation of options.instrumentations) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const instr = instrumentation as any;
+function configureInstrumentation(
+  instrumentation: Instrumentation,
+  options: Options
+) {
+  switch (instrumentation['instrumentationName']) {
+    case '@opentelemetry/instrumentation-graphql': {
+      configureGraphQlInstrumentation(
+        instrumentation as GraphQLInstrumentation,
+        options
+      );
+      break;
+    }
+    case '@opentelemetry/instrumentation-http':
+      configureHttpInstrumentation(
+        instrumentation as HttpInstrumentation,
+        options
+      );
+      break;
+    case '@opentelemetry/instrumentation-redis':
+      configureRedisInstrumentation(
+        instrumentation as RedisInstrumentation,
+        options
+      );
+      break;
+    case '@opentelemetry/instrumentation-bunyan': {
+      const bunyanInstrumentation = instrumentation as BunyanInstrumentation;
+      disableLogSending(bunyanInstrumentation);
+      configureLogInjection(bunyanInstrumentation);
+      break;
+    }
+    case '@opentelemetry/instrumentation-pino': {
+      const pinoInstrumentation = instrumentation as PinoInstrumentation;
+      configureLogInjection(pinoInstrumentation);
+      break;
+    }
+    case '@opentelemetry/instrumentation-winston': {
+      const winstonInstrumentation = instrumentation as WinstonInstrumentation;
+      disableLogSending(winstonInstrumentation);
+      configureLogInjection(winstonInstrumentation);
+      break;
+    }
+  }
+}
 
-    switch (instr['instrumentationName']) {
-      case '@opentelemetry/instrumentation-graphql': {
-        configureGraphQlInstrumentation(instr, options);
-        break;
+function configureInstrumentations(options: Options) {
+  for (const instrumentations of options.instrumentations) {
+    if (Array.isArray(instrumentations)) {
+      for (const instrumentation of instrumentations) {
+        configureInstrumentation(instrumentation, options);
       }
-      case '@opentelemetry/instrumentation-http':
-        configureHttpInstrumentation(instr as HttpInstrumentation, options);
-        break;
-      case '@opentelemetry/instrumentation-redis':
-        configureRedisInstrumentation(instr, options);
-        break;
-      case '@opentelemetry/instrumentation-bunyan': {
-        const bunyanInstrumentation = instrumentation as BunyanInstrumentation;
-        disableLogSending(bunyanInstrumentation);
-        configureLogInjection(bunyanInstrumentation);
-        break;
-      }
-      case '@opentelemetry/instrumentation-pino': {
-        const pinoInstrumentation = instrumentation as PinoInstrumentation;
-        configureLogInjection(pinoInstrumentation);
-        break;
-      }
-      case '@opentelemetry/instrumentation-winston': {
-        const winstonInstrumentation =
-          instrumentation as WinstonInstrumentation;
-        disableLogSending(winstonInstrumentation);
-        configureLogInjection(winstonInstrumentation);
-        break;
-      }
+    } else {
+      configureInstrumentation(instrumentations, options);
     }
   }
 }
