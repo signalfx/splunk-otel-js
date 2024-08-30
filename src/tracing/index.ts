@@ -50,6 +50,9 @@ import {
 } from '../utils';
 import { isProfilingContextManagerSet } from '../profiling';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
+import { BunyanInstrumentation } from '@opentelemetry/instrumentation-bunyan';
+import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
+import { WinstonInstrumentation } from '@opentelemetry/instrumentation-winston';
 
 /**
  * We disallow calling `startTracing` twice because:
@@ -221,23 +224,34 @@ function configureInstrumentations(options: Options) {
     const instr = instrumentation as any;
 
     switch (instr['instrumentationName']) {
-      case '@opentelemetry/instrumentation-graphql':
+      case '@opentelemetry/instrumentation-graphql': {
         configureGraphQlInstrumentation(instr, options);
         break;
+      }
       case '@opentelemetry/instrumentation-http':
         configureHttpInstrumentation(instr as HttpInstrumentation, options);
         break;
       case '@opentelemetry/instrumentation-redis':
         configureRedisInstrumentation(instr, options);
         break;
-      case '@opentelemetry/instrumentation-bunyan':
-        disableLogSending(instr);
-        configureLogInjection(instr);
+      case '@opentelemetry/instrumentation-bunyan': {
+        const bunyanInstrumentation = instrumentation as BunyanInstrumentation;
+        disableLogSending(bunyanInstrumentation);
+        configureLogInjection(bunyanInstrumentation);
         break;
-      case '@opentelemetry/instrumentation-pino':
-      case '@opentelemetry/instrumentation-winston':
-        configureLogInjection(instr);
+      }
+      case '@opentelemetry/instrumentation-pino': {
+        const pinoInstrumentation = instrumentation as PinoInstrumentation;
+        configureLogInjection(pinoInstrumentation);
         break;
+      }
+      case '@opentelemetry/instrumentation-winston': {
+        const winstonInstrumentation =
+          instrumentation as WinstonInstrumentation;
+        disableLogSending(winstonInstrumentation);
+        configureLogInjection(winstonInstrumentation);
+        break;
+      }
     }
   }
 }
