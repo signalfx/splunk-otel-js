@@ -29,20 +29,32 @@ import { startProfiling as _startProfiling } from './profiling';
 export { start, stop } from './start';
 export { listEnvVars } from './utils';
 
+/**
+ * @deprecated Use generic start() function instead
+ */
 export const startMetrics = deprecate(
   _startMetrics,
   'startMetrics is deprecated. Use generic start() and stop() functions instead'
 );
 
+/**
+ * @deprecated Use generic start() function instead
+ */
 export const startProfiling = deprecate(
   _startProfiling,
   'startProfiling is deprecated. Use generic start() and stop() functions instead'
 );
 
+/**
+ * @deprecated Use generic start() function instead
+ */
 export const startTracing = deprecate(
   _startTracing,
   'startTracing is deprecated. Use generic start() and stop() functions instead'
 );
+/**
+ * @deprecated Use generic stop() function instead
+ */
 export const stopTracing = deprecate(
   _stopTracing,
   'stopTracing is deprecated. Use generic start() and stop() functions instead'
