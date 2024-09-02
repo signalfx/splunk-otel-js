@@ -38,21 +38,12 @@ import {
   safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
 
-export class SequelizeInstrumentation extends InstrumentationBase {
+export class SequelizeInstrumentation extends InstrumentationBase<SequelizeInstrumentationConfig> {
   static readonly component = 'sequelize';
-  protected override _config!: SequelizeInstrumentationConfig;
   private moduleVersion?: string;
 
   constructor(config: SequelizeInstrumentationConfig = {}) {
-    super(
-      'splunk-opentelemetry-instrumentation-sequelize',
-      VERSION,
-      Object.assign({}, config)
-    );
-  }
-
-  override setConfig(config: SequelizeInstrumentationConfig = {}) {
-    this._config = Object.assign({}, config);
+    super('splunk-opentelemetry-instrumentation-sequelize', VERSION, config);
   }
 
   protected init() {
