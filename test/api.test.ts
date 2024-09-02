@@ -13,23 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { strict as assert } from 'assert';
-import { deprecate } from 'util';
 
 import * as splunk from '../src';
-
-import * as tracing from '../src/tracing';
+import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
 import * as metrics from '../src/metrics';
 import * as profiling from '../src/profiling';
-import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
+import * as tracing from '../src/tracing';
 
-const SIGNALS = {
-  tracing,
-  metrics,
-  profiling,
-};
+import { strict as assert } from 'assert';
+import { describe, it } from 'node:test';
 
-const assertFunction = (api, memberName) => {
+const assertFunction = (api: typeof splunk, memberName: string) => {
   assert.equal(
     typeof api[memberName],
     'function',

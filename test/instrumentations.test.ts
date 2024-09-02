@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
-
 import {
   bundledInstrumentations,
   getInstrumentations,
 } from '../src/instrumentations';
-
 import { cleanEnvironment } from './utils';
 import { Instrumentation } from '@opentelemetry/instrumentation';
+import { strict as assert } from 'assert';
+import { describe, it, beforeEach } from 'node:test';
 
 describe('instrumentations', () => {
   beforeEach(cleanEnvironment);
-  after(cleanEnvironment);
+  // after(cleanEnvironment); //FIXME after not needed in node testrunner
 
   it('loads instrumentations if they are installed', () => {
     const loadedInstrumentations = getInstrumentations();

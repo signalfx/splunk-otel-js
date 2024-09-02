@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
 import { startLogging, _setDefaultOptions } from '../src/logging';
 import * as logsAPI from '@opentelemetry/api-logs';
 import {
@@ -23,6 +22,8 @@ import {
   ConsoleLogRecordExporter,
 } from '@opentelemetry/sdk-logs';
 import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
+import { strict as assert } from 'assert';
+import { describe, it } from 'node:test';
 
 describe('logging', () => {
   describe('startLogging', () => {

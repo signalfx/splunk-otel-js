@@ -16,14 +16,13 @@
 import * as assert from 'assert';
 import * as sinon from 'sinon';
 
+import { diag } from '@opentelemetry/api';
+import { Resource } from '@opentelemetry/resources';
+import { start, stop } from '../src';
+import * as logging from '../src/logging';
 import * as metrics from '../src/metrics';
 import * as profiling from '../src/profiling';
 import * as tracing from '../src/tracing';
-import * as logging from '../src/logging';
-import { getInstrumentations } from '../src/instrumentations';
-import { start, stop } from '../src';
-import { Resource } from '@opentelemetry/resources';
-import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 
 import * as utils from './utils';
 

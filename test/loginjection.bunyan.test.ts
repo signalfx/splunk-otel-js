@@ -18,6 +18,7 @@ import { TestLogStream, assertInjection } from './utils';
 import { startTracing, stopTracing } from '../src/tracing';
 import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
 import type * as bunyan from 'bunyan';
+import { describe, it, beforeEach } from 'node:test';
 
 describe('log injection', () => {
   let logStream: TestLogStream;

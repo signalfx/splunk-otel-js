@@ -15,12 +15,10 @@
  */
 import * as assert from 'assert';
 import * as fs from 'fs';
-import * as path from 'path';
 import * as os from 'os';
+import * as path from 'path';
 
 import { defaultServiceName, findServiceName } from '../src/utils';
-import { cleanEnvironment } from './utils';
-import { DiagLogLevel } from '@opentelemetry/api';
 
 describe('findServiceName', () => {
   const TMP_PREFIX = 'splunk-otel-service-name-test-';

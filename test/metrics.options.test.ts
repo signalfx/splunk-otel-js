@@ -15,24 +15,24 @@
  */
 
 import * as api from '@opentelemetry/api';
-import * as assert from 'assert';
-import * as sinon from 'sinon';
 import * as utils from './utils';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
 import { OTLPMetricExporter as OTLPHttpProtoMetricExporter } from '@opentelemetry/exporter-metrics-otlp-proto';
 import { _setDefaultOptions } from '../src/metrics';
 import { ConsoleMetricExporter } from '../src/metrics/ConsoleMetricExporter';
+import { strict as assert } from 'assert';
+import { describe, it, beforeEach, mock } from 'node:test';
 
 describe('metrics options', () => {
   let logger;
   beforeEach(() => {
     logger = {
-      warn: sinon.spy(),
+      warn: mock.fn(),
     };
     api.diag.setLogger(logger, api.DiagLogLevel.ALL);
     // Setting logger logs stuff. Cleaning that up.
-    logger.warn.resetHistory();
+    logger.warn.mock.resetCalls();
   });
 
   describe('OTEL_METRICS_EXPORTER', () => {
@@ -74,16 +74,14 @@ describe('metrics options', () => {
   });
 
   describe('OTLP metric reader factory', () => {
-    beforeEach(() => {
-      beforeEach(utils.cleanEnvironment);
-    });
+    beforeEach(utils.cleanEnvironment);
 
     it('throws when called with an unsupported OTLP protocol', () => {
       process.env.OTEL_EXPORTER_OTLP_METRICS_PROTOCOL = 'http/json';
       const options = _setDefaultOptions();
       assert.throws(() => {
         options.metricReaderFactory(options);
-      }, 'Metrics: expected OTLP protocol to be either grpc or http/protobuf, got http/json.');
+      }, /Metrics: expected OTLP protocol/);
     });
 
     it('is possible to use OTEL_EXPORTER_OTLP_PROTOCOL', () => {
@@ -128,10 +126,9 @@ describe('metrics options', () => {
         exporter['_otlpExporter'].url,
         'https://ingest.us0.signalfx.com/v2/datapoint/otlp'
       );
-      sinon.assert.calledWith(
-        logger.warn,
-        `OTLP metric exporter: defaulting protocol to 'http/protobuf' instead of 'grpc' due to realm being defined.`
-      );
+      //FIXME extract to calledWith utility method
+      const msg = `OTLP metric exporter: defaulting protocol to 'http/protobuf' instead of 'grpc' due to realm being defined.`;
+      assert.equal(logger.warn.mock.calls[0].arguments[0], msg);
     });
 
     it('throws when realm is set without an access token', () => {
@@ -170,10 +167,11 @@ describe('metrics options', () => {
       const options = _setDefaultOptions();
       const [reader] = options.metricReaderFactory(options);
       const exporter = reader['_exporter'];
-      sinon.assert.calledWith(
-        logger.warn,
-        'OTLP metric exporter factory: Realm value ignored (full endpoint URL has been specified).'
-      );
+
+      const msg =
+        'OTLP metric exporter factory: Realm value ignored (full endpoint URL has been specified).';
+      assert.equal(logger.warn.mock.calls[0].arguments[0], msg);
+
       assert(exporter instanceof OTLPMetricExporter);
       assert.deepStrictEqual(exporter['_otlpExporter'].url, 'localhost:4317');
     });

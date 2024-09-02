@@ -17,6 +17,7 @@
 import { startTracing, stopTracing } from '../src/tracing';
 import { TestLogStream, assertInjection } from './utils';
 import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
+import { describe, it, beforeEach } from 'node:test';
 
 describe('winston log injection', () => {
   let logStream: TestLogStream;

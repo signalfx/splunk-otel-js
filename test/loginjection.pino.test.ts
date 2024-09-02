@@ -20,6 +20,8 @@ import { TestLogStream, assertInjection } from './utils';
 import { defaultLogHook } from '../src/instrumentations/logging';
 import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
 import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
+import { describe, it, beforeEach, afterEach } from 'node:test';
+
 describe('pino with with custom hooks', () => {
   let logStream: TestLogStream;
 
