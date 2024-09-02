@@ -83,14 +83,9 @@ const entityManagerMethods: EntityManagerMethods[] = [
   ...functionsUsingQueryBuilder,
 ];
 
-export class TypeormInstrumentation extends InstrumentationBase {
-  protected override _config!: TypeormInstrumentationConfig;
+export class TypeormInstrumentation extends InstrumentationBase<TypeormInstrumentationConfig> {
   constructor(config: TypeormInstrumentationConfig = {}) {
-    super(
-      'splunk-opentelemetry-instrumentation-typeorm',
-      VERSION,
-      Object.assign({}, config)
-    );
+    super('splunk-opentelemetry-instrumentation-typeorm', VERSION, config);
   }
 
   protected init() {

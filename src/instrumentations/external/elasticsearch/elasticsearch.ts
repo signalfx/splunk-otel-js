@@ -39,10 +39,9 @@ enum AttributeNames {
   ELASTICSEARCH_INDICES = 'elasticsearch.request.indices',
 }
 
-export class ElasticsearchInstrumentation extends InstrumentationBase {
+export class ElasticsearchInstrumentation extends InstrumentationBase<ElasticsearchInstrumentationConfig> {
   static readonly component = '@elastic/elasticsearch';
 
-  protected override _config: ElasticsearchInstrumentationConfig = {};
   private _isEnabled = false;
   private moduleVersion?: string;
 
@@ -50,12 +49,8 @@ export class ElasticsearchInstrumentation extends InstrumentationBase {
     super(
       'splunk-opentelemetry-instrumentation-elasticsearch',
       VERSION,
-      Object.assign({}, config)
+      config
     );
-  }
-
-  override setConfig(config: ElasticsearchInstrumentationConfig = {}) {
-    this._config = Object.assign({}, config);
   }
 
   protected init(): InstrumentationModuleDefinition {
