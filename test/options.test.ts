@@ -19,17 +19,17 @@ import { W3CBaggagePropagator } from '@opentelemetry/core';
 import { InstrumentationBase } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
 import {
-  SEMRESATTRS_CONTAINER_ID,
-  SEMRESATTRS_HOST_ARCH,
-  SEMRESATTRS_HOST_NAME,
-  SEMRESATTRS_OS_TYPE,
-  SEMRESATTRS_OS_VERSION,
-  SEMRESATTRS_PROCESS_EXECUTABLE_NAME,
-  SEMRESATTRS_PROCESS_PID,
-  SEMRESATTRS_PROCESS_RUNTIME_NAME,
-  SEMRESATTRS_PROCESS_RUNTIME_VERSION,
-  SEMRESATTRS_SERVICE_NAME,
-} from '@opentelemetry/semantic-conventions';
+  ATTR_CONTAINER_ID,
+  ATTR_HOST_ARCH,
+  ATTR_HOST_NAME,
+  ATTR_OS_TYPE,
+  ATTR_OS_VERSION,
+  ATTR_PROCESS_EXECUTABLE_NAME,
+  ATTR_PROCESS_PID,
+  ATTR_PROCESS_RUNTIME_NAME,
+  ATTR_PROCESS_RUNTIME_VERSION,
+  ATTR_SERVICE_NAME,
+} from '@opentelemetry/semantic-conventions/incubating';
 import {
   ConsoleSpanExporter,
   SimpleSpanProcessor,
@@ -41,7 +41,6 @@ import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/expor
 
 import { strict as assert } from 'assert';
 import * as sinon from 'sinon';
-import * as fs from 'fs';
 import * as os from 'os';
 
 import * as instrumentations from '../src/instrumentations';
@@ -53,6 +52,7 @@ import {
   Options,
 } from '../src/tracing/options';
 import * as utils from './utils';
+import { ContainerDetector } from '@opentelemetry/resource-detector-container';
 
 const assertVersion = (versionAttr) => {
   assert.equal(typeof versionAttr, 'string');
@@ -117,14 +117,14 @@ describe('options', () => {
       );
 
       const expectedAttributes = new Set([
-        SEMRESATTRS_HOST_ARCH,
-        SEMRESATTRS_HOST_NAME,
-        SEMRESATTRS_OS_TYPE,
-        SEMRESATTRS_OS_VERSION,
-        SEMRESATTRS_PROCESS_EXECUTABLE_NAME,
-        SEMRESATTRS_PROCESS_PID,
-        SEMRESATTRS_PROCESS_RUNTIME_NAME,
-        SEMRESATTRS_PROCESS_RUNTIME_VERSION,
+        ATTR_HOST_ARCH,
+        ATTR_HOST_NAME,
+        ATTR_OS_TYPE,
+        ATTR_OS_VERSION,
+        ATTR_PROCESS_EXECUTABLE_NAME,
+        ATTR_PROCESS_PID,
+        ATTR_PROCESS_RUNTIME_NAME,
+        ATTR_PROCESS_RUNTIME_VERSION,
         'splunk.distro.version',
       ]);
 
@@ -136,13 +136,13 @@ describe('options', () => {
       });
 
       assert.deepStrictEqual(
-        options.tracerConfig.resource?.attributes[SEMRESATTRS_SERVICE_NAME],
+        options.tracerConfig.resource?.attributes[ATTR_SERVICE_NAME],
         '@splunk/otel'
       );
 
       // Container ID is checked in a different test,
       // this avoids collisions with stubbing fs methods.
-      delete options.tracerConfig.resource.attributes[SEMRESATTRS_CONTAINER_ID];
+      delete options.tracerConfig.resource.attributes[ATTR_CONTAINER_ID];
 
       // resource attributes for process, host and os are different at each run, iterate through them, make sure they exist and then delete
       Object.keys(options.tracerConfig.resource.attributes)
@@ -198,18 +198,22 @@ describe('options', () => {
       );
     });
 
-    it('reads the container when setting default options', () => {
+    it('reads the container when setting default options', async () => {
       sandbox.stub(os, 'platform').returns('linux');
       sandbox
-        .stub(fs, 'readFileSync')
+        .stub(ContainerDetector as any, 'readFileAsync')
         .withArgs('/proc/self/cgroup', 'utf8')
         .returns(
-          '1:blkio:/docker/a4d00c9dd675d67f866c786181419e1b44832d4696780152e61afd44a3e02856\n'
+          new Promise((resolve) =>
+            resolve(
+              '11:devices:/docker/1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcde\n'
+            )
+          )
         );
       const options = _setDefaultOptions();
-      assertContainerId(
-        options.tracerConfig.resource?.attributes[SEMRESATTRS_CONTAINER_ID]
-      );
+      const resource = options.tracerConfig.resource || Resource.empty();
+      await resource.waitForAsyncAttributes?.();
+      assertContainerId(resource.attributes[ATTR_CONTAINER_ID]);
     });
   });
 
@@ -325,7 +329,7 @@ describe('options', () => {
     delete process.env.OTEL_RESOURCE_ATTRIBUTES;
 
     assert.deepStrictEqual(
-      options.tracerConfig.resource?.attributes[SEMRESATTRS_SERVICE_NAME],
+      options.tracerConfig.resource?.attributes[ATTR_SERVICE_NAME],
       'foobar'
     );
   });
