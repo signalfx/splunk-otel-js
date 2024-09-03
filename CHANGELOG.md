@@ -1,5 +1,15 @@
 # Change Log - @splunk/otel
 
+## 2.12.0
+
+- Add `resourceFactory` option for traces. Allows for customization of the detected resource. Previously a resource could be provided via `tracerConfig`, but this overwrote the detected attributes. For backwards compatibility the latter option is still possible. [#938](https://github.com/signalfx/splunk-otel-js/pull/938)
+- Support `none` value for `OTEL_TRACES_EXPORTER` and `OTEL_METRICS_EXPORTER` environment variables. [#939](https://github.com/signalfx/splunk-otel-js/pull/939)
+- Use the default `OTEL_BSP_SCHEDULE_DELAY` of `5000` instead of `500`. This was a workaround for an old `BatchSpanProcessor` bug where it failed to flush spans fully. [#940](https://github.com/signalfx/splunk-otel-js/pull/940)
+- Disable log sending for Winston instrumentation by default. Add `winston-transport` package as a dependency in case log collection is enabled. [#941](https://github.com/signalfx/splunk-otel-js/pull/941)
+- Use a synchronous container detector from upstream. [#944](https://github.com/signalfx/splunk-otel-js/pull/944)
+- Add deprecation annotations to signal-specific start calls. [#885](https://github.com/signalfx/splunk-otel-js/pull/885)
+- Upgrade to OpenTelemetry `1.26.0` / `0.53.0`. [#945](https://github.com/signalfx/splunk-otel-js/pull/945)
+
 ## 2.11.0
 
 - Bundle instrumentations for `undici`, `socket.io` and `lru-memoizer` by default. [#934](https://github.com/signalfx/splunk-otel-js/pull/934)
