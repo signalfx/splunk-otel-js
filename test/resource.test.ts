@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
+import { strict as assert } from 'assert';
+import { beforeEach, describe, it, mock } from 'node:test';
 
+import { SEMRESATTRS_CONTAINER_ID } from '@opentelemetry/semantic-conventions';
+import * as fs from 'fs';
 import { ContainerDetector } from '../src/detectors/ContainerDetector';
 import { detect } from '../src/resource';
-import * as fs from 'fs';
-import * as sinon from 'sinon';
 import * as utils from './utils';
-import { SEMRESATTRS_CONTAINER_ID } from '@opentelemetry/semantic-conventions';
 
 describe('resource detector', () => {
   beforeEach(() => {
@@ -29,16 +29,6 @@ describe('resource detector', () => {
   });
 
   describe('ContainerDetector', () => {
-    let sandbox: sinon.SinonSandbox;
-
-    before(() => {
-      sandbox = sinon.createSandbox();
-    });
-
-    after(() => {
-      sandbox.restore();
-    });
-
     const invalidCases = [
       '13:name=systemd:/podruntime/docker/kubepods/ac679f8a8319c8cf7d38e1adf263bc08d23zzzz',
     ];
@@ -84,20 +74,20 @@ describe('resource detector', () => {
     it('parses all the known test cases correctly', () => {
       const detector = new ContainerDetector();
       testCases.forEach(([testCase, result]) => {
-        const stub = sinon.stub(fs, 'readFileSync').returns(testCase);
+        mock.method(fs, 'readFileSync', () => testCase);
+
         assert.strictEqual(
           detector.detect().attributes[SEMRESATTRS_CONTAINER_ID],
           result
         );
-        stub.restore();
       });
       invalidCases.forEach(([testCase, result]) => {
-        const stub = sinon.stub(fs, 'readFileSync').returns(testCase);
+        mock.method(fs, 'readFileSync', () => testCase);
+
         assert.strictEqual(
           detector.detect().attributes[SEMRESATTRS_CONTAINER_ID],
           undefined
         );
-        stub.restore();
       });
     });
   });

@@ -16,8 +16,16 @@
 
 import * as api from '@opentelemetry/api';
 import { W3CBaggagePropagator } from '@opentelemetry/core';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
+import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 import { InstrumentationBase } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
+import {
+  ConsoleSpanExporter,
+  InMemorySpanExporter,
+  SimpleSpanProcessor,
+  SpanExporter,
+} from '@opentelemetry/sdk-trace-base';
 import {
   SEMRESATTRS_CONTAINER_ID,
   SEMRESATTRS_HOST_ARCH,
@@ -30,19 +38,10 @@ import {
   SEMRESATTRS_PROCESS_RUNTIME_VERSION,
   SEMRESATTRS_SERVICE_NAME,
 } from '@opentelemetry/semantic-conventions';
-import {
-  ConsoleSpanExporter,
-  SimpleSpanProcessor,
-  SpanExporter,
-  InMemorySpanExporter,
-} from '@opentelemetry/sdk-trace-base';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
-import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 
 import { strict as assert } from 'assert';
-import { describe, it, beforeEach, afterEach, mock } from 'node:test';
-import { Mock } from 'node:test';
 import * as fs from 'fs';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 import * as os from 'os';
 
 import * as instrumentations from '../src/instrumentations';
@@ -195,11 +194,28 @@ describe('options', () => {
 
       assert(exporter instanceof OTLPTraceExporter);
 
-      // sinon.assert.calledWithMatch(logger.warn, MATCH_SERVICE_NAME_WARNING);
-      //FIXME finish
       const logMsg = logger.warn.mock.calls[0].arguments[0];
-      console.log(logMsg);
+      assert(MATCH_SERVICE_NAME_WARNING.test(logMsg));
     });
+
+    it('reads the container when setting default options', (t) => {
+      // Stub `os.platform` to return 'linux'
+      mock.method(os, 'platform', () => 'linux');
+
+      // Stub `fs.readFileSync` to simulate reading the file
+      mock.method(fs, 'readFileSync', (path, encoding) => {
+        if (path === '/proc/self/cgroup' && encoding === 'utf8') {
+          return '1:blkio:/docker/a4d00c9dd675d67f866c786181419e1b44832d4696780152e61afd44a3e02856\n';
+        }
+        return ''; // Default return if different path or encoding
+      });
+
+      const options = _setDefaultOptions();
+      assertContainerId(
+        options.tracerConfig.resource?.attributes[SEMRESATTRS_CONTAINER_ID]
+      );
+    });
+    // TODO left for debugging
 
     // it('reads the container when setting default options', () => {
     //   sandbox.stub(os, 'platform').returns('linux');
@@ -254,11 +270,7 @@ describe('options', () => {
       propagatorFactory: testPropagatorFactory,
     });
 
-    sinon.assert.neverCalledWithMatch(logger.warn, MATCH_SERVICE_NAME_WARNING);
-    sinon.assert.neverCalledWithMatch(
-      logger.warn,
-      MATCH_NO_INSTRUMENTATIONS_WARNING
-    );
+    assert(logger.warn.mock.calls.length === 0);
   });
 
   describe('OTEL_TRACES_EXPORTER', () => {
@@ -358,10 +370,12 @@ describe('options', () => {
         exporter.url,
         'https://ingest.us0.signalfx.com/v2/trace/otlp'
       );
-      sinon.assert.calledWith(
-        logger.warn,
-        `OTLP span exporter factory: defaulting protocol to 'http/protobuf' instead of grpc due to realm being defined.`
+      const oneLogMatches = logger.warn.mock.calls.some((call) =>
+        call.arguments[0].includes(
+          `OTLP span exporter factory: defaulting protocol to 'http/protobuf' instead of grpc due to realm being defined.`
+        )
       );
+      assert(oneLogMatches);
     });
 
     it('warns when realm and endpoint are both set', () => {
@@ -373,10 +387,14 @@ describe('options', () => {
       const exporters = options.spanExporterFactory(options);
       assert(Array.isArray(exporters));
       const [exporter] = exporters;
-      sinon.assert.calledWith(
-        logger.warn,
-        'OTLP span exporter factory: Realm value ignored (full endpoint URL has been specified).'
+
+      const oneLogMatches = logger.warn.mock.calls.some((call) =>
+        call.arguments[0].includes(
+          `OTLP span exporter factory: Realm value ignored (full endpoint URL has been specified).`
+        )
       );
+      assert(oneLogMatches);
+
       assert(
         exporter instanceof OTLPTraceExporter,
         'Expected exporter to be instance of OTLPTraceExporter'

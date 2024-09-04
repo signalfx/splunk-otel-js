@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
 import * as util from 'util';
 
 import {
-  propagation,
-  trace,
   context,
   defaultTextMapSetter,
-  defaultTextMapGetter,
+  propagation,
+  trace,
 } from '@opentelemetry/api';
-import { startTracing, stopTracing } from '../src/tracing';
-import { CompositePropagator, RandomIdGenerator } from '@opentelemetry/core';
+import { RandomIdGenerator } from '@opentelemetry/core';
 import {
   InMemorySpanExporter,
   SpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
+import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
+import { startTracing, stopTracing } from '../src/tracing';
 import { SYNTHETIC_RUN_ID_FIELD } from '../src/tracing/SplunkBatchSpanProcessor';
 import { defaultSpanProcessorFactory } from '../src/tracing/options';
 import * as utils from './utils';
-import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
+import { strict as assert } from 'assert';
+import { describe, it, beforeEach, afterEach } from 'node:test';
 
 function assertIncludes(arr: string[], item: string) {
   assert(Array.isArray(arr), `Expected an array got ${util.inspect(arr)}`);
