@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as assert from 'assert';
 import { SpanStatusCode } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import { strict as assert } from 'assert';
+import { afterEach, before, beforeEach, describe, it } from 'node:test';
+import { exporter, getTestSpans, provider, setInstrumentation } from '../setup';
 import { TypeormInstrumentation } from '../../../../src/instrumentations/external/typeorm';
-import { setInstrumentation, getTestSpans } from '../setup';
 
 const instrumentation = new TypeormInstrumentation();
 import * as typeorm from 'typeorm';
-import { defaultOptions, User } from './utils';
+import { User, defaultOptions } from './utils';
+provider.register();
 
 describe('QueryBuilder', () => {
   before(() => {
@@ -29,6 +31,7 @@ describe('QueryBuilder', () => {
   });
 
   beforeEach(() => {
+    exporter.reset();
     instrumentation.enable();
   });
 
@@ -46,6 +49,7 @@ describe('QueryBuilder', () => {
       .where('user.id = :userId', { userId: '1' })
       .getManyAndCount();
     assert.strictEqual(users.length, 2);
+
     const typeOrmSpans = getTestSpans();
     assert.strictEqual(typeOrmSpans.length, 1);
     assert.strictEqual(typeOrmSpans[0].status.code, SpanStatusCode.UNSET);

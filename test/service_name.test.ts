@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as assert from 'assert';
+
+import { strict as assert } from 'assert';
+import { beforeEach, describe, it } from 'node:test';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';

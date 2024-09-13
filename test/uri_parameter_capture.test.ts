@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
-import { startTracing, stopTracing } from '../src/tracing';
-import { defaultSpanProcessorFactory } from '../src/tracing/options';
-import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
 import * as utils from './utils';
+utils.mockMocha();
 import {
   InMemorySpanExporter,
   ReadableSpan,
   SpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
+import { strict as assert } from 'assert';
+import { afterEach, beforeEach, before, describe, it } from 'node:test';
+import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
+import { startTracing, stopTracing } from '../src/tracing';
+import { defaultSpanProcessorFactory } from '../src/tracing/options';
 
 const PORT = 9112;
 const SERVER_URL = `http://localhost:${PORT}`;

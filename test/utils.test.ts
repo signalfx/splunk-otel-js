@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as assert from 'assert';
-import * as sinon from 'sinon';
 import * as api from '@opentelemetry/api';
+import { strict as assert } from 'assert';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
-import { getNonEmptyEnvVar, parseLogLevel } from '../src/utils';
-import { cleanEnvironment } from './utils';
 import { DiagLogLevel } from '@opentelemetry/api';
+import { getNonEmptyEnvVar, parseLogLevel } from '../src/utils';
+import { calledWithExactly, cleanEnvironment } from './utils';
 
 describe('utils', () => {
   describe('logLevel', () => {
@@ -37,20 +37,18 @@ describe('utils', () => {
   });
 
   describe('getNonEmptyEnvVar', () => {
-    const sandbox = sinon.createSandbox();
     let logger;
 
     beforeEach(() => {
       cleanEnvironment();
       logger = {
-        warn: sandbox.spy(),
+        warn: mock.fn(),
       };
       api.diag.setLogger(logger, api.DiagLogLevel.ALL);
-      logger.warn.resetHistory();
     });
 
     afterEach(() => {
-      sandbox.restore();
+      logger.warn.mock.resetCalls();
     });
 
     it('returns an empty environment variable as undefined', () => {
@@ -77,7 +75,7 @@ describe('utils', () => {
       process.env.OTEL_SERVICE_NAME = '';
       assert.deepStrictEqual(getNonEmptyEnvVar('OTEL_SERVICE_NAME'), undefined);
 
-      sinon.assert.calledWith(
+      calledWithExactly(
         logger.warn,
         `Defined, but empty environment variable: 'OTEL_SERVICE_NAME'. The value will be considered as undefined.`
       );

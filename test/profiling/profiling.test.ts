@@ -14,27 +14,26 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
-import { hrtime } from 'process';
+import { strict as assert } from 'assert';
+import { beforeEach, describe, it } from 'node:test';
 import { inspect } from 'util';
 
-import { context, trace, propagation } from '@opentelemetry/api';
+import { context, trace } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { InMemorySpanExporter } from '@opentelemetry/sdk-trace-base';
+import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
-import {
-  defaultExporterFactory,
-  startProfiling,
-  _setDefaultOptions,
-} from '../../src/profiling';
 import { start, stop } from '../../src';
+import {
+  _setDefaultOptions,
+  defaultExporterFactory,
+} from '../../src/profiling';
+import { ProfilingContextManager } from '../../src/profiling/ProfilingContextManager';
 import {
   CpuProfile,
   HeapProfile,
   ProfilingExporter,
 } from '../../src/profiling/types';
-import { ProfilingContextManager } from '../../src/profiling/ProfilingContextManager';
 import { detect as detectResource } from '../../src/resource';
 
 import * as utils from '../utils';
@@ -49,20 +48,30 @@ describe('profiling', () => {
       utils.cleanEnvironment();
     });
 
-    it('sets default options when no options are provided', () => {
+    it('sets default options when no options are provided', async () => {
       const options = _setDefaultOptions();
-      assert.deepStrictEqual(options, {
+      await options.resource.waitForAsyncAttributes();
+      const testResource = new Resource({
+        [SemanticResourceAttributes.SERVICE_NAME]: '@splunk/otel',
+      }).merge(detectResource());
+      await testResource.waitForAsyncAttributes();
+
+      const { resource: defaultResource, ...defaultOtherAttrs } = options;
+
+      assert.deepStrictEqual(defaultOtherAttrs, {
         serviceName: '@splunk/otel',
         endpoint: 'http://localhost:4317',
         callstackInterval: 1_000,
         collectionDuration: 30_000,
-        resource: new Resource({
-          [SemanticResourceAttributes.SERVICE_NAME]: '@splunk/otel',
-        }).merge(detectResource()),
         exporterFactory: defaultExporterFactory,
         memoryProfilingEnabled: false,
         memoryProfilingOptions: undefined,
       });
+
+      assert.deepStrictEqual(
+        defaultResource._attributes,
+        testResource._attributes
+      );
     });
 
     it('uses options from environment', () => {

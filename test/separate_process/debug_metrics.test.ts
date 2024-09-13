@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
-import { cleanEnvironment, TestMetricReader } from '../utils';
-import {
-  AggregationTemporality,
-  MetricReader,
-} from '@opentelemetry/sdk-metrics';
-import { startMetrics } from '../../src/metrics';
+import { AggregationTemporality } from '@opentelemetry/sdk-metrics';
+import { strict as assert } from 'assert';
+import { afterEach, beforeEach, describe, it } from 'node:test';
 import { start, stop } from '../../src';
+import { TestMetricReader, cleanEnvironment } from '../utils';
 
 describe('debug metrics', () => {
   let reader: TestMetricReader;

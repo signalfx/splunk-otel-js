@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
-import * as sinon from 'sinon';
+import { strict as assert } from 'assert';
+import { after, before, beforeEach, describe, it, mock } from 'node:test';
 
 import { trace } from '@opentelemetry/api';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 import {
   BatchSpanProcessor,
-  SimpleSpanProcessor,
   ConsoleSpanExporter,
   InMemorySpanExporter,
+  SimpleSpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 
 import { parseOptionsAndConfigureInstrumentations } from '../../src/instrumentations';
 import { startTracing, stopTracing } from '../../src/tracing';
@@ -35,7 +35,7 @@ describe('tracing:otlp', () => {
   let addSpanProcessorMock;
 
   before(() => {
-    addSpanProcessorMock = sinon.spy(
+    addSpanProcessorMock = mock.method(
       NodeTracerProvider.prototype,
       'addSpanProcessor'
     );
@@ -43,11 +43,11 @@ describe('tracing:otlp', () => {
 
   beforeEach(() => {
     utils.cleanEnvironment();
-    addSpanProcessorMock.resetHistory();
+    addSpanProcessorMock.mock.resetCalls();
   });
 
   after(() => {
-    addSpanProcessorMock.restore();
+    // addSpanProcessorMock.restore();
   });
 
   function assertTracingPipeline(
@@ -55,9 +55,8 @@ describe('tracing:otlp', () => {
     serviceName: string,
     accessToken?: string
   ) {
-    sinon.assert.calledOnce(addSpanProcessorMock);
-    const processor = addSpanProcessorMock.getCall(0).args[0];
-
+    assert(addSpanProcessorMock.mock.callCount() === 1);
+    const processor = addSpanProcessorMock.mock.calls[0].arguments[0];
     assert(processor instanceof BatchSpanProcessor);
     const exporter = processor['_exporter'];
     assert(exporter instanceof OTLPTraceExporter);
@@ -65,9 +64,10 @@ describe('tracing:otlp', () => {
     assert.deepEqual(exporter.url, exportURL);
 
     if (accessToken) {
-      // gRPC not yet supported in ingest
       assert.equal(
-        exporter['_transport']['_parameters']['metadata']().get('x-sf-token'),
+        exporter['_transport']['_parameters']
+          ['metadata']()
+          .get('x-sf-token')[0],
         accessToken
       );
     }
@@ -123,8 +123,8 @@ describe('tracing:otlp', () => {
 
     startTracing(tracingOptions);
 
-    sinon.assert.calledOnce(addSpanProcessorMock);
-    const p1 = addSpanProcessorMock.getCall(0).args[0];
+    assert(addSpanProcessorMock.mock.callCount() === 1);
+    const p1 = addSpanProcessorMock.mock.calls[0].arguments[0];
 
     assert(p1 instanceof SimpleSpanProcessor);
     const exp1 = p1['_exporter'];
@@ -146,14 +146,14 @@ describe('tracing:otlp', () => {
 
     startTracing(tracingOptions);
 
-    sinon.assert.calledTwice(addSpanProcessorMock);
-    const p1 = addSpanProcessorMock.getCall(0).args[0];
+    assert(addSpanProcessorMock.mock.callCount() === 2);
+    const p1 = addSpanProcessorMock.mock.calls[0].arguments[0];
 
     assert(p1 instanceof SimpleSpanProcessor);
     const exp1 = p1['_exporter'];
     assert(exp1 instanceof ConsoleSpanExporter);
 
-    const p2 = addSpanProcessorMock.getCall(1).args[0];
+    const p2 = addSpanProcessorMock.mock.calls[1].arguments[0];
     assert(p2 instanceof BatchSpanProcessor);
     const exp2 = p2['_exporter'];
     assert(exp2 instanceof InMemorySpanExporter);
@@ -171,8 +171,8 @@ describe('tracing:otlp', () => {
       span.end();
     };
     const exporter = new InMemorySpanExporter();
-    const exportFn = sinon.spy(exporter, 'export');
-    const shutdownFn = sinon.spy(exporter, 'shutdown');
+    const exportFn = mock.method(exporter, 'export');
+    const shutdownFn = mock.method(exporter, 'shutdown');
 
     const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
       tracing: {
@@ -185,8 +185,8 @@ describe('tracing:otlp', () => {
     const storedTracer = trace.getTracer('test-tracer');
     createSpan();
 
-    assert.equal(exportFn.callCount, 0);
-    assert.equal(shutdownFn.callCount, 0);
+    assert.equal(exportFn.mock.callCount(), 0);
+    assert.equal(shutdownFn.mock.callCount(), 0);
     await stopTracing();
 
     createSpan(false);
@@ -194,10 +194,10 @@ describe('tracing:otlp', () => {
     // are "recorded", but the SpanProcessor which is now shut down will just dump them.
     createSpan(true, storedTracer);
 
-    assert.equal(exportFn.callCount, 1);
-    assert.equal(shutdownFn.callCount, 1);
+    assert.equal(exportFn.mock.callCount(), 1);
+    assert.equal(shutdownFn.mock.callCount(), 1);
 
-    exportFn.restore();
-    shutdownFn.restore();
+    exportFn.mock.restore();
+    shutdownFn.mock.restore();
   });
 });

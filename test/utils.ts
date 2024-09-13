@@ -106,3 +106,44 @@ export function assertInjection(
     );
   }
 }
+
+export function calledWithExactly(mocked, expected) {
+  const match = mocked.mock.calls.some((call) => {
+    try {
+      assert.deepStrictEqual(call.arguments[0], expected);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  });
+
+  assert(match, `Expected call with: ${JSON.stringify(expected)} not found`);
+}
+
+export function calledOnceWithMatch(mocked, match: Object) {
+  assert.strictEqual(
+    mocked.mock.calls.length,
+    1,
+    'calledOnceWithMatch can only be used with a single call'
+  );
+
+  const callArgs = mocked.mock.calls[0].arguments[0];
+  for (const key in match) {
+    assert.deepEqual(callArgs[key], match[key], `key ${key} does not match`);
+  }
+}
+
+export function mockMocha() {
+  const isMocha = [
+    'afterEach',
+    'after',
+    'beforeEach',
+    'before',
+    'describe',
+    'it',
+  ].forEach((fn) => {
+    global[fn] = () => {
+      console.error(`Attempted to call mock global mocha function`);
+    };
+  });
+}

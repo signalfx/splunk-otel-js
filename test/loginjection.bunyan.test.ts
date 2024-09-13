@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { TestLogStream, assertInjection } from './utils';
-import { startTracing, stopTracing } from '../src/tracing';
-import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
 import type * as bunyan from 'bunyan';
-import { describe, it, beforeEach } from 'node:test';
+import { after, before, beforeEach, describe, it } from 'node:test';
+import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
+import { startTracing, stopTracing } from '../src/tracing';
+import { TestLogStream, assertInjection } from './utils';
 
 describe('log injection', () => {
   let logStream: TestLogStream;

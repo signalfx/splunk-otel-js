@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as assert from 'assert';
-import * as sinon from 'sinon';
+
+import { strict as assert } from 'assert';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
 import { diag } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
@@ -81,24 +82,32 @@ describe('start', () => {
     const logging = signals.includes('logging');
 
     if (metrics) {
-      sinon.assert.calledOnce(fns.metrics);
+      assert(fns.metrics.mock.callCount() === 1);
+      // sinon.assert.calledOnce(fns.metrics);
     } else {
-      sinon.assert.notCalled(fns.metrics);
+      assert(fns.metrics.mock.callCount() === 0);
+      // sinon.assert.notCalled(fns.metrics);
     }
     if (profiling) {
-      sinon.assert.calledOnce(fns.profiling);
+      assert(fns.profiling.mock.callCount() === 1);
+      // sinon.assert.calledOnce(fns.profiling);
     } else {
-      sinon.assert.notCalled(fns.profiling);
+      assert(fns.profiling.mock.callCount() === 0);
+      // sinon.assert.notCalled(fns.profiling);
     }
     if (tracing) {
-      sinon.assert.calledOnce(fns.tracing);
+      assert(fns.tracing.mock.callCount() === 1);
+      // sinon.assert.calledOnce(fns.tracing);
     } else {
-      sinon.assert.notCalled(fns.tracing);
+      assert(fns.tracing.mock.callCount() === 0);
+      // sinon.assert.notCalled(fns.tracing);
     }
     if (logging) {
-      sinon.assert.calledOnce(fns.logging);
+      assert(fns.logging.mock.callCount() === 1);
+      // sinon.assert.calledOnce(fns.logging);
     } else {
-      sinon.assert.notCalled(fns.logging);
+      assert(fns.logging.mock.callCount() === 0);
+      // sinon.assert.notCalled(fns.logging);
     }
   };
 
@@ -106,29 +115,29 @@ describe('start', () => {
 
   beforeEach(() => {
     signals.stop = {
-      logging: sinon.spy(),
-      metrics: sinon.spy(),
-      profiling: sinon.spy(),
-      tracing: sinon.stub(tracing, 'stopTracing').callsFake(() => {}),
+      logging: mock.fn(),
+      metrics: mock.fn(),
+      profiling: mock.fn(),
+      tracing: mock.method(tracing, 'stopTracing', () => {}),
     };
 
     signals.start = {
-      logging: sinon.stub(logging, 'startLogging').callsFake(() => {
+      logging: mock.method(logging, 'startLogging', () => {
         return { stop: signals.stop.logging };
       }),
-      metrics: sinon.stub(metrics, 'startMetrics').callsFake(() => {
+      metrics: mock.method(metrics, 'startMetrics', () => {
         return { stop: signals.stop.metrics };
       }),
-      profiling: sinon.stub(profiling, 'startProfiling').callsFake(() => {
+      profiling: mock.method(profiling, 'startProfiling', () => {
         return { stop: signals.stop.profiling };
       }),
-      tracing: sinon.stub(tracing, 'startTracing').callsFake(() => true),
+      tracing: mock.method(tracing, 'startTracing', () => true),
     };
   });
 
   afterEach(() => {
     stop();
-    sinon.restore();
+    // sinon.restore(); //FIXME hmmm
   });
 
   describe('toggling signals', () => {
@@ -187,7 +196,7 @@ describe('start', () => {
         logging: true,
       });
 
-      sinon.assert.calledOnceWithMatch(signals.start.tracing, {
+      utils.calledOnceWithMatch(signals.start.tracing, {
         accessToken: 'xyz',
         endpoint: 'localhost:1111',
         serviceName: 'test',
@@ -195,19 +204,19 @@ describe('start', () => {
         captureHttpRequestUriParams: [],
       });
 
-      sinon.assert.calledOnceWithMatch(signals.start.profiling, {
+      utils.calledOnceWithMatch(signals.start.profiling, {
         endpoint: 'localhost:1111',
         serviceName: 'test',
       });
 
-      sinon.assert.calledOnceWithMatch(signals.start.metrics, {
+      utils.calledOnceWithMatch(signals.start.metrics, {
         accessToken: 'xyz',
         endpoint: 'localhost:1111',
         serviceName: 'test',
       });
 
-      sinon.assert.calledOnceWithMatch(signals.start.logging, {
-        // accessToken: 'xyz', // FIXME logging doesn't use accessToken atm cause no ingest
+      utils.calledOnceWithMatch(signals.start.logging, {
+        //accessToken: 'xyz',// FIXME logging doesn't use accessToken atm cause no ingest
         endpoint: 'localhost:1111',
         serviceName: 'test',
       });
@@ -267,48 +276,53 @@ describe('start', () => {
   });
 
   describe('diagnostic logging', () => {
-    const sandbox = sinon.createSandbox();
-    let c;
+    let logSpy;
+    let infoSpy;
+    let debugSpy;
 
     beforeEach(() => {
       utils.cleanEnvironment();
-      c = sandbox.spy(console);
+      logSpy = mock.method(console, 'log');
+      infoSpy = mock.method(console, 'info');
+      debugSpy = mock.method(console, 'debug');
     });
 
     afterEach(() => {
-      sandbox.restore();
+      logSpy.mock.resetCalls();
+      infoSpy.mock.resetCalls();
+      debugSpy.mock.resetCalls();
     });
 
     it('does not enable diagnostic logging by default', () => {
       start();
       diag.info('42');
-      assert(c.log.notCalled);
+      assert(logSpy.mock.callCount() === 0);
     });
 
     it('does not enable diagnostic logging via explicit config', () => {
       start({ logLevel: 'none' });
       diag.info('42');
-      assert(c.log.notCalled);
+      assert(logSpy.mock.callCount() === 0);
     });
 
     it('is possible to enable diag logging via config', () => {
       start({ logLevel: 'debug' });
       diag.debug('42');
-      assert(c.debug.calledWithExactly('42'));
+      utils.calledWithExactly(debugSpy, '42');
     });
 
     it('is possible to enable diag logging via env vars', () => {
       process.env.OTEL_LOG_LEVEL = 'info';
       start();
       diag.info('42');
-      assert(c.info.calledWithExactly('42'));
+      utils.calledWithExactly(infoSpy, '42');
     });
 
     it('prefers programmatic config over env var', () => {
       process.env.OTEL_LOG_LEVEL = 'debug';
       start({ logLevel: 'info' });
       diag.debug('42');
-      assert(c.debug.notCalled);
+      assert(debugSpy.mock.callCount() === 0);
     });
   });
 });

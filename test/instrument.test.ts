@@ -14,44 +14,38 @@
  * limitations under the License.
  */
 
-import * as tracing from '../src/tracing';
-import * as metrics from '../src/metrics';
-import { cleanEnvironment } from './utils';
 import { strict as assert } from 'assert';
-import { describe, it, beforeEach, afterEach, mock } from 'node:test';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
+import * as tracing from '../src/tracing';
+import { cleanEnvironment } from './utils';
 
 describe('instrumentation', () => {
   let startTracingMock;
-  let startMetricsMock;
 
   beforeEach(() => {
     delete require.cache[require.resolve('../src/instrument')];
     cleanEnvironment();
-    startTracingMock = mock.method(tracing, 'startTracing').mock;
-    startMetricsMock = mock.method(metrics, 'startMetrics').mock;
+    startTracingMock = mock.method(tracing, 'startTracing', () => {});
   });
 
   afterEach(() => {
-    startTracingMock.restore();
-    startMetricsMock.restore();
+    startTracingMock.mock.restore();
   });
 
   it('importing auto calls startTracing', () => {
     require('../src/instrument');
-    assert.strictEqual(startTracingMock.callCount(), 1);
+    assert.strictEqual(startTracingMock.mock.callCount(), 1);
   });
 
   it('calls startTracing when SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES contains a matching package name', () => {
     process.env.SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES = '@splunk/otel,foo';
     require('../src/instrument');
-    // sinon.assert.calledOnce(startTracingMock);
-    assert.equal(startTracingMock.callCount(), 1);
+    assert.equal(startTracingMock.mock.callCount(), 1);
   });
 
   it('does not call startTracing when SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES does not contain a matching package name', () => {
     process.env.SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES = 'foo,@splunk/zotel';
     require('../src/instrument');
-    // sinon.assert.notCalled(startTracingMock);
-    assert.equal(startTracingMock.callCount(), 0);
+    assert.equal(startTracingMock.mock.callCount(), 0);
   });
 });

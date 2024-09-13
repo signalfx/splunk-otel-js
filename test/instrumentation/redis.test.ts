@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
-import { startTracing, stopTracing } from '../../src/tracing';
-import { defaultSpanProcessorFactory } from '../../src/tracing/options';
+import * as utils from '../utils';
+utils.mockMocha();
+import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
 import {
   InMemorySpanExporter,
   SpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
-import * as utils from '../utils';
+import { strict as assert } from 'assert';
 import * as net from 'net';
-import type * as Redis from 'redis';
-import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
+import { after, afterEach, before, beforeEach, describe, it } from 'node:test';
 import { parseOptionsAndConfigureInstrumentations } from '../../src/instrumentations';
+import { startTracing, stopTracing } from '../../src/tracing';
+import { defaultSpanProcessorFactory } from '../../src/tracing/options';
 
 describe('Redis instrumentation', () => {
-  let redisServer;
+  let redisServer: net.Server;
   let exporter;
   let spanProcessor: SpanProcessor;
 
@@ -41,6 +42,7 @@ describe('Redis instrumentation', () => {
         if (data.endsWith('bar\r\n')) {
           socket.write('$2\r\nok\r\n');
           data = '';
+          socket.end();
         }
       });
     });
@@ -70,7 +72,7 @@ describe('Redis instrumentation', () => {
     },
   });
 
-  it('db statement is not added when SPLUNK_REDIS_INCLUDE_COMMAND_ARGS is false', (done) => {
+  it('db statement is not added when SPLUNK_REDIS_INCLUDE_COMMAND_ARGS is false', async () => {
     process.env.SPLUNK_REDIS_INCLUDE_COMMAND_ARGS = 'false';
     const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
       tracing: testOpts(),
@@ -79,19 +81,28 @@ describe('Redis instrumentation', () => {
     const client = require('redis').createClient({
       no_ready_check: true,
     });
-    client.hget('foo', 'bar', async () => {
-      await spanProcessor.forceFlush();
-      const [span] = await exporter.getFinishedSpans();
-      client.end(false);
-      assert.deepStrictEqual(
-        span.attributes['db.statement'],
-        'hget [2 other arguments]'
-      );
-      done();
+
+    await new Promise<void>((resolve, reject) => {
+      client.hget('foo', 'bar', async (err, res) => {
+        if (err) {
+          return reject(err);
+        }
+
+        await spanProcessor.forceFlush();
+        const [span] = await exporter.getFinishedSpans();
+        assert.deepStrictEqual(
+          span.attributes['db.statement'],
+          'hget [2 other arguments]'
+        );
+
+        resolve();
+      });
     });
+
+    await client.quit();
   });
 
-  it('db statement is fully added when setting SPLUNK_REDIS_INCLUDE_COMMAND_ARGS env var', (done) => {
+  it('db statement is fully added when setting SPLUNK_REDIS_INCLUDE_COMMAND_ARGS env var', async () => {
     process.env.SPLUNK_REDIS_INCLUDE_COMMAND_ARGS = 'true';
     const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
       tracing: testOpts(),
@@ -100,12 +111,21 @@ describe('Redis instrumentation', () => {
     const client = require('redis').createClient({
       no_ready_check: true,
     });
-    client.hget('foo', 'bar', async () => {
-      await spanProcessor.forceFlush();
-      const [span] = await exporter.getFinishedSpans();
-      client.end(false);
-      assert.deepStrictEqual(span.attributes['db.statement'], 'hget foo bar');
-      done();
+
+    await new Promise<void>((resolve, reject) => {
+      client.hget('foo', 'bar', async (err, res) => {
+        if (err) {
+          return reject(err);
+        }
+
+        await spanProcessor.forceFlush();
+        const [span] = await exporter.getFinishedSpans();
+        assert.deepStrictEqual(span.attributes['db.statement'], 'hget foo bar');
+
+        resolve();
+      });
     });
+
+    await client.quit();
   });
 });

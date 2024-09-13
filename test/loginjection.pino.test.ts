@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
+import { TestLogStream, assertInjection, mockMocha } from './utils';
+mockMocha();
 import type * as pino from 'pino';
 import { startTracing, stopTracing } from '../src/tracing';
-import { TestLogStream, assertInjection } from './utils';
 import { defaultLogHook } from '../src/instrumentations/logging';
 import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
 import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
