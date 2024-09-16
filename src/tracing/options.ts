@@ -35,7 +35,7 @@ import {
   getEnvBoolean,
 } from '../utils';
 import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { SEMRESATTRS_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { diag, Span, TextMapPropagator } from '@opentelemetry/api';
 import {
   CompositePropagator,
@@ -44,6 +44,7 @@ import {
 } from '@opentelemetry/core';
 import { SplunkBatchSpanProcessor } from './SplunkBatchSpanProcessor';
 import { Resource } from '@opentelemetry/resources';
+import type { ResourceFactory } from '../types';
 
 type SpanExporterFactory = (options: Options) => SpanExporter | SpanExporter[];
 
@@ -67,6 +68,7 @@ export interface Options {
   captureHttpRequestUriParams: string[] | CaptureHttpUriParameters;
   instrumentations: (Instrumentation | Instrumentation[])[];
   propagatorFactory: PropagatorFactory;
+  resourceFactory: ResourceFactory;
   serverTimingEnabled: boolean;
   spanExporterFactory: SpanExporterFactory;
   spanProcessorFactory: SpanProcessorFactory;
@@ -80,6 +82,7 @@ export const allowedTracingOptions = [
   'endpoint',
   'instrumentations',
   'propagatorFactory',
+  'resourceFactory',
   'serverTimingEnabled',
   'serviceName',
   'spanExporterFactory',
@@ -115,12 +118,15 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   const extraTracerConfig = options.tracerConfig || {};
 
-  let resource = detectResource();
+  const envResource = detectResource();
+
+  const resourceFactory = options.resourceFactory || ((r: Resource) => r);
+  let resource = resourceFactory(envResource);
 
   const serviceName =
     options.serviceName ||
     getNonEmptyEnvVar('OTEL_SERVICE_NAME') ||
-    resource.attributes[SemanticResourceAttributes.SERVICE_NAME];
+    resource.attributes[SEMRESATTRS_SERVICE_NAME];
 
   if (!serviceName) {
     diag.warn(
@@ -132,8 +138,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   resource = resource.merge(
     new Resource({
-      [SemanticResourceAttributes.SERVICE_NAME]:
-        serviceName || defaultServiceName(),
+      [SEMRESATTRS_SERVICE_NAME]: serviceName || defaultServiceName(),
     })
   );
 
@@ -142,19 +147,16 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     ...extraTracerConfig,
   };
 
-  const exporterTypes = getExporterTypes(options);
-
-  // factories
   if (options.spanExporterFactory === undefined) {
-    options.spanExporterFactory = resolveTraceExporters(exporterTypes);
+    options.spanExporterFactory = defaultSpanExporterFactory(options);
   }
+
   options.spanProcessorFactory =
     options.spanProcessorFactory || defaultSpanProcessorFactory;
 
   options.propagatorFactory =
     options.propagatorFactory || defaultPropagatorFactory;
 
-  // instrumentations
   if (options.instrumentations === undefined) {
     options.instrumentations = getInstrumentations();
   }
@@ -172,9 +174,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   return {
     realm: options.realm,
     endpoint: options.endpoint,
-    serviceName: String(
-      resource.attributes[SemanticResourceAttributes.SERVICE_NAME]
-    ),
+    serviceName: String(resource.attributes[SEMRESATTRS_SERVICE_NAME]),
     accessToken: options.accessToken,
     serverTimingEnabled: options.serverTimingEnabled,
     captureHttpRequestUriParams: options.captureHttpRequestUriParams,
@@ -183,16 +183,18 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     spanExporterFactory: options.spanExporterFactory,
     spanProcessorFactory: options.spanProcessorFactory,
     propagatorFactory: options.propagatorFactory,
+    resourceFactory,
   };
 }
 
-const SUPPORTED_EXPORTER_TYPES = ['console', 'otlp'];
+const SUPPORTED_EXPORTER_TYPES = ['console', 'otlp', 'none'];
 
-type ExporterType = (typeof SUPPORTED_EXPORTER_TYPES)[number];
+export type ExporterType = (typeof SUPPORTED_EXPORTER_TYPES)[number];
 
 const SpanExporterMap: Record<ExporterType, SpanExporterFactory> = {
   console: consoleSpanExporterFactory,
   otlp: otlpSpanExporterFactory,
+  none: () => [],
 };
 
 function containsSupportedRealmExporter(exporterTypes: string[]) {
@@ -235,11 +237,14 @@ function getExporterTypes(options: Partial<Options>): ExporterType[] {
   return traceExporters;
 }
 
-function resolveTraceExporters(
-  exporterTypes: ExporterType[]
+export function defaultSpanExporterFactory(
+  options: Partial<Options>
 ): SpanExporterFactory {
-  const factories = exporterTypes.map((t) => SpanExporterMap[t]);
-  return (options) => factories.flatMap((factory) => factory(options));
+  const exporterTypes = getExporterTypes(options);
+  return (options) => {
+    const factories = exporterTypes.map((t) => SpanExporterMap[t]);
+    return factories.flatMap((factory) => factory(options));
+  };
 }
 
 export function otlpSpanExporterFactory(options: Options): SpanExporter {
@@ -312,16 +317,6 @@ export function consoleSpanExporterFactory(): SpanExporter {
   return new ConsoleSpanExporter();
 }
 
-// Temporary workaround until https://github.com/open-telemetry/opentelemetry-js/issues/3094 is resolved
-function getBatchSpanProcessorConfig() {
-  // OTel uses its own parsed environment, we can just use the default env if the BSP delay is unset.
-  if (getNonEmptyEnvVar('OTEL_BSP_SCHEDULE_DELAY') !== undefined) {
-    return undefined;
-  }
-
-  return { scheduledDelayMillis: 500 };
-}
-
 export function defaultSpanProcessorFactory(options: Options): SpanProcessor[] {
   let exporters = options.spanExporterFactory(options);
 
@@ -329,10 +324,7 @@ export function defaultSpanProcessorFactory(options: Options): SpanProcessor[] {
     exporters = [exporters];
   }
 
-  return exporters.map(
-    (exporter) =>
-      new SplunkBatchSpanProcessor(exporter, getBatchSpanProcessorConfig())
-  );
+  return exporters.map((exporter) => new SplunkBatchSpanProcessor(exporter));
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

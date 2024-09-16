@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
+import type { Resource } from '@opentelemetry/resources';
+
 export type LogLevel = 'none' | 'verbose' | 'debug' | 'info' | 'warn' | 'error';
+
+export type ResourceFactory = (resource: Resource) => Resource;
 
 export type EnvVarKey =
   | 'OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT'

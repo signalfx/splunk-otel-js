@@ -22,9 +22,8 @@ import {
   osDetectorSync,
   processDetectorSync,
 } from '@opentelemetry/resources';
-
+import { containerDetector } from '@opentelemetry/resource-detector-container';
 import { distroDetector } from './detectors/DistroDetector';
-import { containerDetector } from './detectors/ContainerDetector';
 
 const detectors = [
   distroDetector,
