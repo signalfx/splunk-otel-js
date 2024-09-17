@@ -38,9 +38,9 @@ import * as util from 'util';
 import { detect as detectResource } from '../resource';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { ConsoleMetricExporter } from './ConsoleMetricExporter';
+import type { ResourceFactory } from '../types';
 
 export type MetricReaderFactory = (options: MetricsOptions) => MetricReader[];
-export type ResourceFactory = (resource: Resource) => Resource;
 
 export interface MetricsOptions {
   accessToken: string;
@@ -133,7 +133,7 @@ function areValidExporterTypes(types: string[]): boolean {
   return types.every((t) => SUPPORTED_EXPORTER_TYPES.includes(t));
 }
 
-function createOtlpExporter(options: MetricsOptions) {
+export function createOtlpExporter(options: MetricsOptions) {
   let protocol = getEnvValueByPrecedence([
     'OTEL_EXPORTER_OTLP_METRICS_PROTOCOL',
     'OTEL_EXPORTER_OTLP_PROTOCOL',

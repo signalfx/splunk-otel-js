@@ -16,10 +16,7 @@
 
 import { StartTracingOptions } from '../tracing';
 import { getEnvBoolean } from '../utils';
-import type {
-  GraphQLInstrumentation,
-  GraphQLInstrumentationConfig,
-} from '@opentelemetry/instrumentation-graphql';
+import type { GraphQLInstrumentationConfig } from '@opentelemetry/instrumentation-graphql';
 
 export function configureGraphQlInstrumentation(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -30,12 +27,10 @@ export function configureGraphQlInstrumentation(
     return;
   }
 
-  const qglInstrumentation = instrumentation as GraphQLInstrumentation;
-
   const config: GraphQLInstrumentationConfig = {
-    ...qglInstrumentation.getConfig(),
+    ...instrumentation.getConfig(),
     ignoreResolveSpans: true,
   };
 
-  qglInstrumentation.setConfig(config);
+  instrumentation.setConfig(config);
 }

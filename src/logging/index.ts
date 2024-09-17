@@ -113,7 +113,7 @@ export function _setDefaultOptions(options: StartLoggingOptions = {}): Options {
   };
 }
 
-const SUPPORTED_EXPORTER_TYPES = ['console', 'otlp'];
+const SUPPORTED_EXPORTER_TYPES = ['console', 'otlp', 'none'];
 
 function areValidExporterTypes(types: string[]): boolean {
   return types.every((t) => SUPPORTED_EXPORTER_TYPES.includes(t));

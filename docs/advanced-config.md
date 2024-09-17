@@ -64,7 +64,7 @@ This distribution supports all the configuration options supported by the compon
 | `OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT`                        |                         | Stable  | Maximum allowed attribute value size. Empty value is treated as infinity
 | `OTEL_SPAN_EVENT_COUNT_LIMIT`                                   | `128`                   | Stable  |
 | `OTEL_SPAN_LINK_COUNT_LIMIT`                                    | `1000`\*                | Stable  |
-| `OTEL_TRACES_EXPORTER`<br>`tracing.spanExporterFactory`         | `otlp`                  | Stable  | Chooses the trace exporters. Shortcut for setting `spanExporterFactory`. Comma-delimited list of exporters. Currently supported values: `otlp`, `console`.
+| `OTEL_TRACES_EXPORTER`<br>`tracing.spanExporterFactory`         | `otlp`                  | Stable  | Chooses the trace exporters. Shortcut for setting `spanExporterFactory`. Comma-delimited list of exporters. Currently supported values: `otlp`, `console`, `none`.
 | `OTEL_TRACES_SAMPLER`                                           | `parentbased_always_on` | Stable  | Sampler to be used for traces. See [Sampling](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling)
 | `OTEL_TRACES_SAMPLER_ARG`                                       |                         | Stable  | String value to be used as the sampler argument. Only be used if OTEL_TRACES_SAMPLER is set.
 | `SPLUNK_ACCESS_TOKEN`<br>`accessToken`                          |                         | Stable  | The optional access token for exporting signal data directly to SignalFx API.
@@ -79,6 +79,8 @@ This distribution supports all the configuration options supported by the compon
 The following config options can be set by passing them as tracing arguments to `start()`.
 
 - `tracing.tracerConfig`: A JS object that is merged into the default tracer config replacing any existing keys. It's passed to the tracer provider during initialization. This can be used to customize the tracer provider or tracer. Must satisfy [`TracerConfig` interface](https://github.com/open-telemetry/opentelemetry-js/blob/71ba83a0dc51118e08e3148c788b81fe711003e7/packages/opentelemetry-tracing/src/types.ts#L26)
+
+- `tracing.resourceFactory`: A function that is invoked with the default resource detected from the environment. Can be used to change the detected attributes or return a completely new resource.
 
 - `tracing.spanExporterFactory`: A function that accepts the tracing options. Returns a new instance of SpanExporter. When set, this function is used to create a new exporter and the returned exporter will be used in the pipeline.
 
@@ -97,7 +99,7 @@ The following config options can be set by passing them as tracing arguments to 
 | `OTEL_SERVICE_NAME`<br>`serviceName`                            | `unnamed-node-service`  | Stable  | The service name of this Node service.
 | `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT`<br>`endpoint`             | `http://localhost:4317` | Stable | The OTLP endpoint to export to.
 | `OTEL_METRIC_EXPORT_INTERVAL`<br>`metrics.exportIntervalMillis` | `30000`                 | Stable | The interval, in milliseconds, of metrics collection and exporting.
-| `OTEL_METRICS_EXPORTER`<br>`metrics.metricReaderFactory`        | `otlp`                  | Stable  | Chooses the metric exporters. Comma-delimited list of exporters. Currently supported values: `otlp`, `console`.
+| `OTEL_METRICS_EXPORTER`<br>`metrics.metricReaderFactory`        | `otlp`                  | Stable  | Chooses the metric exporters. Comma-delimited list of exporters. Currently supported values: `otlp`, `console`, `none`.
 | `OTEL_EXPORTER_OTLP_METRICS_PROTOCOL`<br>`metrics.metricReaderFactory` | `grpc`           | Stable  | Chooses the metric exporter protocol. Currently supported values: `grpc`, `http/protobuf`.
 | `OTEL_RESOURCE_ATTRIBUTES`                                      |                         | Stable  | The resource attributes to metric data. <details><summary>Environment variable example</summary>`key1=val1,key2=val2`</details>
 | `SPLUNK_METRICS_ENABLED`<br>n/a (enabled by calling `start`) | `false`             | Experimental | Sets up the metrics pipeline (global meter provider, exporters).

@@ -149,7 +149,9 @@ describe('metrics options', () => {
       assert(exporter instanceof OTLPHttpProtoMetricExporter);
 
       assert.deepStrictEqual(
-        exporter['_otlpExporter'].headers['X-SF-TOKEN'],
+        exporter._otlpExporter['_transport']['_transport']['_parameters'][
+          'headers'
+        ]['X-SF-TOKEN'],
         'abc'
       );
 
