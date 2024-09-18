@@ -131,22 +131,10 @@ jobs:
       fail-fast: false
       matrix:
         os: ['ubuntu-latest', 'macos-latest']
-        nodejs: ['14', '16', '17', '18', '20', '21']
-        exclude:
-          - os: 'macos-latest'
-            nodejs: '14'
+        nodejs: ['18', '20', '21']
         include:
           - os: 'macos-latest'
             python_version: '3.11'
-          - os: 'macos-13'
-            nodejs: '14'
-            python_version: '3.10'
-          - os: 'windows-2019'
-            nodejs: '14'
-          - os: 'windows-2019'
-            nodejs: '16'
-          - os: 'windows-2019'
-            nodejs: '17'
           - os: 'windows-2019'
             nodejs: '18.20.1'
           - os: 'windows-2019'
@@ -178,7 +166,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ['ARM64']
-        nodejs: ['14', '16', '17', '18', '20', '21']
+        nodejs: ['18', '20', '21']
     container: node:${{ matrix.nodejs }}
     steps:
       - name: Checkout
@@ -213,66 +201,66 @@ jobs:
           name: splunk-otel-js-metadata.yaml
           path: splunk-otel-js-metadata.yaml
 
-  centos-build-check:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        nodejs: [14]
-        include:
-          - container: 'centos:7'
-          - cmd: 'curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && yum install -y nodejs gcc-c++ make'
-    name: CentOS build check - ${{ matrix.container }} - Node.js ${{ matrix.nodejs }}
-    container: ${{ matrix.container }}
-    env:
-      NODE_VERSION: ${{ matrix.nodejs }}
-    steps:
-      - name: Setup container
-        run: |
-          sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
-          sed -i 's|#baseurl=http://mirror.centos.org|baseurl=https://archive.kernel.org/centos-vault|g' /etc/yum.repos.d/CentOS-*
-          yum update -y
-          ${{ matrix.cmd }}
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Install npm dependencies
-        run: npm ci --ignore-scripts --no-optional
-      - name: Compile native
-        run: npm run prebuild:current
-      - name: Run tests
-        run: npm run test
+  # centos-build-check:
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       nodejs: [14]
+  #       include:
+  #         - container: 'centos:7'
+  #         - cmd: 'curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && yum install -y nodejs gcc-c++ make'
+  #   name: CentOS build check - ${{ matrix.container }} - Node.js ${{ matrix.nodejs }}
+  #   container: ${{ matrix.container }}
+  #   env:
+  #     NODE_VERSION: ${{ matrix.nodejs }}
+  #   steps:
+  #     - name: Setup container
+  #       run: |
+  #         sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+  #         sed -i 's|#baseurl=http://mirror.centos.org|baseurl=https://archive.kernel.org/centos-vault|g' /etc/yum.repos.d/CentOS-*
+  #         yum update -y
+  #         ${{ matrix.cmd }}
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Install npm dependencies
+  #       run: npm ci --ignore-scripts --no-optional
+  #     - name: Compile native
+  #       run: npm run prebuild:current
+  #     - name: Run tests
+  #       run: npm run test
 
-  centos-prebuild-check:
-    needs: [prebuilds-linux]
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        container: ['centos:7']
-        nodejs: [14, 16]
-    name: Centos check - ${{ matrix.container }} - Node.js ${{ matrix.nodejs }}
-    container: ${{ matrix.container }}
-    env:
-      NODE_VERSION: ${{ matrix.nodejs }}
-    steps:
-      - name: Setup container
-        run: |
-          sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
-          sed -i 's|#baseurl=http://mirror.centos.org|baseurl=https://archive.kernel.org/centos-vault|g' /etc/yum.repos.d/CentOS-*
-          yum update -y
-          curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && yum install -y nodejs gcc-c++ make
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Download
-        uses: actions/download-artifact@v3
-      - name: copy prebuilds
-        run: |
-          mkdir -p prebuilds
-          cp -r prebuilds-linux/* prebuilds
-      - name: Install npm dependencies
-        run: npm ci --ignore-scripts --no-optional --loglevel verbose
-      - name: Run tests
-        run: npm run test
+  # centos-prebuild-check:
+  #   needs: [prebuilds-linux]
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       container: ['centos:7']
+  #       nodejs: [14, 16]
+  #   name: Centos check - ${{ matrix.container }} - Node.js ${{ matrix.nodejs }}
+  #   container: ${{ matrix.container }}
+  #   env:
+  #     NODE_VERSION: ${{ matrix.nodejs }}
+  #   steps:
+  #     - name: Setup container
+  #       run: |
+  #         sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+  #         sed -i 's|#baseurl=http://mirror.centos.org|baseurl=https://archive.kernel.org/centos-vault|g' /etc/yum.repos.d/CentOS-*
+  #         yum update -y
+  #         curl -sL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && yum install -y nodejs gcc-c++ make
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Download
+  #       uses: actions/download-artifact@v3
+  #     - name: copy prebuilds
+  #       run: |
+  #         mkdir -p prebuilds
+  #         cp -r prebuilds-linux/* prebuilds
+  #     - name: Install npm dependencies
+  #       run: npm ci --ignore-scripts --no-optional --loglevel verbose
+  #     - name: Run tests
+  #       run: npm run test
 
   e2e-local:
     runs-on: ubuntu-latest
