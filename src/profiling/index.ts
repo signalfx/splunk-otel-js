@@ -128,8 +128,8 @@ export function startProfiling(options: ProfilingOptions) {
 
   extStartProfiling(extension, startOptions);
 
-  let cpuSamplesCollectInterval: NodeJS.Timer;
-  let memSamplesCollectInterval: NodeJS.Timer;
+  let cpuSamplesCollectInterval: NodeJS.Timeout;
+  let memSamplesCollectInterval: NodeJS.Timeout;
   let exporters: ProfilingExporter[] = [];
 
   // Tracing needs to be started after profiling, setting up the profiling exporter
