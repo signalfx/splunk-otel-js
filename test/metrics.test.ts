@@ -32,6 +32,7 @@ import { _setDefaultOptions, startMetrics } from '../src/metrics';
 import { cleanEnvironment, TestMetricReader } from './utils';
 import { strict as assert } from 'assert';
 import { describe, it, after, beforeEach } from 'node:test';
+import { inspect } from 'util';
 
 function emptyCounter() {
   return {
@@ -70,7 +71,11 @@ describe('metrics', () => {
       metrics.start();
 
       await new Promise((resolve) => setTimeout(resolve, 10));
-      assert.notDeepStrictEqual(metrics.collect(), stats);
+      const stats2 = metrics.collect();
+      console.log(inspect(stats2, {showHidden: false, depth: null, colors: true}));
+      console.log('------------------------------');
+      console.log(inspect(stats, {showHidden: false, depth: null, colors: true}));
+      assert.notDeepStrictEqual(stats2, stats);
     });
 
     it('is possible to reset native counters', () => {

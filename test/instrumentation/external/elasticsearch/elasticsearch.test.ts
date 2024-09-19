@@ -15,14 +15,14 @@
  */
 import { strict as assert } from 'assert';
 import * as nock from 'nock';
-import { after, before, describe, it } from 'node:test';
+import { after, before, beforeEach, describe, it } from 'node:test';
 import * as os from 'os';
 import { ElasticsearchInstrumentation } from '../../../../src/instrumentations/external/elasticsearch';
 
-import { getTestSpans, setInstrumentation } from '../setup';
+import { getTestSpans, setInstrumentation, exporter, provider } from '../setup';
 
 const instrumentation = new ElasticsearchInstrumentation();
-
+provider.register();
 import { Client } from '@elastic/elasticsearch';
 const esMockUrl = 'http://localhost:9200';
 const esNock = nock(esMockUrl);
@@ -41,6 +41,10 @@ describe('elasticsearch instrumentation', () => {
         { version: { number: '7.14.0' } },
         { 'x-elastic-product': 'Elasticsearch' }
       );
+  });
+
+  beforeEach(() => {
+    exporter.reset();
   });
 
   after(() => {
