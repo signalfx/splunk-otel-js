@@ -72,9 +72,13 @@ describe('metrics', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 10));
       const stats2 = metrics.collect();
-      console.log(inspect(stats2, {showHidden: false, depth: null, colors: true}));
+      console.log(
+        inspect(stats2, { showHidden: false, depth: null, colors: true })
+      );
       console.log('------------------------------');
-      console.log(inspect(stats, {showHidden: false, depth: null, colors: true}));
+      console.log(
+        inspect(stats, { showHidden: false, depth: null, colors: true })
+      );
       assert.notDeepStrictEqual(stats2, stats);
     });
 
