@@ -42,6 +42,6 @@ exec(command, (error, stdout, stderr) => {
   }
 
   if (error) {
-    console.error(`ErrorExec: ${error.code} - ${error.message}`);
+    console.error(`Error: ${error.code} - ${error.message}`);
   }
 });
