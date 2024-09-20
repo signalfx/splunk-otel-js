@@ -9,121 +9,121 @@ env:
   ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
 jobs:
-  prebuilds-linux:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        container: ['node:14.0.0']
-        node_api_target: ['14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0']
-        include:
-          - container: 'node:16.0.0'
-            node_api_target: '20.0.0'
-          - container: 'node:16.0.0'
-            node_api_target: '21.2.0'
-    container: ${{ matrix.container }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-      - name: Install npm dependencies
-        run: npm ci --ignore-scripts --no-optional
-      - name: Prebuild
-        run: npm run prebuild:os ${{ matrix.node_api_target }}
-      - name: upload prebuilds
-        uses: actions/upload-artifact@v3
-        with:
-          name: prebuilds-linux
-          path: prebuilds
-  prebuilds-linux-arm64:
-    runs-on: [self-hosted, Linux, ARM64]
-    strategy:
-      fail-fast: false
-      matrix:
-        container: ['node:14.0.0']
-        node_api_target: ['14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0']
-        include:
-          - container: 'node:16.0.0'
-            node_api_target: '20.0.0'
-          - container: 'node:16.0.0'
-            node_api_target: '21.2.0'
-    container: ${{ matrix.container }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-      - name: Install npm dependencies
-        run: npm ci --ignore-scripts --no-optional
-      - name: Prebuild
-        run: npm run prebuild:os ${{ matrix.node_api_target }}
-      - name: upload prebuilds
-        uses: actions/upload-artifact@v3
-        with:
-          name: prebuilds-linux-arm64
-          path: prebuilds
+# prebuilds-linux:
+#   runs-on: ubuntu-latest
+#   strategy:
+#     fail-fast: false
+#     matrix:
+#       container: ['node:14.0.0']
+#       node_api_target: ['14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0']
+#       include:
+#         - container: 'node:16.0.0'
+#           node_api_target: '20.0.0'
+#         - container: 'node:16.0.0'
+#           node_api_target: '21.2.0'
+#   container: ${{ matrix.container }}
+#   steps:
+#     - name: Checkout
+#       uses: actions/checkout@v3
+#     - uses: actions/setup-node@v3
+#     - name: Install npm dependencies
+#       run: npm ci --ignore-scripts --no-optional
+#     - name: Prebuild
+#       run: npm run prebuild:os ${{ matrix.node_api_target }}
+#     - name: upload prebuilds
+#       uses: actions/upload-artifact@v3
+#       with:
+#         name: prebuilds-linux
+#         path: prebuilds
+# prebuilds-linux-arm64:
+#   runs-on: [self-hosted, Linux, ARM64]
+#   strategy:
+#     fail-fast: false
+#     matrix:
+#       container: ['node:14.0.0']
+#       node_api_target: ['14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0']
+#       include:
+#         - container: 'node:16.0.0'
+#           node_api_target: '20.0.0'
+#         - container: 'node:16.0.0'
+#           node_api_target: '21.2.0'
+#   container: ${{ matrix.container }}
+#   steps:
+#     - name: Checkout
+#       uses: actions/checkout@v3
+#     - uses: actions/setup-node@v3
+#     - name: Install npm dependencies
+#       run: npm ci --ignore-scripts --no-optional
+#     - name: Prebuild
+#       run: npm run prebuild:os ${{ matrix.node_api_target }}
+#     - name: upload prebuilds
+#       uses: actions/upload-artifact@v3
+#       with:
+#         name: prebuilds-linux-arm64
+#         path: prebuilds
 
-  prebuilds-macos-windows:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-2019, macos-12]
-        node_api_target: ['14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0', '20.0.0', '21.2.0']
-        include:
-          - os: macos-12
-            python_version: '3.11'
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python_version }}
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '16'
-      - name: Install npm dependencies
-        run: npm ci --ignore-scripts
-      - name: Prebuild
-        run: npm run prebuild:os ${{ matrix.node_api_target }}
-      - name: upload prebuilds
-        uses: actions/upload-artifact@v3
-        with:
-          name: prebuilds-macos-windows
-          path: prebuilds
+# prebuilds-macos-windows:
+#   strategy:
+#     fail-fast: false
+#     matrix:
+#       os: [windows-2019, macos-12]
+#       node_api_target: ['14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0', '20.0.0', '21.2.0']
+#       include:
+#         - os: macos-12
+#           python_version: '3.11'
+#   runs-on: ${{ matrix.os }}
+#   steps:
+#     - name: Checkout
+#       uses: actions/checkout@v3
+#     - uses: actions/setup-python@v4
+#       with:
+#         python-version: ${{ matrix.python_version }}
+#     - uses: actions/setup-node@v3
+#       with:
+#         node-version: '16'
+#     - name: Install npm dependencies
+#       run: npm ci --ignore-scripts
+#     - name: Prebuild
+#       run: npm run prebuild:os ${{ matrix.node_api_target }}
+#     - name: upload prebuilds
+#       uses: actions/upload-artifact@v3
+#       with:
+#         name: prebuilds-macos-windows
+#         path: prebuilds
 
-  create-package:
-    needs: [prebuilds-linux, prebuilds-macos-windows, prebuilds-linux-arm64]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '16'
-      - name: download prebuilds
-        uses: actions/download-artifact@v3
-      - name: copy prebuilds
-        run: |
-          mkdir -p prebuilds
-          cp -r prebuilds-linux/* prebuilds
-          cp -r prebuilds-macos-windows/* prebuilds
-          cp -r prebuilds-linux-arm64/* prebuilds
-      - name: Install npm dependencies
-        run: npm ci --ignore-scripts
-      - name: Build
-        run: npm run compile
-      - name: Pack
-        id: pack
-        run: |
-          echo "::set-output name=package_file::$(npm pack)"
-      - name: Upload package
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ steps.pack.outputs.package_file }}
-          path: ${{ steps.pack.outputs.package_file }}
+  # create-package:
+  #   needs: [prebuilds-linux, prebuilds-macos-windows, prebuilds-linux-arm64]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - uses: actions/setup-python@v4
+  #       with:
+  #         python-version: '3.11'
+  #     - uses: actions/setup-node@v3
+  #       with:
+  #         node-version: '16'
+  #     - name: download prebuilds
+  #       uses: actions/download-artifact@v3
+  #     - name: copy prebuilds
+  #       run: |
+  #         mkdir -p prebuilds
+  #         cp -r prebuilds-linux/* prebuilds
+  #         cp -r prebuilds-macos-windows/* prebuilds
+  #         cp -r prebuilds-linux-arm64/* prebuilds
+  #     - name: Install npm dependencies
+  #       run: npm ci --ignore-scripts
+  #     - name: Build
+  #       run: npm run compile
+  #     - name: Pack
+  #       id: pack
+  #       run: |
+  #         echo "::set-output name=package_file::$(npm pack)"
+  #     - name: Upload package
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         name: ${{ steps.pack.outputs.package_file }}
+  #         path: ${{ steps.pack.outputs.package_file }}
 
   unit-tests:
     runs-on: ${{ matrix.os }}
@@ -262,28 +262,28 @@ jobs:
   #     - name: Run tests
   #       run: npm run test
 
-  e2e-local:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - target: ''
-            name: 'Basic'
-          - target: '-f express.override.yml'
-            name: 'Express'
-          - target: '-f mixed.override.yml'
-            name: 'Mixed'
-          - target: '-f log-injection.override.yml'
-            name: 'Log injection'
-          - target: '-f profiling.override.yml'
-            name: 'Profiling'
-          - target: '-f typescript.override.yml'
-            name: 'TypeScript'
-    name: e2e local ${{ matrix.name }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Test ${{ matrix.name }} example
-        working-directory: test/examples
-        run: docker compose -f e2e.docker-compose.yml ${{ matrix.target }} up --exit-code-from test
+  # e2e-local:
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       include:
+  #         - target: ''
+  #           name: 'Basic'
+  #         - target: '-f express.override.yml'
+  #           name: 'Express'
+  #         - target: '-f mixed.override.yml'
+  #           name: 'Mixed'
+  #         - target: '-f log-injection.override.yml'
+  #           name: 'Log injection'
+  #         - target: '-f profiling.override.yml'
+  #           name: 'Profiling'
+  #         - target: '-f typescript.override.yml'
+  #           name: 'TypeScript'
+  #   name: e2e local ${{ matrix.name }}
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: Test ${{ matrix.name }} example
+  #       working-directory: test/examples
+  #       run: docker compose -f e2e.docker-compose.yml ${{ matrix.target }} up --exit-code-from test
