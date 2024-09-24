@@ -42,6 +42,10 @@ exec(command, (error, stdout, stderr) => {
   }
 
   if (error) {
-    console.error(`Error: ${error.code} - ${error.message}`);
+    console.error(`Error: ${error.message}`);
+    process.exit(error.code); // Exit with the error code if tests fail
+  } else {
+    console.log('Tests passed.');
+    process.exit(0); // Exit with a success code if tests pass
   }
 });
