@@ -49,7 +49,7 @@ describe('Redis instrumentation', () => {
     redisServer.listen(6379);
   });
 
-  after( async () => {
+  after(async () => {
     redisServer.close();
     redisServer.unref();
   });
@@ -59,7 +59,7 @@ describe('Redis instrumentation', () => {
     exporter = new InMemorySpanExporter();
   });
 
-  afterEach( async () => {
+  afterEach(async () => {
     utils.cleanEnvironment();
     await stopTracing();
   });
