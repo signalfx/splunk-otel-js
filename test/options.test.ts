@@ -53,6 +53,8 @@ import {
 } from '../src/tracing/options';
 import * as utils from './utils';
 import { ContainerDetector } from '@opentelemetry/resource-detector-container';
+import { SplunkBatchSpanProcessor } from '../src/tracing/SplunkBatchSpanProcessor';
+import { NextJsSpanProcessor } from '../src/tracing/NextJsSpanProcessor';
 
 const assertVersion = (versionAttr) => {
   assert.equal(typeof versionAttr, 'string');
@@ -320,6 +322,31 @@ describe('options', () => {
     it('throws on invalid key', () => {
       process.env.OTEL_TRACES_EXPORTER = 'invalid-key';
       assert.throws(_setDefaultOptions, /OTEL_TRACES_EXPORTER/);
+    });
+  });
+
+  describe('SPLUNK_NEXTJS_FIX_ENABLED', () => {
+    beforeEach(utils.cleanEnvironment);
+
+    it('does not add a nextjs span processor by default', () => {
+      const options = _setDefaultOptions();
+      const processors = options.spanProcessorFactory(options);
+      assert(Array.isArray(processors));
+
+      assert.deepStrictEqual(processors.length, 1);
+      assert(processors[0] instanceof SplunkBatchSpanProcessor);
+    });
+
+    it('enables nextjs span processor', () => {
+      process.env.SPLUNK_NEXTJS_FIX_ENABLED = 'true';
+
+      const options = _setDefaultOptions();
+      const processors = options.spanProcessorFactory(options);
+      assert(Array.isArray(processors));
+
+      assert.deepStrictEqual(processors.length, 2);
+      assert(processors[0] instanceof NextJsSpanProcessor);
+      assert(processors[1] instanceof SplunkBatchSpanProcessor);
     });
   });
 
