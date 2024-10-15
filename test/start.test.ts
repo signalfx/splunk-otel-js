@@ -83,31 +83,23 @@ describe('start', () => {
 
     if (metrics) {
       assert(fns.metrics.mock.callCount() === 1);
-      // sinon.assert.calledOnce(fns.metrics);
     } else {
       assert(fns.metrics.mock.callCount() === 0);
-      // sinon.assert.notCalled(fns.metrics);
     }
     if (profiling) {
       assert(fns.profiling.mock.callCount() === 1);
-      // sinon.assert.calledOnce(fns.profiling);
     } else {
       assert(fns.profiling.mock.callCount() === 0);
-      // sinon.assert.notCalled(fns.profiling);
     }
     if (tracing) {
       assert(fns.tracing.mock.callCount() === 1);
-      // sinon.assert.calledOnce(fns.tracing);
     } else {
       assert(fns.tracing.mock.callCount() === 0);
-      // sinon.assert.notCalled(fns.tracing);
     }
     if (logging) {
       assert(fns.logging.mock.callCount() === 1);
-      // sinon.assert.calledOnce(fns.logging);
     } else {
       assert(fns.logging.mock.callCount() === 0);
-      // sinon.assert.notCalled(fns.logging);
     }
   };
 

@@ -79,9 +79,9 @@ describe('elasticsearch utils', () => {
         meta: { connection: { url: 'http://localhost' } },
       });
 
-      assert(setAttributesStub.mock.callCount() === 1);
-      assert(setStatusStub.mock.callCount() === 1);
-      assert(endStub.mock.callCount() === 1);
+      assert.equal(setAttributesStub.mock.callCount(), 1);
+      assert.equal(setStatusStub.mock.callCount(), 1);
+      assert.equal(endStub.mock.callCount(), 1);
       calledWithExactly(setStatusStub, { code: SpanStatusCode.OK });
 
       setAttributesStub.mock.resetCalls();
@@ -102,12 +102,12 @@ describe('elasticsearch utils', () => {
         responseHook
       );
 
-      assert(setAttributesStub.mock.callCount() === 1);
-      assert(setStatusStub.mock.callCount() === 1);
-      assert(endStub.mock.callCount() === 1);
+      assert.equal(setAttributesStub.mock.callCount(), 1);
+      assert.equal(setStatusStub.mock.callCount(), 1);
+      assert.equal(endStub.mock.callCount(), 1);
       calledWithExactly(setStatusStub, { code: SpanStatusCode.OK });
 
-      assert(responseHook.mock.callCount() === 1);
+      assert.equal(responseHook.mock.callCount(), 1);
 
       setAttributesStub.mock.resetCalls();
       setStatusStub.mock.resetCalls();
@@ -219,11 +219,7 @@ describe('elasticsearch utils', () => {
         attributes: { testAttribute: 'testValue' },
       });
 
-      assert(startSpanStub.mock.callCount() === 1);
-
-      // const [operation, options] = startSpanStub.getCall(0).args;
-      console.log('startSpanStub.mock.calls[0].arguments');
-      console.log(startSpanStub.mock.calls[0].arguments);
+      assert.equal(startSpanStub.mock.callCount(), 1);
       const [operation, options] = startSpanStub.mock.calls[0].arguments;
 
       assert.strictEqual(operation, 'elasticsearch.request');

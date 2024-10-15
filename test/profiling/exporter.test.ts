@@ -100,14 +100,12 @@ describe('profiling OTLP exporter', () => {
           },
           { key: 'profiling.data.total.frame.count', value: { intValue: 2 } },
         ]);
-
-        // done();
       });
 
       exporter.send(cpuProfile);
     });
 
-    it('attaches common attributes when exporting heap profiles', (done) => {
+    it('attaches common attributes when exporting heap profiles', () => {
       const exporter = new OTLPProfilingExporter({
         endpoint: 'http://foobar:8181',
         callstackInterval: 1000,
@@ -140,8 +138,6 @@ describe('profiling OTLP exporter', () => {
           },
           { key: 'profiling.data.total.frame.count', value: { intValue: 3 } },
         ]);
-
-        // done();
       });
 
       exporter.sendHeapProfile(heapProfile);

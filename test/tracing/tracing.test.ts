@@ -15,7 +15,7 @@
  */
 
 import { strict as assert } from 'assert';
-import { after, before, beforeEach, describe, it, mock } from 'node:test';
+import { before, beforeEach, describe, it, mock } from 'node:test';
 
 import { trace } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
@@ -46,16 +46,12 @@ describe('tracing:otlp', () => {
     addSpanProcessorMock.mock.resetCalls();
   });
 
-  after(() => {
-    // addSpanProcessorMock.restore();
-  });
-
   function assertTracingPipeline(
     exportURL: string,
     serviceName: string,
     accessToken?: string
   ) {
-    assert(addSpanProcessorMock.mock.callCount() === 1);
+    assert.equal(addSpanProcessorMock.mock.callCount(), 1);
     const processor = addSpanProcessorMock.mock.calls[0].arguments[0];
     assert(processor instanceof BatchSpanProcessor);
     const exporter = processor['_exporter'];
@@ -123,7 +119,7 @@ describe('tracing:otlp', () => {
 
     startTracing(tracingOptions);
 
-    assert(addSpanProcessorMock.mock.callCount() === 1);
+    assert.equal(addSpanProcessorMock.mock.callCount(), 1);
     const p1 = addSpanProcessorMock.mock.calls[0].arguments[0];
 
     assert(p1 instanceof SimpleSpanProcessor);
@@ -146,7 +142,7 @@ describe('tracing:otlp', () => {
 
     startTracing(tracingOptions);
 
-    assert(addSpanProcessorMock.mock.callCount() === 2);
+    assert.equal(addSpanProcessorMock.mock.callCount(), 2);
     const p1 = addSpanProcessorMock.mock.calls[0].arguments[0];
 
     assert(p1 instanceof SimpleSpanProcessor);
