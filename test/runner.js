@@ -1,4 +1,4 @@
-const { exec } = require('child_process');
+const { spawn } = require('node:child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -28,24 +28,15 @@ const testFiles = findTestFiles(__dirname);
 const majorVersion = parseInt(process.version.substring(1, 3))
 const olderThanNode20 = majorVersion < 20;
 
-//timeout added v20.11
-const timeoutFlag = '--test-timeout=50000';
-const command = `node --require ts-node/register/transpile-only --test ${olderThanNode20 ? '' : timeoutFlag} ${testFiles.join(' ')}`;
+const args = [
+  '--require',
+  'ts-node/register/transpile-only',
+  '--test',
+  olderThanNode20 ? '' : '--test-timeout=50000',
+  ...testFiles,
+];
 
-exec(command, (error, stdout, stderr) => {
-  if (stdout) {
-    console.log(`Output:\n${stdout}`);
-  }
+const testProcess = spawn('node', args);
 
-  if (stderr) {
-    console.error(`Stderr:\n${stderr}`);
-  }
-
-  if (error) {
-    console.error(`Error: ${error.message}`);
-    process.exit(error.code); // Exit with the error code if tests fail
-  } else {
-    console.log('Tests passed.');
-    process.exit(0); // Exit with a success code if tests pass
-  }
-});
+testProcess.stdout.pipe(process.stdout);
+testProcess.stderr.pipe(process.stderr);
