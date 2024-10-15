@@ -1,5 +1,9 @@
 # Change Log - @splunk/otel
 
+## 2.13.0
+
+- Add an optional workaround for Next.js span cardinality issues. Can be enabled by setting `SPLUNK_NEXTJS_FIX_ENABLED` to `true`. [#957](https://github.com/signalfx/splunk-otel-js/pull/957)
+
 ## 2.12.0
 
 - Add `resourceFactory` option for traces. Allows for customization of the detected resource. Previously a resource could be provided via `tracerConfig`, but this overwrote the detected attributes. For backwards compatibility the latter option is still possible. [#938](https://github.com/signalfx/splunk-otel-js/pull/938)

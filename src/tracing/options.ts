@@ -45,6 +45,7 @@ import {
 import { SplunkBatchSpanProcessor } from './SplunkBatchSpanProcessor';
 import { Resource } from '@opentelemetry/resources';
 import type { ResourceFactory } from '../types';
+import { NextJsSpanProcessor } from './NextJsSpanProcessor';
 
 type SpanExporterFactory = (options: Options) => SpanExporter | SpanExporter[];
 
@@ -324,7 +325,19 @@ export function defaultSpanProcessorFactory(options: Options): SpanProcessor[] {
     exporters = [exporters];
   }
 
-  return exporters.map((exporter) => new SplunkBatchSpanProcessor(exporter));
+  const nextJsFixEnabled = getEnvBoolean('SPLUNK_NEXTJS_FIX_ENABLED', false);
+
+  const processors: SpanProcessor[] = [];
+
+  if (nextJsFixEnabled) {
+    processors.push(new NextJsSpanProcessor());
+  }
+
+  for (const exporter of exporters) {
+    processors.push(new SplunkBatchSpanProcessor(exporter));
+  }
+
+  return processors;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
