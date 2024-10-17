@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as sinon from 'sinon';
-import * as assert from 'assert';
-import * as Utils from '../../../../src/instrumentations/external/elasticsearch/utils';
 import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import { strict as assert } from 'assert';
+import { describe, it, mock } from 'node:test';
+import * as Utils from '../../../../src/instrumentations/external/elasticsearch/utils';
+import { calledWithExactly } from '../../../utils';
 
 describe('elasticsearch utils', () => {
   const spanMock = {
@@ -27,7 +28,7 @@ describe('elasticsearch utils', () => {
     setAttributes: (obj) => {},
   };
 
-  context('defaultDbStatementSerializer', () => {
+  describe('defaultDbStatementSerializer', () => {
     it('should serialize', () => {
       const result = Utils.defaultDbStatementSerializer(
         'operationName',
@@ -41,59 +42,59 @@ describe('elasticsearch utils', () => {
     });
   });
 
-  context('onError', () => {
+  describe('onError', () => {
     it('should record error', () => {
-      const recordExceptionStub = sinon.stub(spanMock, 'recordException');
-      const setStatusStub = sinon.stub(spanMock, 'setStatus');
-      const endStub = sinon.stub(spanMock, 'end');
+      const recordExceptionStub = mock.method(spanMock, 'recordException');
+      const setStatusStub = mock.method(spanMock, 'setStatus');
+      const endStub = mock.method(spanMock, 'end');
 
       const error = new Error('test error');
 
       Utils.onError(spanMock, error);
 
-      sinon.assert.calledOnce(recordExceptionStub);
-      sinon.assert.calledWith(recordExceptionStub, error);
+      assert(recordExceptionStub.mock.callCount() === 1);
+      calledWithExactly(recordExceptionStub, error);
 
-      sinon.assert.calledOnce(setStatusStub);
-      sinon.assert.calledWith(setStatusStub, {
+      assert(setStatusStub.mock.callCount() === 1);
+      calledWithExactly(setStatusStub, {
         code: SpanStatusCode.ERROR,
         message: error.message,
       });
 
-      sinon.assert.calledOnce(endStub);
+      assert(endStub.mock.callCount() === 1);
 
-      recordExceptionStub.restore();
-      setStatusStub.restore();
-      endStub.restore();
+      recordExceptionStub.mock.resetCalls();
+      setStatusStub.mock.resetCalls();
+      endStub.mock.resetCalls();
     });
   });
 
-  context('onResponse', () => {
+  describe('onResponse', () => {
     it('should record response without responseHook', () => {
-      const setAttributesStub = sinon.stub(spanMock, 'setAttributes');
-      const setStatusStub = sinon.stub(spanMock, 'setStatus');
-      const endStub = sinon.stub(spanMock, 'end');
+      const setAttributesStub = mock.method(spanMock, 'setAttributes');
+      const setStatusStub = mock.method(spanMock, 'setStatus');
+      const endStub = mock.method(spanMock, 'end');
 
       Utils.onResponse(spanMock, {
         meta: { connection: { url: 'http://localhost' } },
       });
 
-      sinon.assert.calledOnce(setAttributesStub);
-      sinon.assert.calledOnce(setStatusStub);
-      sinon.assert.calledOnce(endStub);
-      sinon.assert.calledWith(setStatusStub, { code: SpanStatusCode.OK });
+      assert.equal(setAttributesStub.mock.callCount(), 1);
+      assert.equal(setStatusStub.mock.callCount(), 1);
+      assert.equal(endStub.mock.callCount(), 1);
+      calledWithExactly(setStatusStub, { code: SpanStatusCode.OK });
 
-      setAttributesStub.restore();
-      setStatusStub.restore();
-      endStub.restore();
+      setAttributesStub.mock.resetCalls();
+      setStatusStub.mock.resetCalls();
+      endStub.mock.resetCalls();
     });
 
     it('should record response with responseHook', () => {
-      const setAttributesStub = sinon.stub(spanMock, 'setAttributes');
-      const setStatusStub = sinon.stub(spanMock, 'setStatus');
-      const endStub = sinon.stub(spanMock, 'end');
+      const setAttributesStub = mock.method(spanMock, 'setAttributes');
+      const setStatusStub = mock.method(spanMock, 'setStatus');
+      const endStub = mock.method(spanMock, 'end');
 
-      const responseHook = sinon.spy();
+      const responseHook = mock.fn();
 
       Utils.onResponse(
         spanMock,
@@ -101,20 +102,20 @@ describe('elasticsearch utils', () => {
         responseHook
       );
 
-      sinon.assert.calledOnce(setAttributesStub);
-      sinon.assert.calledOnce(setStatusStub);
-      sinon.assert.calledOnce(endStub);
-      sinon.assert.calledWith(setStatusStub, { code: SpanStatusCode.OK });
+      assert.equal(setAttributesStub.mock.callCount(), 1);
+      assert.equal(setStatusStub.mock.callCount(), 1);
+      assert.equal(endStub.mock.callCount(), 1);
+      calledWithExactly(setStatusStub, { code: SpanStatusCode.OK });
 
-      assert.strictEqual(responseHook.called, true);
+      assert.equal(responseHook.mock.callCount(), 1);
 
-      setAttributesStub.restore();
-      setStatusStub.restore();
-      endStub.restore();
+      setAttributesStub.mock.resetCalls();
+      setStatusStub.mock.resetCalls();
+      endStub.mock.resetCalls();
     });
   });
 
-  context('getNetAttributes', () => {
+  describe('getNetAttributes', () => {
     const url = 'http://localhost:9200';
     const attributes = Utils.getNetAttributes(url);
 
@@ -137,7 +138,7 @@ describe('elasticsearch utils', () => {
     });
   });
 
-  context('getPort', () => {
+  describe('getPort', () => {
     it('should get port', () => {
       const result = Utils.getPort('3030', 'http:');
       assert.strictEqual(result, '3030');
@@ -154,7 +155,7 @@ describe('elasticsearch utils', () => {
     });
   });
 
-  context('normalizeArguments', () => {
+  describe('normalizeArguments', () => {
     it('should normalize with callback only', () => {
       const callbackFunction = () => {};
       const [params, options, callback] =
@@ -176,7 +177,7 @@ describe('elasticsearch utils', () => {
     });
   });
 
-  context('getIndexName', () => {
+  describe('getIndexName', () => {
     it('should accept index string', () => {
       const index = Utils.getIndexName({ index: 'test' });
       assert.strictEqual(index, 'test');
@@ -205,22 +206,21 @@ describe('elasticsearch utils', () => {
     });
   });
 
-  context('startSpan', () => {
+  describe('startSpan', () => {
     const tracerMock = {
       startSpan: (name, options?, context?): any => {},
       startActiveSpan: () => {},
     };
     it('should start span with client kind', () => {
-      const startSpanStub = sinon.stub(tracerMock, 'startSpan');
+      const startSpanStub = mock.method(tracerMock, 'startSpan');
 
       Utils.startSpan({
         tracer: tracerMock,
         attributes: { testAttribute: 'testValue' },
       });
 
-      sinon.assert.calledOnce(startSpanStub);
-
-      const [operation, options] = startSpanStub.getCall(0).args;
+      assert.equal(startSpanStub.mock.callCount(), 1);
+      const [operation, options] = startSpanStub.mock.calls[0].arguments;
 
       assert.strictEqual(operation, 'elasticsearch.request');
       assert.strictEqual(options.kind, SpanKind.CLIENT);

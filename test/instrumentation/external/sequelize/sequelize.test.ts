@@ -13,22 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as assert from 'assert';
-import { SequelizeInstrumentation } from '../../../../src/instrumentations/external/sequelize';
-import { extractTableFromQuery } from '../../../../src/instrumentations/external/sequelize/utils';
-import { ReadableSpan, Span } from '@opentelemetry/sdk-trace-base';
 import {
-  context,
-  diag,
-  SpanStatusCode,
   DiagConsoleLogger,
   ROOT_CONTEXT,
+  SpanStatusCode,
+  context,
+  diag,
 } from '@opentelemetry/api';
+import { ReadableSpan, Span } from '@opentelemetry/sdk-trace-base';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { getTestSpans, setInstrumentation, sqlite3MockModule } from '../setup';
+import { strict as assert } from 'assert';
+import { afterEach, before, beforeEach, describe, it } from 'node:test';
+import { SequelizeInstrumentation } from '../../../../src/instrumentations/external/sequelize';
+import { extractTableFromQuery } from '../../../../src/instrumentations/external/sequelize/utils';
+import {
+  getTestSpans,
+  setInstrumentation,
+  sqlite3MockModule,
+  provider,
+  exporter,
+} from '../setup';
 
 const instrumentation = new SequelizeInstrumentation();
-
+provider.register();
 import * as sequelize from 'sequelize';
 
 describe('instrumentation-sequelize', () => {
@@ -43,6 +50,8 @@ describe('instrumentation-sequelize', () => {
   });
 
   beforeEach(() => {
+    exporter.reset();
+    instrumentation.setConfig({});
     instrumentation.enable();
   });
 

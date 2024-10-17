@@ -15,6 +15,7 @@
  */
 
 import { strict as assert } from 'assert';
+import { afterEach, describe, it } from 'node:test';
 import {
   AllocationSample,
   HeapProfileNode,

@@ -13,23 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { strict as assert } from 'assert';
 import * as nock from 'nock';
-import * as assert from 'assert';
+import { after, before, beforeEach, describe, it } from 'node:test';
 import * as os from 'os';
 import { ElasticsearchInstrumentation } from '../../../../src/instrumentations/external/elasticsearch';
 
-import {
-  NodeTracerProvider,
-  NodeTracerConfig,
-} from '@opentelemetry/sdk-trace-node';
-import {
-  InMemorySpanExporter,
-  SimpleSpanProcessor,
-} from '@opentelemetry/sdk-trace-base';
-import { setInstrumentation, getTestSpans } from '../setup';
+import { getTestSpans, setInstrumentation, exporter, provider } from '../setup';
 
 const instrumentation = new ElasticsearchInstrumentation();
-
+provider.register();
 import { Client } from '@elastic/elasticsearch';
 const esMockUrl = 'http://localhost:9200';
 const esNock = nock(esMockUrl);
@@ -48,6 +41,10 @@ describe('elasticsearch instrumentation', () => {
         { version: { number: '7.14.0' } },
         { 'x-elastic-product': 'Elasticsearch' }
       );
+  });
+
+  beforeEach(() => {
+    exporter.reset();
   });
 
   after(() => {

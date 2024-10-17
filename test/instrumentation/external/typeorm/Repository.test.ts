@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as assert from 'assert';
+import { strict as assert } from 'assert';
+import { afterEach, before, beforeEach, describe, it } from 'node:test';
 import { TypeormInstrumentation } from '../../../../src/instrumentations/external/typeorm';
-import { setInstrumentation, getTestSpans } from '../setup';
+import { getTestSpans, setInstrumentation, provider, exporter } from '../setup';
 
 const instrumentation = new TypeormInstrumentation();
-
-import { defaultOptions, User } from './utils';
-import * as typeorm from 'typeorm';
+provider.register();
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import * as typeorm from 'typeorm';
+import { defaultOptions, User } from './utils';
 
 describe('Repository', () => {
   before(() => {
@@ -29,6 +30,7 @@ describe('Repository', () => {
   });
 
   beforeEach(() => {
+    exporter.reset();
     instrumentation.enable();
   });
 

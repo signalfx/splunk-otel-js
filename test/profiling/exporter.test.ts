@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
-import * as sinon from 'sinon';
-import { OTLPProfilingExporter } from '../../src/profiling/OTLPProfilingExporter';
-import { Resource } from '@opentelemetry/resources';
-import { VERSION } from '@opentelemetry/core';
-import * as utils from '../utils';
 import * as grpc from '@grpc/grpc-js';
+import { VERSION } from '@opentelemetry/core';
+import { Resource } from '@opentelemetry/resources';
+import { strict as assert } from 'assert';
+import { beforeEach, describe, it, mock } from 'node:test';
+import { OTLPProfilingExporter } from '../../src/profiling/OTLPProfilingExporter';
+import * as utils from '../utils';
 import { cpuProfile, heapProfile } from './profiles';
 
 describe('profiling OTLP exporter', () => {
@@ -67,20 +67,14 @@ describe('profiling OTLP exporter', () => {
   });
 
   describe('exporting', () => {
-    const sandbox = sinon.createSandbox();
-
-    beforeEach(() => {
-      sandbox.restore();
-    });
-
-    it('attaches common attributes when exporting CPU profiles', (done) => {
+    it('attaches common attributes when exporting CPU profiles', () => {
       const exporter = new OTLPProfilingExporter({
         endpoint: 'http://foobar:8181',
         callstackInterval: 1000,
         resource: new Resource({ service: 'foo' }),
       });
 
-      sandbox.replace(exporter['_client'], 'export', (payload: unknown) => {
+      mock.method(exporter['_client'], 'export', (payload: unknown) => {
         const { resourceLogs } = payload as any;
         assert.deepStrictEqual(resourceLogs.length, 1);
         const { instrumentationLibraryLogs, resource } = resourceLogs[0];
@@ -106,21 +100,19 @@ describe('profiling OTLP exporter', () => {
           },
           { key: 'profiling.data.total.frame.count', value: { intValue: 2 } },
         ]);
-
-        done();
       });
 
       exporter.send(cpuProfile);
     });
 
-    it('attaches common attributes when exporting heap profiles', (done) => {
+    it('attaches common attributes when exporting heap profiles', () => {
       const exporter = new OTLPProfilingExporter({
         endpoint: 'http://foobar:8181',
         callstackInterval: 1000,
         resource: new Resource({ service: 'foo' }),
       });
 
-      sandbox.replace(exporter['_client'], 'export', (payload: unknown) => {
+      mock.method(exporter['_client'], 'export', (payload: unknown) => {
         const { resourceLogs } = payload as any;
         assert.deepStrictEqual(resourceLogs.length, 1);
         const { instrumentationLibraryLogs, resource } = resourceLogs[0];
@@ -146,8 +138,6 @@ describe('profiling OTLP exporter', () => {
           },
           { key: 'profiling.data.total.frame.count', value: { intValue: 3 } },
         ]);
-
-        done();
       });
 
       exporter.sendHeapProfile(heapProfile);

@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as assert from 'assert';
 import { SpanStatusCode } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import { strict as assert } from 'assert';
+import { after, afterEach, before, beforeEach, describe, it } from 'node:test';
 import { TypeormInstrumentation } from '../../../../src/instrumentations/external/typeorm';
-import { setInstrumentation, getTestSpans } from '../setup';
+import { exporter, getTestSpans, provider, setInstrumentation } from '../setup';
 
 const instrumentation = new TypeormInstrumentation();
-
+provider.register();
 import * as typeorm from 'typeorm';
 import { rawQueryOptions } from './utils';
 
@@ -33,6 +34,7 @@ describe('Connection', () => {
     instrumentation.enable();
   });
   beforeEach(() => {
+    exporter.reset();
     instrumentation.enable();
   });
   afterEach(() => {

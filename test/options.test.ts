@@ -16,6 +16,8 @@
 
 import * as api from '@opentelemetry/api';
 import { W3CBaggagePropagator } from '@opentelemetry/core';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
+import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 import { InstrumentationBase } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
 import {
@@ -36,13 +38,10 @@ import {
   SpanExporter,
   InMemorySpanExporter,
 } from '@opentelemetry/sdk-trace-base';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
-import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 
 import { strict as assert } from 'assert';
-import * as sinon from 'sinon';
+import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 import * as os from 'os';
-
 import * as instrumentations from '../src/instrumentations';
 import {
   _setDefaultOptions,
@@ -75,11 +74,10 @@ const assertContainerId = (containerIdAttr) => {
   Set your service name using the OTEL_RESOURCE_ATTRIBUTES environment variable.
   E.g. OTEL_RESOURCE_ATTRIBUTES="service.name=<YOUR_SERVICE_NAME_HERE>"
 */
-const MATCH_SERVICE_NAME_WARNING = sinon.match(/service\.name.*not.*set/i);
+const MATCH_SERVICE_NAME_WARNING = /service\.name.*not.*set/i;
 // No instrumentations set to be loaded. Install an instrumentation package to enable auto-instrumentation.
-const MATCH_NO_INSTRUMENTATIONS_WARNING = sinon.match(
-  /no.*instrumentation.*install.*package/i
-);
+const MATCH_NO_INSTRUMENTATIONS_WARNING =
+  /no.*instrumentation.*install.*package/i;
 
 describe('options', () => {
   let logger;
@@ -88,11 +86,11 @@ describe('options', () => {
 
   beforeEach(() => {
     logger = {
-      warn: sinon.spy(),
+      warn: mock.fn(),
     };
     api.diag.setLogger(logger, api.DiagLogLevel.ALL);
     // Setting logger logs stuff. Cleaning that up.
-    logger.warn.resetHistory();
+    logger.warn.mock.resetCalls();
   });
 
   afterEach(() => {
@@ -100,15 +98,19 @@ describe('options', () => {
   });
 
   describe('defaults', () => {
-    const sandbox = sinon.createSandbox();
-
+    // const sandbox = sinon.createSandbox();
+    let instrMock;
     beforeEach(() => {
       // Mock the default `getInstrumentations` in case some instrumentations (e.g. http) are part of dev dependencies.
-      sandbox.stub(instrumentations, 'getInstrumentations').returns([]);
+      instrMock = mock.method(
+        instrumentations,
+        'getInstrumentations',
+        () => []
+      );
     });
 
     afterEach(() => {
-      sandbox.restore();
+      instrMock.mock.restore();
     });
 
     it('has expected defaults', () => {
@@ -193,21 +195,21 @@ describe('options', () => {
 
       assert(exporter instanceof OTLPTraceExporter);
 
-      sinon.assert.calledWithMatch(logger.warn, MATCH_SERVICE_NAME_WARNING);
+      const logMsg = logger.warn.mock.calls[0].arguments[0];
+      assert(MATCH_SERVICE_NAME_WARNING.test(logMsg));
     });
 
     it('reads the container when setting default options', async () => {
-      sandbox.stub(os, 'platform').returns('linux');
-      sandbox
-        .stub(ContainerDetector as any, 'readFileAsync')
-        .withArgs('/proc/self/cgroup', 'utf8')
-        .returns(
-          new Promise((resolve) =>
-            resolve(
-              '11:devices:/docker/1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcde\n'
-            )
-          )
-        );
+      mock.method(os, 'platform', () => 'linux');
+
+      const containerDetector = ContainerDetector as any;
+      mock.method(containerDetector, 'readFileAsync', (path, encoding) => {
+        if (path === '/proc/self/cgroup' && encoding === 'utf8') {
+          return '11:devices:/docker/1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcde\n';
+        }
+        return ''; // Default return if different path or encoding
+      });
+
       const options = _setDefaultOptions();
       const resource = options.tracerConfig.resource || Resource.empty();
       await resource.waitForAsyncAttributes?.();
@@ -257,11 +259,7 @@ describe('options', () => {
       propagatorFactory: testPropagatorFactory,
     });
 
-    sinon.assert.neverCalledWithMatch(logger.warn, MATCH_SERVICE_NAME_WARNING);
-    sinon.assert.neverCalledWithMatch(
-      logger.warn,
-      MATCH_NO_INSTRUMENTATIONS_WARNING
-    );
+    assert(logger.warn.mock.calls.length === 0);
   });
 
   it('is possible to provide additional resource attributes', () => {
@@ -413,10 +411,12 @@ describe('options', () => {
         exporter.url,
         'https://ingest.us0.signalfx.com/v2/trace/otlp'
       );
-      sinon.assert.calledWith(
-        logger.warn,
-        `OTLP span exporter factory: defaulting protocol to 'http/protobuf' instead of grpc due to realm being defined.`
+      const oneLogMatches = logger.warn.mock.calls.some((call) =>
+        call.arguments[0].includes(
+          `OTLP span exporter factory: defaulting protocol to 'http/protobuf' instead of grpc due to realm being defined.`
+        )
       );
+      assert(oneLogMatches);
     });
 
     it('warns when realm and endpoint are both set', () => {
@@ -428,10 +428,14 @@ describe('options', () => {
       const exporters = options.spanExporterFactory(options);
       assert(Array.isArray(exporters));
       const [exporter] = exporters;
-      sinon.assert.calledWith(
-        logger.warn,
-        'OTLP span exporter factory: Realm value ignored (full endpoint URL has been specified).'
+
+      const oneLogMatches = logger.warn.mock.calls.some((call) =>
+        call.arguments[0].includes(
+          `OTLP span exporter factory: Realm value ignored (full endpoint URL has been specified).`
+        )
       );
+      assert(oneLogMatches);
+
       assert(
         exporter instanceof OTLPTraceExporter,
         'Expected exporter to be instance of OTLPTraceExporter'
