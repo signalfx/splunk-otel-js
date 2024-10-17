@@ -24,7 +24,7 @@ import * as util from 'util';
 import { Writable } from 'stream';
 import { context, trace } from '@opentelemetry/api';
 
-const isConfigVarEntry = (key) => {
+const isConfigVarEntry = (key: string) => {
   const lowercased = key.toLowerCase();
   return (
     lowercased.includes('splunk_') ||
@@ -109,8 +109,8 @@ export function assertInjection(
   }
 }
 
-export function calledWithExactly(mocked, expected) {
-  const match = mocked.mock.calls.some((call) => {
+export function calledWithExactly(mocked: any, expected: any) {
+  const match = mocked.mock.calls.some((call: any) => {
     try {
       assert.deepStrictEqual(call.arguments[0], expected);
       return true;
@@ -122,7 +122,7 @@ export function calledWithExactly(mocked, expected) {
   assert(match, `Expected call with: ${JSON.stringify(expected)} not found`);
 }
 
-export function calledOnceWithMatch(mocked, match: Object) {
+export function calledOnceWithMatch(mocked: any, match: Object) {
   assert.strictEqual(
     mocked.mock.calls.length,
     1,

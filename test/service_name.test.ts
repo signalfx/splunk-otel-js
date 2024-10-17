@@ -24,7 +24,7 @@ import { defaultServiceName, findServiceName } from '../src/utils';
 
 describe('findServiceName', () => {
   const TMP_PREFIX = 'splunk-otel-service-name-test-';
-  let tempDir;
+  let tempDir: string;
 
   beforeEach(() => {
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), TMP_PREFIX));

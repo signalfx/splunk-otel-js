@@ -98,7 +98,6 @@ describe('options', () => {
   });
 
   describe('defaults', () => {
-    // const sandbox = sinon.createSandbox();
     let instrMock;
     beforeEach(() => {
       // Mock the default `getInstrumentations` in case some instrumentations (e.g. http) are part of dev dependencies.
@@ -525,6 +524,6 @@ function testSpanProcessorFactory(options: Options) {
   return new SimpleSpanProcessor(exporters);
 }
 
-function testPropagatorFactory(options: Options): api.TextMapPropagator {
+function testPropagatorFactory(_options: Options): api.TextMapPropagator {
   return new W3CBaggagePropagator();
 }

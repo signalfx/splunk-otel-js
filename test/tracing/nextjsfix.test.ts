@@ -25,6 +25,7 @@ import { NextJsSpanProcessor } from '../../src/tracing/NextJsSpanProcessor';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { Resource } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
+import { describe, it, afterEach } from 'node:test';
 
 describe('Next.js span processor', () => {
   const exporter = new InMemorySpanExporter();

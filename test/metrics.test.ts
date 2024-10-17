@@ -24,7 +24,8 @@ import {
   MetricData,
   View,
 } from '@opentelemetry/sdk-metrics';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { ATTR_DEPLOYMENT_ENVIRONMENT } from '@opentelemetry/semantic-conventions/incubating';
+import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 
 import { hrtime } from 'process';
 import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
@@ -32,7 +33,6 @@ import { _setDefaultOptions, startMetrics } from '../src/metrics';
 import { cleanEnvironment, TestMetricReader } from './utils';
 import { strict as assert } from 'assert';
 import { describe, it, after, beforeEach } from 'node:test';
-import { inspect } from 'util';
 
 function emptyCounter() {
   return {
@@ -110,7 +110,7 @@ describe('metrics', () => {
       assert.deepEqual(options.accessToken, '');
       assert.deepEqual(options.exportIntervalMillis, 30000);
       assert.deepEqual(
-        options.resource.attributes[SemanticResourceAttributes.SERVICE_NAME],
+        options.resource.attributes[ATTR_SERVICE_NAME],
         '@splunk/otel'
       );
       assert.deepEqual(options.runtimeMetricsEnabled, true);
@@ -139,7 +139,7 @@ describe('metrics', () => {
       assert.deepEqual(options.resource.attributes['key1'], 'val1');
       assert.deepEqual(options.resource.attributes['key2'], 'val2');
       assert.deepEqual(
-        options.resource.attributes[SemanticResourceAttributes.SERVICE_NAME],
+        options.resource.attributes[ATTR_SERVICE_NAME],
         'bigmetric'
       );
       assert.deepEqual(options.runtimeMetricsEnabled, true);
@@ -161,7 +161,7 @@ describe('metrics', () => {
     // Custom metrics and runtime metrics are done with 1 test as OTel meter provider can't be reset
     it('is possible to use metrics', async () => {
       const resource = new Resource({
-        [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: 'test',
+        [ATTR_DEPLOYMENT_ENVIRONMENT]: 'test',
       });
       const { metricsOptions } = parseOptionsAndConfigureInstrumentations({
         metrics: {
@@ -191,15 +191,13 @@ describe('metrics', () => {
 
       assert.deepEqual(
         metricData.resourceMetrics.resource.attributes[
-          SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT
+          ATTR_DEPLOYMENT_ENVIRONMENT
         ],
         'test'
       );
 
       assert.deepEqual(
-        metricData.resourceMetrics.resource.attributes[
-          SemanticResourceAttributes.SERVICE_NAME
-        ],
+        metricData.resourceMetrics.resource.attributes[ATTR_SERVICE_NAME],
         'foo'
       );
 

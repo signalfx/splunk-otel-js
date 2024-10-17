@@ -21,13 +21,14 @@ import { inspect } from 'util';
 import { context, trace } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import { InMemorySpanExporter } from '@opentelemetry/sdk-trace-base';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 
 import { start, stop } from '../../src';
 import {
   _setDefaultOptions,
   defaultExporterFactory,
 } from '../../src/profiling';
+import { ProfilingStacktrace } from '../../src/profiling/types';
 import { ProfilingContextManager } from '../../src/profiling/ProfilingContextManager';
 import {
   CpuProfile,
@@ -50,11 +51,11 @@ describe('profiling', () => {
 
     it('sets default options when no options are provided', async () => {
       const options = _setDefaultOptions();
-      await options.resource.waitForAsyncAttributes();
+      await options.resource.waitForAsyncAttributes?.();
       const testResource = new Resource({
-        [SemanticResourceAttributes.SERVICE_NAME]: '@splunk/otel',
+        [ATTR_SERVICE_NAME]: '@splunk/otel',
       }).merge(detectResource());
-      await testResource.waitForAsyncAttributes();
+      await testResource.waitForAsyncAttributes?.();
 
       const { resource: defaultResource, ...defaultOtherAttrs } = options;
 
@@ -69,8 +70,8 @@ describe('profiling', () => {
       });
 
       assert.deepStrictEqual(
-        defaultResource._attributes,
-        testResource._attributes
+        defaultResource.attributes,
+        testResource.attributes
       );
     });
 
@@ -104,7 +105,7 @@ describe('profiling', () => {
   describe('startProfiling', () => {
     it('exports stacktraces', async () => {
       let sendCallCount = 0;
-      const stacktracesReceived = [];
+      const stacktracesReceived: ProfilingStacktrace[] = [];
       const exporter: ProfilingExporter = {
         send(cpuProfile: CpuProfile) {
           const { stacktraces } = cpuProfile;

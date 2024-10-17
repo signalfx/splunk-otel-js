@@ -27,7 +27,7 @@ import * as tracing from '../src/tracing';
 
 import * as utils from './utils';
 
-const CONFIG = {};
+const CONFIG: Record<string, any> = {};
 
 const accessToken = 'accessToken';
 const endpoint = 'endpoint';
@@ -129,7 +129,6 @@ describe('start', () => {
 
   afterEach(() => {
     stop();
-    // sinon.restore(); //FIXME hmmm
   });
 
   describe('toggling signals', () => {
