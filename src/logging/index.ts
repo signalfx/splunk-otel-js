@@ -19,7 +19,7 @@ import * as logsAPI from '@opentelemetry/api-logs';
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
 import { Resource } from '@opentelemetry/resources';
 import { diag } from '@opentelemetry/api';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import {
   LoggerProvider,
   BatchLogRecordProcessor,
@@ -31,10 +31,10 @@ import { getNonEmptyEnvVar, getEnvArray, defaultServiceName } from '../utils';
 import { detect as detectResource } from '../resource';
 
 type LogRecordProcessorFactory = (
-  options: LoggingOptions
+  options: Options
 ) => LogRecordProcessor | LogRecordProcessor[];
 
-interface LoggingOptions {
+export interface Options {
   accessToken?: string;
   realm?: string;
   serviceName: string;
@@ -51,10 +51,9 @@ export const allowedLoggingOptions = [
   'logRecordProcessorFactory',
 ];
 
-export type StartLoggingOptions = Partial<Omit<LoggingOptions, 'resource'>>;
+export type StartLoggingOptions = Partial<Omit<Options, 'resource'>>;
 
-export function startLogging(opts: StartLoggingOptions = {}) {
-  const options = _setDefaultOptions(opts);
+export function startLogging(options: Options) {
   const loggerProvider = new LoggerProvider({
     resource: options.resource,
   });
@@ -78,15 +77,13 @@ export function startLogging(opts: StartLoggingOptions = {}) {
   };
 }
 
-export function _setDefaultOptions(
-  options: StartLoggingOptions = {}
-): LoggingOptions {
+export function _setDefaultOptions(options: StartLoggingOptions = {}): Options {
   let resource = detectResource();
 
   const serviceName =
     options.serviceName ||
     getNonEmptyEnvVar('OTEL_SERVICE_NAME') ||
-    resource.attributes[SemanticResourceAttributes.SERVICE_NAME];
+    resource.attributes[ATTR_SERVICE_NAME];
 
   if (!serviceName) {
     diag.warn(
@@ -98,8 +95,7 @@ export function _setDefaultOptions(
 
   resource = resource.merge(
     new Resource({
-      [SemanticResourceAttributes.SERVICE_NAME]:
-        serviceName || defaultServiceName(),
+      [ATTR_SERVICE_NAME]: serviceName || defaultServiceName(),
     })
   );
 
@@ -107,9 +103,7 @@ export function _setDefaultOptions(
     options.logRecordProcessorFactory || defaultlogRecordProcessorFactory;
 
   return {
-    serviceName: String(
-      resource.attributes[SemanticResourceAttributes.SERVICE_NAME]
-    ),
+    serviceName: String(resource.attributes[ATTR_SERVICE_NAME]),
     endpoint: options.endpoint, // will use default collector url if not set
     logRecordProcessorFactory: options.logRecordProcessorFactory,
     resource,
@@ -122,7 +116,7 @@ function areValidExporterTypes(types: string[]): boolean {
   return types.every((t) => SUPPORTED_EXPORTER_TYPES.includes(t));
 }
 
-export function createExporters(options: LoggingOptions) {
+function createExporters(options: Options) {
   const logExporters: string[] = getEnvArray('OTEL_LOGS_EXPORTER', ['otlp']);
 
   if (!areValidExporterTypes(logExporters)) {
@@ -150,7 +144,7 @@ export function createExporters(options: LoggingOptions) {
 }
 
 export function defaultlogRecordProcessorFactory(
-  options: LoggingOptions
+  options: Options
 ): LogRecordProcessor[] {
   let exporters = createExporters(options);
 

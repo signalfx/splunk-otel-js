@@ -14,4 +14,4 @@ if (process.env.OTEL_LOG_LEVEL) {
   diag.setLogger(new DiagConsoleLogger(), DiagLogLevel[process.env.OTEL_LOG_LEVEL]);
 }
 
-const tracer = require('@splunk/otel').startTracing();
+require('@splunk/otel').start();

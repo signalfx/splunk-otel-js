@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
-import { Resource } from '@opentelemetry/resources';
 import { metrics } from '@opentelemetry/api';
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
+import { Resource } from '@opentelemetry/resources';
 import {
   AggregationTemporality,
   DataPointType,
   InstrumentType,
   MetricData,
-  MetricReader,
   View,
 } from '@opentelemetry/sdk-metrics';
-import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
-import { OTLPMetricExporter as OTLPHttpProtoMetricExporter } from '@opentelemetry/exporter-metrics-otlp-proto';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { ATTR_DEPLOYMENT_ENVIRONMENT } from '@opentelemetry/semantic-conventions/incubating';
+import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 
-import { cleanEnvironment, TestMetricReader } from './utils';
 import { hrtime } from 'process';
-import { startMetrics, _setDefaultOptions } from '../src/metrics';
+import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
+import { _setDefaultOptions, startMetrics } from '../src/metrics';
+import { cleanEnvironment, TestMetricReader } from './utils';
+import { strict as assert } from 'assert';
+import { describe, it, after, beforeEach } from 'node:test';
 
 function emptyCounter() {
   return {
@@ -63,16 +64,15 @@ describe('metrics', () => {
   describe('native counters collection', () => {
     const { metrics } = require('../src/native_ext');
 
-    it('is possible to get native counters', (done) => {
+    it('is possible to get native counters', async () => {
       const stats = metrics.collect();
       assert.deepStrictEqual(stats, emptyStats());
 
       metrics.start();
 
-      setTimeout(() => {
-        assert.notDeepStrictEqual(metrics.collect(), stats);
-        done();
-      }, 10);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const stats2 = metrics.collect();
+      assert.notDeepStrictEqual(stats2, stats);
     });
 
     it('is possible to reset native counters', () => {
@@ -80,7 +80,7 @@ describe('metrics', () => {
       assert.deepStrictEqual(metrics.collect(), emptyStats());
     });
 
-    it('does not compute event loop lag to be less than the actual execution time', (done) => {
+    it('does not compute event loop lag to be less than the actual execution time', async () => {
       metrics.reset();
       const begin = hrtime();
 
@@ -91,14 +91,12 @@ describe('metrics', () => {
         duration = hrtime(begin);
       }
 
-      setTimeout(() => {
-        const stats = metrics.collect();
-        assert(
-          stats.eventLoopLag.max >= duration[1],
-          `event loop max below actual execution duration max=${stats.eventLoopLag.max} exec=${duration}`
-        );
-        done();
-      }, 10);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      const stats = metrics.collect();
+      assert(
+        stats.eventLoopLag.max >= duration[1],
+        `event loop max below actual execution duration max=${stats.eventLoopLag.max} exec=${duration}`
+      );
     });
   });
 
@@ -112,7 +110,7 @@ describe('metrics', () => {
       assert.deepEqual(options.accessToken, '');
       assert.deepEqual(options.exportIntervalMillis, 30000);
       assert.deepEqual(
-        options.resource.attributes[SemanticResourceAttributes.SERVICE_NAME],
+        options.resource.attributes[ATTR_SERVICE_NAME],
         '@splunk/otel'
       );
       assert.deepEqual(options.runtimeMetricsEnabled, true);
@@ -141,7 +139,7 @@ describe('metrics', () => {
       assert.deepEqual(options.resource.attributes['key1'], 'val1');
       assert.deepEqual(options.resource.attributes['key2'], 'val2');
       assert.deepEqual(
-        options.resource.attributes[SemanticResourceAttributes.SERVICE_NAME],
+        options.resource.attributes[ATTR_SERVICE_NAME],
         'bigmetric'
       );
       assert.deepEqual(options.runtimeMetricsEnabled, true);
@@ -163,23 +161,26 @@ describe('metrics', () => {
     // Custom metrics and runtime metrics are done with 1 test as OTel meter provider can't be reset
     it('is possible to use metrics', async () => {
       const resource = new Resource({
-        [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: 'test',
+        [ATTR_DEPLOYMENT_ENVIRONMENT]: 'test',
+      });
+      const { metricsOptions } = parseOptionsAndConfigureInstrumentations({
+        metrics: {
+          serviceName: 'foo',
+          resourceFactory: (defaultResource: Resource) => {
+            return defaultResource.merge(resource);
+          },
+          views: [
+            new View({ name: 'clicks.xyz', instrumentName: 'test-counter' }),
+          ],
+          runtimeMetricsEnabled: true,
+          runtimeMetricsCollectionIntervalMillis: 1,
+          metricReaderFactory: () => {
+            return [reader];
+          },
+        },
       });
 
-      startMetrics({
-        serviceName: 'foo',
-        resourceFactory: (defaultResource: Resource) => {
-          return defaultResource.merge(resource);
-        },
-        views: [
-          new View({ name: 'clicks.xyz', instrumentName: 'test-counter' }),
-        ],
-        runtimeMetricsEnabled: true,
-        runtimeMetricsCollectionIntervalMillis: 1,
-        metricReaderFactory: () => {
-          return [reader];
-        },
-      });
+      startMetrics(metricsOptions);
 
       const counter = metrics.getMeter('custom').createCounter('test-counter');
       counter.add(42);
@@ -190,15 +191,13 @@ describe('metrics', () => {
 
       assert.deepEqual(
         metricData.resourceMetrics.resource.attributes[
-          SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT
+          ATTR_DEPLOYMENT_ENVIRONMENT
         ],
         'test'
       );
 
       assert.deepEqual(
-        metricData.resourceMetrics.resource.attributes[
-          SemanticResourceAttributes.SERVICE_NAME
-        ],
+        metricData.resourceMetrics.resource.attributes[ATTR_SERVICE_NAME],
         'foo'
       );
 

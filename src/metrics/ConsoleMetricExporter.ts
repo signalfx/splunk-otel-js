@@ -18,7 +18,7 @@ import {
   AggregationTemporality,
   DataPointType,
   Histogram,
-  InstrumentDescriptor,
+  MetricDescriptor,
   ScopeMetrics,
   PushMetricExporter,
   ResourceMetrics,
@@ -31,7 +31,7 @@ import {
   hrTimeToTimeStamp,
 } from '@opentelemetry/core';
 
-function logDescriptor(descriptor: InstrumentDescriptor) {
+function logDescriptor(descriptor: MetricDescriptor) {
   const valueType = descriptor.valueType === ValueType.INT ? 'INT' : 'DOUBLE';
   console.dir({ ...descriptor, valueType });
 }

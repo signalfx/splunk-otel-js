@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-import { Options } from '../tracing/options';
+import { StartTracingOptions } from '../tracing';
 import { getEnvBoolean } from '../utils';
-import type {
-  GraphQLInstrumentation,
-  GraphQLInstrumentationConfig,
-} from '@opentelemetry/instrumentation-graphql';
+import type { GraphQLInstrumentationConfig } from '@opentelemetry/instrumentation-graphql';
 
 export function configureGraphQlInstrumentation(
-  instrumentation: GraphQLInstrumentation,
-  _options: Options
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  instrumentation: any,
+  _options: StartTracingOptions
 ) {
   if (getEnvBoolean('SPLUNK_GRAPHQL_RESOLVE_SPANS_ENABLED', false)) {
     return;

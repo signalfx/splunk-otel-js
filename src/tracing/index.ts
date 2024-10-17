@@ -34,39 +34,15 @@ import {
   AsyncHooksContextManager,
   AsyncLocalStorageContextManager,
 } from '@opentelemetry/context-async-hooks';
-
-import { configureGraphQlInstrumentation } from '../instrumentations/graphql';
-import { configureHttpInstrumentation } from '../instrumentations/http';
-import {
-  configureLogInjection,
-  disableLogSending,
-} from '../instrumentations/logging';
-import { allowedTracingOptions, Options, _setDefaultOptions } from './options';
-import { configureRedisInstrumentation } from '../instrumentations/redis';
-import {
-  assertNoExtraneousProperties,
-  getNonEmptyEnvVar,
-  parseEnvBooleanString,
-} from '../utils';
+import { Options } from './options';
 import { isProfilingContextManagerSet } from '../profiling';
-import type { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
-import type { BunyanInstrumentation } from '@opentelemetry/instrumentation-bunyan';
-import type { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
-import type { WinstonInstrumentation } from '@opentelemetry/instrumentation-winston';
-import type { GraphQLInstrumentation } from '@opentelemetry/instrumentation-graphql';
-import type { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
 
 /**
  * We disallow calling `startTracing` twice because:
  * 1. This is very rarely the user intention;
  * 2. Causes unexpected applied configuration to OTel libs;
  * 3. There's no way to reliably clean up before applying new configuration.
- * However, having a mechanism to allow that in tests is useful even if it
- * leaks and is inperfect in terms of the end result.
  */
-const allowDoubleStart = parseEnvBooleanString(
-  getNonEmptyEnvVar('TEST_ALLOW_DOUBLE_START')
-);
 let isStarted = false;
 let tracingContextManagerEnabled = false;
 let _instrumentations: Instrumentation[] = [];
@@ -104,13 +80,9 @@ function setLoadedInstrumentations(
 }
 
 export type StartTracingOptions = Partial<Options>;
-export function startTracing(opts: StartTracingOptions = {}): boolean {
+export function startTracing(options: Options): boolean {
   assert(!isStarted, 'Splunk APM already started');
   isStarted = true;
-
-  assertNoExtraneousProperties(opts, allowedTracingOptions);
-
-  const options = _setDefaultOptions(opts);
 
   // propagator
   propagation.setGlobalPropagator(options.propagatorFactory(options));
@@ -137,8 +109,6 @@ export function startTracing(opts: StartTracingOptions = {}): boolean {
     process.env.OTEL_TRACES_EXPORTER = envTracesExporter;
   }
 
-  configureInstrumentations(options);
-
   // instrumentations
   unregisterInstrumentations = registerInstrumentations({
     tracerProvider: provider,
@@ -164,9 +134,6 @@ export function startTracing(opts: StartTracingOptions = {}): boolean {
 }
 
 export async function stopTracing() {
-  if (allowDoubleStart) {
-    isStarted = false;
-  }
   // in reality unregistering is not reliable because of the function pointers
   // floating around everywhere in the user code already and will lead to
   // unexpected consequences should it be done more than once. We enable it
@@ -218,60 +185,4 @@ async function shutdownGlobalTracerProvider() {
       reportedConstructor?.name ?? reportedConstructor
     }) does not implement shutdown()`
   );
-}
-
-function configureInstrumentation(
-  instrumentation: Instrumentation,
-  options: Options
-) {
-  switch (instrumentation['instrumentationName']) {
-    case '@opentelemetry/instrumentation-graphql': {
-      configureGraphQlInstrumentation(
-        instrumentation as GraphQLInstrumentation,
-        options
-      );
-      break;
-    }
-    case '@opentelemetry/instrumentation-http':
-      configureHttpInstrumentation(
-        instrumentation as HttpInstrumentation,
-        options
-      );
-      break;
-    case '@opentelemetry/instrumentation-redis':
-      configureRedisInstrumentation(
-        instrumentation as RedisInstrumentation,
-        options
-      );
-      break;
-    case '@opentelemetry/instrumentation-bunyan': {
-      const bunyanInstrumentation = instrumentation as BunyanInstrumentation;
-      disableLogSending(bunyanInstrumentation);
-      configureLogInjection(bunyanInstrumentation);
-      break;
-    }
-    case '@opentelemetry/instrumentation-pino': {
-      const pinoInstrumentation = instrumentation as PinoInstrumentation;
-      configureLogInjection(pinoInstrumentation);
-      break;
-    }
-    case '@opentelemetry/instrumentation-winston': {
-      const winstonInstrumentation = instrumentation as WinstonInstrumentation;
-      disableLogSending(winstonInstrumentation);
-      configureLogInjection(winstonInstrumentation);
-      break;
-    }
-  }
-}
-
-function configureInstrumentations(options: Options) {
-  for (const instrumentations of options.instrumentations) {
-    if (Array.isArray(instrumentations)) {
-      for (const instrumentation of instrumentations) {
-        configureInstrumentation(instrumentation, options);
-      }
-    } else {
-      configureInstrumentation(instrumentations, options);
-    }
-  }
 }

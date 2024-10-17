@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 import { strict as assert } from 'assert';
+import { describe, it } from 'node:test';
+import { perftools } from '../../src/profiling/proto/profile.js';
 import {
+  StringTable,
   serialize,
   serializeHeapProfile,
-  StringTable,
 } from '../../src/profiling/utils';
-import { perftools } from '../../src/profiling/proto/profile.js';
 import { cpuProfile, heapProfile } from './profiles';
 
 const proto = perftools.profiles;

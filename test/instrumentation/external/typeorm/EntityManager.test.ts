@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as assert from 'assert';
+import { strict as assert } from 'assert';
+import { afterEach, before, beforeEach, after, describe, it } from 'node:test';
 import { SpanStatusCode } from '@opentelemetry/api';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { TypeormInstrumentation } from '../../../../src/instrumentations/external/typeorm';
-import { setInstrumentation, getTestSpans } from '../setup';
+import { setInstrumentation, getTestSpans, provider, exporter } from '../setup';
 
 const instrumentation = new TypeormInstrumentation();
+provider.register();
 import * as typeorm from 'typeorm';
 import { defaultOptions, MockSqliteDriver, User } from './utils';
 
@@ -31,6 +33,7 @@ describe('EntityManager', () => {
     instrumentation.enable();
   });
   beforeEach(() => {
+    exporter.reset();
     instrumentation.enable();
   });
   afterEach(() => {
@@ -72,7 +75,6 @@ describe('EntityManager', () => {
       const user = new User(1, 'aspecto', 'io');
       await manager.save(user);
       const typeOrmSpans = getTestSpans();
-
       assert.strictEqual(typeOrmSpans.length, 1);
       assert.strictEqual(typeOrmSpans[0].status.code, SpanStatusCode.UNSET);
       const attributes = typeOrmSpans[0].attributes;

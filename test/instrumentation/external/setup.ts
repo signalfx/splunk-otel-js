@@ -25,15 +25,14 @@ import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ERROR);
 
-const exporter = new InMemorySpanExporter();
-const provider: NodeTracerProvider = new NodeTracerProvider({
+export const exporter = new InMemorySpanExporter();
+export const provider: NodeTracerProvider = new NodeTracerProvider({
   resource: new Resource({
     [SemanticResourceAttributes.SERVICE_NAME]: 'instrumentations-test',
   }),
 });
 provider.addSpanProcessor(new SimpleSpanProcessor(exporter));
-
-let instrumentation: Instrumentation | undefined = undefined;
+export let instrumentation: Instrumentation | undefined = undefined;
 
 export function getTestSpans() {
   return exporter.getFinishedSpans();
@@ -43,18 +42,6 @@ export function setInstrumentation(instr: Instrumentation) {
   instr.setTracerProvider(provider);
   instrumentation = instr;
 }
-
-export const mochaHooks = {
-  beforeAll(done: Function) {
-    provider.register();
-    done();
-  },
-  beforeEach(done: Function) {
-    exporter.reset();
-    instrumentation?.setConfig({});
-    done();
-  },
-};
 
 export class MockSqlite3Db {
   constructor(_db, a, b) {

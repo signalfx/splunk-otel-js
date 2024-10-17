@@ -24,7 +24,7 @@ import * as util from 'util';
 import { Writable } from 'stream';
 import { context, trace } from '@opentelemetry/api';
 
-const isConfigVarEntry = (key) => {
+const isConfigVarEntry = (key: string) => {
   const lowercased = key.toLowerCase();
   return (
     lowercased.includes('splunk_') ||
@@ -60,7 +60,7 @@ export class TestMetricReader extends MetricReader {
     super();
   }
   selectAggregationTemporality(
-    instrumentType: InstrumentType
+    _instrumentType: InstrumentType
   ): AggregationTemporality {
     return this.temporality;
   }
@@ -84,16 +84,18 @@ export class TestLogStream {
 export function assertInjection(
   stream: TestLogStream,
   logger: any,
-  extra = [['service.name', 'test-service']]
+  extra: [string, any][] = [['service.name', 'test-service']]
 ) {
   const span = trace.getTracer('test').startSpan('main');
-  let traceId;
-  let spanId;
-  context.with(trace.setSpan(context.active(), span), () => {
-    traceId = span.spanContext().traceId;
-    spanId = span.spanContext().spanId;
-    logger.info('my-log-message');
-  });
+  const [traceId, spanId] = context.with(
+    trace.setSpan(context.active(), span),
+    () => {
+      const tId = span.spanContext().traceId;
+      const sId = span.spanContext().spanId;
+      logger.info('my-log-message');
+      return [tId, sId];
+    }
+  );
 
   assert.strictEqual(stream.record['trace_id'], traceId);
   assert.strictEqual(stream.record['span_id'], spanId);
@@ -104,5 +106,31 @@ export function assertInjection(
       value,
       `Invalid value for "${key}": ${util.inspect(stream.record[key])}`
     );
+  }
+}
+
+export function calledWithExactly(mocked: any, expected: any) {
+  const match = mocked.mock.calls.some((call: any) => {
+    try {
+      assert.deepStrictEqual(call.arguments[0], expected);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  });
+
+  assert(match, `Expected call with: ${JSON.stringify(expected)} not found`);
+}
+
+export function calledOnceWithMatch(mocked: any, match: Object) {
+  assert.strictEqual(
+    mocked.mock.calls.length,
+    1,
+    'calledOnceWithMatch can only be used with a single call'
+  );
+
+  const callArgs = mocked.mock.calls[0].arguments[0];
+  for (const key in match) {
+    assert.deepEqual(callArgs[key], match[key], `key ${key} does not match`);
   }
 }

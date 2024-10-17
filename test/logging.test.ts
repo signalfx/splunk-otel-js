@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
 import { startLogging, _setDefaultOptions } from '../src/logging';
 import * as logsAPI from '@opentelemetry/api-logs';
 import {
@@ -22,18 +21,22 @@ import {
   SimpleLogRecordProcessor,
   ConsoleLogRecordExporter,
 } from '@opentelemetry/sdk-logs';
+import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
+import { strict as assert } from 'assert';
+import { describe, it } from 'node:test';
 
 describe('logging', () => {
   describe('startLogging', () => {
     it('sets logprovider', () => {
-      startLogging();
+      const { loggingOptions } = parseOptionsAndConfigureInstrumentations();
+      startLogging(loggingOptions);
       const provider = logsAPI.logs.getLoggerProvider();
       assert(provider instanceof LoggerProvider);
     });
 
     it('allows overriding log processors', () => {
       const options = _setDefaultOptions({
-        logRecordProcessorFactory: (options) => {
+        logRecordProcessorFactory: () => {
           return new SimpleLogRecordProcessor(new ConsoleLogRecordExporter());
         },
         serviceName: '',

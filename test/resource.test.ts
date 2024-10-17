@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
-
+import { strict as assert } from 'assert';
+import { beforeEach, describe, it } from 'node:test';
 import { detect } from '../src/resource';
 import * as utils from './utils';
 
@@ -36,9 +36,6 @@ describe('resource detector', () => {
     });
 
     it('catches service name from the env', () => {
-      const expectedAttributes = {
-        'service.name': 'node-svc',
-      };
       process.env.OTEL_SERVICE_NAME = 'node-svc';
       const resource = detect();
 

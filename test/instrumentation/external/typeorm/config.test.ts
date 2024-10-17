@@ -13,29 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as assert from 'assert';
 import { Span } from '@opentelemetry/sdk-trace-base';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import { strict as assert } from 'assert';
+import { before, beforeEach, describe, it } from 'node:test';
 import {
   ExtendedDatabaseAttribute,
   TypeormInstrumentation,
   TypeormInstrumentationConfig,
 } from '../../../../src/instrumentations/external/typeorm';
-import { setInstrumentation, getTestSpans } from '../setup';
+import { getTestSpans, setInstrumentation, provider, exporter } from '../setup';
 
 const instrumentation = new TypeormInstrumentation();
-
+provider.register();
+import { SpanStatusCode } from '@opentelemetry/api';
 import * as typeorm from 'typeorm';
 import { defaultOptions, User } from './utils';
-import { SpanStatusCode } from '@opentelemetry/api';
 
 describe('TypeormInstrumentationConfig', () => {
   before(() => {
     setInstrumentation(instrumentation);
   });
 
-  it('responseHook', async function () {
-    this.timeout(3_000);
+  beforeEach(() => {
+    exporter.reset();
+    instrumentation.setConfig({});
+  });
+
+  it('responseHook', async () => {
+    await new Promise((resolve) => setTimeout(resolve, 3_000));
     instrumentation.disable();
     const config: TypeormInstrumentationConfig = {
       responseHook: (span: Span, response: any) => {

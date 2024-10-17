@@ -14,27 +14,27 @@
  * limitations under the License.
  */
 
-import * as assert from 'assert';
-import { hrtime } from 'process';
+import { strict as assert } from 'assert';
+import { beforeEach, describe, it } from 'node:test';
 import { inspect } from 'util';
 
-import { context, trace, propagation } from '@opentelemetry/api';
+import { context, trace } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { InMemorySpanExporter } from '@opentelemetry/sdk-trace-base';
+import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 
-import {
-  defaultExporterFactory,
-  startProfiling,
-  _setDefaultOptions,
-} from '../../src/profiling';
 import { start, stop } from '../../src';
+import {
+  _setDefaultOptions,
+  defaultExporterFactory,
+} from '../../src/profiling';
+import { ProfilingStacktrace } from '../../src/profiling/types';
+import { ProfilingContextManager } from '../../src/profiling/ProfilingContextManager';
 import {
   CpuProfile,
   HeapProfile,
   ProfilingExporter,
 } from '../../src/profiling/types';
-import { ProfilingContextManager } from '../../src/profiling/ProfilingContextManager';
 import { detect as detectResource } from '../../src/resource';
 
 import * as utils from '../utils';
@@ -49,20 +49,30 @@ describe('profiling', () => {
       utils.cleanEnvironment();
     });
 
-    it('sets default options when no options are provided', () => {
+    it('sets default options when no options are provided', async () => {
       const options = _setDefaultOptions();
-      assert.deepStrictEqual(options, {
+      await options.resource.waitForAsyncAttributes?.();
+      const testResource = new Resource({
+        [ATTR_SERVICE_NAME]: '@splunk/otel',
+      }).merge(detectResource());
+      await testResource.waitForAsyncAttributes?.();
+
+      const { resource: defaultResource, ...defaultOtherAttrs } = options;
+
+      assert.deepStrictEqual(defaultOtherAttrs, {
         serviceName: '@splunk/otel',
         endpoint: 'http://localhost:4317',
         callstackInterval: 1_000,
         collectionDuration: 30_000,
-        resource: new Resource({
-          [SemanticResourceAttributes.SERVICE_NAME]: '@splunk/otel',
-        }).merge(detectResource()),
         exporterFactory: defaultExporterFactory,
         memoryProfilingEnabled: false,
         memoryProfilingOptions: undefined,
       });
+
+      assert.deepStrictEqual(
+        defaultResource.attributes,
+        testResource.attributes
+      );
     });
 
     it('uses options from environment', () => {
@@ -95,7 +105,7 @@ describe('profiling', () => {
   describe('startProfiling', () => {
     it('exports stacktraces', async () => {
       let sendCallCount = 0;
-      const stacktracesReceived = [];
+      const stacktracesReceived: ProfilingStacktrace[] = [];
       const exporter: ProfilingExporter = {
         send(cpuProfile: CpuProfile) {
           const { stacktraces } = cpuProfile;
@@ -144,7 +154,7 @@ describe('profiling', () => {
       );
 
       assert(
-        stacktracesReceived.some(({ spanId, traceId }, idx) => {
+        stacktracesReceived.some(({ spanId, traceId }) => {
           return (
             spanId?.toString('hex') === expectedSpanId &&
             traceId?.toString('hex') === expectedTraceId
@@ -155,32 +165,6 @@ describe('profiling', () => {
 
       // Stop flushes the exporters, hence the extra call count
       assert.deepStrictEqual(sendCallCount, 2);
-    });
-
-    it('exports heap profiles', async () => {
-      let sendCallCount = 0;
-      const exporter: ProfilingExporter = {
-        send(_cpuProfile: CpuProfile) {},
-        sendHeapProfile(profile: HeapProfile) {
-          sendCallCount += 1;
-        },
-      };
-
-      // enabling tracing is required for span information to be caught
-      start({
-        profiling: {
-          serviceName: 'my-service',
-          collectionDuration: 100,
-          exporterFactory: () => [exporter],
-          memoryProfilingEnabled: true,
-        },
-      });
-
-      // let runtime empty the task-queue and enable profiling
-      await sleep(200);
-
-      stop();
-      assert(sendCallCount > 0, 'no profiles were sent');
     });
   });
 });

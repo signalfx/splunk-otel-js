@@ -14,23 +14,16 @@
  * limitations under the License.
  */
 
-import { startTracing, stopTracing } from '../src/tracing';
-import { TestLogStream, assertInjection } from './utils';
+import { test } from 'node:test';
+import { assertTracingPipeline, setupMocks } from './common';
 
-describe('winston log injection', () => {
-  let logStream: TestLogStream;
+import { parseOptionsAndConfigureInstrumentations } from '../../src/instrumentations';
+import { startTracing, stopTracing } from '../../src/tracing';
 
-  beforeEach(() => {
-    logStream = new TestLogStream();
-  });
-
-  it('injects context to winston records', () => {
-    startTracing({ serviceName: 'test-service' });
-    const winston = require('winston');
-    const logger = winston.createLogger({
-      transports: [new winston.transports.Stream({ stream: logStream.stream })],
-    });
-    assertInjection(logStream, logger);
-    stopTracing();
-  });
+test('Tracing: set up with defaults', async () => {
+  const mocks = setupMocks();
+  const { tracingOptions } = parseOptionsAndConfigureInstrumentations();
+  startTracing(tracingOptions);
+  assertTracingPipeline(mocks, 'localhost:4317', '@splunk/otel');
+  await stopTracing();
 });

@@ -14,8 +14,30 @@
  * limitations under the License.
  */
 
-import { getEnvBoolean } from '../utils';
+import { getEnvBoolean, assertNoExtraneousProperties, pick } from '../utils';
 import type { EnvVarKey } from '../types';
+import {
+  allowedTracingOptions,
+  Options as TracingOptions,
+  _setDefaultOptions as setDefaultTracingOptions,
+} from '../tracing/options';
+
+import type { StartLoggingOptions } from '../logging';
+import {
+  allowedLoggingOptions,
+  _setDefaultOptions as setDefaultLoggingOptions,
+} from '../logging';
+import { allowedProfilingOptions } from '../profiling/types';
+import { _setDefaultOptions as setDefaultProfilingOptions } from '../profiling';
+import {
+  allowedMetricsOptions,
+  _setDefaultOptions as setDefaultMetricsOptions,
+} from '../metrics';
+import type { Options as StartOptions } from '../start';
+import { configureGraphQlInstrumentation } from './graphql';
+import { configureHttpInstrumentation } from './http';
+import { configureLogInjection, disableLogSending } from './logging';
+import { configureRedisInstrumentation } from './redis';
 import { AmqplibInstrumentation } from '@opentelemetry/instrumentation-amqplib';
 import { AwsInstrumentation } from '@opentelemetry/instrumentation-aws-sdk';
 import { BunyanInstrumentation } from '@opentelemetry/instrumentation-bunyan';
@@ -61,6 +83,11 @@ type InstrumentationInfo = {
   shortName: string;
   create: () => Instrumentation;
 };
+
+interface Options {
+  tracing: TracingOptions;
+  logging: StartLoggingOptions;
+}
 
 export const bundledInstrumentations: InstrumentationInfo[] = [
   {
@@ -243,4 +270,81 @@ export function getInstrumentations() {
   }
 
   return instrumentations;
+}
+
+export function configureInstrumentations(options: Options) {
+  const instrumentations = options.tracing.instrumentations || [];
+  for (const instrumentation of instrumentations) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const instr = instrumentation as any;
+
+    switch (instr['instrumentationName']) {
+      case '@opentelemetry/instrumentation-graphql':
+        configureGraphQlInstrumentation(instr, options.tracing);
+        break;
+      case '@opentelemetry/instrumentation-http':
+        configureHttpInstrumentation(instr, options.tracing);
+        break;
+      case '@opentelemetry/instrumentation-redis':
+        configureRedisInstrumentation(instr, options.tracing);
+        break;
+      case '@opentelemetry/instrumentation-bunyan':
+      case '@opentelemetry/instrumentation-pino':
+      case '@opentelemetry/instrumentation-winston':
+        disableLogSending(instr);
+        configureLogInjection(instr);
+        break;
+    }
+  }
+}
+
+export function parseOptionsAndConfigureInstrumentations(
+  options: Partial<StartOptions> = {}
+) {
+  const { metrics, profiling, tracing, logging, ...restOptions } = options;
+
+  assertNoExtraneousProperties(restOptions, [
+    'accessToken',
+    'endpoint',
+    'serviceName',
+    'logLevel',
+  ]);
+
+  const startProfilingOptions = Object.assign(
+    pick(restOptions, allowedProfilingOptions),
+    profiling
+  );
+
+  assertNoExtraneousProperties(startProfilingOptions, allowedProfilingOptions);
+  const profilingOptions = setDefaultProfilingOptions(startProfilingOptions);
+
+  const startLoggingOptions = Object.assign(
+    pick(restOptions, allowedLoggingOptions),
+    logging
+  );
+
+  const loggingOptions = setDefaultLoggingOptions(startLoggingOptions);
+
+  const startTracingOptions = Object.assign(
+    pick(restOptions, allowedTracingOptions),
+    tracing
+  ) as Partial<TracingOptions>;
+
+  assertNoExtraneousProperties(startTracingOptions, allowedTracingOptions);
+  const tracingOptions = setDefaultTracingOptions(startTracingOptions);
+
+  const startMetricsOptions = Object.assign(
+    pick(restOptions, allowedMetricsOptions),
+    metrics
+  );
+
+  assertNoExtraneousProperties(startMetricsOptions, allowedMetricsOptions);
+  const metricsOptions = setDefaultMetricsOptions(startMetricsOptions);
+
+  configureInstrumentations({
+    tracing: tracingOptions,
+    logging: loggingOptions,
+  });
+
+  return { tracingOptions, loggingOptions, profilingOptions, metricsOptions };
 }
