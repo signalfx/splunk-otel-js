@@ -36,7 +36,7 @@ import {
 import { enableDebugMetrics, getDebugMetricsViews } from './debug_metrics';
 import * as util from 'util';
 import { detect as detectResource } from '../resource';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { ConsoleMetricExporter } from './ConsoleMetricExporter';
 import type { ResourceFactory } from '../types';
 
@@ -407,13 +407,13 @@ export function _setDefaultOptions(
 
   const serviceName = String(
     options.serviceName ||
-      defaultResource.attributes[SemanticResourceAttributes.SERVICE_NAME] ||
+      defaultResource.attributes[ATTR_SERVICE_NAME] ||
       defaultServiceName()
   );
 
   defaultResource = defaultResource.merge(
     new Resource({
-      [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
+      [ATTR_SERVICE_NAME]: serviceName,
     })
   );
 

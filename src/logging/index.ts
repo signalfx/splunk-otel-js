@@ -19,7 +19,7 @@ import * as logsAPI from '@opentelemetry/api-logs';
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
 import { Resource } from '@opentelemetry/resources';
 import { diag } from '@opentelemetry/api';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import {
   LoggerProvider,
   BatchLogRecordProcessor,
@@ -83,7 +83,7 @@ export function _setDefaultOptions(options: StartLoggingOptions = {}): Options {
   const serviceName =
     options.serviceName ||
     getNonEmptyEnvVar('OTEL_SERVICE_NAME') ||
-    resource.attributes[SemanticResourceAttributes.SERVICE_NAME];
+    resource.attributes[ATTR_SERVICE_NAME];
 
   if (!serviceName) {
     diag.warn(
@@ -95,8 +95,7 @@ export function _setDefaultOptions(options: StartLoggingOptions = {}): Options {
 
   resource = resource.merge(
     new Resource({
-      [SemanticResourceAttributes.SERVICE_NAME]:
-        serviceName || defaultServiceName(),
+      [ATTR_SERVICE_NAME]: serviceName || defaultServiceName(),
     })
   );
 
@@ -104,9 +103,7 @@ export function _setDefaultOptions(options: StartLoggingOptions = {}): Options {
     options.logRecordProcessorFactory || defaultlogRecordProcessorFactory;
 
   return {
-    serviceName: String(
-      resource.attributes[SemanticResourceAttributes.SERVICE_NAME]
-    ),
+    serviceName: String(resource.attributes[ATTR_SERVICE_NAME]),
     endpoint: options.endpoint, // will use default collector url if not set
     logRecordProcessorFactory: options.logRecordProcessorFactory,
     resource,

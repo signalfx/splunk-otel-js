@@ -35,7 +35,7 @@ import {
   getEnvBoolean,
 } from '../utils';
 import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
-import { SEMRESATTRS_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
+import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { diag, Span, TextMapPropagator } from '@opentelemetry/api';
 import {
   CompositePropagator,
@@ -127,7 +127,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   const serviceName =
     options.serviceName ||
     getNonEmptyEnvVar('OTEL_SERVICE_NAME') ||
-    resource.attributes[SEMRESATTRS_SERVICE_NAME];
+    resource.attributes[ATTR_SERVICE_NAME];
 
   if (!serviceName) {
     diag.warn(
@@ -139,7 +139,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
 
   resource = resource.merge(
     new Resource({
-      [SEMRESATTRS_SERVICE_NAME]: serviceName || defaultServiceName(),
+      [ATTR_SERVICE_NAME]: serviceName || defaultServiceName(),
     })
   );
 
@@ -175,7 +175,7 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
   return {
     realm: options.realm,
     endpoint: options.endpoint,
-    serviceName: String(resource.attributes[SEMRESATTRS_SERVICE_NAME]),
+    serviceName: String(resource.attributes[ATTR_SERVICE_NAME]),
     accessToken: options.accessToken,
     serverTimingEnabled: options.serverTimingEnabled,
     captureHttpRequestUriParams: options.captureHttpRequestUriParams,

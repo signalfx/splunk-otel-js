@@ -17,8 +17,8 @@
 import { Span } from '@opentelemetry/api';
 import { Span as SdkSpan } from '@opentelemetry/sdk-trace-base';
 import {
-  SEMRESATTRS_SERVICE_NAME,
-  SEMRESATTRS_SERVICE_VERSION,
+  ATTR_SERVICE_NAME,
+  ATTR_SERVICE_VERSION,
   SEMRESATTRS_DEPLOYMENT_ENVIRONMENT,
 } from '@opentelemetry/semantic-conventions';
 import { BunyanInstrumentation } from '@opentelemetry/instrumentation-bunyan';
@@ -32,10 +32,9 @@ type LogRecord = Record<string, any>;
 export const defaultLogHook = (span: Span, record: LogRecord) => {
   const sdkSpan = span as SdkSpan;
 
-  record['service.name'] =
-    sdkSpan.resource.attributes[SEMRESATTRS_SERVICE_NAME];
+  record['service.name'] = sdkSpan.resource.attributes[ATTR_SERVICE_NAME];
 
-  const version = sdkSpan.resource.attributes[SEMRESATTRS_SERVICE_VERSION];
+  const version = sdkSpan.resource.attributes[ATTR_SERVICE_VERSION];
   if (version !== undefined) {
     record['service.version'] = version;
   }
