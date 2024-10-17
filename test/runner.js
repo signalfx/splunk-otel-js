@@ -22,6 +22,7 @@ function findTestFiles(dir, fileList = []) {
 
 // Find all test files in the ./test directory
 const testFiles = findTestFiles(__dirname);
+console.log(testFiles);
 const majorVersion = parseInt(process.version.substring(1, 3))
 const olderThanNode20 = majorVersion < 20;
 
