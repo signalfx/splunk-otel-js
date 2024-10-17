@@ -25,7 +25,6 @@ import { describe, it, beforeEach } from 'node:test';
 
 describe('instrumentations', () => {
   beforeEach(cleanEnvironment);
-  // after(cleanEnvironment); //FIXME after not needed in node testrunner
 
   it('loads instrumentations if they are installed', () => {
     const loadedInstrumentations = getInstrumentations();

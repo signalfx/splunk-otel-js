@@ -60,7 +60,7 @@ export class TestMetricReader extends MetricReader {
     super();
   }
   selectAggregationTemporality(
-    instrumentType: InstrumentType
+    _instrumentType: InstrumentType
   ): AggregationTemporality {
     return this.temporality;
   }
@@ -84,16 +84,18 @@ export class TestLogStream {
 export function assertInjection(
   stream: TestLogStream,
   logger: any,
-  extra = [['service.name', 'test-service']]
+  extra: [string, any][] = [['service.name', 'test-service']]
 ) {
   const span = trace.getTracer('test').startSpan('main');
-  let traceId;
-  let spanId;
-  context.with(trace.setSpan(context.active(), span), () => {
-    traceId = span.spanContext().traceId;
-    spanId = span.spanContext().spanId;
-    logger.info('my-log-message');
-  });
+  const [traceId, spanId] = context.with(
+    trace.setSpan(context.active(), span),
+    () => {
+      const tId = span.spanContext().traceId;
+      const sId = span.spanContext().spanId;
+      logger.info('my-log-message');
+      return [tId, sId];
+    }
+  );
 
   assert.strictEqual(stream.record['trace_id'], traceId);
   assert.strictEqual(stream.record['span_id'], spanId);
@@ -131,19 +133,4 @@ export function calledOnceWithMatch(mocked, match: Object) {
   for (const key in match) {
     assert.deepEqual(callArgs[key], match[key], `key ${key} does not match`);
   }
-}
-
-export function mockMocha() {
-  const isMocha = [
-    'afterEach',
-    'after',
-    'beforeEach',
-    'before',
-    'describe',
-    'it',
-  ].forEach((fn) => {
-    global[fn] = () => {
-      console.error(`Attempted to call mock global mocha function`);
-    };
-  });
 }

@@ -24,7 +24,6 @@ import { defaultServiceName, findServiceName } from '../src/utils';
 
 describe('findServiceName', () => {
   const TMP_PREFIX = 'splunk-otel-service-name-test-';
-  const prevDir = process.cwd();
   let tempDir;
 
   beforeEach(() => {

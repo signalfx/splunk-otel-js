@@ -36,7 +36,7 @@ describe('logging', () => {
 
     it('allows overriding log processors', () => {
       const options = _setDefaultOptions({
-        logRecordProcessorFactory: (options) => {
+        logRecordProcessorFactory: () => {
           return new SimpleLogRecordProcessor(new ConsoleLogRecordExporter());
         },
         serviceName: '',

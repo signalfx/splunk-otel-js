@@ -36,9 +36,6 @@ describe('resource detector', () => {
     });
 
     it('catches service name from the env', () => {
-      const expectedAttributes = {
-        'service.name': 'node-svc',
-      };
       process.env.OTEL_SERVICE_NAME = 'node-svc';
       const resource = detect();
 

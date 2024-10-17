@@ -37,7 +37,7 @@ describe('utils', () => {
   });
 
   describe('getNonEmptyEnvVar', () => {
-    let logger;
+    let logger: any;
 
     beforeEach(() => {
       cleanEnvironment();

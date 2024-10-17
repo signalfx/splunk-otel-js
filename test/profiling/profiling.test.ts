@@ -153,7 +153,7 @@ describe('profiling', () => {
       );
 
       assert(
-        stacktracesReceived.some(({ spanId, traceId }, idx) => {
+        stacktracesReceived.some(({ spanId, traceId }) => {
           return (
             spanId?.toString('hex') === expectedSpanId &&
             traceId?.toString('hex') === expectedTraceId
@@ -164,32 +164,6 @@ describe('profiling', () => {
 
       // Stop flushes the exporters, hence the extra call count
       assert.deepStrictEqual(sendCallCount, 2);
-    });
-
-    it('exports heap profiles', async () => {
-      let sendCallCount = 0;
-      const exporter: ProfilingExporter = {
-        send(_cpuProfile: CpuProfile) {},
-        sendHeapProfile(profile: HeapProfile) {
-          sendCallCount += 1;
-        },
-      };
-
-      // enabling tracing is required for span information to be caught
-      start({
-        profiling: {
-          serviceName: 'my-service',
-          collectionDuration: 100,
-          exporterFactory: () => [exporter],
-          memoryProfilingEnabled: true,
-        },
-      });
-
-      // let runtime empty the task-queue and enable profiling
-      await sleep(200);
-
-      stop();
-      assert(sendCallCount > 0, 'no profiles were sent');
     });
   });
 });

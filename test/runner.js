@@ -2,9 +2,6 @@ const { spawn } = require('node:child_process');
 const fs = require('fs');
 const path = require('path');
 
-// Set the environment variable
-process.env.TEST_ALLOW_DOUBLE_START = 'y';
-
 // Function to recursively find files
 function findTestFiles(dir, fileList = []) {
   const files = fs.readdirSync(dir);
