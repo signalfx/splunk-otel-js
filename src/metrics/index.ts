@@ -158,7 +158,7 @@ export function createOtlpExporter(options: MetricsOptions) {
     }
   }
 
-  protocol = protocol ?? 'grpc';
+  protocol = protocol ?? 'http/protobuf';
 
   switch (protocol) {
     case 'grpc': {
