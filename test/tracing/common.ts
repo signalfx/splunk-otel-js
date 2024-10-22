@@ -18,7 +18,7 @@ import { strict as assert } from 'assert';
 import { mock } from 'node:test';
 
 import { trace } from '@opentelemetry/api';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { ProxyTracerProvider } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
@@ -59,7 +59,9 @@ export function assertTracingPipeline(
 
   if (accessToken) {
     assert.equal(
-      exporter['_transport']['_parameters']['metadata']().get('x-sf-token')[0],
+      exporter['_transport']['_transport']['_parameters']['headers'][
+        'X-SF-TOKEN'
+      ],
       accessToken
     );
   }

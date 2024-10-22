@@ -16,8 +16,8 @@
 
 import * as api from '@opentelemetry/api';
 import { W3CBaggagePropagator } from '@opentelemetry/core';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
-import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
+import { OTLPTraceExporter as OTLPGrpcTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 import { InstrumentationBase } from '@opentelemetry/instrumentation';
 import { Resource } from '@opentelemetry/resources';
 import {
@@ -75,9 +75,6 @@ const assertContainerId = (containerIdAttr) => {
   E.g. OTEL_RESOURCE_ATTRIBUTES="service.name=<YOUR_SERVICE_NAME_HERE>"
 */
 const MATCH_SERVICE_NAME_WARNING = /service\.name.*not.*set/i;
-// No instrumentations set to be loaded. Install an instrumentation package to enable auto-instrumentation.
-const MATCH_NO_INSTRUMENTATIONS_WARNING =
-  /no.*instrumentation.*install.*package/i;
 
 describe('options', () => {
   let logger;
@@ -377,7 +374,7 @@ describe('options', () => {
       assert.deepStrictEqual(exporters.length, 1);
 
       const [exporter] = exporters;
-      assert(exporter instanceof OTLPHttpTraceExporter);
+      assert(exporter instanceof OTLPTraceExporter);
       assert.deepStrictEqual(
         exporter.url,
         `https://ingest.us0.signalfx.com/v2/trace/otlp`
@@ -405,7 +402,7 @@ describe('options', () => {
 
       assert(Array.isArray(exporters));
       const [exporter] = exporters;
-      assert(exporter instanceof OTLPHttpTraceExporter);
+      assert(exporter instanceof OTLPTraceExporter);
       assert.deepStrictEqual(
         exporter.url,
         'https://ingest.us0.signalfx.com/v2/trace/otlp'
@@ -421,7 +418,7 @@ describe('options', () => {
     it('warns when realm and endpoint are both set', () => {
       process.env.SPLUNK_REALM = 'us0';
       process.env.SPLUNK_ACCESS_TOKEN = 'abc';
-      process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT = 'http://localhost:4317';
+      process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT = 'http://myendpoint:4333';
 
       const options = _setDefaultOptions();
       const exporters = options.spanExporterFactory(options);
@@ -439,7 +436,7 @@ describe('options', () => {
         exporter instanceof OTLPTraceExporter,
         'Expected exporter to be instance of OTLPTraceExporter'
       );
-      assert.deepStrictEqual(exporter.url, 'localhost:4317');
+      assert.deepStrictEqual(exporter.url, 'http://myendpoint:4333');
     });
   });
 
@@ -455,22 +452,22 @@ describe('options', () => {
     });
 
     it('is possible to use OTEL_EXPORTER_OTLP_PROTOCOL', () => {
-      process.env.OTEL_EXPORTER_OTLP_PROTOCOL = 'http/protobuf';
-      const options = _setDefaultOptions();
-      const exporters = options.spanExporterFactory(options);
-      assert(Array.isArray(exporters));
-      const [exporter] = exporters;
-      assert(exporter instanceof OTLPHttpTraceExporter);
-    });
-
-    it('prefers OTEL_EXPORTER_OTLP_TRACES_PROTOCOL over OTEL_EXPORTER_OTLP_PROTOCOL', () => {
-      process.env.OTEL_EXPORTER_OTLP_TRACES_PROTOCOL = 'http/protobuf';
       process.env.OTEL_EXPORTER_OTLP_PROTOCOL = 'grpc';
       const options = _setDefaultOptions();
       const exporters = options.spanExporterFactory(options);
       assert(Array.isArray(exporters));
       const [exporter] = exporters;
-      assert(exporter instanceof OTLPHttpTraceExporter);
+      assert(exporter instanceof OTLPGrpcTraceExporter);
+    });
+
+    it('prefers OTEL_EXPORTER_OTLP_TRACES_PROTOCOL over OTEL_EXPORTER_OTLP_PROTOCOL', () => {
+      process.env.OTEL_EXPORTER_OTLP_TRACES_PROTOCOL = 'grpc';
+      process.env.OTEL_EXPORTER_OTLP_PROTOCOL = 'http/protobuf';
+      const options = _setDefaultOptions();
+      const exporters = options.spanExporterFactory(options);
+      assert(Array.isArray(exporters));
+      const [exporter] = exporters;
+      assert(exporter instanceof OTLPGrpcTraceExporter);
     });
 
     it('is possible to use OTEL_EXPORTER_OTLP_ENDPOINT', () => {

@@ -280,7 +280,7 @@ export function otlpSpanExporterFactory(options: Options): SpanExporter {
     }
   }
 
-  protocol = protocol ?? 'grpc';
+  protocol = protocol ?? 'http/protobuf';
 
   switch (protocol) {
     case 'grpc': {
@@ -341,7 +341,7 @@ export function defaultSpanProcessorFactory(options: Options): SpanProcessor[] {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function defaultPropagatorFactory(options: Options): TextMapPropagator {
+export function defaultPropagatorFactory(_options: Options): TextMapPropagator {
   const envPropagators = getEnvArray('OTEL_PROPAGATORS', [
     'tracecontext',
     'baggage',
