@@ -166,12 +166,7 @@ export const stop = async () => {
   }
 
   if (running.profiling) {
-    promises.push(
-      new Promise<void>((resolve) => {
-        running.profiling!.stop();
-        resolve();
-      })
-    );
+    promises.push(promises.push(running.profiling!.stop()));
     running.profiling = null;
   }
 
