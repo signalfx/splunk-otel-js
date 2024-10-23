@@ -13,12 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as fs from 'fs';
 import { gzip } from 'zlib';
 import { promisify } from 'util';
-import type * as GrpcModule from '@grpc/grpc-js';
-import { diag } from '@opentelemetry/api';
-import { getNonEmptyEnvVar } from '../utils';
 
 import { perftools } from './proto/profile';
 import type { CpuProfile, HeapProfile } from './types';
@@ -220,48 +216,3 @@ export const encode = async function encode(
   const buffer = perftools.profiles.Profile.encode(profile).finish();
   return gzipPromise(buffer);
 };
-
-function readContentSync(location: string): Buffer | undefined {
-  try {
-    return fs.readFileSync(location);
-  } catch (e) {
-    diag.error(`Failed to read file at ${location}`, e);
-  }
-
-  return undefined;
-}
-
-function maybeReadPath(location: string | undefined): Buffer | undefined {
-  if (location === undefined) {
-    return undefined;
-  }
-
-  return readContentSync(location);
-}
-
-export function parseEndpoint(
-  endpoint: string,
-  grpc: typeof GrpcModule
-): {
-  host: string;
-  credentials: GrpcModule.ChannelCredentials;
-} {
-  let host = endpoint;
-  let credentials = grpc.ChannelCredentials.createInsecure();
-
-  if (endpoint.startsWith('https://')) {
-    host = endpoint.substr(8);
-    credentials = grpc.credentials.createSsl(
-      maybeReadPath(getNonEmptyEnvVar('OTEL_EXPORTER_OTLP_CERTIFICATE')),
-      maybeReadPath(getNonEmptyEnvVar('OTEL_EXPORTER_OTLP_CLIENT_KEY')),
-      maybeReadPath(getNonEmptyEnvVar('OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE'))
-    );
-  } else if (endpoint.startsWith('http://')) {
-    host = endpoint.substr(7);
-  }
-
-  return {
-    host,
-    credentials,
-  };
-}

@@ -15,7 +15,7 @@
  */
 
 import { metrics } from '@opentelemetry/api';
-import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-proto';
 import { Resource } from '@opentelemetry/resources';
 import {
   AggregationTemporality,
@@ -115,10 +115,11 @@ describe('metrics', () => {
       );
       assert.deepEqual(options.runtimeMetricsEnabled, true);
       assert.deepEqual(options.runtimeMetricsCollectionIntervalMillis, 5000);
+
+      const readers = options.metricReaderFactory(options);
       assert(
-        options.metricReaderFactory(options)[0]['_exporter'] instanceof
-          OTLPMetricExporter,
-        'Expected the default metric exporter to be OTLP gRPC'
+        readers[0]['_exporter'] instanceof OTLPMetricExporter,
+        'Expected the default metric exporter to be OTLP over HTTP'
       );
       assert.deepEqual(options.debugMetricsEnabled, false);
     });

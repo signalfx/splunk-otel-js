@@ -24,6 +24,10 @@ test('Tracing: set up with defaults', async () => {
   const mocks = setupMocks();
   const { tracingOptions } = parseOptionsAndConfigureInstrumentations();
   startTracing(tracingOptions);
-  assertTracingPipeline(mocks, 'localhost:4317', '@splunk/otel');
+  assertTracingPipeline(
+    mocks,
+    'http://localhost:4318/v1/traces',
+    '@splunk/otel'
+  );
   await stopTracing();
 });

@@ -105,8 +105,8 @@ export interface ProfilingOptions {
 export type StartProfilingOptions = Partial<ProfilingOptions>;
 
 export interface ProfilingExporter {
-  send(profile: CpuProfile): void;
-  sendHeapProfile(profile: HeapProfile): void;
+  send(profile: CpuProfile): Promise<void>;
+  sendHeapProfile(profile: HeapProfile): Promise<void>;
 }
 
 export const allowedProfilingOptions = [

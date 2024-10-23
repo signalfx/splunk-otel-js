@@ -1,5 +1,5 @@
 # Set up the environment, install deps
-FROM node:18-alpine as base
+FROM node:20-alpine AS base
 RUN apk add g++ make python3
 
 USER node
@@ -21,7 +21,7 @@ COPY --chown=node:node ./ .
 
 
 # Install deps for examples
-FROM base as published
+FROM base AS published
 
 RUN ./scripts/examples-npm-install
 
@@ -31,7 +31,7 @@ CMD ["npm", "run", "start"]
 
 
 # Compile the package and use it in examples
-FROM published as compiled
+FROM published AS compiled
 
 # use a single prebuild for tests so we don't have to compile it each install
 RUN npm run prebuild:current

@@ -254,12 +254,7 @@ export function otlpSpanExporterFactory(options: Options): SpanExporter {
     'OTEL_EXPORTER_OTLP_PROTOCOL',
   ]);
 
-  let endpoint =
-    options.endpoint ??
-    getEnvValueByPrecedence([
-      'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT',
-      'OTEL_EXPORTER_OTLP_ENDPOINT',
-    ]);
+  let endpoint = options.endpoint;
 
   const accessToken = options.accessToken;
 
@@ -270,7 +265,12 @@ export function otlpSpanExporterFactory(options: Options): SpanExporter {
       );
     }
 
-    if (endpoint === undefined) {
+    const envEndpoint = getEnvValueByPrecedence([
+      'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT',
+      'OTEL_EXPORTER_OTLP_ENDPOINT',
+    ]);
+
+    if (endpoint === undefined && envEndpoint === undefined) {
       endpoint = `https://ingest.${options.realm}.signalfx.com/v2/trace/otlp`;
       protocol = 'http/protobuf';
     } else {
@@ -280,7 +280,7 @@ export function otlpSpanExporterFactory(options: Options): SpanExporter {
     }
   }
 
-  protocol = protocol ?? 'grpc';
+  protocol = protocol ?? 'http/protobuf';
 
   switch (protocol) {
     case 'grpc': {
@@ -341,7 +341,7 @@ export function defaultSpanProcessorFactory(options: Options): SpanProcessor[] {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function defaultPropagatorFactory(options: Options): TextMapPropagator {
+export function defaultPropagatorFactory(_options: Options): TextMapPropagator {
   const envPropagators = getEnvArray('OTEL_PROPAGATORS', [
     'tracecontext',
     'baggage',

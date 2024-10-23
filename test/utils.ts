@@ -122,7 +122,7 @@ export function calledWithExactly(mocked: any, expected: any) {
   assert(match, `Expected call with: ${JSON.stringify(expected)} not found`);
 }
 
-export function calledOnceWithMatch(mocked: any, match: Object) {
+export function calledOnceWithMatch(mocked: any, match: object) {
   assert.strictEqual(
     mocked.mock.calls.length,
     1,

@@ -1,13 +1,11 @@
-version: "3"
 services:
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.50.0
+    image: quay.io/signalfx/splunk-otel-collector:0.111.0
     environment:
+      - SPLUNK_CONFIG: /etc/otel/config.yml
       - SPLUNK_ACCESS_TOKEN
       - SPLUNK_REALM
-    command: ["--config=/etc/otel-collector-config.yml"]
     volumes:
-      - ./collector-config.yml:/etc/otel-collector-config.yml
+      - ./collector.config.yml:/etc/otel/config.yml
     ports:
-      - "9943:9943"   # signalfx
-      - "4317:4317"   # otlp
+      - "4318:4318"   # otlp

@@ -1,10 +1,5 @@
 const { start, stop } = require('@splunk/otel');
-const { diag, DiagConsoleLogger, DiagLogLevel, trace, context } = require('@opentelemetry/api');
-
-// If OTEL_LOG_LEVEL env var is set, configure logger
-if (process.env.OTEL_LOG_LEVEL) {
-  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel[process.env.OTEL_LOG_LEVEL]);
-}
+const { trace, context } = require('@opentelemetry/api');
 
 start({
   // Tracing is enabled by default and is required for profiling
@@ -21,7 +16,7 @@ const doWork = () => {
 
 // setTimeout has to be here because profiling is currently started asyncronously to avoid blocking the runtime.
 // If we didn't we'd run stop before the profiling has started in the background.
-setTimeout(() => {
+setTimeout(async () => {
   const tracer = trace.getTracer('splunk-otel-example-profiling');
   const span = tracer.startSpan('main');
   const spanContext = trace.setSpan(context.active(), span);
@@ -34,5 +29,5 @@ setTimeout(() => {
   span.end();
 
   // Stop profiling to flush the collected samples
-  stop();
+  await stop();
 }, 10);

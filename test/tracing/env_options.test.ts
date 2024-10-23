@@ -33,6 +33,6 @@ test('Tracing: set up with env options', async () => {
 
   const { tracingOptions } = parseOptionsAndConfigureInstrumentations();
   startTracing(tracingOptions);
-  assertTracingPipeline(mocks, url, serviceName, accessToken);
+  assertTracingPipeline(mocks, `${url}/v1/traces`, serviceName, accessToken);
   await stopTracing();
 });

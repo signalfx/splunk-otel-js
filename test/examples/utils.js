@@ -111,14 +111,14 @@ function sortByName(spans) {
 const waitSpans = (count, timeout = 60) => {
   console.error(`Waiting for ${count} spans for ${timeout}s`);
   console.time('waitSpans');
-  const collectorUrl = new URL(process.env.COLLECTOR_URL ?? 'http://localhost:8378');
+  const collectorUrl = new URL(process.env.COLLECTOR_URL ?? 'http://localhost:8378/spans');
   collectorUrl.searchParams.set('count', count);
   collectorUrl.searchParams.set('timeout', timeout);
 
   return fetch(collectorUrl)
     .then((res) => res.text())
     .then((content) => {
-      if (content.match(/timed.*out.*waiting.*spans/)) {
+      if (content.match(/timed.*out.*while.*waiting.*for.*results/)) {
         assert.fail(`Timed out waiting for ${count} spans for ${timeout}s.`);
       }
 

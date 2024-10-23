@@ -21,7 +21,22 @@ function findTestFiles(dir, fileList = []) {
 }
 
 // Find all test files in the ./test directory
-const testFiles = findTestFiles(__dirname);
+let testFiles = findTestFiles(__dirname);
+
+if (process.argv.length > 2) {
+  const patterns = process.argv.slice(2);
+
+  testFiles = testFiles.filter((path) => {
+    for (const pattern of patterns) {
+      if (path.includes(pattern)) {
+        return true;
+      }
+    }
+
+    return false;
+  });
+}
+
 
 const args = [
   '--require',

@@ -17,7 +17,7 @@
 import * as api from '@opentelemetry/api';
 import * as utils from './utils';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
-import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
+import { OTLPMetricExporter as OTLPGrpcMetricExporter } from '@opentelemetry/exporter-metrics-otlp-grpc';
 import { OTLPMetricExporter as OTLPHttpProtoMetricExporter } from '@opentelemetry/exporter-metrics-otlp-proto';
 import { _setDefaultOptions } from '../src/metrics';
 import { ConsoleMetricExporter } from '../src/metrics/ConsoleMetricExporter';
@@ -53,7 +53,7 @@ describe('metrics options', () => {
 
       assert.deepStrictEqual(readers.length, 2);
 
-      assert(readers[0]['_exporter'] instanceof OTLPMetricExporter);
+      assert(readers[0]['_exporter'] instanceof OTLPHttpProtoMetricExporter);
       assert(readers[1]['_exporter'] instanceof ConsoleMetricExporter);
     });
 
@@ -85,27 +85,30 @@ describe('metrics options', () => {
     });
 
     it('is possible to use OTEL_EXPORTER_OTLP_PROTOCOL', () => {
-      process.env.OTEL_EXPORTER_OTLP_PROTOCOL = 'http/protobuf';
-      const options = _setDefaultOptions();
-      const [reader] = options.metricReaderFactory(options);
-      assert(reader['_exporter'] instanceof OTLPHttpProtoMetricExporter);
-    });
-
-    it('prefers OTEL_EXPORTER_OTLP_METRICS_PROTOCOL over OTEL_EXPORTER_OTLP_PROTOCOL', () => {
-      process.env.OTEL_EXPORTER_OTLP_METRICS_PROTOCOL = 'http/protobuf';
       process.env.OTEL_EXPORTER_OTLP_PROTOCOL = 'grpc';
       const options = _setDefaultOptions();
       const [reader] = options.metricReaderFactory(options);
-      assert(reader['_exporter'] instanceof OTLPHttpProtoMetricExporter);
+      assert(reader['_exporter'] instanceof OTLPGrpcMetricExporter);
+    });
+
+    it('prefers OTEL_EXPORTER_OTLP_METRICS_PROTOCOL over OTEL_EXPORTER_OTLP_PROTOCOL', () => {
+      process.env.OTEL_EXPORTER_OTLP_METRICS_PROTOCOL = 'grpc';
+      process.env.OTEL_EXPORTER_OTLP_PROTOCOL = 'http/protobuf';
+      const options = _setDefaultOptions();
+      const [reader] = options.metricReaderFactory(options);
+      assert(reader['_exporter'] instanceof OTLPGrpcMetricExporter);
     });
 
     it('is possible to use OTEL_EXPORTER_OTLP_ENDPOINT', () => {
-      process.env.OTEL_EXPORTER_OTLP_ENDPOINT = 'foobar:4200';
+      process.env.OTEL_EXPORTER_OTLP_ENDPOINT = 'http://foobar:4200';
       const options = _setDefaultOptions();
       const [reader] = options.metricReaderFactory(options);
       const exporter = reader['_exporter'];
-      assert(exporter instanceof OTLPMetricExporter);
-      assert.deepStrictEqual(exporter['_otlpExporter'].url, 'foobar:4200');
+      assert(exporter instanceof OTLPHttpProtoMetricExporter);
+      assert.deepStrictEqual(
+        exporter['_otlpExporter'].url,
+        'http://foobar:4200/v1/metrics'
+      );
     });
   });
 
@@ -164,7 +167,7 @@ describe('metrics options', () => {
     it('warns when realm and endpoint are both set', () => {
       process.env.SPLUNK_REALM = 'us0';
       process.env.SPLUNK_ACCESS_TOKEN = 'abc';
-      process.env.SPLUNK_METRICS_ENDPOINT = 'http://localhost:4317';
+      process.env.SPLUNK_METRICS_ENDPOINT = 'http://localhost:4320';
 
       const options = _setDefaultOptions();
       const [reader] = options.metricReaderFactory(options);
@@ -174,8 +177,11 @@ describe('metrics options', () => {
         'OTLP metric exporter factory: Realm value ignored (full endpoint URL has been specified).';
       assert.equal(logger.warn.mock.calls[0].arguments[0], msg);
 
-      assert(exporter instanceof OTLPMetricExporter);
-      assert.deepStrictEqual(exporter['_otlpExporter'].url, 'localhost:4317');
+      assert(exporter instanceof OTLPHttpProtoMetricExporter);
+      assert.deepStrictEqual(
+        exporter['_otlpExporter'].url,
+        'http://localhost:4320'
+      );
     });
   });
 });
