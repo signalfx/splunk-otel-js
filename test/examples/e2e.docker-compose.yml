@@ -1,7 +1,7 @@
 version: '3.4'
 services:
   collector:
-    image: quay.io/signalfx/splunk-otel-collector:0.50.1
+    image: quay.io/signalfx/splunk-otel-collector:0.111.0
     environment:
       SPLUNK_CONFIG: /etc/otel/config.yml
     volumes:

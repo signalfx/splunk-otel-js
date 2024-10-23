@@ -13,17 +13,17 @@ exporters:
   logging:
   httpsink:
     endpoint: 0.0.0.0:8378
-  logging/debug:
-    loglevel: debug
+  debug:
+    verbosity: detailed
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
-      exporters: [httpsink, logging/debug]
+      exporters: [httpsink, debug]
     metrics:
       receivers: [otlp]
-      exporters: [logging/debug]
+      exporters: [debug]
     logs/profiling:
       receivers: [otlp]
-      exporters: [logging/debug]
+      exporters: [debug]
