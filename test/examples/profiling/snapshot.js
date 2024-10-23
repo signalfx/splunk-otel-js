@@ -1,17 +1,17 @@
 // a console.log from a previous run
 module.exports = [
   {
-    traceId: 'SugyaoARxWUXXGW7OE6nXg==',
-    id: 'B4g4YngKBnM=',
-    startTime: '2022-06-03T13:04:28.087011840Z',
+    traceId: 'F/F3qoc4BVuoI+5xc2e+uA==',
+    id: '/7kIDz0ib94=',
+    startTime: '2024-10-23T15:34:21.116Z',
+    hrStartTime: 1729697661116000000n,
     name: 'main',
     kind: 'internal',
     parentSpanId: undefined,
     parent: undefined,
-    references: undefined,
     status: { code: undefined },
     attributes: {
-      'otel.library.name': 'splunk-otel-example-profiling',
+      'otel.scope.name': 'splunk-otel-example-profiling',
       'span.kind': 'internal'
     }
   }
