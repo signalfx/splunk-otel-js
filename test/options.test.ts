@@ -418,7 +418,8 @@ describe('options', () => {
     it('warns when realm and endpoint are both set', () => {
       process.env.SPLUNK_REALM = 'us0';
       process.env.SPLUNK_ACCESS_TOKEN = 'abc';
-      process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT = 'http://myendpoint:4333';
+      process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT =
+        'http://myendpoint:4333/v1/my-traces';
 
       const options = _setDefaultOptions();
       const exporters = options.spanExporterFactory(options);
@@ -436,7 +437,10 @@ describe('options', () => {
         exporter instanceof OTLPTraceExporter,
         'Expected exporter to be instance of OTLPTraceExporter'
       );
-      assert.deepStrictEqual(exporter.url, 'http://myendpoint:4333');
+      assert.deepStrictEqual(
+        exporter.url,
+        'http://myendpoint:4333/v1/my-traces'
+      );
     });
   });
 
@@ -477,7 +481,7 @@ describe('options', () => {
       assert(Array.isArray(exporters));
       const [exporter] = exporters;
       assert(exporter instanceof OTLPTraceExporter);
-      assert.deepStrictEqual(exporter.url, 'foobar:4200');
+      assert.deepStrictEqual(exporter.url, 'foobar:4200/v1/traces');
     });
 
     it('prefers OTEL_EXPORTER_OTLP_TRACES_ENDPOINT over OTEL_EXPORTER_OTLP_ENDPOINT', () => {

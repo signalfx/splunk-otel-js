@@ -254,12 +254,7 @@ export function otlpSpanExporterFactory(options: Options): SpanExporter {
     'OTEL_EXPORTER_OTLP_PROTOCOL',
   ]);
 
-  let endpoint =
-    options.endpoint ??
-    getEnvValueByPrecedence([
-      'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT',
-      'OTEL_EXPORTER_OTLP_ENDPOINT',
-    ]);
+  let endpoint = options.endpoint;
 
   const accessToken = options.accessToken;
 
@@ -270,7 +265,12 @@ export function otlpSpanExporterFactory(options: Options): SpanExporter {
       );
     }
 
-    if (endpoint === undefined) {
+    const envEndpoint = getEnvValueByPrecedence([
+      'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT',
+      'OTEL_EXPORTER_OTLP_ENDPOINT',
+    ]);
+
+    if (endpoint === undefined && envEndpoint === undefined) {
       endpoint = `https://ingest.${options.realm}.signalfx.com/v2/trace/otlp`;
       protocol = 'http/protobuf';
     } else {
