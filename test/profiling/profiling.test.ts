@@ -61,7 +61,7 @@ describe('profiling', () => {
 
       assert.deepStrictEqual(defaultOtherAttrs, {
         serviceName: '@splunk/otel',
-        endpoint: 'http://localhost:4317',
+        endpoint: 'http://localhost:4318',
         callstackInterval: 1_000,
         collectionDuration: 30_000,
         exporterFactory: defaultExporterFactory,
@@ -107,12 +107,12 @@ describe('profiling', () => {
       let sendCallCount = 0;
       const stacktracesReceived: ProfilingStacktrace[] = [];
       const exporter: ProfilingExporter = {
-        send(cpuProfile: CpuProfile) {
+        async send(cpuProfile: CpuProfile) {
           const { stacktraces } = cpuProfile;
           sendCallCount += 1;
           stacktracesReceived.push(...stacktraces);
         },
-        sendHeapProfile(_profile: HeapProfile) {},
+        async sendHeapProfile(_profile: HeapProfile) {},
       };
 
       // enabling tracing is required for span information to be caught

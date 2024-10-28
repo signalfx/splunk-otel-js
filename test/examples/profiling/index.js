@@ -1,7 +1,6 @@
 const {
   assertSpans,
   logSpanTable,
-  request,
   waitSpans,
 } = require('../utils.js');
 const snapshot = require('./snapshot.js');

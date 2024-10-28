@@ -1,7 +1,6 @@
-version: '3.4'
 services:
   collector:
-    image: quay.io/signalfx/splunk-otel-collector:0.50.1
+    image: quay.io/signalfx/splunk-otel-collector:0.111.0
     environment:
       SPLUNK_CONFIG: /etc/otel/config.yml
     volumes:
@@ -21,7 +20,7 @@ services:
     command: node ./basic
     environment:
       REQ_URL: http://app/hello
-      COLLECTOR_URL: http://collector:8378
+      COLLECTOR_URL: http://collector:8378/spans
     depends_on:
       - app
       - collector

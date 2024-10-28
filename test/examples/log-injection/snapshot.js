@@ -1,17 +1,17 @@
 // a console.log from a previous run
 module.exports = [
   {
-    traceId: 'SugyaoARxWUXXGW7OE6nXg==',
-    id: 'B4g4YngKBnM=',
-    startTime: '2022-06-03T13:04:28.087011840Z',
+    traceId: 'zMEy3eC1iaInGGIWbtULUg==',
+    id: 'X0ohVf0SuXA=',
+    startTime: '2024-10-23T12:20:31.979Z',
+    hrStartTime: 1729686031979000000n,
     name: 'main',
     kind: 'internal',
     parentSpanId: undefined,
     parent: undefined,
-    references: undefined,
     status: { code: undefined },
     attributes: {
-      'otel.library.name': 'splunk-otel-example-log-injection',
+      'otel.scope.name': 'splunk-otel-example-log-injection',
       'span.kind': 'internal'
     }
   }

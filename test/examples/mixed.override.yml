@@ -6,4 +6,4 @@ services:
     command: node ./mixed
     environment:
       REQ_URL: http://app/
-      COLLECTOR_URL: http://collector:8378
+      COLLECTOR_URL: http://collector:8378/spans

@@ -27,7 +27,7 @@ import {
   recordHeapProfilerMetrics,
 } from '../metrics/debug_metrics';
 import { detect as detectResource } from '../resource';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import {
   HeapProfile,
   MemoryProfilingOptions,
@@ -38,7 +38,7 @@ import {
   ProfilingStartOptions,
 } from './types';
 import { ProfilingContextManager } from './ProfilingContextManager';
-import { OTLPProfilingExporter } from './OTLPProfilingExporter';
+import { OtlpHttpProfilingExporter } from './OtlpHttpProfilingExporter';
 import { isTracingContextManagerEnabled } from '../tracing';
 
 export { StartProfilingOptions };
@@ -83,7 +83,7 @@ export function defaultExporterFactory(
   options: ProfilingOptions
 ): ProfilingExporter[] {
   const exporters: ProfilingExporter[] = [
-    new OTLPProfilingExporter({
+    new OtlpHttpProfilingExporter({
       endpoint: options.endpoint,
       callstackInterval: options.callstackInterval,
       resource: options.resource,
@@ -104,7 +104,7 @@ export function startProfiling(options: ProfilingOptions) {
 
   if (extension === undefined) {
     return {
-      stop: () => {},
+      stop: async () => {},
     };
   }
 
@@ -169,7 +169,7 @@ export function startProfiling(options: ProfilingOptions) {
   });
 
   return {
-    stop: () => {
+    stop: async () => {
       if (options.memoryProfilingEnabled) {
         clearInterval(memSamplesCollectInterval);
         extStopMemoryProfiling(extension);
@@ -179,9 +179,17 @@ export function startProfiling(options: ProfilingOptions) {
       const cpuProfile = extStopProfiling(extension);
 
       if (cpuProfile) {
-        for (const exporter of exporters) {
-          exporter.send(cpuProfile);
-        }
+        const sends = exporters.map((e) => e.send(cpuProfile));
+        await Promise.allSettled(sends).then((results) => {
+          for (const result of results) {
+            if (result.status === 'rejected') {
+              diag.error(
+                'Failed sending CPU profile on shutdown',
+                result.reason
+              );
+            }
+          }
+        });
       }
     },
   };
@@ -208,14 +216,14 @@ export function _setDefaultOptions(
     options.endpoint ||
     getNonEmptyEnvVar('SPLUNK_PROFILER_LOGS_ENDPOINT') ||
     getNonEmptyEnvVar('OTEL_EXPORTER_OTLP_ENDPOINT') ||
-    'http://localhost:4317';
+    'http://localhost:4318';
 
   const combinedResource = detectResource();
 
   const serviceName = String(
     options.serviceName ||
       getNonEmptyEnvVar('OTEL_SERVICE_NAME') ||
-      combinedResource.attributes[SemanticResourceAttributes.SERVICE_NAME] ||
+      combinedResource.attributes[ATTR_SERVICE_NAME] ||
       defaultServiceName()
   );
 
@@ -226,7 +234,7 @@ export function _setDefaultOptions(
 
   resource = resource.merge(
     new Resource({
-      [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
+      [ATTR_SERVICE_NAME]: serviceName,
     })
   );
 
