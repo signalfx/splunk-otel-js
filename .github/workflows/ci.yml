@@ -21,6 +21,8 @@ jobs:
             node_api_target: '20.0.0'
           - container: 'node:16.0.0'
             node_api_target: '21.2.0'
+          - container: 'node:16.0.0'
+            node_api_target: '22.0.0'
     container: ${{ matrix.container }}
     steps:
       - name: Checkout
@@ -47,6 +49,8 @@ jobs:
             node_api_target: '20.0.0'
           - container: 'node:16.0.0'
             node_api_target: '21.2.0'
+          - container: 'node:16.0.0'
+            node_api_target: '22.0.0'
     container: ${{ matrix.container }}
     steps:
       - name: Checkout
@@ -67,7 +71,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-2019, macos-12]
-        node_api_target: ['14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0', '20.0.0', '21.2.0']
+        node_api_target: ['14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0', '20.0.0', '21.2.0', '22.0.0']
         include:
           - os: macos-12
             python_version: '3.11'
@@ -131,7 +135,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ['ubuntu-latest', 'macos-latest']
-        nodejs: ['14', '16', '17', '18', '20', '21']
+        nodejs: ['14', '16', '17', '18', '20', '21', '22']
         exclude:
           - os: 'macos-latest'
             nodejs: '14'
@@ -153,6 +157,8 @@ jobs:
             nodejs: '20.12.1'
           - os: 'windows-2019'
             nodejs: '21.7.2'
+          - os: 'windows-2019'
+            nodejs: '22.10.0'
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -178,7 +184,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ['ARM64']
-        nodejs: ['14', '16', '17', '18', '20', '21']
+        nodejs: ['14', '16', '17', '18', '20', '21', '22']
     container: node:${{ matrix.nodejs }}
     steps:
       - name: Checkout
