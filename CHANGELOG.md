@@ -1,5 +1,9 @@
 # Change Log - @splunk/otel
 
+## 2.14.0
+
+- Add Node.js 22 to prebuilds. [#963](https://github.com/signalfx/splunk-otel-js/pull/963)
+
 ## 2.13.0
 
 - Add an optional workaround for Next.js span cardinality issues. Can be enabled by setting `SPLUNK_NEXTJS_FIX_ENABLED` to `true`. [#957](https://github.com/signalfx/splunk-otel-js/pull/957)
