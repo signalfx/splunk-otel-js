@@ -129,7 +129,6 @@ describe('metrics options', () => {
         exporter['_otlpExporter'].url,
         'https://ingest.us0.signalfx.com/v2/datapoint/otlp'
       );
-      //FIXME extract to calledWith utility method
       const msg = `OTLP metric exporter: defaulting protocol to 'http/protobuf' instead of 'grpc' due to realm being defined.`;
       assert.equal(logger.warn.mock.calls[0].arguments[0], msg);
     });
