@@ -19,24 +19,23 @@ import {
   SpanExporter,
   SpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
-import { Instrumentation } from '@opentelemetry/instrumentation';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
 import { getInstrumentations } from '../instrumentations';
 import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 import type * as OtlpGrpc from '@opentelemetry/exporter-trace-otlp-grpc';
 import type * as grpc from '@grpc/grpc-js';
-import { detect as detectResource } from '../resource';
+import { getDetectedResource } from '../resource';
 import {
   defaultServiceName,
   getEnvArray,
   getEnvValueByPrecedence,
   getNonEmptyEnvVar,
   getEnvBoolean,
+  ensureResourcePath,
 } from '../utils';
-import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
-import { diag, Span, TextMapPropagator } from '@opentelemetry/api';
+import { diag, TextMapPropagator } from '@opentelemetry/api';
 import {
   CompositePropagator,
   W3CBaggagePropagator,
@@ -44,82 +43,35 @@ import {
 } from '@opentelemetry/core';
 import { SplunkBatchSpanProcessor } from './SplunkBatchSpanProcessor';
 import { Resource } from '@opentelemetry/resources';
-import type { ResourceFactory } from '../types';
 import { NextJsSpanProcessor } from './NextJsSpanProcessor';
+import type {
+  SpanExporterFactory,
+  StartTracingOptions,
+  TracingOptions,
+} from './types';
 
-type SpanExporterFactory = (options: Options) => SpanExporter | SpanExporter[];
-
-type SpanProcessorFactory = (
-  options: Options
-) => SpanProcessor | SpanProcessor[];
-
-type PropagatorFactory = (options: Options) => TextMapPropagator;
-
-export type CaptureHttpUriParameters = (
-  span: Span,
-  params: Record<string, string | string[] | undefined>
-) => void;
-
-export interface Options {
-  accessToken: string;
-  realm?: string;
-  endpoint?: string;
-  serviceName: string;
-  // Tracing-specific configuration options:
-  captureHttpRequestUriParams: string[] | CaptureHttpUriParameters;
-  instrumentations: (Instrumentation | Instrumentation[])[];
-  propagatorFactory: PropagatorFactory;
-  resourceFactory: ResourceFactory;
-  serverTimingEnabled: boolean;
-  spanExporterFactory: SpanExporterFactory;
-  spanProcessorFactory: SpanProcessorFactory;
-  tracerConfig: NodeTracerConfig;
-}
-
-export const allowedTracingOptions = [
-  'accessToken',
-  'realm',
-  'captureHttpRequestUriParams',
-  'endpoint',
-  'instrumentations',
-  'propagatorFactory',
-  'resourceFactory',
-  'serverTimingEnabled',
-  'serviceName',
-  'spanExporterFactory',
-  'spanProcessorFactory',
-  'tracerConfig',
-];
-
-export function _setDefaultOptions(options: Partial<Options> = {}): Options {
+export function _setDefaultOptions(
+  options: StartTracingOptions = {}
+): TracingOptions {
   process.env.OTEL_SPAN_LINK_COUNT_LIMIT =
     getNonEmptyEnvVar('OTEL_SPAN_LINK_COUNT_LIMIT') ?? '1000';
   process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT =
     getNonEmptyEnvVar('OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT') ?? '12000';
 
-  options.accessToken =
+  const accessToken =
     options.accessToken || getNonEmptyEnvVar('SPLUNK_ACCESS_TOKEN') || '';
 
-  options.realm = options.realm || getNonEmptyEnvVar('SPLUNK_REALM');
+  const realm = options.realm || getNonEmptyEnvVar('SPLUNK_REALM');
 
-  if (options.realm) {
-    if (!options.accessToken) {
+  if (realm) {
+    if (!accessToken) {
       throw new Error(
         'Splunk realm is set, but access token is unset. To send traces to the Observability Cloud, both need to be set'
       );
     }
   }
 
-  if (options.serverTimingEnabled === undefined) {
-    options.serverTimingEnabled = getEnvBoolean(
-      'SPLUNK_TRACE_RESPONSE_HEADER_ENABLED',
-      true
-    );
-  }
-
-  const extraTracerConfig = options.tracerConfig || {};
-
-  const envResource = detectResource();
+  const envResource = getDetectedResource();
 
   const resourceFactory = options.resourceFactory || ((r: Resource) => r);
   let resource = resourceFactory(envResource);
@@ -143,48 +95,36 @@ export function _setDefaultOptions(options: Partial<Options> = {}): Options {
     })
   );
 
+  const extraTracerConfig = options.tracerConfig || {};
   const tracerConfig = {
     resource,
     ...extraTracerConfig,
   };
 
-  if (options.spanExporterFactory === undefined) {
-    options.spanExporterFactory = defaultSpanExporterFactory(options);
-  }
+  const instrumentations = options.instrumentations || getInstrumentations();
 
-  options.spanProcessorFactory =
-    options.spanProcessorFactory || defaultSpanProcessorFactory;
-
-  options.propagatorFactory =
-    options.propagatorFactory || defaultPropagatorFactory;
-
-  if (options.instrumentations === undefined) {
-    options.instrumentations = getInstrumentations();
-  }
-
-  if (options.instrumentations.length === 0) {
+  if (instrumentations.length === 0) {
     diag.warn(
       'No instrumentations set to be loaded. Install an instrumentation package to enable auto-instrumentation.'
     );
   }
 
-  if (options.captureHttpRequestUriParams === undefined) {
-    options.captureHttpRequestUriParams = [];
-  }
-
   return {
-    realm: options.realm,
+    realm,
     endpoint: options.endpoint,
     serviceName: String(resource.attributes[ATTR_SERVICE_NAME]),
-    accessToken: options.accessToken,
-    serverTimingEnabled: options.serverTimingEnabled,
-    captureHttpRequestUriParams: options.captureHttpRequestUriParams,
-    instrumentations: options.instrumentations,
-    tracerConfig: tracerConfig,
-    spanExporterFactory: options.spanExporterFactory,
-    spanProcessorFactory: options.spanProcessorFactory,
-    propagatorFactory: options.propagatorFactory,
-    resourceFactory,
+    accessToken,
+    serverTimingEnabled:
+      options.serverTimingEnabled ||
+      getEnvBoolean('SPLUNK_TRACE_RESPONSE_HEADER_ENABLED', true),
+    captureHttpRequestUriParams: options.captureHttpRequestUriParams || [],
+    instrumentations,
+    tracerConfig,
+    spanExporterFactory:
+      options.spanExporterFactory || defaultSpanExporterFactory(realm),
+    spanProcessorFactory:
+      options.spanProcessorFactory || defaultSpanProcessorFactory,
+    propagatorFactory: options.propagatorFactory || defaultPropagatorFactory,
   };
 }
 
@@ -212,12 +152,12 @@ function areValidExporterTypes(types: string[]): boolean {
   return true;
 }
 
-function getExporterTypes(options: Partial<Options>): ExporterType[] {
+function getExporterTypes(realm: string | undefined): ExporterType[] {
   const traceExporters: string[] = getEnvArray('OTEL_TRACES_EXPORTER', [
     'otlp',
   ]);
 
-  if (options.realm) {
+  if (realm) {
     if (!containsSupportedRealmExporter(traceExporters)) {
       throw new Error(
         'Setting the Splunk realm with an explicit OTEL_TRACES_EXPORTER requires OTEL_TRACES_EXPORTER to be either otlp or be left undefined'
@@ -239,16 +179,16 @@ function getExporterTypes(options: Partial<Options>): ExporterType[] {
 }
 
 export function defaultSpanExporterFactory(
-  options: Partial<Options>
+  realm: string | undefined
 ): SpanExporterFactory {
-  const exporterTypes = getExporterTypes(options);
+  const exporterTypes = getExporterTypes(realm);
   return (options) => {
     const factories = exporterTypes.map((t) => SpanExporterMap[t]);
     return factories.flatMap((factory) => factory(options));
   };
 }
 
-export function otlpSpanExporterFactory(options: Options): SpanExporter {
+export function otlpSpanExporterFactory(options: TracingOptions): SpanExporter {
   let protocol = getEnvValueByPrecedence([
     'OTEL_EXPORTER_OTLP_TRACES_PROTOCOL',
     'OTEL_EXPORTER_OTLP_PROTOCOL',
@@ -302,8 +242,9 @@ export function otlpSpanExporterFactory(options: Options): SpanExporter {
             'X-SF-TOKEN': accessToken,
           }
         : {};
+      const url = ensureResourcePath(endpoint, '/v1/traces');
       return new OTLPHttpTraceExporter({
-        url: endpoint,
+        url,
         headers,
       });
     }
@@ -318,7 +259,9 @@ export function consoleSpanExporterFactory(): SpanExporter {
   return new ConsoleSpanExporter();
 }
 
-export function defaultSpanProcessorFactory(options: Options): SpanProcessor[] {
+export function defaultSpanProcessorFactory(
+  options: TracingOptions
+): SpanProcessor[] {
   let exporters = options.spanExporterFactory(options);
 
   if (!Array.isArray(exporters)) {
@@ -341,7 +284,9 @@ export function defaultSpanProcessorFactory(options: Options): SpanProcessor[] {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function defaultPropagatorFactory(_options: Options): TextMapPropagator {
+export function defaultPropagatorFactory(
+  _options: TracingOptions
+): TextMapPropagator {
   const envPropagators = getEnvArray('OTEL_PROPAGATORS', [
     'tracecontext',
     'baggage',

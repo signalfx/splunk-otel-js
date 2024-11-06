@@ -207,20 +207,38 @@ export function parseLogLevel(value: string | undefined): DiagLogLevel {
   return DiagLogLevel.NONE;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function pick<T extends Record<string, any>, K extends string>(
-  obj: T,
-  keys: readonly K[]
-): { [P in keyof T as P extends K ? P : never]: T[P] } {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const result = {} as any;
-  for (let i = 0; i < keys.length; i++) {
-    const key = keys[i];
-    if (key in obj) {
-      result[key] = obj[key];
-    }
+function constructUrl(url: string): URL | undefined {
+  try {
+    return new URL(url);
+  } catch {
+    return undefined;
   }
-  return result;
+}
+
+export function ensureResourcePath(
+  url: string | undefined,
+  resourcePath: string
+): string | undefined {
+  if (url === undefined) {
+    return undefined;
+  }
+
+  const validUrl = constructUrl(url);
+
+  if (validUrl === undefined) {
+    diag.error(`Invalid URL: ${url}`);
+    return undefined;
+  }
+
+  if (validUrl.pathname === '/') {
+    diag.debug(
+      `Appending path ${resourcePath} to ${url} due to resource path not set.`
+    );
+    validUrl.pathname = resourcePath;
+    return validUrl.toString();
+  }
+
+  return url;
 }
 
 export function listEnvVars() {

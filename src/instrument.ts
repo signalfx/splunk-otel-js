@@ -14,28 +14,11 @@
  * limitations under the License.
  */
 
-import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
-import {
-  defaultServiceName,
-  getEnvArray,
-  getEnvBoolean,
-  getNonEmptyEnvVar,
-  parseLogLevel,
-} from './utils';
+import { defaultServiceName, getEnvArray, getNonEmptyEnvVar } from './utils';
 
-import { startMetrics } from './metrics';
-import { startProfiling } from './profiling';
-import { startTracing } from './tracing';
-import { startLogging } from './logging';
-import { parseOptionsAndConfigureInstrumentations } from './instrumentations';
+import { start } from './start';
 
 function boot() {
-  const logLevel = parseLogLevel(getNonEmptyEnvVar('OTEL_LOG_LEVEL'));
-
-  if (logLevel !== DiagLogLevel.NONE) {
-    diag.setLogger(new DiagConsoleLogger(), logLevel);
-  }
-
   if (getNonEmptyEnvVar('SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES') !== undefined) {
     const limitToPackages = getEnvArray(
       'SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES',
@@ -47,25 +30,7 @@ function boot() {
     }
   }
 
-  const { tracingOptions, loggingOptions, profilingOptions, metricsOptions } =
-    parseOptionsAndConfigureInstrumentations();
-
-  if (getEnvBoolean('SPLUNK_PROFILER_ENABLED', false)) {
-    startProfiling(profilingOptions);
-  }
-
-  startTracing(tracingOptions);
-
-  if (getEnvBoolean('SPLUNK_AUTOMATIC_LOG_COLLECTION', false)) {
-    startLogging(loggingOptions);
-  }
-
-  if (
-    getEnvBoolean('SPLUNK_METRICS_ENABLED', false) ||
-    getEnvBoolean('SPLUNK_PROFILER_MEMORY_ENABLED', false)
-  ) {
-    startMetrics(metricsOptions);
-  }
+  start();
 }
 
 boot();

@@ -23,6 +23,7 @@ import * as assert from 'assert';
 import * as util from 'util';
 import { Writable } from 'stream';
 import { context, trace } from '@opentelemetry/api';
+import { clearResource } from '../src/resource';
 
 const isConfigVarEntry = (key: string) => {
   const lowercased = key.toLowerCase();
@@ -43,6 +44,7 @@ const isConfigVarEntry = (key: string) => {
   between runs.
 */
 export const cleanEnvironment = () => {
+  clearResource();
   Object.keys(process.env)
     .filter(isConfigVarEntry)
     .forEach((key) => {

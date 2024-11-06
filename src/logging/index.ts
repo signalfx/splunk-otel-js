@@ -27,33 +27,18 @@ import {
   ConsoleLogRecordExporter,
 } from '@opentelemetry/sdk-logs';
 
-import { getNonEmptyEnvVar, getEnvArray, defaultServiceName } from '../utils';
-import { detect as detectResource } from '../resource';
+import {
+  getNonEmptyEnvVar,
+  getEnvArray,
+  defaultServiceName,
+  ensureResourcePath,
+} from '../utils';
+import { getDetectedResource } from '../resource';
+import type { LoggingOptions, StartLoggingOptions } from './types';
 
-type LogRecordProcessorFactory = (
-  options: Options
-) => LogRecordProcessor | LogRecordProcessor[];
+export type { LoggingOptions, StartLoggingOptions };
 
-export interface Options {
-  accessToken?: string;
-  realm?: string;
-  serviceName: string;
-  endpoint?: string;
-  resource: Resource;
-  logRecordProcessorFactory: LogRecordProcessorFactory;
-}
-
-export const allowedLoggingOptions = [
-  'accessToken',
-  'realm',
-  'serviceName',
-  'endpoint',
-  'logRecordProcessorFactory',
-];
-
-export type StartLoggingOptions = Partial<Omit<Options, 'resource'>>;
-
-export function startLogging(options: Options) {
+export function startLogging(options: LoggingOptions) {
   const loggerProvider = new LoggerProvider({
     resource: options.resource,
   });
@@ -77,13 +62,15 @@ export function startLogging(options: Options) {
   };
 }
 
-export function _setDefaultOptions(options: StartLoggingOptions = {}): Options {
-  let resource = detectResource();
+export function _setDefaultOptions(
+  options: StartLoggingOptions = {}
+): LoggingOptions {
+  const envResource = getDetectedResource();
 
   const serviceName =
     options.serviceName ||
     getNonEmptyEnvVar('OTEL_SERVICE_NAME') ||
-    resource.attributes[ATTR_SERVICE_NAME];
+    envResource.attributes[ATTR_SERVICE_NAME];
 
   if (!serviceName) {
     diag.warn(
@@ -93,7 +80,8 @@ export function _setDefaultOptions(options: StartLoggingOptions = {}): Options {
     );
   }
 
-  resource = resource.merge(
+  const resourceFactory = options.resourceFactory || ((r: Resource) => r);
+  const resource = resourceFactory(envResource).merge(
     new Resource({
       [ATTR_SERVICE_NAME]: serviceName || defaultServiceName(),
     })
@@ -116,7 +104,7 @@ function areValidExporterTypes(types: string[]): boolean {
   return types.every((t) => SUPPORTED_EXPORTER_TYPES.includes(t));
 }
 
-function createExporters(options: Options) {
+function createExporters(options: LoggingOptions) {
   const logExporters: string[] = getEnvArray('OTEL_LOGS_EXPORTER', ['otlp']);
 
   if (!areValidExporterTypes(logExporters)) {
@@ -131,10 +119,12 @@ function createExporters(options: Options) {
 
   return logExporters.flatMap((type) => {
     switch (type) {
-      case 'otlp':
+      case 'otlp': {
+        const url = ensureResourcePath(options.endpoint, '/v1/logs');
         return new OTLPLogExporter({
-          url: options.endpoint,
+          url,
         });
+      }
       case 'console':
         return new ConsoleLogRecordExporter();
       default:
@@ -144,7 +134,7 @@ function createExporters(options: Options) {
 }
 
 export function defaultlogRecordProcessorFactory(
-  options: Options
+  options: LoggingOptions
 ): LogRecordProcessor[] {
   let exporters = createExporters(options);
 

@@ -25,8 +25,11 @@ import {
 import { OTLPMetricExporter as OTLPHttpProtoMetricExporter } from '@opentelemetry/exporter-metrics-otlp-proto';
 import type * as grpc from '@grpc/grpc-js';
 import type * as OtlpGrpc from '@opentelemetry/exporter-metrics-otlp-grpc';
+import type { MetricsOptions, StartMetricsOptions } from './types';
+
 import {
   defaultServiceName,
+  ensureResourcePath,
   getEnvArray,
   getEnvBoolean,
   getEnvNumber,
@@ -35,30 +38,11 @@ import {
 } from '../utils';
 import { enableDebugMetrics, getDebugMetricsViews } from './debug_metrics';
 import * as util from 'util';
-import { detect as detectResource } from '../resource';
+import { getDetectedResource } from '../resource';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { ConsoleMetricExporter } from './ConsoleMetricExporter';
-import type { ResourceFactory } from '../types';
 
-export type MetricReaderFactory = (options: MetricsOptions) => MetricReader[];
-
-export interface MetricsOptions {
-  accessToken: string;
-  realm?: string;
-  serviceName: string;
-  endpoint?: string;
-  resource: Resource;
-  views?: View[];
-  exportIntervalMillis: number;
-  metricReaderFactory: MetricReaderFactory;
-  debugMetricsEnabled: boolean;
-  runtimeMetricsEnabled: boolean;
-  runtimeMetricsCollectionIntervalMillis: number;
-}
-
-export type StartMetricsOptions = Partial<Omit<MetricsOptions, 'resource'>> & {
-  resourceFactory?: ResourceFactory;
-};
+export type { MetricsOptions, StartMetricsOptions };
 
 interface Counters {
   min: number;
@@ -179,8 +163,9 @@ export function createOtlpExporter(options: MetricsOptions) {
             'X-SF-TOKEN': options.accessToken,
           }
         : {};
+      const url = ensureResourcePath(endpoint, '/v1/metrics');
       return new OTLPHttpProtoMetricExporter({
-        url: endpoint,
+        url,
         headers,
       });
     }
@@ -248,15 +233,12 @@ export function startMetrics(options: MetricsOptions) {
     ? getDebugMetricsViews()
     : [];
 
+  const metricReaders = options.metricReaderFactory(options);
+
   const provider = new MeterProvider({
     resource: options.resource,
     views: [...(options.views || []), ...debugMetricsViews],
-  });
-
-  const metricReaders = options.metricReaderFactory(options);
-
-  metricReaders.forEach((reader) => {
-    provider.addMetricReader(reader);
+    readers: metricReaders,
   });
 
   metrics.setGlobalMeterProvider(provider);
@@ -403,23 +385,23 @@ export function _setDefaultOptions(
     }
   }
 
-  let defaultResource = detectResource();
+  const envResource = getDetectedResource();
 
   const serviceName = String(
     options.serviceName ||
-      defaultResource.attributes[ATTR_SERVICE_NAME] ||
+      envResource.attributes[ATTR_SERVICE_NAME] ||
       defaultServiceName()
-  );
-
-  defaultResource = defaultResource.merge(
-    new Resource({
-      [ATTR_SERVICE_NAME]: serviceName,
-    })
   );
 
   const resourceFactory =
     options.resourceFactory || ((resource: Resource) => resource);
-  const resource = resourceFactory(defaultResource);
+  let resource = resourceFactory(envResource);
+
+  resource = resource.merge(
+    new Resource({
+      [ATTR_SERVICE_NAME]: serviceName,
+    })
+  );
 
   return {
     serviceName,

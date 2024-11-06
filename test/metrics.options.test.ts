@@ -180,7 +180,7 @@ describe('metrics options', () => {
       assert(exporter instanceof OTLPHttpProtoMetricExporter);
       assert.deepStrictEqual(
         exporter['_otlpExporter'].url,
-        'http://localhost:4320'
+        'http://localhost:4320/v1/metrics'
       );
     });
   });
