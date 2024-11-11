@@ -81,14 +81,6 @@ export function _setDefaultOptions(
     getNonEmptyEnvVar('OTEL_SERVICE_NAME') ||
     resource.attributes[ATTR_SERVICE_NAME];
 
-  if (!serviceName) {
-    diag.warn(
-      'service.name attribute is not set, your service is unnamed and will be difficult to identify. ' +
-        'Set your service name using the OTEL_RESOURCE_ATTRIBUTES environment variable. ' +
-        'E.g. OTEL_RESOURCE_ATTRIBUTES="service.name=<YOUR_SERVICE_NAME_HERE>"'
-    );
-  }
-
   resource = resource.merge(
     new Resource({
       [ATTR_SERVICE_NAME]: serviceName || defaultServiceName(),

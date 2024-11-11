@@ -428,15 +428,6 @@ export function listEnvVars() {
       category: 'metrics',
     },
     {
-      name: 'SPLUNK_METRICS_ENDPOINT',
-      property: 'metrics.endpoint',
-      description:
-        'The metrics endpoint. Takes precedence over OTEL_EXPORTER_OTLP_METRICS_ENDPOINT. When SPLUNK_REALM is used, the default value is https://ingest.<realm>.signalfx.com/v2/datapoint/otlp.',
-      default: '',
-      type: 'string',
-      category: 'metrics',
-    },
-    {
       name: 'SPLUNK_PROFILER_ENABLED',
       property: 'profilingEnabled',
       description: 'Activates AlwaysOn CPU profiling.',

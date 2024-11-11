@@ -21,14 +21,11 @@ import {
 } from '@opentelemetry/resources';
 import { VERSION } from '../version';
 
-/**
- * DistroDetector will be used to detect `splunk.distro.version` and other
- * distro-related resource information.
- */
 class DistroDetector {
   detect(_config?: ResourceDetectionConfig): Resource {
     const distroAttributes: ResourceAttributes = {
-      'splunk.distro.version': VERSION,
+      'telemetry.distro.name': 'splunk-nodejs',
+      'telemetry.distro.version': VERSION,
     };
     return new Resource(distroAttributes);
   }

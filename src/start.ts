@@ -38,8 +38,10 @@ import {
   MeterOptions,
   createNoopMeter,
 } from '@opentelemetry/api';
+import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { StartLoggingOptions, startLogging } from './logging';
 import { Resource } from '@opentelemetry/resources';
+import { getDetectedResource } from './resource';
 
 export interface Options {
   accessToken: string;
@@ -92,6 +94,21 @@ export const start = (options: Partial<Options> = {}) => {
 
   if (logLevel !== DiagLogLevel.NONE) {
     diag.setLogger(new DiagConsoleLogger(), logLevel);
+  }
+
+  const envResource = getDetectedResource();
+
+  const serviceName =
+    options.serviceName ||
+    getNonEmptyEnvVar('OTEL_SERVICE_NAME') ||
+    envResource.attributes[ATTR_SERVICE_NAME];
+
+  if (!serviceName) {
+    diag.warn(
+      'service.name attribute is not set, your service is unnamed and will be difficult to identify. ' +
+        'Set your service name using the OTEL_RESOURCE_ATTRIBUTES environment variable. ' +
+        'E.g. OTEL_RESOURCE_ATTRIBUTES="service.name=<YOUR_SERVICE_NAME_HERE>"'
+    );
   }
 
   const { tracingOptions, loggingOptions, profilingOptions, metricsOptions } =
