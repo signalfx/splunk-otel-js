@@ -43,12 +43,11 @@ import { strict as assert } from 'assert';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 import * as os from 'os';
 import * as instrumentations from '../src/instrumentations';
+import type { TracingOptions } from '../src/tracing';
 import {
   _setDefaultOptions,
-  allowedTracingOptions,
   defaultPropagatorFactory,
   defaultSpanProcessorFactory,
-  Options,
 } from '../src/tracing/options';
 import * as utils from './utils';
 import { ContainerDetector } from '@opentelemetry/resource-detector-container';
@@ -153,11 +152,6 @@ describe('options', () => {
           delete options.tracerConfig.resource?.attributes[processAttribute];
         });
 
-      assert.deepStrictEqual(
-        Object.keys(options).sort(),
-        allowedTracingOptions.sort()
-      );
-
       assert.deepStrictEqual(options.realm, undefined);
 
       /*
@@ -245,7 +239,6 @@ describe('options', () => {
       serverTimingEnabled: true,
       captureHttpRequestUriParams: [],
       instrumentations: [testInstrumentation],
-      resourceFactory,
       tracerConfig: {
         resource: new Resource({ attr1: 'value1' }),
         idGenerator: idGenerator,
@@ -515,7 +508,7 @@ function testSpanExporterFactory(): SpanExporter {
   return new InMemorySpanExporter();
 }
 
-function testSpanProcessorFactory(options: Options) {
+function testSpanProcessorFactory(options: TracingOptions) {
   const exporters = options.spanExporterFactory(options);
 
   if (Array.isArray(exporters)) {
@@ -525,6 +518,8 @@ function testSpanProcessorFactory(options: Options) {
   return new SimpleSpanProcessor(exporters);
 }
 
-function testPropagatorFactory(_options: Options): api.TextMapPropagator {
+function testPropagatorFactory(
+  _options: TracingOptions
+): api.TextMapPropagator {
   return new W3CBaggagePropagator();
 }

@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-import { CaptureHttpUriParameters } from '../tracing/options';
-import { Options as TracingOptions } from '../tracing/options';
+import type {
+  CaptureHttpUriParameters,
+  TracingOptions,
+} from '../tracing/types';
 import { IncomingMessage, ServerResponse } from 'http';
 import {
   HttpResponseCustomAttributeFunction,

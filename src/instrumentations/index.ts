@@ -14,26 +14,19 @@
  * limitations under the License.
  */
 
-import { getEnvBoolean, assertNoExtraneousProperties, pick } from '../utils';
-import type { EnvVarKey } from '../types';
-import {
-  allowedTracingOptions,
-  Options as TracingOptions,
-  _setDefaultOptions as setDefaultTracingOptions,
-} from '../tracing/options';
-
-import type { StartLoggingOptions } from '../logging';
-import {
-  allowedLoggingOptions,
-  _setDefaultOptions as setDefaultLoggingOptions,
-} from '../logging';
-import { allowedProfilingOptions } from '../profiling/types';
-import { _setDefaultOptions as setDefaultProfilingOptions } from '../profiling';
-import {
-  allowedMetricsOptions,
-  _setDefaultOptions as setDefaultMetricsOptions,
-} from '../metrics';
+import type { EnvVarKey, ResourceFactory } from '../types';
+import type { TracingOptions, StartTracingOptions } from '../tracing';
+import type { LoggingOptions, StartLoggingOptions } from '../logging';
+import type { MetricsOptions, StartMetricsOptions } from '../metrics';
+import type { ProfilingOptions, StartProfilingOptions } from '../profiling';
 import type { Options as StartOptions } from '../start';
+import type { Instrumentation } from '@opentelemetry/instrumentation';
+
+import { _setDefaultOptions as setDefaultTracingOptions } from '../tracing/options';
+import { _setDefaultOptions as setDefaultLoggingOptions } from '../logging';
+import { _setDefaultOptions as setDefaultProfilingOptions } from '../profiling';
+import { _setDefaultOptions as setDefaultMetricsOptions } from '../metrics';
+import { getEnvBoolean, assertNoExtraneousProperties } from '../utils';
 import { configureGraphQlInstrumentation } from './graphql';
 import { configureHttpInstrumentation } from './http';
 import { configureLogInjection, disableLogSending } from './logging';
@@ -77,7 +70,6 @@ import { ElasticsearchInstrumentation } from './external/elasticsearch';
 import { SequelizeInstrumentation } from './external/sequelize';
 import { TypeormInstrumentation } from './external/typeorm';
 import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici';
-import type { Instrumentation } from '@opentelemetry/instrumentation';
 
 type InstrumentationInfo = {
   shortName: string;
@@ -298,48 +290,98 @@ export function configureInstrumentations(options: Options) {
   }
 }
 
+type CommonOptions = Omit<
+  Partial<StartOptions>,
+  'tracing' | 'profiling' | 'metrics' | 'logging' | 'logLevel'
+>;
+
+function coalesceOptions<
+  T extends {
+    serviceName?: string;
+    endpoint?: string;
+    accessToken?: string;
+    realm?: string;
+    resourceFactory?: ResourceFactory;
+  },
+>(options: T, common: CommonOptions): T {
+  options.serviceName = options.serviceName ?? common.serviceName;
+  options.endpoint = options.endpoint ?? common.endpoint;
+  options.accessToken = options.accessToken ?? common.accessToken;
+  options.resourceFactory = options.resourceFactory ?? common.resource;
+  options.realm = options.realm ?? common.realm;
+  return options;
+}
+
+function setupTracingOptions(
+  common: CommonOptions,
+  tracing: StartTracingOptions
+): TracingOptions {
+  const opts = coalesceOptions(tracing, common);
+  return setDefaultTracingOptions(opts);
+}
+
+function setupProfilingOptions(
+  common: CommonOptions,
+  profiling: StartProfilingOptions
+): ProfilingOptions {
+  const opts = coalesceOptions(profiling, common);
+  return setDefaultProfilingOptions(opts);
+}
+
+function setupMetricsOptions(
+  common: CommonOptions,
+  metrics: StartMetricsOptions
+): MetricsOptions {
+  const opts = coalesceOptions(metrics, common);
+  return setDefaultMetricsOptions(opts);
+}
+
+function setupLoggingOptions(
+  common: CommonOptions,
+  logging: StartLoggingOptions
+): LoggingOptions {
+  const opts = coalesceOptions(logging, common);
+  return setDefaultLoggingOptions(opts);
+}
+
+function signalStartOpt<T extends {}>(options: T | boolean | undefined): T {
+  if (typeof options === 'object') {
+    return options;
+  }
+
+  return {} as T;
+}
+
 export function parseOptionsAndConfigureInstrumentations(
   options: Partial<StartOptions> = {}
 ) {
-  const { metrics, profiling, tracing, logging, ...restOptions } = options;
+  const { metrics, profiling, tracing, logging, ...commonOptions } = options;
 
-  assertNoExtraneousProperties(restOptions, [
+  assertNoExtraneousProperties(commonOptions, [
     'accessToken',
     'endpoint',
+    'realm',
     'serviceName',
     'logLevel',
+    'resource',
   ]);
 
-  const startProfilingOptions = Object.assign(
-    pick(restOptions, allowedProfilingOptions),
-    profiling
+  const tracingOptions = setupTracingOptions(
+    commonOptions,
+    signalStartOpt(tracing)
   );
-
-  assertNoExtraneousProperties(startProfilingOptions, allowedProfilingOptions);
-  const profilingOptions = setDefaultProfilingOptions(startProfilingOptions);
-
-  const startLoggingOptions = Object.assign(
-    pick(restOptions, allowedLoggingOptions),
-    logging
+  const metricsOptions = setupMetricsOptions(
+    commonOptions,
+    signalStartOpt(metrics)
   );
-
-  const loggingOptions = setDefaultLoggingOptions(startLoggingOptions);
-
-  const startTracingOptions = Object.assign(
-    pick(restOptions, allowedTracingOptions),
-    tracing
-  ) as Partial<TracingOptions>;
-
-  assertNoExtraneousProperties(startTracingOptions, allowedTracingOptions);
-  const tracingOptions = setDefaultTracingOptions(startTracingOptions);
-
-  const startMetricsOptions = Object.assign(
-    pick(restOptions, allowedMetricsOptions),
-    metrics
+  const profilingOptions = setupProfilingOptions(
+    commonOptions,
+    signalStartOpt(profiling)
   );
-
-  assertNoExtraneousProperties(startMetricsOptions, allowedMetricsOptions);
-  const metricsOptions = setDefaultMetricsOptions(startMetricsOptions);
+  const loggingOptions = setupLoggingOptions(
+    commonOptions,
+    signalStartOpt(logging)
+  );
 
   configureInstrumentations({
     tracing: tracingOptions,

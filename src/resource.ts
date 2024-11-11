@@ -34,6 +34,8 @@ const detectors = [
   processDetectorSync,
 ];
 
+let detectedResource: Resource | undefined;
+
 export const detect = (): Resource => {
   return detectors
     .map((detector) => {
@@ -48,3 +50,15 @@ export const detect = (): Resource => {
       return acc.merge(resource);
     }, Resource.empty());
 };
+
+export function getDetectedResource(): Resource {
+  if (detectedResource === undefined) {
+    detectedResource = detect();
+  }
+
+  return detectedResource;
+}
+
+export function clearResource() {
+  detectedResource = undefined;
+}

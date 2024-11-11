@@ -49,7 +49,7 @@ const resource = Resource.empty();
 CONFIG.profiling = {
   callstackInterval,
   collectionDuration,
-  resource,
+  resourceFactory: () => resource,
 };
 
 const captureHttpRequestUriParams = 'captureHttpRequestUriParams';
@@ -127,8 +127,8 @@ describe('start', () => {
     };
   });
 
-  afterEach(() => {
-    stop();
+  afterEach(async () => {
+    await stop();
   });
 
   describe('toggling signals', () => {
@@ -287,13 +287,13 @@ describe('start', () => {
     it('does not enable diagnostic logging by default', () => {
       start();
       diag.info('42');
-      assert(logSpy.mock.callCount() === 0);
+      assert.strictEqual(logSpy.mock.callCount(), 0);
     });
 
     it('does not enable diagnostic logging via explicit config', () => {
       start({ logLevel: 'none' });
       diag.info('42');
-      assert(logSpy.mock.callCount() === 0);
+      assert.strictEqual(logSpy.mock.callCount(), 0);
     });
 
     it('is possible to enable diag logging via config', () => {

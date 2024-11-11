@@ -39,12 +39,15 @@ import {
   createNoopMeter,
 } from '@opentelemetry/api';
 import { StartLoggingOptions, startLogging } from './logging';
+import { Resource } from '@opentelemetry/resources';
 
 export interface Options {
   accessToken: string;
   endpoint: string;
+  realm: string;
   serviceName: string;
   logLevel?: LogLevel;
+  resource?: (detectedResource: Resource) => Resource;
   // Signal-specific configuration options:
   metrics: boolean | StartMetricsOptions;
   profiling: boolean | StartProfilingOptions;

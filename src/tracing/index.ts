@@ -34,8 +34,10 @@ import {
   AsyncHooksContextManager,
   AsyncLocalStorageContextManager,
 } from '@opentelemetry/context-async-hooks';
-import { Options } from './options';
+import type { StartTracingOptions, TracingOptions } from './types';
 import { isProfilingContextManagerSet } from '../profiling';
+
+export type { StartTracingOptions, TracingOptions };
 
 /**
  * We disallow calling `startTracing` twice because:
@@ -79,8 +81,7 @@ function setLoadedInstrumentations(
   }
 }
 
-export type StartTracingOptions = Partial<Options>;
-export function startTracing(options: Options): boolean {
+export function startTracing(options: TracingOptions): boolean {
   assert(!isStarted, 'Splunk APM already started');
   isStarted = true;
 

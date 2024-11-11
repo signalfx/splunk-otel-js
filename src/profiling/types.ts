@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Resource } from '@opentelemetry/resources';
+import type { Resource } from '@opentelemetry/resources';
+import type { ResourceFactory } from '../types';
 
 export interface ProfilingStartOptions {
   samplingIntervalMicroseconds: number;
@@ -102,20 +103,13 @@ export interface ProfilingOptions {
   memoryProfilingOptions?: MemoryProfilingOptions;
 }
 
-export type StartProfilingOptions = Partial<ProfilingOptions>;
+export type StartProfilingOptions = Partial<
+  Omit<ProfilingOptions, 'resource'>
+> & {
+  resourceFactory?: ResourceFactory;
+};
 
 export interface ProfilingExporter {
   send(profile: CpuProfile): Promise<void>;
   sendHeapProfile(profile: HeapProfile): Promise<void>;
 }
-
-export const allowedProfilingOptions = [
-  'callstackInterval',
-  'collectionDuration',
-  'endpoint',
-  'resource',
-  'serviceName',
-  'exporterFactory',
-  'memoryProfilingEnabled',
-  'memoryProfilingOptions',
-];

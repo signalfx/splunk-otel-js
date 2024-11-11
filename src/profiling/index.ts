@@ -21,27 +21,28 @@ import {
   getEnvBoolean,
   getEnvNumber,
   getNonEmptyEnvVar,
+  ensureResourcePath,
 } from '../utils';
 import {
   recordCpuProfilerMetrics,
   recordHeapProfilerMetrics,
 } from '../metrics/debug_metrics';
-import { detect as detectResource } from '../resource';
+import { getDetectedResource } from '../resource';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
-import {
+import type {
   HeapProfile,
   MemoryProfilingOptions,
   ProfilingExporter,
   ProfilingExtension,
+  ProfilingStartOptions,
   ProfilingOptions,
   StartProfilingOptions,
-  ProfilingStartOptions,
 } from './types';
 import { ProfilingContextManager } from './ProfilingContextManager';
 import { OtlpHttpProfilingExporter } from './OtlpHttpProfilingExporter';
 import { isTracingContextManagerEnabled } from '../tracing';
 
-export { StartProfilingOptions };
+export type { StartProfilingOptions, ProfilingOptions };
 
 /* The following are wrappers around native functions to give more context to profiling samples. */
 function extStopProfiling(extension: ProfilingExtension) {
@@ -82,9 +83,11 @@ function extCollectCpuProfile(extension: ProfilingExtension) {
 export function defaultExporterFactory(
   options: ProfilingOptions
 ): ProfilingExporter[] {
+  const endpoint =
+    ensureResourcePath(options.endpoint, '/v1/logs') ?? options.endpoint;
   const exporters: ProfilingExporter[] = [
     new OtlpHttpProfilingExporter({
-      endpoint: options.endpoint,
+      endpoint,
       callstackInterval: options.callstackInterval,
       resource: options.resource,
     }),
@@ -210,7 +213,7 @@ export function loadExtension(): ProfilingExtension | undefined {
 }
 
 export function _setDefaultOptions(
-  options: Partial<ProfilingOptions> = {}
+  options: StartProfilingOptions = {}
 ): ProfilingOptions {
   const endpoint =
     options.endpoint ||
@@ -218,21 +221,18 @@ export function _setDefaultOptions(
     getNonEmptyEnvVar('OTEL_EXPORTER_OTLP_ENDPOINT') ||
     'http://localhost:4318';
 
-  const combinedResource = detectResource();
+  const envResource = getDetectedResource();
 
   const serviceName = String(
     options.serviceName ||
       getNonEmptyEnvVar('OTEL_SERVICE_NAME') ||
-      combinedResource.attributes[ATTR_SERVICE_NAME] ||
+      envResource.attributes[ATTR_SERVICE_NAME] ||
       defaultServiceName()
   );
 
-  let resource =
-    options.resource === undefined
-      ? combinedResource
-      : combinedResource.merge(options.resource);
+  const resourceFactory = options.resourceFactory || ((r: Resource) => r);
 
-  resource = resource.merge(
+  const resource = resourceFactory(envResource).merge(
     new Resource({
       [ATTR_SERVICE_NAME]: serviceName,
     })
@@ -255,3 +255,15 @@ export function _setDefaultOptions(
     memoryProfilingOptions: options.memoryProfilingOptions,
   };
 }
+
+export const allowedProfilingOptions = [
+  'callstackInterval',
+  'collectionDuration',
+  'endpoint',
+  'accessToken',
+  'resourceFactory',
+  'serviceName',
+  'exporterFactory',
+  'memoryProfilingEnabled',
+  'memoryProfilingOptions',
+];
