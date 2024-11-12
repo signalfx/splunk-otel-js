@@ -233,7 +233,7 @@ export function otlpSpanExporterFactory(options: TracingOptions): SpanExporter {
         ? {
             'X-SF-TOKEN': accessToken,
           }
-        : {};
+        : undefined;
       const url = ensureResourcePath(endpoint, '/v1/traces');
       return new OTLPHttpTraceExporter({
         url,

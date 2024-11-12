@@ -106,7 +106,7 @@ describe('metrics options', () => {
       const exporter = reader['_exporter'];
       assert(exporter instanceof OTLPHttpProtoMetricExporter);
       assert.deepStrictEqual(
-        exporter['_otlpExporter'].url,
+        utils.exporterUrl(exporter),
         'http://foobar:4200/v1/metrics'
       );
     });
@@ -126,7 +126,7 @@ describe('metrics options', () => {
 
       assert(exporter instanceof OTLPHttpProtoMetricExporter);
       assert.deepStrictEqual(
-        exporter['_otlpExporter'].url,
+        utils.exporterUrl(exporter),
         'https://ingest.us0.signalfx.com/v2/datapoint/otlp'
       );
       const msg = `OTLP metric exporter: defaulting protocol to 'http/protobuf' instead of 'grpc' due to realm being defined.`;
@@ -151,14 +151,12 @@ describe('metrics options', () => {
       assert(exporter instanceof OTLPHttpProtoMetricExporter);
 
       assert.deepStrictEqual(
-        exporter._otlpExporter['_transport']['_transport']['_parameters'][
-          'headers'
-        ]['X-SF-TOKEN'],
+        utils.exporterHeaders(exporter)['X-SF-TOKEN'],
         'abc'
       );
 
       assert.deepStrictEqual(
-        exporter['_otlpExporter'].url,
+        utils.exporterUrl(exporter),
         'https://ingest.eu0.signalfx.com/v2/datapoint/otlp'
       );
     });
@@ -178,7 +176,7 @@ describe('metrics options', () => {
 
       assert(exporter instanceof OTLPHttpProtoMetricExporter);
       assert.deepStrictEqual(
-        exporter['_otlpExporter'].url,
+        utils.exporterUrl(exporter),
         'http://localhost:4320/v1/metrics'
       );
     });

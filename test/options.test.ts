@@ -358,7 +358,7 @@ describe('options', () => {
       const [exporter] = exporters;
       assert(exporter instanceof OTLPTraceExporter);
       assert.deepStrictEqual(
-        exporter.url,
+        utils.exporterUrl(exporter),
         `https://ingest.us0.signalfx.com/v2/trace/otlp`
       );
     });
@@ -386,7 +386,7 @@ describe('options', () => {
       const [exporter] = exporters;
       assert(exporter instanceof OTLPTraceExporter);
       assert.deepStrictEqual(
-        exporter.url,
+        utils.exporterUrl(exporter),
         'https://ingest.us0.signalfx.com/v2/trace/otlp'
       );
       const oneLogMatches = logger.warn.mock.calls.some((call) =>
@@ -420,7 +420,7 @@ describe('options', () => {
         'Expected exporter to be instance of OTLPTraceExporter'
       );
       assert.deepStrictEqual(
-        exporter.url,
+        utils.exporterUrl(exporter),
         'http://myendpoint:4333/v1/my-traces'
       );
     });
@@ -463,7 +463,10 @@ describe('options', () => {
       assert(Array.isArray(exporters));
       const [exporter] = exporters;
       assert(exporter instanceof OTLPTraceExporter);
-      assert.deepStrictEqual(exporter.url, 'foobar:4200/v1/traces');
+      assert.deepStrictEqual(
+        utils.exporterUrl(exporter),
+        'foobar:4200/v1/traces'
+      );
     });
 
     it('prefers OTEL_EXPORTER_OTLP_TRACES_ENDPOINT over OTEL_EXPORTER_OTLP_ENDPOINT', () => {
@@ -474,7 +477,7 @@ describe('options', () => {
       assert(Array.isArray(exporters));
       const [exporter] = exporters;
       assert(exporter instanceof OTLPTraceExporter);
-      assert.deepStrictEqual(exporter.url, 'barfoo:2400');
+      assert.deepStrictEqual(utils.exporterUrl(exporter), 'barfoo:2400');
     });
   });
 });

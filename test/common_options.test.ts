@@ -18,6 +18,7 @@ import { describe, it } from 'node:test';
 import { strict as assert } from 'assert';
 import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
 import { Resource } from '@opentelemetry/resources';
+import { exporterUrl } from './utils';
 
 describe('common options', () => {
   it('passes resource creation function to signals', () => {
@@ -118,19 +119,25 @@ describe('common options', () => {
         endpoint: 'http://localhost:4318',
       });
 
-    const traceUrl = tracingOptions.spanExporterFactory(tracingOptions)[0].url;
-    assert.strictEqual(traceUrl, 'http://localhost:4318/v1/traces');
+    const spanExporter = tracingOptions.spanExporterFactory(tracingOptions)[0];
+    assert.strictEqual(
+      exporterUrl(spanExporter),
+      'http://localhost:4318/v1/traces'
+    );
 
-    const metricsUrl =
-      metricsOptions.metricReaderFactory(metricsOptions)[0]['_exporter'][
-        '_otlpExporter'
-      ].url;
-    assert.strictEqual(metricsUrl, 'http://localhost:4318/v1/metrics');
+    const metricsExporter =
+      metricsOptions.metricReaderFactory(metricsOptions)[0]['_exporter'];
+    assert.strictEqual(
+      exporterUrl(metricsExporter),
+      'http://localhost:4318/v1/metrics'
+    );
 
-    const logsUrl =
-      loggingOptions.logRecordProcessorFactory(loggingOptions)[0]['_exporter']
-        .url;
-    assert.strictEqual(logsUrl, 'http://localhost:4318/v1/logs');
+    const logsExporter =
+      loggingOptions.logRecordProcessorFactory(loggingOptions)[0]['_exporter'];
+    assert.strictEqual(
+      exporterUrl(logsExporter),
+      'http://localhost:4318/v1/logs'
+    );
 
     const profilingUrl =
       profilingOptions.exporterFactory(profilingOptions)[0]['_endpoint'];

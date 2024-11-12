@@ -68,7 +68,7 @@ interface NativeCounters {
   };
 }
 
-const typedKeys = <T extends {}>(obj: T): (keyof T)[] =>
+const typedKeys = <T extends object>(obj: T): (keyof T)[] =>
   Object.keys(obj) as (keyof T)[];
 
 interface CountersExtension {
@@ -167,7 +167,7 @@ export function createOtlpExporter(options: MetricsOptions) {
         ? {
             'X-SF-TOKEN': options.accessToken,
           }
-        : {};
+        : undefined;
       const url = ensureResourcePath(endpoint, '/v1/metrics');
       return new OTLPHttpProtoMetricExporter({
         url,

@@ -23,6 +23,7 @@ import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { ProxyTracerProvider } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
+import { exporterHeaders, exporterUrl } from '../utils';
 
 export function setupMocks() {
   const addSpanProcessorMock = mock.method(
@@ -55,14 +56,9 @@ export function assertTracingPipeline(
     provider.resource.attributes[ATTR_SERVICE_NAME],
     serviceName
   );
-  assert.strictEqual(exporter.url, exportURL);
+  assert.strictEqual(exporterUrl(exporter), exportURL);
 
   if (accessToken) {
-    assert.equal(
-      exporter['_transport']['_transport']['_parameters']['headers'][
-        'X-SF-TOKEN'
-      ],
-      accessToken
-    );
+    assert.equal(exporterHeaders(exporter)['X-SF-TOKEN'], accessToken);
   }
 }

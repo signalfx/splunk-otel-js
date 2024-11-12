@@ -305,7 +305,7 @@ export class TypeormInstrumentation extends InstrumentationBase<TypeormInstrumen
           try {
             attributes[ExtendedDatabaseAttribute.DB_STATEMENT_PARAMETERS] =
               JSON.stringify(parameters);
-          } catch (err) {
+          } catch {
             /* */
           }
         }
@@ -341,7 +341,7 @@ export class TypeormInstrumentation extends InstrumentationBase<TypeormInstrumen
       statement = statement.trim();
       try {
         operation = statement.split(' ')[0].toUpperCase();
-      } catch (e) {
+      } catch {
         /* */
       }
     }
@@ -459,7 +459,7 @@ const buildStatement = (func: Function, args: any[]) => {
         statement[pName] = args[i];
         return;
       }
-    } catch (_err) {
+    } catch {
       /* */
     }
     if (value?.name) {

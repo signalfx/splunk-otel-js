@@ -344,7 +344,7 @@ function setupLoggingOptions(
   return setDefaultLoggingOptions(opts);
 }
 
-function signalStartOpt<T extends {}>(options: T | boolean | undefined): T {
+function signalStartOpt<T extends object>(options: T | boolean | undefined): T {
   if (typeof options === 'object') {
     return options;
   }
