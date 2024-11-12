@@ -68,12 +68,6 @@ const assertContainerId = (containerIdAttr) => {
     `${containerIdAttr} is not an hex string`
   );
 };
-/*
-  service.name attribute is not set, your service is unnamed and will be difficult to identify.
-  Set your service name using the OTEL_RESOURCE_ATTRIBUTES environment variable.
-  E.g. OTEL_RESOURCE_ATTRIBUTES="service.name=<YOUR_SERVICE_NAME_HERE>"
-*/
-const MATCH_SERVICE_NAME_WARNING = /service\.name.*not.*set/i;
 
 describe('options', () => {
   let logger;
@@ -111,9 +105,12 @@ describe('options', () => {
     it('has expected defaults', () => {
       const options = _setDefaultOptions();
 
-      assertVersion(
-        options.tracerConfig.resource?.attributes['splunk.distro.version']
-      );
+      const resAttrs =
+        options.tracerConfig.resource?.attributes || Resource.empty();
+
+      assertVersion(resAttrs['telemetry.distro.version']);
+
+      assert.strictEqual(resAttrs['telemetry.distro.name'], 'splunk-nodejs');
 
       const expectedAttributes = new Set([
         ATTR_HOST_ARCH,
@@ -124,27 +121,22 @@ describe('options', () => {
         ATTR_PROCESS_PID,
         ATTR_PROCESS_RUNTIME_NAME,
         ATTR_PROCESS_RUNTIME_VERSION,
-        'splunk.distro.version',
+        'telemetry.distro.version',
+        'telemetry.distro.name',
       ]);
 
       expectedAttributes.forEach((processAttribute) => {
-        assert(
-          options.tracerConfig.resource?.attributes[processAttribute],
-          `${processAttribute} missing`
-        );
+        assert(resAttrs[processAttribute], `${processAttribute} missing`);
       });
 
-      assert.deepStrictEqual(
-        options.tracerConfig.resource?.attributes[ATTR_SERVICE_NAME],
-        '@splunk/otel'
-      );
+      assert.deepStrictEqual(resAttrs[ATTR_SERVICE_NAME], '@splunk/otel');
 
       // Container ID is checked in a different test,
       // this avoids collisions with stubbing fs methods.
-      delete options.tracerConfig.resource.attributes[ATTR_CONTAINER_ID];
+      delete resAttrs[ATTR_CONTAINER_ID];
 
       // resource attributes for process, host and os are different at each run, iterate through them, make sure they exist and then delete
-      Object.keys(options.tracerConfig.resource.attributes)
+      Object.keys(resAttrs)
         .filter((attribute) => {
           return expectedAttributes.has(attribute);
         })
@@ -184,9 +176,6 @@ describe('options', () => {
       const [exporter] = exporters;
 
       assert(exporter instanceof OTLPTraceExporter);
-
-      const logMsg = logger.warn.mock.calls[0].arguments[0];
-      assert(MATCH_SERVICE_NAME_WARNING.test(logMsg));
     });
 
     it('reads the container when setting default options', async () => {

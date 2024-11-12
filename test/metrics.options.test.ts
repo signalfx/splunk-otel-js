@@ -166,7 +166,7 @@ describe('metrics options', () => {
     it('warns when realm and endpoint are both set', () => {
       process.env.SPLUNK_REALM = 'us0';
       process.env.SPLUNK_ACCESS_TOKEN = 'abc';
-      process.env.SPLUNK_METRICS_ENDPOINT = 'http://localhost:4320';
+      process.env.OTEL_EXPORTER_OTLP_ENDPOINT = 'http://localhost:4320';
 
       const options = _setDefaultOptions();
       const [reader] = options.metricReaderFactory(options);

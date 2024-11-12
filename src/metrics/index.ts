@@ -132,7 +132,12 @@ export function createOtlpExporter(options: MetricsOptions) {
       );
     }
 
-    if (options.endpoint === undefined) {
+    const envEndpoint = getEnvValueByPrecedence([
+      'OTEL_EXPORTER_OTLP_METRICS_ENDPOINT',
+      'OTEL_EXPORTER_OTLP_ENDPOINT',
+    ]);
+
+    if (endpoint === undefined && envEndpoint === undefined) {
       endpoint = `https://ingest.${options.realm}.signalfx.com/v2/datapoint/otlp`;
       protocol = 'http/protobuf';
     } else {
@@ -366,9 +371,6 @@ export function _setDefaultOptions(
   const accessToken =
     options.accessToken || getNonEmptyEnvVar('SPLUNK_ACCESS_TOKEN') || '';
 
-  const endpoint =
-    options.endpoint || getNonEmptyEnvVar('SPLUNK_METRICS_ENDPOINT');
-
   const realm = options.realm || getNonEmptyEnvVar('SPLUNK_REALM') || '';
 
   if (realm) {
@@ -408,7 +410,7 @@ export function _setDefaultOptions(
     accessToken,
     realm,
     resource,
-    endpoint,
+    endpoint: options.endpoint,
     views: options.views,
     metricReaderFactory:
       options.metricReaderFactory ?? defaultMetricReaderFactory,

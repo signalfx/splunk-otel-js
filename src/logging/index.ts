@@ -18,7 +18,6 @@ import * as util from 'util';
 import * as logsAPI from '@opentelemetry/api-logs';
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
 import { Resource } from '@opentelemetry/resources';
-import { diag } from '@opentelemetry/api';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import {
   LoggerProvider,
@@ -71,14 +70,6 @@ export function _setDefaultOptions(
     options.serviceName ||
     getNonEmptyEnvVar('OTEL_SERVICE_NAME') ||
     envResource.attributes[ATTR_SERVICE_NAME];
-
-  if (!serviceName) {
-    diag.warn(
-      'service.name attribute for logging is not set, your service is unnamed and will be difficult to identify. ' +
-        'Set your service name using the OTEL_RESOURCE_ATTRIBUTES environment variable. ' +
-        'E.g. OTEL_RESOURCE_ATTRIBUTES="service.name=<YOUR_SERVICE_NAME_HERE>"'
-    );
-  }
 
   const resourceFactory = options.resourceFactory || ((r: Resource) => r);
   const resource = resourceFactory(envResource).merge(

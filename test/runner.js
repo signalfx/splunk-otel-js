@@ -42,6 +42,8 @@ const args = [
   '--require',
   'ts-node/register/transpile-only',
   '--test',
+  '--test-reporter',
+  'spec',
   ...testFiles,
 ];
 

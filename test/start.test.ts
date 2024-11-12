@@ -269,18 +269,21 @@ describe('start', () => {
   describe('diagnostic logging', () => {
     let logSpy;
     let infoSpy;
+    let warnSpy;
     let debugSpy;
 
     beforeEach(() => {
       utils.cleanEnvironment();
       logSpy = mock.method(console, 'log');
       infoSpy = mock.method(console, 'info');
+      warnSpy = mock.method(console, 'warn');
       debugSpy = mock.method(console, 'debug');
     });
 
     afterEach(() => {
       logSpy.mock.resetCalls();
       infoSpy.mock.resetCalls();
+      warnSpy.mock.resetCalls();
       debugSpy.mock.resetCalls();
     });
 
@@ -314,6 +317,16 @@ describe('start', () => {
       start({ logLevel: 'info' });
       diag.debug('42');
       assert(debugSpy.mock.callCount() === 0);
+    });
+
+    it('logs a warning when service name is not set', () => {
+      start({ logLevel: 'info' });
+      utils.calledWithExactly(
+        warnSpy,
+        'service.name attribute is not set, your service is unnamed and will be difficult to identify. ' +
+          'Set your service name using the OTEL_RESOURCE_ATTRIBUTES environment variable. ' +
+          'E.g. OTEL_RESOURCE_ATTRIBUTES="service.name=<YOUR_SERVICE_NAME_HERE>"'
+      );
     });
   });
 });
