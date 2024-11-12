@@ -29,6 +29,8 @@ module.exports = {
     ],
     "@typescript-eslint/no-unused-vars": ["error", {"argsIgnorePattern": "^_", "args": "after-used"}],
     "@typescript-eslint/no-inferrable-types": ["error", { ignoreProperties: true }],
+    "@typescript-eslint/no-unsafe-function-type": "off",
+    "@typescript-eslint/no-require-imports": "off",
     "arrow-parens": ["error", "always"],
     "prettier/prettier": ["error", {
       "singleQuote": true,

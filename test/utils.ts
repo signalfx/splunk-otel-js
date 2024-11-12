@@ -24,6 +24,11 @@ import * as util from 'util';
 import { Writable } from 'stream';
 import { context, trace } from '@opentelemetry/api';
 import { clearResource } from '../src/resource';
+// eslint bugs and reports these as extraneous even though instanceof is used
+// eslint-disable-next-line n/no-extraneous-import
+import { OTLPExporterNodeBase } from '@opentelemetry/otlp-exporter-base';
+// eslint-disable-next-line n/no-extraneous-import
+import { OTLPMetricExporterBase } from '@opentelemetry/exporter-metrics-otlp-http';
 
 const isConfigVarEntry = (key: string) => {
   const lowercased = key.toLowerCase();
@@ -39,9 +44,6 @@ const isConfigVarEntry = (key: string) => {
   To be used in tests to make sure:
   1. that we don't depend on the actual environment in the tests.
   2. there are no leaking setup between tests;
-
-  An alternative would be to sinon.stub all relevant options and restore them
-  between runs.
 */
 export const cleanEnvironment = () => {
   clearResource();
@@ -135,4 +137,31 @@ export function calledOnceWithMatch(mocked: any, match: object) {
   for (const key in match) {
     assert.deepEqual(callArgs[key], match[key], `key ${key} does not match`);
   }
+}
+
+export function exporterUrl(exporter: any) {
+  if (exporter instanceof OTLPExporterNodeBase) {
+    return exporter['_transport']['_transport']['_parameters'].url;
+  }
+
+  if (exporter instanceof OTLPMetricExporterBase) {
+    return exporter['_otlpExporter']['_transport']['_transport']['_parameters']
+      .url;
+  }
+
+  return undefined;
+}
+
+export function exporterHeaders(exporter: any) {
+  if (exporter instanceof OTLPExporterNodeBase) {
+    return exporter['_transport']['_transport']['_parameters']['headers'];
+  }
+
+  if (exporter instanceof OTLPMetricExporterBase) {
+    return exporter['_otlpExporter']['_transport']['_transport']['_parameters'][
+      'headers'
+    ];
+  }
+
+  return {};
 }
