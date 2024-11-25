@@ -61,7 +61,7 @@
   "devDependencies": {
     "@commitlint/cli": "^19.3.0",
     "@commitlint/config-conventional": "^19.2.2",
-    "@elastic/elasticsearch": "^7.17.11",
+    "@elastic/elasticsearch": "^8.16.2",
     "@types/bunyan": "1.8.11",
     "@types/semver": "^7.5.0",
     "@typescript-eslint/eslint-plugin": "^8.14.0",
