@@ -15,6 +15,7 @@
  */
 import * as util from 'util';
 import {
+  AlwaysOnSampler,
   ConsoleSpanExporter,
   SpanExporter,
   SpanProcessor,
@@ -49,6 +50,18 @@ import type {
   StartTracingOptions,
   TracingOptions,
 } from './types';
+import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
+
+function defaultSampler(config: NodeTracerConfig) {
+  if (
+    config.sampler === undefined &&
+    getNonEmptyEnvVar('OTEL_TRACES_SAMPLER') === undefined
+  ) {
+    return new AlwaysOnSampler();
+  }
+
+  return undefined;
+}
 
 export function _setDefaultOptions(
   options: StartTracingOptions = {}
@@ -88,8 +101,11 @@ export function _setDefaultOptions(
   );
 
   const extraTracerConfig = options.tracerConfig || {};
+
+  const sampler = defaultSampler(extraTracerConfig);
   const tracerConfig = {
     resource,
+    sampler,
     ...extraTracerConfig,
   };
 

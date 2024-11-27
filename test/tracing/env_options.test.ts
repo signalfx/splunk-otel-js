@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
+import { strict as assert } from 'assert';
 import { test } from 'node:test';
 import { assertTracingPipeline, setupMocks } from './common';
 
 import { parseOptionsAndConfigureInstrumentations } from '../../src/instrumentations';
 import { startTracing, stopTracing } from '../../src/tracing';
+import { trace } from '@opentelemetry/api';
+import { ParentBasedSampler } from '@opentelemetry/sdk-trace-base';
 
 test('Tracing: set up with env options', async () => {
   const mocks = setupMocks();
@@ -30,9 +33,14 @@ test('Tracing: set up with env options', async () => {
   process.env.OTEL_EXPORTER_OTLP_ENDPOINT = url;
   process.env.OTEL_SERVICE_NAME = serviceName;
   process.env.SPLUNK_ACCESS_TOKEN = accessToken;
+  process.env.OTEL_TRACES_SAMPLER = 'parentbased_always_on';
 
   const { tracingOptions } = parseOptionsAndConfigureInstrumentations();
   startTracing(tracingOptions);
   assertTracingPipeline(mocks, `${url}/v1/traces`, serviceName, accessToken);
+
+  const provider = trace.getTracerProvider();
+  assert(provider.getTracer('test')['_sampler'] instanceof ParentBasedSampler);
+
   await stopTracing();
 });
