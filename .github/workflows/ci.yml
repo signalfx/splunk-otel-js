@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        container: ['node:14.0.0']
+        container: ['node:16.0.0']
         node_api_target: ['18.0.0']
         include:
           - container: 'node:16.0.0'
@@ -42,7 +42,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        container: ['node:14.0.0']
+        container: ['node:16.0.0']
         node_api_target: ['18.0.0']
         include:
           - container: 'node:16.0.0'

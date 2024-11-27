@@ -37,6 +37,7 @@ import {
   SimpleSpanProcessor,
   SpanExporter,
   InMemorySpanExporter,
+  AlwaysOffSampler,
 } from '@opentelemetry/sdk-trace-base';
 
 import { strict as assert } from 'assert';
@@ -212,6 +213,7 @@ describe('options', () => {
       instrumentations: [testInstrumentation],
       tracerConfig: {
         resource: new Resource({ attr1: 'value1' }),
+        sampler: new AlwaysOffSampler(),
         idGenerator: idGenerator,
       },
       resourceFactory,
@@ -230,6 +232,7 @@ describe('options', () => {
       instrumentations: [testInstrumentation],
       tracerConfig: {
         resource: new Resource({ attr1: 'value1' }),
+        sampler: new AlwaysOffSampler(),
         idGenerator: idGenerator,
       },
       spanExporterFactory: testSpanExporterFactory,

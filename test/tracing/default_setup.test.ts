@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
+import { strict as assert } from 'assert';
 import { test } from 'node:test';
 import { assertTracingPipeline, setupMocks } from './common';
 
 import { parseOptionsAndConfigureInstrumentations } from '../../src/instrumentations';
 import { startTracing, stopTracing } from '../../src/tracing';
+import { trace } from '@opentelemetry/api';
+import { AlwaysOnSampler } from '@opentelemetry/sdk-trace-base';
 
 test('Tracing: set up with defaults', async () => {
   const mocks = setupMocks();
@@ -29,5 +32,9 @@ test('Tracing: set up with defaults', async () => {
     'http://localhost:4318/v1/traces',
     '@splunk/otel'
   );
+
+  const provider = trace.getTracerProvider();
+  assert(provider.getTracer('test')['_sampler'] instanceof AlwaysOnSampler);
+
   await stopTracing();
 });
