@@ -7,8 +7,6 @@ permissions: read-all
 env:
   # https://github.com/actions/checkout/issues/1590
   ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
-  ACTIONS_RUNNER_FORCED_INTERNAL_NODE_VERSION: node16
-  ACTIONS_RUNNER_FORCE_ACTIONS_NODE_VERSION: node16
 
 jobs:
   prebuilds-linux:
@@ -16,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        container: ['node:14.0.0']
+        container: ['node:14']
         node_api_target: ['14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0']
         include:
           - container: 'node:16.0.0'
@@ -27,12 +25,6 @@ jobs:
             node_api_target: '22.0.0'
     container: ${{ matrix.container }}
     steps:
-      - name: Fix checkout
-        run: |
-          echo "ACTIONS_RUNNER_FORCED_INTERNAL_NODE_VERSION=node16" >> /home/runner/actions-runner/.env
-          echo "ACTIONS_RUNNER_FORCE_ACTIONS_NODE_VERSION=node16" >> /home/runner/actions-runner/.env
-          which env.sh
-          systemctl restart github-actions-runner.service
       - name: Checkout
         uses: actions/checkout@v4
       - uses: actions/setup-node@v3
@@ -50,7 +42,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        container: ['node:14.0.0']
+        container: ['node:14']
         node_api_target: ['14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0']
         include:
           - container: 'node:16.0.0'
