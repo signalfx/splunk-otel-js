@@ -27,6 +27,13 @@ jobs:
             node_api_target: '22.0.0'
     container: ${{ matrix.container }}
     steps:
+      - name: Fix checkout
+        run: |
+          cat /home/runner/actions-runner/.env
+          echo "ACTIONS_RUNNER_FORCED_INTERNAL_NODE_VERSION=node16" >> /home/runner/actions-runner/.env
+          echo "ACTIONS_RUNNER_FORCE_ACTIONS_NODE_VERSION=node16" >> /home/runner/actions-runner/.env
+          cat /home/runner/actions-runner/.env
+          which env.sh
       - name: Checkout
         uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -55,10 +62,6 @@ jobs:
             node_api_target: '22.0.0'
     container: ${{ matrix.container }}
     steps:
-      - name: Fix checkout
-        run: |
-          cat /home/runner/actions-runner/.env
-          which env.sh
       - name: Checkout
         uses: actions/checkout@v3
       - uses: actions/setup-node@v3
