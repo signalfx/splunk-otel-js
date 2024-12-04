@@ -61,14 +61,11 @@ describe('tracing:otlp', () => {
     const exporter = processor['_exporter'];
     assert(exporter instanceof OTLPTraceExporter);
 
-    assert.deepEqual(exporter.url, exportURL);
+    assert.deepEqual(utils.exporterUrl(exporter), exportURL);
 
     if (accessToken) {
       // gRPC not yet supported in ingest
-      assert.equal(
-        exporter['_transport']['_parameters']['metadata']().get('x-sf-token'),
-        accessToken
-      );
+      assert.equal(utils.exporterHeaders(exporter)['x-sf-token'], accessToken);
     }
   }
 

@@ -23,6 +23,13 @@ import * as assert from 'assert';
 import * as util from 'util';
 import { Writable } from 'stream';
 import { context, trace } from '@opentelemetry/api';
+// eslint bugs and reports these as extraneous even though instanceof is used
+// eslint-disable-next-line n/no-extraneous-import
+import { OTLPExporterNodeBase } from '@opentelemetry/otlp-exporter-base';
+import { OTLPTraceExporter as OTLPGrpcTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
+import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
+// eslint-disable-next-line n/no-extraneous-import
+import { OTLPMetricExporterBase } from '@opentelemetry/exporter-metrics-otlp-http';
 
 const isConfigVarEntry = (key) => {
   const lowercased = key.toLowerCase();
@@ -105,4 +112,44 @@ export function assertInjection(
       `Invalid value for "${key}": ${util.inspect(stream.record[key])}`
     );
   }
+}
+
+export function exporterUrl(exporter: any) {
+  if (exporter instanceof OTLPGrpcTraceExporter) {
+    const transport = exporter['_transport'];
+    return transport['_parameters'].address;
+  }
+
+  if (exporter instanceof OTLPHttpTraceExporter) {
+    return exporter['_transport']['_transport']['_parameters'].url;
+  }
+
+  if (exporter instanceof OTLPMetricExporterBase) {
+    const transport = exporter['_otlpExporter']['_transport'];
+    if (transport['_parameters']) {
+      return transport['_parameters'].address;
+    }
+
+    return transport['_transport']['_parameters'].url;
+  }
+
+  return undefined;
+}
+
+export function exporterHeaders(exporter: any) {
+  if (exporter instanceof OTLPHttpTraceExporter) {
+    return exporter['_transport']['_transport']['_parameters']['headers'];
+  }
+
+  if (exporter instanceof OTLPGrpcTraceExporter) {
+    return exporter['_transport']['_parameters'].metadata().toJSON();
+  }
+
+  if (exporter instanceof OTLPMetricExporterBase) {
+    return exporter['_otlpExporter']['_transport']['_transport']['_parameters'][
+      'headers'
+    ];
+  }
+
+  return {};
 }

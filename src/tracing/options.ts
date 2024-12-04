@@ -301,7 +301,7 @@ export function otlpSpanExporterFactory(options: Options): SpanExporter {
         ? {
             'X-SF-TOKEN': accessToken,
           }
-        : {};
+        : undefined;
       return new OTLPHttpTraceExporter({
         url: endpoint,
         headers,

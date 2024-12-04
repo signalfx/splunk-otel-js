@@ -107,7 +107,7 @@ describe('metrics options', () => {
       const [reader] = options.metricReaderFactory(options);
       const exporter = reader['_exporter'];
       assert(exporter instanceof OTLPMetricExporter);
-      assert.deepStrictEqual(exporter['_otlpExporter'].url, 'foobar:4200');
+      assert.deepStrictEqual(utils.exporterUrl(exporter), 'foobar:4200');
     });
   });
 
@@ -125,7 +125,7 @@ describe('metrics options', () => {
 
       assert(exporter instanceof OTLPHttpProtoMetricExporter);
       assert.deepStrictEqual(
-        exporter['_otlpExporter'].url,
+        utils.exporterUrl(exporter),
         'https://ingest.us0.signalfx.com/v2/datapoint/otlp'
       );
       sinon.assert.calledWith(
@@ -159,7 +159,7 @@ describe('metrics options', () => {
       );
 
       assert.deepStrictEqual(
-        exporter['_otlpExporter'].url,
+        utils.exporterUrl(exporter),
         'https://ingest.eu0.signalfx.com/v2/datapoint/otlp'
       );
     });
@@ -177,7 +177,7 @@ describe('metrics options', () => {
         'OTLP metric exporter factory: Realm value ignored (full endpoint URL has been specified).'
       );
       assert(exporter instanceof OTLPMetricExporter);
-      assert.deepStrictEqual(exporter['_otlpExporter'].url, 'localhost:4317');
+      assert.deepStrictEqual(utils.exporterUrl(exporter), 'localhost:4317');
     });
   });
 });
