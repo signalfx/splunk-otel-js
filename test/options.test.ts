@@ -387,7 +387,7 @@ describe('options', () => {
       const [exporter] = exporters;
       assert(exporter instanceof OTLPHttpTraceExporter);
       assert.deepStrictEqual(
-        exporter.url,
+        utils.exporterUrl(exporter),
         `https://ingest.us0.signalfx.com/v2/trace/otlp`
       );
     });
@@ -415,7 +415,7 @@ describe('options', () => {
       const [exporter] = exporters;
       assert(exporter instanceof OTLPHttpTraceExporter);
       assert.deepStrictEqual(
-        exporter.url,
+        utils.exporterUrl(exporter),
         'https://ingest.us0.signalfx.com/v2/trace/otlp'
       );
       sinon.assert.calledWith(
@@ -441,7 +441,7 @@ describe('options', () => {
         exporter instanceof OTLPTraceExporter,
         'Expected exporter to be instance of OTLPTraceExporter'
       );
-      assert.deepStrictEqual(exporter.url, 'localhost:4317');
+      assert.deepStrictEqual(utils.exporterUrl(exporter), 'localhost:4317');
     });
   });
 
@@ -482,7 +482,7 @@ describe('options', () => {
       assert(Array.isArray(exporters));
       const [exporter] = exporters;
       assert(exporter instanceof OTLPTraceExporter);
-      assert.deepStrictEqual(exporter.url, 'foobar:4200');
+      assert.deepStrictEqual(utils.exporterUrl(exporter), 'foobar:4200');
     });
 
     it('prefers OTEL_EXPORTER_OTLP_TRACES_ENDPOINT over OTEL_EXPORTER_OTLP_ENDPOINT', () => {
@@ -493,7 +493,7 @@ describe('options', () => {
       assert(Array.isArray(exporters));
       const [exporter] = exporters;
       assert(exporter instanceof OTLPTraceExporter);
-      assert.deepStrictEqual(exporter.url, 'barfoo:2400');
+      assert.deepStrictEqual(utils.exporterUrl(exporter), 'barfoo:2400');
     });
   });
 });

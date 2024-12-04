@@ -179,7 +179,7 @@ export function createOtlpExporter(options: MetricsOptions) {
         ? {
             'X-SF-TOKEN': options.accessToken,
           }
-        : {};
+        : undefined;
       return new OTLPHttpProtoMetricExporter({
         url: endpoint,
         headers,
