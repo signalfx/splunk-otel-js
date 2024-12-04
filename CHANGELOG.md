@@ -1,5 +1,9 @@
 # Change Log - @splunk/otel
 
+## 2.15.0
+
+- Upgrade to OpenTelemetry `1.28.0` / `0.55.0`. [#987](https://github.com/signalfx/splunk-otel-js/pull/987)
+
 ## 2.14.0
 
 - Add Node.js 22 to prebuilds. [#963](https://github.com/signalfx/splunk-otel-js/pull/963)
