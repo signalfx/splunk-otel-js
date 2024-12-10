@@ -29,7 +29,7 @@ jobs:
       - name: Prebuild
         run: npm run prebuild:os ${{ matrix.node_api_target }}
       - name: upload prebuilds
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: prebuilds-linux
           path: prebuilds
@@ -53,7 +53,7 @@ jobs:
       - name: Prebuild
         run: npm run prebuild:os ${{ matrix.node_api_target }}
       - name: upload prebuilds
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: prebuilds-linux-arm64
           path: prebuilds
@@ -82,7 +82,7 @@ jobs:
       - name: Prebuild
         run: npm run prebuild:os ${{ matrix.node_api_target }}
       - name: upload prebuilds
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: prebuilds-macos-windows
           path: prebuilds
@@ -100,7 +100,7 @@ jobs:
         with:
           node-version: '16'
       - name: download prebuilds
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
       - name: copy prebuilds
         run: |
           mkdir -p prebuilds
@@ -116,7 +116,7 @@ jobs:
         run: |
           echo "::set-output name=package_file::$(npm pack)"
       - name: Upload package
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.pack.outputs.package_file }}
           path: ${{ steps.pack.outputs.package_file }}
@@ -196,7 +196,7 @@ jobs:
       - name: Generate metadata YAML
         run: node scripts/generate-metadata-yaml.js > splunk-otel-js-metadata.yaml
       - name: Upload metadata yaml
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: splunk-otel-js-metadata.yaml
           path: splunk-otel-js-metadata.yaml
