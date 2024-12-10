@@ -15,7 +15,10 @@ jobs:
       fail-fast: false
       matrix:
         container: ['node:16.0.0']
-        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0']
+        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0']
+        include:
+          - container: 'node:18.0.0'
+          - node_api_target: '23.0.0'
     container: ${{ matrix.container }}
     steps:
       - name: Checkout
@@ -36,7 +39,10 @@ jobs:
       fail-fast: false
       matrix:
         container: ['node:16.0.0']
-        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0']
+        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0']
+        include:
+          - container: 'node:18.0.0'
+          - node_api_target: '23.0.0'
     container: ${{ matrix.container }}
     steps:
       - name: Checkout
@@ -56,10 +62,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2019, macos-12]
+        os: [windows-2019, macos-13]
         node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0']
         include:
-          - os: macos-12
+          - os: macos-13
             python_version: '3.11'
     runs-on: ${{ matrix.os }}
     steps:
