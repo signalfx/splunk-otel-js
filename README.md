@@ -19,8 +19,7 @@ The Splunk Distribution of [OpenTelemetry JS](https://github.com/open-telemetry/
 This distribution comes with the following defaults:
 
 - [W3C tracecontext and baggage propagation](https://www.w3.org/TR/trace-context)
-- [OTLP exporter](https://www.npmjs.com/package/@opentelemetry/exporter-trace-otlp-grpc)
-  configured to send spans to a locally running OpenTelemetry Collector over gRPC
+- [OTLP exporter](https://www.npmjs.com/package/@opentelemetry/exporter-trace-otlp-proto) configured to send spans to a locally running OpenTelemetry Collector over HTTP.
 - Many bundled [instrumentations](#default-instrumentation-packages)
 
 If you're using the SignalFx Tracing Library for Node and want to migrate to the Splunk Distribution of OpenTelemetry Node, see [Migrate from the SignalFx Tracing Library for NodeJS](https://quickdraw.splunk.com/redirect/?product=Observability&version=current&location=nodejs.application.migrate) in the official documentation.
@@ -82,7 +81,7 @@ You can find more instrumentation packages in the [OpenTelemetry Registry](https
 
 For troubleshooting issues with the Splunk Distribution of OpenTelemetry JS, see [Troubleshoot Node.js instrumentation for Splunk Observability Cloud](https://quickdraw.splunk.com/redirect/?product=Observability&version=current&location=nodejs.application.tshoot) in the official documentation.
 
-> Examples and developer documentation for version 1.x is available at [/tree/1.x](https://github.com/signalfx/splunk-otel-js/tree/1.x).
+> Examples and developer documentation for version 2.x is available at [/tree/2.x](https://github.com/signalfx/splunk-otel-js/tree/2.x).
 
 # License
 

@@ -34,5 +34,3 @@ Once the PR is approved, you need to merge it. The rest of the process is automa
 Go to the internal Splunk mirror of this repository and verify that the pipeline job for your new version was successful.
 
 Go to [https://www.npmjs.com/package/@splunk/otel](https://www.npmjs.com/package/@splunk/otel) and verify the new package was published. It may take a few minutes for the npmjs.com web interface to reflect the new package but it should be installable instantly.
-
-Navigate to all `examples/*`, install dependencies and manually verify that the examples are working as expected per README. `@splunk/otel` version in package.json in `examples/*` is updated while [generating changelog](#step-2).

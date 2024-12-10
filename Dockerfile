@@ -3,7 +3,7 @@ WORKDIR /splunk-otel-js
 COPY . .
 RUN npm install
 RUN npm run compile
-RUN npm run prebuild:os '14.0.0' '15.0.0' '16.0.0' '17.0.1' '18.0.0'
+RUN npm run prebuild:os '18.0.0' '20.0.0' '21.2.0' '22.0.0'
 RUN npm pack && tar xf splunk-otel-$(npm view @splunk/otel version).tgz
 RUN npm prune --omit=dev && cp -r node_modules/ package
 
@@ -13,7 +13,7 @@ WORKDIR /splunk-otel-js
 COPY . .
 RUN npm install
 RUN npm run compile
-RUN npm run prebuild:os '14.0.0' '15.0.0' '16.0.0' '17.0.1' '18.0.0'
+RUN npm run prebuild:os '18.0.0' '20.0.0' '21.2.0' '22.0.0'
 RUN npm pack && tar xf splunk-otel-$(npm view @splunk/otel version).tgz
 RUN npm prune --omit=dev && cp -r node_modules/ package
 
@@ -22,7 +22,7 @@ WORKDIR /splunk-otel-js
 COPY . .
 RUN npm install
 RUN npm run compile
-RUN npm run prebuild:os '14.0.0' '15.0.0' '16.0.0' '17.0.1' '18.0.0'
+RUN npm run prebuild:os '18.0.0' '20.0.0' '21.2.0' '22.0.0'
 RUN npm pack && tar xf splunk-otel-$(npm view @splunk/otel version).tgz
 RUN npm prune --omit=dev && cp -r node_modules/ package
 
