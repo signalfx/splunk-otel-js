@@ -56,7 +56,7 @@ This distribution supports all the configuration options supported by the compon
 | `OTEL_ATTRIBUTE_COUNT_LIMIT`                                    |                         | Stable  | Maximum allowed span attribute count
 | `OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT`                             | `12000`\*               | Stable  | Maximum allowed attribute value size
 | `OTEL_EXPORTER_OTLP_ENDPOINT`<br>`endpoint`                     | `http://localhost:4318` | Stable  | The OTLP endpoint to export to.
-| `OTEL_LOG_LEVEL`                                                |                         | Stable  | Log level to use in diagnostics logging. **Does not set the logger.**
+| `OTEL_LOG_LEVEL`                                                |                         | Stable  | Log level to use in diagnostics logging.
 | `OTEL_PROPAGATORS`<br>`tracing.propagators`                     | `tracecontext,baggage`  | Stable  | Comma-delimited list of propagators to use. Valid keys: `baggage`, `tracecontext`, `b3multi`, `b3`.
 | `OTEL_RESOURCE_ATTRIBUTES`                                      |                         | Stable  | Comma-separated list of resource attributes added to every reported span. <details><summary>Example</summary>`key1=val1,key2=val2`</details>
 | `OTEL_SERVICE_NAME`<br>`serviceName`                            | `unnamed-node-service`  | Stable  | The service name of this Node service.
@@ -65,6 +65,7 @@ This distribution supports all the configuration options supported by the compon
 | `OTEL_SPAN_EVENT_COUNT_LIMIT`                                   | `128`                   | Stable  |
 | `OTEL_SPAN_LINK_COUNT_LIMIT`                                    | `1000`\*                | Stable  |
 | `OTEL_TRACES_EXPORTER`<br>`tracing.spanExporterFactory`         | `otlp`                  | Stable  | Chooses the trace exporters. Shortcut for setting `spanExporterFactory`. Comma-delimited list of exporters. Currently supported values: `otlp`, `console`, `none`.
+| `OTEL_EXPORTER_OTLP_TRACES_PROTOCOL`                            | `http/protobuf`         | Stable  | Metric exporter protocol. Supported values: `http/protobuf`, `grpc`.
 | `OTEL_TRACES_SAMPLER`                                           | `parentbased_always_on` | Stable  | Sampler to be used for traces. See [Sampling](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling)
 | `OTEL_TRACES_SAMPLER_ARG`                                       |                         | Stable  | String value to be used as the sampler argument. Only be used if OTEL_TRACES_SAMPLER is set.
 | `SPLUNK_ACCESS_TOKEN`<br>`accessToken`                          |                         | Stable  | The optional access token for exporting signal data directly to SignalFx API.
@@ -78,8 +79,6 @@ This distribution supports all the configuration options supported by the compon
 
 The following config options can be set by passing them as tracing arguments to `start()`.
 
-- `tracing.tracerConfig`: A JS object that is merged into the default tracer config replacing any existing keys. It's passed to the tracer provider during initialization. This can be used to customize the tracer provider or tracer. Must satisfy [`TracerConfig` interface](https://github.com/open-telemetry/opentelemetry-js/blob/71ba83a0dc51118e08e3148c788b81fe711003e7/packages/opentelemetry-tracing/src/types.ts#L26)
-
 - `tracing.resourceFactory`: A function that is invoked with the default resource detected from the environment. Can be used to change the detected attributes or return a completely new resource.
 
 - `tracing.spanExporterFactory`: A function that accepts the tracing options. Returns a new instance of SpanExporter. When set, this function is used to create a new exporter and the returned exporter will be used in the pipeline.
@@ -91,6 +90,9 @@ The following config options can be set by passing them as tracing arguments to 
 - `tracing.instrumentations`: Can be used to enable additional instrumentation packages.
 
 - `tracing.captureHttpRequestUriParams`: Either a list of keys (case-sensitive) of HTTP query parameters to capture or a function that gets invoked with the current span and query parameters to set a custom span attribute. When using the former, parameters are set as span attributes as `http.request.param.${key}`. Attribute keys are normalized at capture time, meaning `.` is replaced with `_` to avoid any attribute namespacing issues.
+
+- `tracing.tracerConfig`: An object that is merged into the default tracer config replacing any existing keys. It's passed to the tracer provider during initialization. This can be used to customize the tracer provider or tracer. Must satisfy [`TracerConfig` interface](https://open-telemetry.github.io/opentelemetry-js/interfaces/_opentelemetry_sdk_trace_base.TracerConfig.html)
+
 
 ### Metrics
 
