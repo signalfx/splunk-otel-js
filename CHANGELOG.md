@@ -1,5 +1,55 @@
 # Change Log - @splunk/otel
 
+## 3.0.0
+
+- Raise the minimum required Node.js version to 18. If Node <18 is a requirement, [2.x](https://github.com/signalfx/splunk-otel-js/tree/2.x) is still maintained and package versions 2.x can be used..
+- Change the default OTLP protocol from `grpc` to `http/protobuf`. The default exporting endpoint has been changed from `http://localhost:4317` to `http://localhost:4318`. Signal specific URL paths are automatically added when choosing the endpoint, e.g. when `endpoint` is set to `http://collector:4318`, `/v1/traces` is added for traces.
+- Change the default sampler from `parentbased_always_on` to `always_on`.
+- Improve the start API to avoid duplicating parameters in the signal specific configuration.
+  * Add `resource` field - a function which can be used to overwrite or add additional parameters to the resource detected from the environment.
+
+    ```ts
+    import { start } from '@splunk/otel';
+    import { Resource } from '@opentelemetry/resources';
+
+    start({
+      serviceName: 'example',
+      resource: (detectedResource) => {
+        return detectedResource.merge(new Resource({ 'service.version': '0.2.0' }));
+      },
+    });
+    ```
+
+  * Add `realm` field. When set passes the access token and realm to signals.
+
+    ```ts
+    import { start } from '@splunk/otel';
+
+    start({
+      serviceName: 'example',
+      realm: 'us0',
+      accessToken: '<token>'
+    });
+
+    // Traces and metrics are now sent to the us0 backend.
+    ```
+
+  Signal specific options can still be used and take preference over the shared configuration options.
+- Profiling configuration: `resource: Resource` field has been changed to `resourceFactory: (resource: Resource) => Resource` to bring it in line with tracing and metrics configuration.
+- `splunk.distro.version` (automatically added resource attribute) has been removed and is replaced with `telemetry.distro.version` and `telemetry.distro.name`.
+- `SPLUNK_METRICS_ENDPOINT` environment variable has been removed. Use the OpenTelemetry specific `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` instead.
+- Fix logging of `service.name` attribute not set from each signal, when the service name is not set.
+- Add prebuilt binaries for Node.js 22 and 23.
+- Upgrade to OpenTelemetry `1.28.0` / `0.55.0`.
+
+## 2.15.0
+
+- Upgrade to OpenTelemetry `1.28.0` / `0.55.0`. [#987](https://github.com/signalfx/splunk-otel-js/pull/987)
+
+## 2.14.0
+
+- Add Node.js 22 to prebuilds. [#963](https://github.com/signalfx/splunk-otel-js/pull/963)
+
 ## 2.13.0
 
 - Add an optional workaround for Next.js span cardinality issues. Can be enabled by setting `SPLUNK_NEXTJS_FIX_ENABLED` to `true`. [#957](https://github.com/signalfx/splunk-otel-js/pull/957)
