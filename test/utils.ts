@@ -24,11 +24,12 @@ import * as util from 'util';
 import { Writable } from 'stream';
 import { context, trace } from '@opentelemetry/api';
 import { clearResource } from '../src/resource';
+import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
+import { OTLPTraceExporter as OTLPGrpcTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 // eslint bugs and reports these as extraneous even though instanceof is used
 // eslint-disable-next-line n/no-extraneous-import
-import { OTLPExporterNodeBase } from '@opentelemetry/otlp-exporter-base';
-// eslint-disable-next-line n/no-extraneous-import
 import { OTLPMetricExporterBase } from '@opentelemetry/exporter-metrics-otlp-http';
+import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
 
 const isConfigVarEntry = (key: string) => {
   const lowercased = key.toLowerCase();
@@ -140,27 +141,44 @@ export function calledOnceWithMatch(mocked: any, match: object) {
 }
 
 export function exporterUrl(exporter: any) {
-  if (exporter instanceof OTLPExporterNodeBase) {
-    return exporter['_transport']['_transport']['_parameters'].url;
+  if (exporter instanceof OTLPGrpcTraceExporter) {
+    const transport = exporter['_transport'];
+    return transport['_parameters'].address;
   }
 
-  if (exporter instanceof OTLPMetricExporterBase) {
-    return exporter['_otlpExporter']['_transport']['_transport']['_parameters']
-      .url;
+  if (exporter instanceof OTLPHttpTraceExporter) {
+    return exporter['_delegate']['_transport']['_transport']['_parameters'].url;
+  }
+
+  if (
+    exporter instanceof OTLPMetricExporterBase ||
+    exporter instanceof OTLPLogExporter
+  ) {
+    const transport = exporter['_delegate']['_transport']['_transport'];
+    if (transport['_parameters']) {
+      return transport['_parameters'].url;
+    }
+
+    return transport['_transport']['_parameters'].url;
   }
 
   return undefined;
 }
 
 export function exporterHeaders(exporter: any) {
-  if (exporter instanceof OTLPExporterNodeBase) {
-    return exporter['_transport']['_transport']['_parameters']['headers'];
+  if (exporter instanceof OTLPHttpTraceExporter) {
+    return exporter['_delegate']['_transport']['_transport'][
+      '_parameters'
+    ].headers();
+  }
+
+  if (exporter instanceof OTLPGrpcTraceExporter) {
+    return exporter['_transport']['_parameters'].metadata().toJSON();
   }
 
   if (exporter instanceof OTLPMetricExporterBase) {
-    return exporter['_otlpExporter']['_transport']['_transport']['_parameters'][
-      'headers'
-    ];
+    const transport = exporter['_delegate']['_transport']['_transport'];
+    return transport['_parameters'].headers();
   }
 
   return {};
