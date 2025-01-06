@@ -40,7 +40,7 @@
 - `SPLUNK_METRICS_ENDPOINT` environment variable has been removed. Use the OpenTelemetry specific `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` instead.
 - Fix logging of `service.name` attribute not set from each signal, when the service name is not set.
 - Add prebuilt binaries for Node.js 22 and 23.
-- Upgrade to OpenTelemetry `1.28.0` / `0.55.0`.
+- Upgrade to OpenTelemetry `1.30.0` / `0.57.0`.
 
 ## 2.15.0
 
