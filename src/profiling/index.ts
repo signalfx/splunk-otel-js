@@ -140,15 +140,13 @@ export function startProfiling(options: ProfilingOptions) {
   // has finished, load it next event loop.
   setImmediate(() => {
     exporters = options.exporterFactory(options);
-    cpuSamplesCollectInterval = setInterval(() => {
+    cpuSamplesCollectInterval = setInterval(async () => {
       const cpuProfile = extCollectCpuProfile(extension);
 
       if (cpuProfile) {
         recordCpuProfilerMetrics(cpuProfile);
-
-        for (const exporter of exporters) {
-          exporter.send(cpuProfile);
-        }
+        const sends = exporters.map((exporter) => exporter.send(cpuProfile));
+        await Promise.allSettled(sends);
       }
     }, options.collectionDuration);
 
@@ -156,14 +154,15 @@ export function startProfiling(options: ProfilingOptions) {
 
     if (options.memoryProfilingEnabled) {
       extStartMemoryProfiling(extension, options.memoryProfilingOptions);
-      memSamplesCollectInterval = setInterval(() => {
+      memSamplesCollectInterval = setInterval(async () => {
         const heapProfile = extCollectHeapProfile(extension);
         if (heapProfile) {
           recordHeapProfilerMetrics(heapProfile);
 
-          for (const exporter of exporters) {
-            exporter.sendHeapProfile(heapProfile);
-          }
+          const sends = exporters.map((exporter) =>
+            exporter.sendHeapProfile(heapProfile)
+          );
+          await Promise.allSettled(sends);
         }
       }, options.collectionDuration);
 
