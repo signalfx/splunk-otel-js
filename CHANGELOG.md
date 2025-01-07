@@ -1,6 +1,6 @@
 # Change Log - @splunk/otel
 
-## 3.0.0 (unreleased)
+## 3.0.0-rc1
 
 - Raise the minimum required Node.js version to 18. If Node <18 is a requirement, [2.x](https://github.com/signalfx/splunk-otel-js/tree/2.x) is still maintained and package versions 2.x can be used..
 - Change the default OTLP protocol from `grpc` to `http/protobuf`. The default exporting endpoint has been changed from `http://localhost:4317` to `http://localhost:4318`. Signal specific URL paths are automatically added when choosing the endpoint, e.g. when `endpoint` is set to `http://collector:4318`, `/v1/traces` is added for traces.
