@@ -15,6 +15,13 @@ stages:
   - npm run prepare-release-artifact
   - shasum -a 256 dist/* > dist/checksums.txt
 
+.checksums-sign: &checksums-sign
+  stage: checksum-sign
+  extends: .submit-signing-request
+  variables:
+    ARTIFACT: dist/checksums.txt
+    SIGN_TYPE: GPG
+
 oss-scan:
   stage: scan
   extends: .oss-scan
@@ -28,6 +35,7 @@ release:
     - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+.*/
   script:
     - *prepare_dist
+    - *checksums_sign
     - npm run release:github
     - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
     - npm publish ./dist/splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz
