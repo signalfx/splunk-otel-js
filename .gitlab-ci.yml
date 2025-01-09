@@ -25,7 +25,7 @@ prepare:
   script:
     - *prepare_dist
 
-.checksums-sign: &checksums-sign
+checksums-sign:
   stage: checksums-sign
   extends: .submit-signing-request
   variables:
