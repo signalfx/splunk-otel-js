@@ -5,6 +5,8 @@ include:
   - project: 'ci-cd/templates'
     ref: master
     file: '/prodsec/.oss-scan.yml'
+
+include:
   - project: core-ee/signing/api-integration
     ref: develop
     file: /templates/.sign-client.yml
