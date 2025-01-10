@@ -2,9 +2,14 @@
 
 ## 3.0.0
 
-- Raise the minimum required Node.js version to 18. If Node <18 is a requirement, [2.x](https://github.com/signalfx/splunk-otel-js/tree/2.x) is still maintained and package versions 2.x can be used..
-- Change the default OTLP protocol from `grpc` to `http/protobuf`. The default exporting endpoint has been changed from `http://localhost:4317` to `http://localhost:4318`. Signal specific URL paths are automatically added when choosing the endpoint, e.g. when `endpoint` is set to `http://collector:4318`, `/v1/traces` is added for traces.
-- Change the default sampler from `parentbased_always_on` to `always_on`.
+> [!WARNING] Breaking changes
+
+> - Raise the minimum required Node.js version to 18. If Node <18 is a requirement, [2.x](https://github.com/signalfx/splunk-otel-js/tree/2.x) is still maintained and package versions 2.x can be used..
+> [!WARNING] Breaking change
+>- Change the default OTLP protocol from `grpc` to `http/protobuf`. The default exporting endpoint has been changed from `http://localhost:4317` to `http://localhost:4318`. Signal specific URL paths are automatically added when choosing the endpoint, e.g. when `endpoint` is set to `http://collector:4318`, `/v1/traces` is added for traces.
+>- Change the default sampler from `parentbased_always_on` to `always_on`.
+>- Profiling configuration: `resource: Resource` field has been changed to `resourceFactory: (resource: Resource) => Resource` to bring it in line with tracing and metrics configuration.
+
 - Improve the start API to avoid duplicating parameters in the signal specific configuration.
   * Add `resource` field - a function which can be used to overwrite or add additional parameters to the resource detected from the environment.
 
@@ -35,7 +40,6 @@
     ```
 
   Signal specific options can still be used and take preference over the shared configuration options.
-- Profiling configuration: `resource: Resource` field has been changed to `resourceFactory: (resource: Resource) => Resource` to bring it in line with tracing and metrics configuration.
 - `splunk.distro.version` (automatically added resource attribute) has been removed and is replaced with `telemetry.distro.version` and `telemetry.distro.name`.
 - `SPLUNK_METRICS_ENDPOINT` environment variable has been removed. Use the OpenTelemetry specific `OTEL_EXPORTER_OTLP_METRICS_ENDPOINT` instead.
 - Fix logging of `service.name` attribute not set from each signal, when the service name is not set.
