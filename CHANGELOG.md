@@ -3,7 +3,8 @@
 ## 3.0.0
 
 > [!WARNING]
-> - Raise the minimum required Node.js version to 18. If Node <18 is a requirement, [2.x](https://github.com/signalfx/splunk-otel-js/tree/2.x) is still maintained and package versions 2.x can be used..
+>### Breaking changes
+>- Raise the minimum required Node.js version to 18. If Node <18 is a requirement, [2.x](https://github.com/signalfx/splunk-otel-js/tree/2.x) is still maintained and package versions 2.x can be used..
 >- Change the default OTLP protocol from `grpc` to `http/protobuf`. The default exporting endpoint has been changed from `http://localhost:4317` to `http://localhost:4318`. Signal specific URL paths are automatically added when choosing the endpoint, e.g. when `endpoint` is set to `http://collector:4318`, `/v1/traces` is added for traces.
 >- Change the default sampler from `parentbased_always_on` to `always_on`.
 >- Profiling configuration: `resource: Resource` field has been changed to `resourceFactory: (resource: Resource) => Resource` to bring it in line with tracing and metrics configuration.
