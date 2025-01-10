@@ -151,7 +151,9 @@ describe('metrics options', () => {
       const exporter = reader['_exporter'];
       assert(exporter instanceof OTLPHttpProtoMetricExporter);
       assert.deepStrictEqual(
-        exporter._delegate['_transport']['_transport']['_parameters'].headers()['X-SF-TOKEN'],
+        exporter._delegate['_transport']['_transport']['_parameters'].headers()[
+          'X-SF-TOKEN'
+        ],
         'abc'
       );
 

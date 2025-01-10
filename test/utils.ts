@@ -145,7 +145,9 @@ export function exporterHeaders(exporter: any) {
   }
 
   if (exporter instanceof OTLPGrpcTraceExporter) {
-    return exporter['_delegate']['_transport']['_parameters'].metadata().toJSON();
+    return exporter['_delegate']['_transport']['_parameters']
+      .metadata()
+      .toJSON();
   }
 
   if (exporter instanceof OTLPMetricExporterBase) {
