@@ -140,6 +140,9 @@ jobs:
           - os: 'macos-latest'
             nodejs: '14'
         include:
+          - os: 'ubuntu-latest'
+            nodejs: '14'
+            python_version: '3.8'
           - os: 'macos-latest'
             python_version: '3.11'
           - os: 'macos-13'
