@@ -1,5 +1,9 @@
 # Change Log - @splunk/otel
 
+## 2.16.0
+
+- Upgrade to OpenTelemetry `1.30.0` / `0.57.0`. [#1005](https://github.com/signalfx/splunk-otel-js/pull/1005)
+
 ## 2.15.0
 
 - Upgrade to OpenTelemetry `1.28.0` / `0.55.0`. [#987](https://github.com/signalfx/splunk-otel-js/pull/987)
