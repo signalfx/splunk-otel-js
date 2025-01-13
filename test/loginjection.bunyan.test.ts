@@ -35,21 +35,21 @@ describe('log injection', () => {
       delete process.env.OTEL_RESOURCE_ATTRIBUTES;
     });
 
-    // it('injects service version and service environment if available', () => {
-    //   startTracing({ serviceName: 'test-service' });
+    it('injects service version and service environment if available', () => {
+      startTracing({ serviceName: 'test-service' });
 
-    //   const logger: bunyan = require('bunyan').createLogger({
-    //     name: 'test',
-    //     stream: logStream.stream,
-    //   });
+      const logger: bunyan = require('bunyan').createLogger({
+        name: 'test',
+        stream: logStream.stream,
+      });
 
-    //   assertInjection(logStream, logger, [
-    //     ['service.name', 'test-service'],
-    //     ['service.version', '1'],
-    //     ['service.environment', 'test'],
-    //   ]);
+      assertInjection(logStream, logger, [
+        ['service.name', 'test-service'],
+        ['service.version', '1'],
+        ['service.environment', 'test'],
+      ]);
 
-    //   stopTracing();
-    // });
+      stopTracing();
+    });
   });
 });

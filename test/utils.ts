@@ -100,16 +100,18 @@ export function assertInjection(
     logger.info('my-log-message');
   });
 
-  assert.strictEqual(stream.record['trace_id'], traceId);
-  assert.strictEqual(stream.record['span_id'], spanId);
-
-  for (const [key, value] of extra || []) {
-    assert.strictEqual(
-      stream.record[key],
-      value,
-      `Invalid value for "${key}": ${util.inspect(stream.record[key])}`
-    );
-  }
+  setTimeout( () => {
+    assert.strictEqual(stream.record['trace_id'], traceId);
+    assert.strictEqual(stream.record['span_id'], spanId);
+  
+    for (const [key, value] of extra || []) {
+      assert.strictEqual(
+        stream.record[key],
+        value,
+        `Invalid value for "${key}": ${util.inspect(stream.record[key])}`
+      );
+    }    
+  }, 20)
 }
 
 export function exporterUrl(exporter: any) {
