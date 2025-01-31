@@ -1,5 +1,10 @@
 # Change Log - @splunk/otel
 
+
+## 3.0.1
+
+- Make 3.x latest instead of 2.16
+
 ## 3.0.0
 
 > [!WARNING]
