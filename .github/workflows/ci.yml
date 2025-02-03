@@ -107,6 +107,9 @@ jobs:
           path: allprebuilds
       - name: copy prebuilds
         run: |
+          ls
+          echo "---"
+          ls allprebuilds
           mkdir -p prebuilds    
           cp -r allprebuilds/prebuilds-linux-arm64-*/* prebuilds
           cp -r allprebuilds/prebuilds-linux-*/* prebuilds
