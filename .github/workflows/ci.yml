@@ -130,20 +130,11 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16'
-      - name: Download merged prebuilds (linux)
-        uses: actions/download-artifact@v3
+      - name: Download all prebuilds
+        uses: actions/download-artifact@v4
         with:
-          name: prebuilds-linux
-          path: prebuilds
-      - name: Download merged prebuilds (ARM64)
-        uses: actions/download-artifact@v3
-        with:
-          name: prebuilds-linux-arm64
-          path: prebuilds
-      - name: Download merged prebuilds (macOS/Windows)
-        uses: actions/download-artifact@v3
-        with:
-          name: prebuilds-macos-windows
+          pattern: prebuilds-*
+          merge-multiple: true
           path: prebuilds
       - name: copy prebuilds
         run: |
