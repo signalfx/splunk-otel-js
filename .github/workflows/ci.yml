@@ -104,14 +104,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: prebuilds-*
-          path: prebuilds
+          path: allprebuilds
       - name: copy prebuilds
         run: |
-          mkdir -p prebuilds
-          cp -r prebuilds-linux-arm64-*/* prebuilds
-          cp -r prebuilds-linux-*/* prebuilds
-          cp -r prebuilds-Windows-*/* prebuilds
-          cp -r prebuilds-macOS-*/* prebuilds
+          mkdir -p prebuilds    
+          cp -r allprebuilds/prebuilds-linux-arm64-*/* prebuilds
+          cp -r allprebuilds/prebuilds-linux-*/* prebuilds
+          cp -r allprebuilds/prebuilds-Windows-*/* prebuilds
+          cp -r allprebuildsprebuilds-macOS-*/* prebuilds
           ls prebuilds
       - name: Install npm dependencies
         run: npm ci --ignore-scripts
