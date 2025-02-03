@@ -31,8 +31,19 @@ jobs:
       - name: upload prebuilds
         uses: actions/upload-artifact@v4
         with:
-          name: prebuilds-linux
+          name: prebuilds-linux-${{ matrix.node_api_target }}
           path: prebuilds
+
+  merge-prebuilds-linux:
+    runs-on: ubuntu-latest
+    needs: prebuilds-linux
+    steps:
+      - name: Merge Linux Prebuilds
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: prebuilds-linux
+          pattern: prebuilds-linux-*
+
   prebuilds-linux-arm64:
     runs-on: [self-hosted, Linux, ARM64]
     strategy:
@@ -55,8 +66,18 @@ jobs:
       - name: upload prebuilds
         uses: actions/upload-artifact@v4
         with:
-          name: prebuilds-linux-arm64
+          name: prebuilds-linux-arm64-${{ matrix.node_api_target }}
           path: prebuilds
+
+  merge-prebuilds-linux-arm64:
+    runs-on: ubuntu-latest
+    needs: prebuilds-linux-arm64
+    steps:
+      - name: Merge Linux ARM64 Prebuilds
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: prebuilds-linux-arm64
+          pattern: prebuilds-linux-arm64-*
 
   prebuilds-macos-windows:
     strategy:
@@ -84,11 +105,21 @@ jobs:
       - name: upload prebuilds
         uses: actions/upload-artifact@v4
         with:
-          name: prebuilds-macos-windows
+          name: prebuilds-${{ runner.os }}-${{ matrix.node_api_target }}
           path: prebuilds
 
+  merge-prebuilds-macos-windows:
+    runs-on: ubuntu-latest
+    needs: prebuilds-macos-windows
+    steps:
+      - name: Merge macOS & Windows Prebuilds
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: prebuilds-macos-windows
+          pattern: prebuilds-*
+
   create-package:
-    needs: [prebuilds-linux, prebuilds-macos-windows, prebuilds-linux-arm64]
+    needs: [merge-prebuilds-linux, merge-prebuilds-linux-arm64, merge-prebuilds-macos-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -99,8 +130,21 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '16'
-      - name: download prebuilds
+      - name: Download merged prebuilds (linux)
         uses: actions/download-artifact@v3
+        with:
+          name: prebuilds-linux
+          path: prebuilds
+      - name: Download merged prebuilds (ARM64)
+        uses: actions/download-artifact@v3
+        with:
+          name: prebuilds-linux-arm64
+          path: prebuilds
+      - name: Download merged prebuilds (macOS/Windows)
+        uses: actions/download-artifact@v3
+        with:
+          name: prebuilds-macos-windows
+          path: prebuilds
       - name: copy prebuilds
         run: |
           mkdir -p prebuilds
