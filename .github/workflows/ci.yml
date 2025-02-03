@@ -107,7 +107,11 @@ jobs:
           path: prebuilds
       - name: copy prebuilds
         run: |
-          ls
+          mkdir -p prebuilds
+          cp -r prebuilds-linux-arm64-*/* prebuilds
+          cp -r prebuilds-linux-*/* prebuilds
+          cp -r prebuilds-Windows-*/* prebuilds
+          cp -r prebuilds-macOS-*/* prebuilds
           ls prebuilds
       - name: Install npm dependencies
         run: npm ci --ignore-scripts
@@ -123,63 +127,63 @@ jobs:
           name: ${{ steps.pack.outputs.package_file }}
           path: ${{ steps.pack.outputs.package_file }}
 
-  # unit-tests:
-  #   runs-on: ${{ matrix.os }}
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       os: ['ubuntu-latest', 'macos-latest']
-  #       nodejs: ['18', '20', '21', '22', '23']
-  #       include:
-  #         - os: 'macos-latest'
-  #           python_version: '3.11'
-  #         - os: 'windows-2019'
-  #           nodejs: '18.20.1'
-  #         - os: 'windows-2019'
-  #           nodejs: '20.12.1'
-  #         - os: 'windows-2019'
-  #           nodejs: '21.7.2'
-  #         - os: 'windows-2019'
-  #           nodejs: '22.10.0'
-  #         - os: 'windows-2019'
-  #           nodejs: '23.0.0'
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
-  #     - uses: actions/setup-python@v4
-  #       with:
-  #         python-version: ${{ matrix.python_version }}
-  #     - uses: actions/setup-node@v3
-  #       with:
-  #         node-version: ${{ matrix.nodejs }}
-  #     - name: Install npm dependencies
-  #       run: npm ci
-  #     - name: Test
-  #       run: npm run test
-  #     - name: Report Coverage
-  #       if: ${{matrix.nodejs == '16' && matrix.os == 'ubuntu-latest'}}
-  #       uses: codecov/codecov-action@v3
-  #       with:
-  #         verbose: true
+  unit-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['ubuntu-latest', 'macos-latest']
+        nodejs: ['18', '20', '21', '22', '23']
+        include:
+          - os: 'macos-latest'
+            python_version: '3.11'
+          - os: 'windows-2019'
+            nodejs: '18.20.1'
+          - os: 'windows-2019'
+            nodejs: '20.12.1'
+          - os: 'windows-2019'
+            nodejs: '21.7.2'
+          - os: 'windows-2019'
+            nodejs: '22.10.0'
+          - os: 'windows-2019'
+            nodejs: '23.0.0'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python_version }}
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.nodejs }}
+      - name: Install npm dependencies
+        run: npm ci
+      - name: Test
+        run: npm run test
+      - name: Report Coverage
+        if: ${{matrix.nodejs == '16' && matrix.os == 'ubuntu-latest'}}
+        uses: codecov/codecov-action@v3
+        with:
+          verbose: true
 
-  # unit-tests-arm64:
-  #   runs-on: ${{ matrix.os }}
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       os: ['ARM64']
-  #       nodejs: ['18', '20', '21', '22', '23']
-  #   container: node:${{ matrix.nodejs }}
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
-  #     - uses: actions/setup-python@v4
-  #       with:
-  #         python-version: ${{ matrix.python_version }}
-  #     - name: Install npm dependencies
-  #       run: npm ci --unsafe-perm
-  #     - name: Test
-  #       run: npm run test
+  unit-tests-arm64:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['ARM64']
+        nodejs: ['18', '20', '21', '22', '23']
+    container: node:${{ matrix.nodejs }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python_version }}
+      - name: Install npm dependencies
+        run: npm ci --unsafe-perm
+      - name: Test
+        run: npm run test
 
   build:
     runs-on: ubuntu-latest
@@ -203,28 +207,28 @@ jobs:
           name: splunk-otel-js-metadata.yaml
           path: splunk-otel-js-metadata.yaml
 
-  # e2e-local:
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       include:
-  #         - target: ''
-  #           name: 'Basic'
-  #         - target: '-f express.override.yml'
-  #           name: 'Express'
-  #         - target: '-f mixed.override.yml'
-  #           name: 'Mixed'
-  #         - target: '-f log-injection.override.yml'
-  #           name: 'Log injection'
-  #         - target: '-f profiling.override.yml'
-  #           name: 'Profiling'
-  #         - target: '-f typescript.override.yml'
-  #           name: 'TypeScript'
-  #   name: e2e local ${{ matrix.name }}
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
-  #     - name: Test ${{ matrix.name }} example
-  #       working-directory: test/examples
-  #       run: docker compose -f e2e.docker-compose.yml ${{ matrix.target }} up --exit-code-from test
+  e2e-local:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: ''
+            name: 'Basic'
+          - target: '-f express.override.yml'
+            name: 'Express'
+          - target: '-f mixed.override.yml'
+            name: 'Mixed'
+          - target: '-f log-injection.override.yml'
+            name: 'Log injection'
+          - target: '-f profiling.override.yml'
+            name: 'Profiling'
+          - target: '-f typescript.override.yml'
+            name: 'TypeScript'
+    name: e2e local ${{ matrix.name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Test ${{ matrix.name }} example
+        working-directory: test/examples
+        run: docker compose -f e2e.docker-compose.yml ${{ matrix.target }} up --exit-code-from test
