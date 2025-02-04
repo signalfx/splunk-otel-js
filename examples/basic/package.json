@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "@opentelemetry/api": "^1.8.0",
-    "@splunk/otel": "3.0.0-rc1",
+    "@splunk/otel": "3.0.1",
     "axios": "^0.28.0",
     "express": "^4.17.1"
   }
