@@ -31,9 +31,9 @@ import {
 } from '@opentelemetry/api';
 import { Neo4jInstrumentation } from '../../../../src/instrumentations/external/neo4j';
 import {
-  SEMATTRS_DB_OPERATION,
-  SEMATTRS_DB_STATEMENT,
-} from '@opentelemetry/semantic-conventions';
+  ATTR_DB_OPERATION,
+  ATTR_DB_STATEMENT,
+} from '../../../../src/instrumentations/external/neo4j/semconv';
 import { map, mergeMap } from 'rxjs/operators';
 // eslint-disable-next-line n/no-extraneous-import
 import { concat } from 'rxjs';
@@ -125,9 +125,9 @@ describe('neo4j instrumentation', { skip: !shouldTest }, () => {
       const span = getSingleSpan();
       assertSpan(span);
       assert.strictEqual(span.name, 'CREATE neo4j');
-      assert.strictEqual(span.attributes[SEMATTRS_DB_OPERATION], 'CREATE');
+      assert.strictEqual(span.attributes[ATTR_DB_OPERATION], 'CREATE');
       assert.strictEqual(
-        span.attributes[SEMATTRS_DB_STATEMENT],
+        span.attributes[ATTR_DB_STATEMENT],
         'CREATE (n:MyLabel) RETURN n'
       );
     });
@@ -140,12 +140,9 @@ describe('neo4j instrumentation', { skip: !shouldTest }, () => {
           onCompleted: () => {
             const span = getSingleSpan();
             assertSpan(span);
+            assert.strictEqual(span.attributes[ATTR_DB_OPERATION], 'CREATE');
             assert.strictEqual(
-              span.attributes[SEMATTRS_DB_OPERATION],
-              'CREATE'
-            );
-            assert.strictEqual(
-              span.attributes[SEMATTRS_DB_STATEMENT],
+              span.attributes[ATTR_DB_STATEMENT],
               'CREATE (n:MyLabel) RETURN n'
             );
             done();
@@ -225,14 +222,14 @@ describe('neo4j instrumentation', { skip: !shouldTest }, () => {
       assert.strictEqual(spans.length, 3);
       for (const span of spans) {
         assertSpan(span);
-        assert.strictEqual(span.attributes[SEMATTRS_DB_OPERATION], 'MATCH');
+        assert.strictEqual(span.attributes[ATTR_DB_OPERATION], 'MATCH');
       }
     });
 
     it('captures operation with trailing white spaces', async () => {
       await driver.session().run('  MATCH (k) RETURN k ');
       const span = getSingleSpan();
-      assert.strictEqual(span.attributes[SEMATTRS_DB_OPERATION], 'MATCH');
+      assert.strictEqual(span.attributes[ATTR_DB_OPERATION], 'MATCH');
     });
 
     it('does not capture any span when ignoreOrphanedSpans is set to true', async () => {
@@ -337,9 +334,9 @@ describe('neo4j instrumentation', { skip: !shouldTest }, () => {
       });
       const span = getSingleSpan();
       assertSpan(span);
-      assert.strictEqual(span.attributes[SEMATTRS_DB_OPERATION], 'MATCH');
+      assert.strictEqual(span.attributes[ATTR_DB_OPERATION], 'MATCH');
       assert.strictEqual(
-        span.attributes[SEMATTRS_DB_STATEMENT],
+        span.attributes[ATTR_DB_STATEMENT],
         'MATCH (person:Person) RETURN person.name AS name'
       );
     });
@@ -350,9 +347,9 @@ describe('neo4j instrumentation', { skip: !shouldTest }, () => {
       });
       const span = getSingleSpan();
       assertSpan(span);
-      assert.strictEqual(span.attributes[SEMATTRS_DB_OPERATION], 'MATCH');
+      assert.strictEqual(span.attributes[ATTR_DB_OPERATION], 'MATCH');
       assert.strictEqual(
-        span.attributes[SEMATTRS_DB_STATEMENT],
+        span.attributes[ATTR_DB_STATEMENT],
         'MATCH (person:Person) RETURN person.name AS name'
       );
     });
@@ -402,7 +399,7 @@ describe('neo4j instrumentation', { skip: !shouldTest }, () => {
             const span = getSingleSpan();
             assertSpan(span);
             assert.strictEqual(
-              span.attributes[SEMATTRS_DB_STATEMENT],
+              span.attributes[ATTR_DB_STATEMENT],
               'MERGE (james:Person {name: $nameParam}) RETURN james.name AS name'
             );
             done();
@@ -451,7 +448,7 @@ describe('neo4j instrumentation', { skip: !shouldTest }, () => {
           complete: () => {
             const span = getSingleSpan();
             assert.strictEqual(
-              span.attributes[SEMATTRS_DB_STATEMENT],
+              span.attributes[ATTR_DB_STATEMENT],
               'MATCH (person:Person) RETURN person.name AS name'
             );
             done();
@@ -475,7 +472,7 @@ describe('neo4j instrumentation', { skip: !shouldTest }, () => {
             const span = getSingleSpan();
             assertSpan(span);
             assert.strictEqual(
-              span.attributes[SEMATTRS_DB_STATEMENT],
+              span.attributes[ATTR_DB_STATEMENT],
               'MATCH (person:Person) RETURN person.name AS name'
             );
             done();

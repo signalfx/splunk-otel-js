@@ -17,13 +17,13 @@ import { strict as assert } from 'assert';
 import { QueryResult } from 'neo4j-driver';
 import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
 import {
-  SEMATTRS_DB_NAME,
-  SEMATTRS_DB_SYSTEM,
-  SEMATTRS_DB_USER,
-  SEMATTRS_NET_PEER_NAME,
-  SEMATTRS_NET_PEER_PORT,
-  SEMATTRS_NET_TRANSPORT,
-} from '@opentelemetry/semantic-conventions';
+  ATTR_DB_NAME,
+  ATTR_DB_SYSTEM,
+  ATTR_DB_USER,
+  ATTR_NET_PEER_NAME,
+  ATTR_NET_PEER_PORT,
+  ATTR_NET_TRANSPORT,
+} from '../../../../src/instrumentations/external/neo4j/semconv';
 import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
 
 export const normalizeResponse = (response: QueryResult) => {
@@ -40,10 +40,10 @@ export const normalizeResponse = (response: QueryResult) => {
 export const assertSpan = (span: ReadableSpan) => {
   assert.strictEqual(span.kind, SpanKind.CLIENT);
   assert.strictEqual(span.status.code, SpanStatusCode.UNSET);
-  assert.strictEqual(span.attributes[SEMATTRS_DB_SYSTEM], 'neo4j');
-  assert.strictEqual(span.attributes[SEMATTRS_DB_NAME], 'neo4j');
-  assert.strictEqual(span.attributes[SEMATTRS_DB_USER], 'neo4j');
-  assert.strictEqual(span.attributes[SEMATTRS_NET_PEER_NAME], 'localhost');
-  assert.strictEqual(span.attributes[SEMATTRS_NET_PEER_PORT], 11011);
-  assert.strictEqual(span.attributes[SEMATTRS_NET_TRANSPORT], 'IP.TCP');
+  assert.strictEqual(span.attributes[ATTR_DB_SYSTEM], 'neo4j');
+  assert.strictEqual(span.attributes[ATTR_DB_NAME], 'neo4j');
+  assert.strictEqual(span.attributes[ATTR_DB_USER], 'neo4j');
+  assert.strictEqual(span.attributes[ATTR_NET_PEER_NAME], 'localhost');
+  assert.strictEqual(span.attributes[ATTR_NET_PEER_PORT], 11011);
+  assert.strictEqual(span.attributes[ATTR_NET_TRANSPORT], 'IP.TCP');
 };

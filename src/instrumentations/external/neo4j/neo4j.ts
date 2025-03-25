@@ -21,11 +21,11 @@ import {
   SpanKind,
 } from '@opentelemetry/api';
 import {
-  SEMATTRS_DB_NAME,
-  SEMATTRS_DB_OPERATION,
-  SEMATTRS_DB_STATEMENT,
-  SEMATTRS_DB_SYSTEM,
-} from '@opentelemetry/semantic-conventions';
+  ATTR_DB_NAME,
+  ATTR_DB_OPERATION,
+  ATTR_DB_STATEMENT,
+  ATTR_DB_SYSTEM,
+} from './semconv';
 import { VERSION } from '../../../version';
 import type * as neo4j from 'neo4j-driver';
 import {
@@ -111,13 +111,13 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4jInstrumentati
           const query = args[0] as string;
           const operation = query.trim().split(/\s+/)[0];
           const span = self.tracer.startSpan(
-            `${operation} ${connectionAttributes[SEMATTRS_DB_NAME]}`,
+            `${operation} ${connectionAttributes[ATTR_DB_NAME]}`,
             {
               attributes: {
                 ...connectionAttributes,
-                [SEMATTRS_DB_SYSTEM]: 'neo4j',
-                [SEMATTRS_DB_OPERATION]: operation,
-                [SEMATTRS_DB_STATEMENT]: query,
+                [ATTR_DB_SYSTEM]: 'neo4j',
+                [ATTR_DB_OPERATION]: operation,
+                [ATTR_DB_STATEMENT]: query,
               },
               kind: SpanKind.CLIENT,
             }
