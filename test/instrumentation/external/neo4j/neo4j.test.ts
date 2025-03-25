@@ -14,15 +14,7 @@
  * limitations under the License.
  */
 import { strict as assert } from 'assert';
-import {
-  after,
-  afterEach,
-  before,
-  beforeEach,
-  describe,
-  it,
-  suite,
-} from 'node:test';
+import { after, afterEach, before, beforeEach, describe, it } from 'node:test';
 import {
   context,
   ROOT_CONTEXT,
@@ -60,11 +52,6 @@ describe('neo4j instrumentation', { skip: !shouldTest }, () => {
   };
 
   before(async () => {
-    if (!shouldTest) {
-      suite.skip();
-      return;
-    }
-
     if (testWithDocker) {
       startContainer(
         'docker run --rm -d --name splunk-otel-neo4j -p 11011:7687 -e NEO4J_AUTH=neo4j/test_pw neo4j:4.4.42'

@@ -148,7 +148,7 @@ jobs:
             nodejs: '23.0.0'
     services:
       neo4j:
-        image: neo4j:4.4.42
+        image: ${{ (matrix.os == 'ubuntu-latest') && 'neo4j:4.4.42' || '' }}
         ports:
           - 11011:7687
         env:
@@ -166,6 +166,8 @@ jobs:
         run: npm ci
       - name: Test
         run: npm run test
+        env:
+          NEO4J_TEST_WITH_LOCAL: true
       - name: Report Coverage
         if: ${{matrix.nodejs == '16' && matrix.os == 'ubuntu-latest'}}
         uses: codecov/codecov-action@v3
@@ -174,13 +176,6 @@ jobs:
 
   unit-tests-arm64:
     runs-on: ${{ matrix.os }}
-    services:
-      neo4j:
-        image: neo4j:4.4.42
-        ports:
-          - 11011:7687
-        env:
-          NEO4J_AUTH: neo4j/test_pw
     strategy:
       fail-fast: false
       matrix:
