@@ -67,7 +67,7 @@ describe('neo4j instrumentation', { skip: !shouldTest }, () => {
 
     if (testWithDocker) {
       startContainer(
-        'docker run --rm -d --name splunk-otel-neo4j -p 11011:7687 -e NEO4J_AUTH=neo4j/test_pw neo4j:4.4.34'
+        'docker run --rm -d --name splunk-otel-neo4j -p 11011:7687 -e NEO4J_AUTH=neo4j/test_pw neo4j:4.4.42'
       );
     }
 
@@ -97,11 +97,11 @@ describe('neo4j instrumentation', { skip: !shouldTest }, () => {
   });
 
   after(async () => {
-    await driver.close();
-
     if (testWithDocker) {
       stopContainer('splunk-otel-neo4j');
     }
+
+    await driver.close();
   });
 
   beforeEach(async () => {

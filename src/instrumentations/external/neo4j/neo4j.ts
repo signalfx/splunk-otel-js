@@ -50,7 +50,7 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4jInstrumentati
 
   protected init(): InstrumentationModuleDefinition[] {
     return [
-      this.getModuleDefinition('neo4j-driver-core', ['>=4.3.0 <5']),
+      this.getModuleDefinition('neo4j-driver-core', ['>=4.3.0 <6']),
       this.getModuleDefinition('neo4j-driver', ['>=4.0.0 <4.3.0']),
     ];
   }
@@ -130,13 +130,9 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4jInstrumentati
             spanEnded = true;
           };
 
-          const response: neo4j.Result = originalRun.apply(this, args);
-
-          const originalSubscribe = response.subscribe;
-          response.subscribe = function (observer) {
+          const patchObserver = (observer: neo4j.ResultObserver) => {
             const records: neo4j.Record[] = [];
-
-            return originalSubscribe.call(this, {
+            return {
               ...observer,
               onKeys: function (
                 this: unknown,
@@ -157,7 +153,7 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4jInstrumentati
                 }
                 if (observer.onNext) return observer.onNext.apply(this, args);
               },
-              onCompleted: function (
+              onCompleted: function patchedOnCompleted(
                 this: unknown,
                 ...args: Parameters<
                   NonNullable<neo4j.ResultObserver['onCompleted']>
@@ -198,7 +194,29 @@ export class Neo4jInstrumentation extends InstrumentationBase<Neo4jInstrumentati
                 endSpan();
                 if (observer.onError) return observer.onError.apply(this, args);
               },
-            });
+            };
+          };
+
+          const response: neo4j.Result = originalRun.apply(this, args);
+
+          // Necessary for neo4j 5.x
+          if (typeof response._decorateObserver === 'function') {
+            const originalDecorate = response._decorateObserver;
+
+            response._decorateObserver = function patchedDecorate(
+              originalObserver
+            ) {
+              const observer = originalDecorate.call(
+                response,
+                originalObserver
+              );
+              return patchObserver(observer);
+            };
+          }
+
+          const originalSubscribe = response.subscribe;
+          response.subscribe = function (observer) {
+            return originalSubscribe.call(this, patchObserver(observer));
           };
 
           return response;

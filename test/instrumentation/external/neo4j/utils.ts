@@ -29,10 +29,18 @@ import { SpanKind, SpanStatusCode } from '@opentelemetry/api';
 export const normalizeResponse = (response: QueryResult) => {
   return JSON.stringify(
     response.records.map((r) => {
-      const asObject = r.toObject();
-      r.keys.forEach((key) => delete asObject[key as any].identity);
+      const record = r.toObject();
+      const normalized = {};
 
-      return asObject;
+      for (const k in record) {
+        const node = record[k];
+        normalized[k] = {
+          labels: node['labels'],
+          properties: node['properties'],
+        };
+      }
+
+      return normalized;
     })
   );
 };
