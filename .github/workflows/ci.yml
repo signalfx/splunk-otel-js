@@ -167,7 +167,7 @@ jobs:
       - name: Test
         run: npm run test
         env:
-          NEO4J_TEST_WITH_LOCAL: true
+          NEO4J_TEST_WITH_LOCAL: ${{ (matrix.os == 'ubuntu-latest') && 'true' || 'false' }}
       - name: Report Coverage
         if: ${{matrix.nodejs == '16' && matrix.os == 'ubuntu-latest'}}
         uses: codecov/codecov-action@v3

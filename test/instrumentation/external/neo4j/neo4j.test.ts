@@ -39,7 +39,7 @@ import neo4j, { Driver } from 'neo4j-driver';
 import { normalizeResponse, assertSpan } from './utils';
 
 const testWithDocker = process.env.NEO4J_TEST_WITH_DOCKER !== undefined;
-const testWithLocalNeo4j = process.env.NEO4J_TEST_WITH_LOCAL !== undefined;
+const testWithLocalNeo4j = process.env.NEO4J_TEST_WITH_LOCAL === 'true';
 const shouldTest = testWithDocker || testWithLocalNeo4j;
 
 describe('neo4j instrumentation', { skip: !shouldTest }, () => {
