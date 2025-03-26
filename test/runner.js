@@ -53,3 +53,6 @@ const testProcess = spawn('node', args);
 
 testProcess.stdout.pipe(process.stdout);
 testProcess.stderr.pipe(process.stderr);
+testProcess.on('exit', (code) => {
+  process.exit(code);
+});

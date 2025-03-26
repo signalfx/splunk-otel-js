@@ -20,6 +20,7 @@ import {
   MetricReader,
 } from '@opentelemetry/sdk-metrics';
 import * as assert from 'assert';
+import * as childProcess from 'child_process';
 import * as util from 'util';
 import { Writable } from 'stream';
 import { context, trace } from '@opentelemetry/api';
@@ -182,4 +183,41 @@ export function exporterHeaders(exporter: any) {
   }
 
   return {};
+}
+
+function run(cmd: string) {
+  try {
+    const proc = childProcess.spawnSync(cmd, {
+      shell: true,
+    });
+    const output = Buffer.concat(
+      proc.output.filter((c) => c) as Buffer[]
+    ).toString('utf8');
+    if (proc.status !== 0) {
+      console.error('Failed run command:', cmd);
+      console.error(output);
+    }
+    return {
+      code: proc.status,
+      output,
+    };
+  } catch (e) {
+    console.log(e);
+    return;
+  }
+}
+
+export function startContainer(cmd: string) {
+  const task = run(cmd);
+
+  if (task && task.code !== 0) {
+    console.error(task.output);
+    return false;
+  }
+
+  return true;
+}
+
+export function stopContainer(container: string) {
+  run(`docker stop ${container}`);
 }

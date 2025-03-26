@@ -107,7 +107,7 @@ jobs:
           path: allprebuilds
       - name: copy prebuilds
         run: |
-          mkdir -p prebuilds    
+          mkdir -p prebuilds
           cp -r allprebuilds/prebuilds-linux-arm64-*/* prebuilds
           cp -r allprebuilds/prebuilds-linux-*/* prebuilds
           cp -r allprebuilds/prebuilds-Windows-*/* prebuilds
@@ -146,6 +146,13 @@ jobs:
             nodejs: '22.10.0'
           - os: 'windows-2019'
             nodejs: '23.0.0'
+    services:
+      neo4j:
+        image: ${{ (matrix.os == 'ubuntu-latest') && 'neo4j:4.4.42' || '' }}
+        ports:
+          - 11011:7687
+        env:
+          NEO4J_AUTH: neo4j/test_pw
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -159,6 +166,8 @@ jobs:
         run: npm ci
       - name: Test
         run: npm run test
+        env:
+          NEO4J_TEST_WITH_LOCAL: ${{ (matrix.os == 'ubuntu-latest') && 'true' || 'false' }}
       - name: Report Coverage
         if: ${{matrix.nodejs == '16' && matrix.os == 'ubuntu-latest'}}
         uses: codecov/codecov-action@v3
