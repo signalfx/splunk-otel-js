@@ -59,15 +59,14 @@
     "access": "public"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.3.0",
-    "@commitlint/config-conventional": "^19.2.2",
+    "@commitlint/cli": "^19.8.0",
+    "@commitlint/config-conventional": "^19.8.0",
     "@elastic/elasticsearch": "^7.17.11",
     "@types/bunyan": "1.8.11",
     "@types/semver": "^7.5.8",
     "@typescript-eslint/eslint-plugin": "^8.19.0",
     "@typescript-eslint/parser": "^8.19.0",
     "bunyan": "1.8.15",
-    "cross-env": "^7.0.3",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-header": "^3.1.1",
@@ -86,7 +85,7 @@
     "redis": "^3.1.2",
     "sequelize": "^6.32.1",
     "ts-node": "^10.9.2",
-    "typeorm": "^0.3.17",
+    "typeorm": "^0.3.21",
     "typescript": "5.7.2",
     "winston": "3.10.0"
   },
@@ -149,7 +148,7 @@
     "@opentelemetry/semantic-conventions": "1.28.0",
     "@opentelemetry/winston-transport": "0.10.0",
     "is-promise": "^4.0.0",
-    "nan": "^2.22.0",
+    "nan": "^2.22.2",
     "node-gyp-build": "^4.8.4",
     "protobufjs": "^7.4.0",
     "semver": "^7.6.3"
