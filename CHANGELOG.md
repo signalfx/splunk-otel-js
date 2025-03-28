@@ -1,5 +1,8 @@
 # Change Log - @splunk/otel
 
+## 3.1.0
+
+- Add neo4j-driver instrumentation. [#1010](https://github.com/signalfx/splunk-otel-js/pull/1010)
 
 ## 3.0.1
 
