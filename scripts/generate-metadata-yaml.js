@@ -10,6 +10,7 @@ const KNOWN_TARGET_LIBRARY_VERSIONS = new Map([
   ["splunk-opentelemetry-instrumentation-kafkajs", [">=0.1.0 <3"]],
   ["splunk-opentelemetry-instrumentation-sequelize", ["*"]],
   ["splunk-opentelemetry-instrumentation-typeorm", [">0.2.28"]],
+  ["splunk-opentelemetry-instrumentation-neo4j", [">=4.0.0 <6"]],
   ["@opentelemetry/instrumentation-dns", ["*"]],
   ["@opentelemetry/instrumentation-net", ["*"]],
   ["@opentelemetry/instrumentation-http",  ["*"]],
@@ -62,6 +63,7 @@ const INSTRUMENTATIONS = [
   { name: "splunk-opentelemetry-instrumentation-elasticsearch", target: "@elastic/elasticsearch", support: "supported", },
   { name: "splunk-opentelemetry-instrumentation-sequelize", target: "sequelize", support: "supported", },
   { name: "splunk-opentelemetry-instrumentation-typeorm", target: "typeorm", support: "supported", },
+  { name: "splunk-opentelemetry-instrumentation-neoj", target: "neo4j", support: "supported", }
 ];
 
 async function getSupportedVersion(instrumentation) {
