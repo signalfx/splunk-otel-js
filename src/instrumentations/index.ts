@@ -56,6 +56,7 @@ import { MongooseInstrumentation } from '@opentelemetry/instrumentation-mongoose
 import { MySQLInstrumentation } from '@opentelemetry/instrumentation-mysql';
 import { MySQL2Instrumentation } from '@opentelemetry/instrumentation-mysql2';
 import { NestInstrumentation } from '@opentelemetry/instrumentation-nestjs-core';
+import { Neo4jInstrumentation } from './external/neo4j';
 import { NetInstrumentation } from '@opentelemetry/instrumentation-net';
 import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
 import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
@@ -177,6 +178,10 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
   {
     create: () => new MySQL2Instrumentation(),
     shortName: 'mysql2',
+  },
+  {
+    create: () => new Neo4jInstrumentation(),
+    shortName: 'neo4j',
   },
   {
     create: () => new NestInstrumentation(),
