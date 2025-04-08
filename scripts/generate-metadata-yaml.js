@@ -24,6 +24,7 @@ const KNOWN_TARGET_LIBRARY_VERSIONS = new Map([
 ]);
 
 const INSTRUMENTATIONS = [
+  { name: "@splunk/otel", target: "node.js runtime", },
   { name: "@opentelemetry/instrumentation-amqplib", target: "amqplib", },
   { name: "@opentelemetry/instrumentation-aws-sdk", target: "aws-sdk and @aws-sdk", },
   { name: "@opentelemetry/instrumentation-bunyan", target: "bunyan", },
@@ -63,8 +64,124 @@ const INSTRUMENTATIONS = [
   { name: "splunk-opentelemetry-instrumentation-elasticsearch", target: "@elastic/elasticsearch", support: "supported", },
   { name: "splunk-opentelemetry-instrumentation-sequelize", target: "sequelize", support: "supported", },
   { name: "splunk-opentelemetry-instrumentation-typeorm", target: "typeorm", support: "supported", },
-  { name: "splunk-opentelemetry-instrumentation-neoj", target: "neo4j", support: "supported", }
+  { name: "splunk-opentelemetry-instrumentation-neo4j", target: "neo4j", support: "supported", }
 ];
+
+const INSTRUMENTATION_ADDITIONAL_DATA = new Map([
+  ["@splunk/otel", {
+    signals: [
+      {metrics: [
+        {metric_name: "process.runtime.nodejs.event_loop.lag.max", instrument: "histogram", description: "Maximum duration of event loop lag"},
+        {metric_name: "process.runtime.nodejs.event_loop.lag.min", instrument: "histogram", description: "Minimum duration of event loop lag"},
+        {metric_name: "process.runtime.nodejs.memory.gc.count", instrument: "counter", description: "Garbage collection pause count"},
+        {metric_name: "process.runtime.nodejs.memory.gc.pause", instrument: "counter", description: "Garbage collection total time"},
+        {metric_name: "process.runtime.nodejs.memory.gc.size", instrument: "counter", description: "Gabrage collection size"},
+        {metric_name: "process.runtime.nodejs.memory.heap.total", instrument: "histogram", description: "V8's total memory usage"},
+        {metric_name: "process.runtime.nodejs.memory.heap.used", instrument: "histogram", description: "V8's used memory"},
+        {metric_name: "process.runtime.nodejs.memory.rss", instrument: "histogram", description: "Process' Resident Set Size"},
+      ]},
+    ],
+  }],
+  ["@opentelemetry/instrumentation-http", {
+    signals: [
+      {metrics: [
+        {metric_name: "http.server.duration", instrument: "histogram", description: "Measures the duration of inbound HTTP requests."},
+        {metric_name: "http.client.duration", instrument: "histogram", description: "Duration of HTTP client requests."},
+        /* Once switched to stable semconv
+        {metric_name: "http.server.request.duration", instrument: "histogram", description: "Measures the duration of inbound HTTP requests."},
+        {metric_name: "http.client.request.duration", instrument: "histogram", description: "Duration of HTTP client requests."},
+        */
+      ]},
+    ],
+  }],
+]);
+
+// Output typedef
+
+/**
+ * @typedef {Object} Metadata
+ * @prop {string} component
+ * @prop {string} version
+ * @prop {Array<Setting>=} settings
+ * @prop {Array<Instrumentation>=} instrumentations
+ * @prop {Array<ResourceDetector>=} resource_detectors
+ * @prop {Array<DependencyInfo>=} dependencies
+ */
+/**
+ * @typedef {Object} Setting
+ * @prop {string} env
+ * @prop {string} property
+ * @prop {string} description
+ * @prop {string} default
+ * @prop {string} type
+ * @prop {string} category
+ */
+/**
+ * @typedef {Object} Instrumentation
+ * @prop {Array<string>} keys
+ * @prop {Array<object>} instrumented_components
+ * @prop {string} support
+ * @prop {string=} stability
+ * @prop {Array<object>=} signals
+ */
+/**
+ * @typedef {Object} ResourceDetector
+ * @prop {string} key
+ * @prop {string} description
+ * @prop {Array<object>} attributes
+ * @prop {string} support
+ */
+/**
+ * @typedef {Object} DependencyInfo
+ * @prop {string} name
+ * @prop {string} version
+ * @prop {string} stability
+ * @prop {string=} source_href
+ */
+
+// YAML Formatting
+const INDENT = '  ';
+
+/**
+ * Convert JS object to YAML string
+ *
+ * @param {*} input 
+ * @param {number} objIndent Indent level for objects
+ * @returns {string}
+ */
+function encodeYaml(input, objIndent = 0) {
+  if (Array.isArray(input)) {
+    // Replace values first line indent with array item indent
+    return input.map(item => INDENT.repeat(Math.max(0, objIndent)) + '- ' + encodeYaml(item, objIndent + 1).trimStart())
+      .join('\n');
+  }
+
+  if (input === null) {
+    return 'null';
+  }
+
+  switch (typeof input) {
+    case 'object':
+      return Object.keys(input).map(key => {
+        const value = input[key];
+        const newline = typeof input[key] === 'object'; // obj/array
+        return `${INDENT.repeat(objIndent)}${key}:${newline ? '\n' : ' '}${encodeYaml(value, objIndent + 1)}`;
+      }).join('\n');
+    case 'undefined':
+      return 'undefined';
+    case 'boolean':
+    case 'number':
+    case 'string':
+      // Will this break something in some point in the future?
+      // ... Yeah probably
+      return JSON.stringify(input);
+    default:
+      return JSON.stringify("(unknown type)");
+  }
+
+}
+
+// Metadata fillers
 
 async function getSupportedVersion(instrumentation) {
   const name = instrumentation.instrumentationName;
@@ -115,59 +232,13 @@ async function readMeVersions(instrumentationName) {
     });
 }
 
-class LineWriter {
-  constructor() {
-    this.lines = [];
-    this.indent = 0;
-    this.indents = [];
-  }
-
-  pushIndent(indent) {
-    this.indent += indent;
-    this.indents.push(indent);
-  }
-
-  popIndent(n) {
-    if (this.indents.length > 0) {
-
-      if (n === undefined) {
-        n = 1;
-      }
-
-      for (let i = 0; i < Math.min(this.indents.length, n); i++) {
-        this.indent -= this.indents.pop();
-      }
-    }
-  }
-
-  push(lines) {
-    if (!Array.isArray(lines)) {
-      lines = [lines];
-    }
-
-    if (this.indent > 0) {
-      const indent = " ".repeat(this.indent);
-      for (const line of lines) {
-        this.lines.push(indent + line);
-      }
-
-      return;
-    }
-
-    for (const line of lines) {
-      this.lines.push(line);
-    }
-  }
-
-  join() {
-    return this.lines.join("\n");
-  }
-}
 
 async function getSupportedLibraryVersions(instrumentations) {
   const versions = await Promise.all(instrumentations.map(i => getSupportedVersion(i)));
 
-  const versionsByInstrumentation = {};
+  const versionsByInstrumentation = {
+    "@splunk/otel": ["See general requirements"],
+  };
 
   versions.forEach((v, i) => {
     versionsByInstrumentation[instrumentations[i].instrumentationName] = v;
@@ -181,113 +252,94 @@ function getSettingsList() {
   return listEnvVars();
 }
 
-function populateSettings(writer) {
+/** @param {Metadata} metadata */
+function populateSettings(metadata) {
   const settings = getSettingsList();
-  writer.push("settings:");
 
-  function addSetting(setting) {
-    writer.push(`- env: "${setting.name}"`);
-    writer.pushIndent(2);
-    writer.push([
-      `property: "${setting.property}"`,
-      `description: "${setting.description}"`,
-      `default: "${setting.default}"`,
-      `type: "${setting.type}"`,
-      `category: "${setting.category}"`,
-    ]);
-    writer.popIndent();
-  }
-
-  for (const setting of settings) {
-    addSetting(setting);
-  }
+  metadata.settings = settings.map(setting => ({
+    env: setting.name,
+    property: setting.property,
+    description: setting.description,
+    default: setting.default,
+    type: setting.type,
+    category: setting.category,
+  }));
 }
 
-async function populateInstrumentations(writer) {
+/** @param {Metadata} metadata */
+async function populateInstrumentations(metadata) {
   const versions = await getSupportedLibraryVersions(LOADED_INSTRUMENTATIONS);
 
-  writer.push("instrumentations:");
-  writer.pushIndent(2);
-  for (const instrumentation of INSTRUMENTATIONS) {
-    writer.push("- keys:");
-    writer.pushIndent(2);
-    writer.push(`- "${instrumentation.name}"`);
-    writer.push("instrumented_components:");
-    writer.pushIndent(2);
-    writer.push(`- name: "${instrumentation.target}"`);
-    writer.pushIndent(2);
-    writer.push(`supported_versions: "${versions[instrumentation.name]}"`);
-    writer.popIndent(2);
-    writer.push(`support: "${instrumentation.support ?? "community"}"`,);
-    writer.popIndent();
+  function joinIfArray(value) {
+    return Array.isArray(value) ? value.join(',') : value;
   }
-  writer.popIndent();
+
+  metadata.instrumentations = INSTRUMENTATIONS.map(instrumentation => {
+    const instru = {
+      keys: [instrumentation.name],
+      instrumented_components: [
+        {name: instrumentation.target, supported_versions: joinIfArray(versions[instrumentation.name])},
+      ],
+      support: instrumentation.support ?? "community"
+    }
+
+    if (INSTRUMENTATION_ADDITIONAL_DATA.has(instrumentation.name)) {
+      Object.assign(instru, INSTRUMENTATION_ADDITIONAL_DATA.get(instrumentation.name));
+    }
+
+    return instru;
+  })
 }
 
-function populateResourceDetectors(writer) {
-  const detectors = [
+/** @param {Metadata} metadata */
+function populateResourceDetectors(metadata) {
+  metadata.resource_detectors = [
     {
       key: "PROCESS",
       description: "Process info detector",
       attributes: [
-        "process.pid",
-        "process.executable.path",
-        "process.runtime.version",
-        "process.runtime.name",
+        {id: "process.pid"},
+        {id: "process.executable.path"},
+        {id: "process.runtime.version"},
+        {id: "process.runtime.name"},
       ],
+      support: "supported",
     },
     {
       key: "OS",
       description: "Operating system detector",
       attributes: [
-        "os.type",
-        "os.description",
+        {id: "os.type"},
+        {id: "os.description"},
       ],
+      support: "supported",
     },
     {
       key: "HOST",
       description: "Host detector",
       attributes: [
-        "host.name",
-        "host.arch"
+        {id: "host.name"},
+        {id: "host.arch"},
       ],
+      support: "supported",
     },
     {
       key: "CONTAINER",
       description: "Container ID detector",
       attributes: [
-        "container.id",
+        {id: "container.id"},
       ],
+      support: "supported",
     },
     {
       key: "DISTRO",
       description: "Distribution version detector",
       attributes: [
-        "splunk.distro.version",
+        {id: "splunk.distro.version"},
       ],
+      support: "supported",
     }
   ];
-
-  writer.push("resource_detectors:");
-  writer.pushIndent(2);
-
-  for (const detector of detectors) {
-    writer.push(`- key: "${detector.key}"`);
-    writer.pushIndent(2);
-    writer.push(`description: "${detector.description}"`),
-    writer.push("attributes:")
-    writer.pushIndent(2);
-
-    for (const attr of detector.attributes) {
-      writer.push(`- id: "${attr}"`);
-    }
-
-    writer.popIndent();
-    writer.push(`support: "supported"`);
-    writer.popIndent();
-  }
-
-  writer.popIndent();
 }
 
 async function findPackageJson(packageName, maxDepth) {
@@ -313,6 +365,11 @@ function isExperimental(dependency, version) {
   return dependency.startsWith("@opentelemetry") && version.startsWith("0");
 }
 
+/**
+ * @param {string} dependency
+ * @param {string} version
+ * @returns {DependencyInfo}
+ */
 async function populateDependencyInfo(dependency, version, writer) {
     const status = isExperimental(dependency, version) ? "experimental" : "stable";
 
@@ -325,43 +382,40 @@ async function populateDependencyInfo(dependency, version, writer) {
       url = pkgJson.homepage;
     }
 
-    writer.push(`- name: "${dependency}"`);
-    writer.pushIndent(2);
-    writer.push(`version: "${version}"`);
-    writer.push(`stability: "${status}"`);
-
-    if (url) {
-      writer.push(`source_href: "${url}"`);
+    /** @type {DependencyInfo} */
+    const info = {
+      name: dependency,
+      version,
+      stability: status,
     }
-
-    writer.popIndent();
+    if (url) {
+      info.source_href = url;
+    }
+    return info;
 }
 
-async function populateDependencies(writer) {
+/** @param {Metadata} metadata */
+async function populateDependencies(metadata) {
   const deps = require(join(__dirname, "../package.json")).dependencies;
-  writer.push("dependencies:")
-  writer.pushIndent(2);
 
-  const promises = Object.keys(deps).map(dep => populateDependencyInfo(dep, deps[dep], writer));
-  await Promise.all(promises);
+  const promises = Object.keys(deps).map(dep => populateDependencyInfo(dep, deps[dep]));
 
-  writer.popIndent();
+  metadata.dependencies = await Promise.all(promises);
 }
 
 async function genMetadata() {
-  const writer = new LineWriter();
-  writer.push([
-    "component: Splunk Distribution of OpenTelemetry JavaScript",
-    `version: ${require("../package.json").version}`,
-  ]);
+  /** @type {Metadata} */
+  const metadata = {
+    component: "Splunk Distribution of OpenTelemetry JavaScript",
+    version: require("../package.json").version,
+  }
 
-  populateSettings(writer);
-  await populateInstrumentations(writer);
-  populateResourceDetectors(writer);
-  await populateDependencies(writer);
+  populateSettings(metadata);
+  await populateInstrumentations(metadata);
+  populateResourceDetectors(metadata);
+  await populateDependencies(metadata);
 
-  const yaml = writer.join();
-  process.stdout.write(yaml);
+  process.stdout.write(encodeYaml(metadata));
   process.stdout.write("\n");
 }
 
