@@ -14,6 +14,11 @@
 #define SPLK_BEGIN_IGNORE_CAST_FUNCTION_TYPE_WARNING                                               \
   _Pragma("GCC diagnostic push") _Pragma("GCC diagnostic ignored \"-Wcast-function-type\"")
 #define SPLK_END_IGNORE_CAST_FUNCTION_TYPE_WARNING _Pragma("GCC diagnostic pop")
+#elif defined(__clang__)
+#define SPLK_BEGIN_IGNORE_CAST_FUNCTION_TYPE_WARNING \
+  _Pragma("clang diagnostic push") \
+  _Pragma("clang diagnostic ignored \"-Wcast-function-type-mismatch\"")
+#define SPLK_END_IGNORE_CAST_FUNCTION_TYPE_WARNING _Pragma("clang diagnostic pop")
 #else
 #define SPLK_BEGIN_IGNORE_CAST_FUNCTION_TYPE_WARNING
 #define SPLK_END_IGNORE_CAST_FUNCTION_TYPE_WARNING
