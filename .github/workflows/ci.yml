@@ -68,6 +68,8 @@ jobs:
         include:
           - os: macos-13
             python_version: '3.11'
+          - os: macos-14
+            python_version: '3.11'
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
