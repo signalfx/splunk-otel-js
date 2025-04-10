@@ -1,5 +1,8 @@
 #include <algorithm>
+#include "ext.h"
+SPLK_BEGIN_IGNORE_CAST_FUNCTION_TYPE_WARNING
 #include <nan.h>
+SPLK_END_IGNORE_CAST_FUNCTION_TYPE_WARNING
 #include <node_version.h>
 #include <uv.h>
 

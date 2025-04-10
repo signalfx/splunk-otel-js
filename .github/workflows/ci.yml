@@ -70,10 +70,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2019, macos-13]
+        os: [windows-2019, macos-13, macos-14]
         node_api_target: ['14.0.0', '15.0.0', '16.0.0', '17.0.1', '18.0.0', '20.0.0', '21.2.0', '22.0.0']
         include:
           - os: macos-13
+            python_version: '3.11'
+          - os: macos-14
             python_version: '3.11'
     runs-on: ${{ matrix.os }}
     steps:
