@@ -1,5 +1,10 @@
 # Change Log - @splunk/otel
 
+## 2.16.1
+
+- Add prebuilds for Apple silicon. [#1018](https://github.com/signalfx/splunk-otel-js/pull/1018)
+- Fix compilation on macOS with Xcode 16.3. [#1018](https://github.com/signalfx/splunk-otel-js/pull/1018)
+
 ## 2.16.0
 
 - Upgrade to OpenTelemetry `1.30.0` / `0.57.0`. [#1005](https://github.com/signalfx/splunk-otel-js/pull/1005)
