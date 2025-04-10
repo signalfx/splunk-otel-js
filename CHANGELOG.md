@@ -1,5 +1,10 @@
 # Change Log - @splunk/otel
 
+## 3.1.2
+
+- Add prebuilds for Apple silicon. [#1016](https://github.com/signalfx/splunk-otel-js/pull/1016)
+- Fix compilation on macOS with Xcode 16.3. [#1016](https://github.com/signalfx/splunk-otel-js/pull/1016)
+
 ## 3.1.1
 
 - Fix loading of neo4j-driver instrumentation. [#1013](https://github.com/signalfx/splunk-otel-js/pull/1013)
