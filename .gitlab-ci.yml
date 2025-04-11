@@ -30,7 +30,7 @@ release:
     - *prepare_dist
     - npm run release:github
     - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
-    - npm publish ./dist/splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz
+    - npm publish --tag maintenance ./dist/splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz
     - rm -f ~/.npmrc
   when: manual
 
