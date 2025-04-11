@@ -69,6 +69,7 @@ async function getBuildArtifact() {
     owner,
     repo,
     run_id: run.id,
+    per_page: 100,
   });
 
   console.log('found artifacts for workflow', artifacts);
