@@ -15,14 +15,12 @@
  */
 
 import { test } from 'node:test';
-import { assertTracingPipeline, setupMocks } from './common';
+import { assertTracingPipeline } from './common';
 
 import { parseOptionsAndConfigureInstrumentations } from '../../src/instrumentations';
 import { startTracing } from '../../src/tracing';
 
 test('Tracing: set up with options', async () => {
-  const mocks = setupMocks();
-
   const endpoint = 'custom-endpoint:1111';
   const serviceName = 'test-node-service';
   const accessToken = '1234';
@@ -35,5 +33,5 @@ test('Tracing: set up with options', async () => {
   });
 
   startTracing(tracingOptions);
-  assertTracingPipeline(mocks, endpoint, serviceName, accessToken);
+  assertTracingPipeline(endpoint, serviceName, accessToken);
 });

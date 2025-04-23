@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import type { ResourceFactory } from '../types';
-import type { MetricReader, View } from '@opentelemetry/sdk-metrics';
+import type { MetricReader, ViewOptions } from '@opentelemetry/sdk-metrics';
 import type { Resource } from '@opentelemetry/resources';
 
 export type MetricReaderFactory = (options: MetricsOptions) => MetricReader[];
@@ -25,7 +25,7 @@ export interface MetricsOptions {
   serviceName: string;
   endpoint?: string;
   resource: Resource;
-  views?: View[];
+  views?: ViewOptions[];
   exportIntervalMillis: number;
   metricReaderFactory: MetricReaderFactory;
   debugMetricsEnabled: boolean;

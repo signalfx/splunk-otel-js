@@ -19,7 +19,7 @@ import { beforeEach, describe, it } from 'node:test';
 import { inspect } from 'util';
 
 import { context, trace } from '@opentelemetry/api';
-import { Resource } from '@opentelemetry/resources';
+import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
 import { InMemorySpanExporter } from '@opentelemetry/sdk-trace-base';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 
@@ -35,9 +35,8 @@ import {
   HeapProfile,
   ProfilingExporter,
 } from '../../src/profiling/types';
-import { detect as detectResource } from '../../src/resource';
 
-import * as utils from '../utils';
+import { cleanEnvironment, detectResource, spinMs } from '../utils';
 
 const sleep = (ms: number) => {
   return new Promise((r) => setTimeout(r, ms));
@@ -46,15 +45,15 @@ const sleep = (ms: number) => {
 describe('profiling', () => {
   describe('options', () => {
     beforeEach(() => {
-      utils.cleanEnvironment();
+      cleanEnvironment();
     });
 
     it('sets default options when no options are provided', async () => {
       const options = _setDefaultOptions();
       await options.resource.waitForAsyncAttributes?.();
-      const testResource = new Resource({
+      const testResource = resourceFromAttributes({
         [ATTR_SERVICE_NAME]: '@splunk/otel',
-      }).merge(detectResource());
+      }).merge(resourceFromAttributes(detectResource().attributes || {}));
       await testResource.waitForAsyncAttributes?.();
 
       const { resource: defaultResource, ...defaultOtherAttrs } = options;
@@ -136,7 +135,7 @@ describe('profiling', () => {
         span.spanContext();
 
       context.with(trace.setSpan(context.active(), span), () => {
-        utils.spinMs(2_500);
+        spinMs(2_500);
         span.end();
       });
 

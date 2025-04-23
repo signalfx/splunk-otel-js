@@ -16,12 +16,11 @@
 
 import { strict as assert } from 'assert';
 import { beforeEach, describe, it } from 'node:test';
-import { detect } from '../src/resource';
-import * as utils from './utils';
+import { cleanEnvironment, detectResource } from './utils';
 
 describe('resource detector', () => {
   beforeEach(() => {
-    utils.cleanEnvironment();
+    cleanEnvironment();
   });
 
   describe('resource.detect', () => {
@@ -29,22 +28,22 @@ describe('resource detector', () => {
       process.env.OTEL_RESOURCE_ATTRIBUTES =
         'k=v,service.name=node-svc,x=a%20b';
 
-      const resource = detect();
-      assert.strictEqual(resource.attributes['k'], 'v');
-      assert.strictEqual(resource.attributes['x'], 'a b');
-      assert.strictEqual(resource.attributes['service.name'], 'node-svc');
+      const resource = detectResource();
+      assert.strictEqual(resource.attributes?.['k'], 'v');
+      assert.strictEqual(resource.attributes?.['x'], 'a b');
+      assert.strictEqual(resource.attributes?.['service.name'], 'node-svc');
     });
 
     it('catches service name from the env', () => {
       process.env.OTEL_SERVICE_NAME = 'node-svc';
-      const resource = detect();
+      const resource = detectResource();
 
-      assert.strictEqual(resource.attributes['service.name'], 'node-svc');
+      assert.strictEqual(resource.attributes?.['service.name'], 'node-svc');
     });
 
     it('catches process attributes', () => {
-      const resource = detect();
-      assert.strictEqual(typeof resource.attributes['process.pid'], 'number');
+      const resource = detectResource();
+      assert.strictEqual(typeof resource.attributes?.['process.pid'], 'number');
 
       for (const attributeName of [
         'process.executable.name',
@@ -52,20 +51,23 @@ describe('resource detector', () => {
         'process.runtime.version',
         'process.runtime.name',
       ]) {
-        assert.strictEqual(typeof resource.attributes[attributeName], 'string');
+        assert.strictEqual(
+          typeof resource.attributes?.[attributeName],
+          'string'
+        );
       }
     });
 
     it('detects OS attributes', () => {
-      const resource = detect();
-      assert.strictEqual(typeof resource.attributes['os.type'], 'string');
-      assert.strictEqual(typeof resource.attributes['os.version'], 'string');
+      const resource = detectResource();
+      assert.strictEqual(typeof resource.attributes?.['os.type'], 'string');
+      assert.strictEqual(typeof resource.attributes?.['os.version'], 'string');
     });
 
     it('catches host attributes', () => {
-      const resource = detect();
-      assert.strictEqual(typeof resource.attributes['host.name'], 'string');
-      assert.strictEqual(typeof resource.attributes['host.arch'], 'string');
+      const resource = detectResource();
+      assert.strictEqual(typeof resource.attributes?.['host.name'], 'string');
+      assert.strictEqual(typeof resource.attributes?.['host.arch'], 'string');
     });
   });
 });

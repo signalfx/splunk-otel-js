@@ -43,7 +43,7 @@ import {
   W3CTraceContextPropagator,
 } from '@opentelemetry/core';
 import { SplunkBatchSpanProcessor } from './SplunkBatchSpanProcessor';
-import { Resource } from '@opentelemetry/resources';
+import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
 import { NextJsSpanProcessor } from './NextJsSpanProcessor';
 import type {
   SpanExporterFactory,
@@ -87,7 +87,9 @@ export function _setDefaultOptions(
   const envResource = getDetectedResource();
 
   const resourceFactory = options.resourceFactory || ((r: Resource) => r);
-  let resource = resourceFactory(envResource);
+  let resource = resourceFactory(
+    resourceFromAttributes(envResource.attributes || {})
+  );
 
   const serviceName =
     options.serviceName ||
@@ -95,7 +97,7 @@ export function _setDefaultOptions(
     resource.attributes[ATTR_SERVICE_NAME];
 
   resource = resource.merge(
-    new Resource({
+    resourceFromAttributes({
       [ATTR_SERVICE_NAME]: serviceName || defaultServiceName(),
     })
   );

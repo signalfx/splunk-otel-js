@@ -43,7 +43,8 @@ export class NextJsSpanProcessor implements SpanProcessor {
 
     if (
       span.attributes['next.span_name'] === 'resolve page components' &&
-      span.parentSpanId === this.handleRequestSpan.spanContext().spanId &&
+      span.parentSpanContext?.spanId ===
+        this.handleRequestSpan.spanContext().spanId &&
       typeof span.attributes['next.route'] === 'string'
     ) {
       const rsc =
