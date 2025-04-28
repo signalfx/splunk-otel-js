@@ -37,7 +37,7 @@
     "stats"
   ],
   "engines": {
-    "node": ">=18"
+    "node": "^18.19.0 || >=20.6.0"
   },
   "files": [
     "binding.gyp",
@@ -110,7 +110,7 @@
     "@opentelemetry/instrumentation-dataloader": "0.17.0",
     "@opentelemetry/instrumentation-dns": "0.44.0",
     "@opentelemetry/instrumentation-express": "0.48.1",
-    "@fastify/otel": "0.6.0",
+    "@fastify/otel": "0.7.0",
     "@opentelemetry/instrumentation-generic-pool": "0.44.0",
     "@opentelemetry/instrumentation-graphql": "0.48.0",
     "@opentelemetry/instrumentation-grpc": "0.200.0",
