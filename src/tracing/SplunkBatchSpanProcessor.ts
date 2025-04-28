@@ -26,7 +26,8 @@ export class SplunkBatchSpanProcessor extends BatchSpanProcessor {
     const syntheticsId = propagation
       .getBaggage(parentContext)
       ?.getEntry(SYNTHETIC_RUN_ID_FIELD)?.value;
-    if ((syntheticsId?.length ?? 0) > 0) {
+
+    if (syntheticsId !== undefined && syntheticsId.length > 0) {
       _span.setAttribute(SYNTHETIC_RUN_ID_FIELD, syntheticsId);
     }
   }

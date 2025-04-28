@@ -25,7 +25,10 @@ import {
   trace,
   TracerProvider,
 } from '@opentelemetry/api';
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import {
+  NodeTracerConfig,
+  NodeTracerProvider,
+} from '@opentelemetry/sdk-trace-node';
 import {
   Instrumentation,
   registerInstrumentations,
@@ -105,7 +108,19 @@ export function startTracing(options: TracingOptions): boolean {
   if (envTracesExporter !== undefined) {
     process.env.OTEL_TRACES_EXPORTER = '';
   }
-  const provider = new NodeTracerProvider(options.tracerConfig);
+
+  // processors
+  let spanProcessors = options.spanProcessorFactory(options);
+  if (!Array.isArray(spanProcessors)) {
+    spanProcessors = [spanProcessors];
+  }
+
+  const tracerConfig: NodeTracerConfig = {
+    spanProcessors,
+    ...options.tracerConfig,
+  };
+
+  const provider = new NodeTracerProvider(tracerConfig);
   if (envTracesExporter !== undefined) {
     process.env.OTEL_TRACES_EXPORTER = envTracesExporter;
   }
@@ -117,16 +132,6 @@ export function startTracing(options: TracingOptions): boolean {
   });
 
   setLoadedInstrumentations(options.instrumentations);
-
-  // processors
-  let processors = options.spanProcessorFactory(options);
-  if (!Array.isArray(processors)) {
-    processors = [processors];
-  }
-
-  for (const i in processors) {
-    provider.addSpanProcessor(processors[i]);
-  }
 
   // register global provider
   trace.setGlobalTracerProvider(provider);

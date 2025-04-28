@@ -16,7 +16,8 @@
 
 import { strict as assert } from 'assert';
 import { test } from 'node:test';
-import { setupMocks } from './common';
+import { ProxyTracerProvider, trace } from '@opentelemetry/api';
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
 import {
   BatchSpanProcessor,
@@ -28,8 +29,6 @@ import { parseOptionsAndConfigureInstrumentations } from '../../src/instrumentat
 import { startTracing } from '../../src/tracing';
 
 test('Tracing: set up with multiple span processors', async () => {
-  const { addSpanProcessorMock } = setupMocks();
-
   const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
     tracing: {
       spanProcessorFactory: () => {
@@ -43,14 +42,15 @@ test('Tracing: set up with multiple span processors', async () => {
 
   startTracing(tracingOptions);
 
-  assert.equal(addSpanProcessorMock.mock.callCount(), 2);
-  const p1 = addSpanProcessorMock.mock.calls[0].arguments[0];
+  const proxy = trace.getTracerProvider() as ProxyTracerProvider;
+  const provider = proxy.getDelegate() as NodeTracerProvider;
+
+  const [p1, p2] = provider['_activeSpanProcessor']['_spanProcessors'];
 
   assert(p1 instanceof SimpleSpanProcessor);
   const exp1 = p1['_exporter'];
   assert(exp1 instanceof ConsoleSpanExporter);
 
-  const p2 = addSpanProcessorMock.mock.calls[1].arguments[0];
   assert(p2 instanceof BatchSpanProcessor);
   const exp2 = p2['_exporter'];
   assert(exp2 instanceof InMemorySpanExporter);

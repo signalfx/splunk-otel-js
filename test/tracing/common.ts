@@ -15,45 +15,27 @@
  */
 
 import { strict as assert } from 'assert';
-import { mock } from 'node:test';
 
-import { trace } from '@opentelemetry/api';
+import { ProxyTracerProvider, trace } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
-import { ProxyTracerProvider } from '@opentelemetry/api';
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
-import { exporterHeaders, exporterUrl } from '../utils';
-
-export function setupMocks() {
-  const addSpanProcessorMock = mock.method(
-    NodeTracerProvider.prototype,
-    'addSpanProcessor'
-  );
-
-  return {
-    addSpanProcessorMock,
-  };
-}
+import { exporterHeaders, exporterUrl, getSpanProcessors } from '../utils';
 
 export function assertTracingPipeline(
-  mocks: ReturnType<typeof setupMocks>,
   exportURL: string,
   serviceName: string,
   accessToken?: string
 ) {
-  const { addSpanProcessorMock } = mocks;
-  assert.equal(addSpanProcessorMock.mock.callCount(), 1);
-  const processor = addSpanProcessorMock.mock.calls[0].arguments[0];
+  const provider = trace.getTracerProvider() as ProxyTracerProvider;
+  const processors = getSpanProcessors(provider);
+  const processor = processors[0];
   assert(processor instanceof BatchSpanProcessor);
   const exporter = processor['_exporter'];
   assert(exporter instanceof OTLPTraceExporter);
 
-  const proxy = trace.getTracerProvider() as ProxyTracerProvider;
-  const provider = proxy.getDelegate() as NodeTracerProvider;
-
   assert.strictEqual(
-    provider.resource.attributes[ATTR_SERVICE_NAME],
+    provider.getDelegate()['_resource'].attributes[ATTR_SERVICE_NAME],
     serviceName
   );
   assert.strictEqual(exporterUrl(exporter), exportURL);

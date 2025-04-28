@@ -16,15 +16,13 @@
 
 import { metrics } from '@opentelemetry/api';
 import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-proto';
-import { Resource } from '@opentelemetry/resources';
+import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
 import {
   AggregationTemporality,
   DataPointType,
   InstrumentType,
   MetricData,
-  View,
 } from '@opentelemetry/sdk-metrics';
-import { ATTR_DEPLOYMENT_ENVIRONMENT } from '@opentelemetry/semantic-conventions/incubating';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 
 import { hrtime } from 'process';
@@ -33,6 +31,8 @@ import { _setDefaultOptions, startMetrics } from '../src/metrics';
 import { cleanEnvironment, TestMetricReader } from './utils';
 import { strict as assert } from 'assert';
 import { describe, it, after, beforeEach } from 'node:test';
+
+const ATTR_DEPLOYMENT_ENVIRONMENT_NAME = 'deployment.environment.name';
 
 function emptyCounter() {
   return {
@@ -161,8 +161,8 @@ describe('metrics', () => {
 
     // Custom metrics and runtime metrics are done with 1 test as OTel meter provider can't be reset
     it('is possible to use metrics', async () => {
-      const resource = new Resource({
-        [ATTR_DEPLOYMENT_ENVIRONMENT]: 'test',
+      const resource = resourceFromAttributes({
+        [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: 'test',
       });
       const { metricsOptions } = parseOptionsAndConfigureInstrumentations({
         metrics: {
@@ -170,9 +170,7 @@ describe('metrics', () => {
           resourceFactory: (defaultResource: Resource) => {
             return defaultResource.merge(resource);
           },
-          views: [
-            new View({ name: 'clicks.xyz', instrumentName: 'test-counter' }),
-          ],
+          views: [{ name: 'clicks.xyz', instrumentName: 'test-counter' }],
           runtimeMetricsEnabled: true,
           runtimeMetricsCollectionIntervalMillis: 1,
           metricReaderFactory: () => {
@@ -192,7 +190,7 @@ describe('metrics', () => {
 
       assert.deepEqual(
         metricData.resourceMetrics.resource.attributes[
-          ATTR_DEPLOYMENT_ENVIRONMENT
+          ATTR_DEPLOYMENT_ENVIRONMENT_NAME
         ],
         'test'
       );
@@ -211,7 +209,7 @@ describe('metrics', () => {
         }
       );
 
-      assert.deepEqual(customMetrics.metrics[0].descriptor.name, 'clicks.xyz');
+      assert.deepEqual(customMetrics?.metrics[0].descriptor.name, 'clicks.xyz');
 
       const runtimeIlMetrics = metricData.resourceMetrics.scopeMetrics.find(
         (scopeMetrics) => {
@@ -221,8 +219,8 @@ describe('metrics', () => {
 
       assert.notEqual(runtimeIlMetrics, undefined);
 
-      const runtimeMetrics = runtimeIlMetrics.metrics;
-      assert.equal(runtimeMetrics.length, 8);
+      const runtimeMetrics = runtimeIlMetrics?.metrics;
+      assert.equal(runtimeMetrics?.length, 8);
 
       const expectedDescriptors = new Map([
         [

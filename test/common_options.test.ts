@@ -17,7 +17,7 @@
 import { describe, it } from 'node:test';
 import { strict as assert } from 'assert';
 import { parseOptionsAndConfigureInstrumentations } from '../src/instrumentations';
-import { Resource } from '@opentelemetry/resources';
+import { resourceFromAttributes } from '@opentelemetry/resources';
 import { exporterUrl } from './utils';
 
 describe('common options', () => {
@@ -25,7 +25,7 @@ describe('common options', () => {
     const opts = parseOptionsAndConfigureInstrumentations({
       resource: (envResource) => {
         return envResource.merge(
-          new Resource({
+          resourceFromAttributes({
             'test.attribute': 'foobar',
           })
         );
@@ -69,22 +69,22 @@ describe('common options', () => {
     const opts = parseOptionsAndConfigureInstrumentations({
       realm: 'eu0',
       accessToken: 'abc',
-      resource: () => new Resource({ test: 'common' }),
+      resource: () => resourceFromAttributes({ test: 'common' }),
       tracing: {
         realm: 'us0',
         accessToken: 'a',
-        resourceFactory: () => new Resource({ test: 'tracing' }),
+        resourceFactory: () => resourceFromAttributes({ test: 'tracing' }),
       },
       metrics: {
         realm: 'us1',
         accessToken: 'b',
-        resourceFactory: () => new Resource({ test: 'metrics' }),
+        resourceFactory: () => resourceFromAttributes({ test: 'metrics' }),
       },
       logging: {
-        resourceFactory: () => new Resource({ test: 'logging' }),
+        resourceFactory: () => resourceFromAttributes({ test: 'logging' }),
       },
       profiling: {
-        resourceFactory: () => new Resource({ test: 'profiling' }),
+        resourceFactory: () => resourceFromAttributes({ test: 'profiling' }),
       },
     });
 

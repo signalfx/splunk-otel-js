@@ -20,14 +20,14 @@ import {
   ProfilingStacktrace,
 } from './types';
 import { context, diag } from '@opentelemetry/api';
-import { Resource } from '@opentelemetry/resources';
+import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
 import {
   hrTime,
   InstrumentationScope,
   suppressTracing,
 } from '@opentelemetry/core';
+import { dependencies } from '../../package.json';
 import type { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-proto';
-import { VERSION } from '@opentelemetry/core';
 import {
   ATTR_TELEMETRY_SDK_LANGUAGE,
   ATTR_TELEMETRY_SDK_VERSION,
@@ -40,6 +40,8 @@ export interface ExporterOptions {
   endpoint: string;
   resource: Resource;
 }
+
+const OTEL_SDK_VERSION = dependencies['@opentelemetry/core'];
 
 function countSamples(stacktraces: ProfilingStacktrace[]) {
   let sampleCount = 0;
@@ -83,9 +85,9 @@ export class OtlpHttpProfilingExporter implements ProfilingExporter {
   constructor(options: ExporterOptions) {
     this._callstackInterval = options.callstackInterval;
     this._endpoint = createEndpoint(options.endpoint);
-    this._resource = new Resource({
+    this._resource = resourceFromAttributes({
       [ATTR_TELEMETRY_SDK_LANGUAGE]: 'node',
-      [ATTR_TELEMETRY_SDK_VERSION]: VERSION,
+      [ATTR_TELEMETRY_SDK_VERSION]: OTEL_SDK_VERSION,
     }).merge(options.resource);
 
     this._scope = {

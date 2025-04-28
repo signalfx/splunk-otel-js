@@ -16,18 +16,17 @@
 
 import { strict as assert } from 'assert';
 import { test } from 'node:test';
-import { setupMocks } from './common';
 
+import { trace } from '@opentelemetry/api';
 import {
   ConsoleSpanExporter,
   SimpleSpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
 import { parseOptionsAndConfigureInstrumentations } from '../../src/instrumentations';
 import { startTracing, stopTracing } from '../../src/tracing';
+import { getSpanProcessors } from '../utils';
 
 test('Tracing: set up with span processor', async () => {
-  const { addSpanProcessorMock } = setupMocks();
-
   const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
     tracing: {
       spanProcessorFactory: () => {
@@ -38,8 +37,7 @@ test('Tracing: set up with span processor', async () => {
 
   startTracing(tracingOptions);
 
-  assert.strictEqual(addSpanProcessorMock.mock.callCount(), 1);
-  const p1 = addSpanProcessorMock.mock.calls[0].arguments[0];
+  const [p1] = getSpanProcessors(trace.getTracerProvider());
 
   assert(p1 instanceof SimpleSpanProcessor);
   const exp1 = p1['_exporter'];

@@ -39,7 +39,7 @@ import { ConnectInstrumentation } from '@opentelemetry/instrumentation-connect';
 import { DataloaderInstrumentation } from '@opentelemetry/instrumentation-dataloader';
 import { DnsInstrumentation } from '@opentelemetry/instrumentation-dns';
 import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
-import { FastifyInstrumentation } from '@opentelemetry/instrumentation-fastify';
+import { FastifyOtelInstrumentation } from '@fastify/otel';
 import { GenericPoolInstrumentation } from '@opentelemetry/instrumentation-generic-pool';
 import { GraphQLInstrumentation } from '@opentelemetry/instrumentation-graphql';
 import { GrpcInstrumentation } from '@opentelemetry/instrumentation-grpc';
@@ -116,7 +116,7 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
     shortName: 'express',
   },
   {
-    create: () => new FastifyInstrumentation(),
+    create: () => new FastifyOtelInstrumentation(),
     shortName: 'fastify',
   },
   {
@@ -259,8 +259,8 @@ function getInstrumentationsToLoad() {
   );
 }
 
-export function getInstrumentations() {
-  const instrumentations = [];
+export function getInstrumentations(): Instrumentation[] {
+  const instrumentations: Instrumentation[] = [];
 
   for (const desc of getInstrumentationsToLoad()) {
     instrumentations.push(desc.create());
