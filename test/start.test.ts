@@ -18,7 +18,7 @@ import { strict as assert } from 'assert';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
 import { diag } from '@opentelemetry/api';
-import { Resource } from '@opentelemetry/resources';
+import { emptyResource } from '@opentelemetry/resources';
 import { start, stop } from '../src';
 import * as logging from '../src/logging';
 import * as metrics from '../src/metrics';
@@ -45,7 +45,7 @@ CONFIG.metrics = {
 
 const callstackInterval = 'callstackInterval';
 const collectionDuration = 'collectionDuration';
-const resource = Resource.empty();
+const resource = emptyResource();
 CONFIG.profiling = {
   callstackInterval,
   collectionDuration,
