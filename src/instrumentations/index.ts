@@ -71,6 +71,7 @@ import { ElasticsearchInstrumentation } from './external/elasticsearch';
 import { SequelizeInstrumentation } from './external/sequelize';
 import { TypeormInstrumentation } from './external/typeorm';
 import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici';
+import { HttpDcInstrumentation } from './dchttp/dchttp';
 
 type InstrumentationInfo = {
   shortName: string;
@@ -242,6 +243,10 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
   {
     create: () => new UndiciInstrumentation(),
     shortName: 'undici',
+  },
+  {
+    create: () => new HttpDcInstrumentation(),
+      shortName: 'httpdc',
   },
 ];
 

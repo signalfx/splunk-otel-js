@@ -64,8 +64,8 @@
     "@elastic/elasticsearch": "^7.17.11",
     "@types/bunyan": "1.8.11",
     "@types/semver": "^7.5.8",
-    "@typescript-eslint/eslint-plugin": "^8.19.0",
-    "@typescript-eslint/parser": "^8.19.0",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
     "bunyan": "1.8.15",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
@@ -86,7 +86,7 @@
     "sequelize": "^6.32.1",
     "ts-node": "^10.9.2",
     "typeorm": "^0.3.21",
-    "typescript": "5.7.2",
+    "typescript": "5.8.3",
     "winston": "3.10.0"
   },
   "dependencies": {
