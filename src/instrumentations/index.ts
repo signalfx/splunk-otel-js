@@ -246,7 +246,7 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
   },
   {
     create: () => new HttpDcInstrumentation(),
-      shortName: 'httpdc',
+    shortName: 'httpdc',
   },
 ];
 

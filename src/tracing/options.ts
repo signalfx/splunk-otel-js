@@ -273,14 +273,20 @@ export function consoleSpanExporterFactory(): SpanExporter {
 export function defaultSpanProcessorFactory(
   options: TracingOptions
 ): SpanProcessor[] {
-  let exporters = options.spanExporterFactory(options);
+  let exporters: SpanExporter | SpanExporter[] = [];
 
-  if (!Array.isArray(exporters)) {
-    exporters = [exporters];
+  if (process.env.ASYNC_EXPORT === 'true') {
+    exporters.push(new WorkerExporter());
+    console.log('creating new worker at span processor factory');
+  } else {
+    const spanExporters = options.spanExporterFactory(options);
+
+    if (!Array.isArray(spanExporters)) {
+      exporters = [spanExporters];
+    } else {
+      exporters = spanExporters;
+    }
   }
-
-  console.log('creating new worker at span processor factory');
-  exporters.push(new WorkerExporter());
 
   const nextJsFixEnabled = getEnvBoolean('SPLUNK_NEXTJS_FIX_ENABLED', false);
 
