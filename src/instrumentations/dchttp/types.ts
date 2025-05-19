@@ -14,12 +14,7 @@
  * limitations under the License.
  */
 import { Span, Attributes } from '@opentelemetry/api';
-import {
-  ClientRequest,
-  IncomingMessage,
-  ServerResponse,
-  RequestOptions,
-} from 'http';
+import { ClientRequest, IncomingMessage, ServerResponse } from 'http';
 import { InstrumentationConfig } from '@opentelemetry/instrumentation';
 
 export interface HttpCustomAttributeFunction {
@@ -35,7 +30,7 @@ export interface IgnoreIncomingRequestFunction {
 }
 
 export interface IgnoreOutgoingRequestFunction {
-  (request: RequestOptions): boolean;
+  (request: ClientRequest): boolean;
 }
 
 export interface HttpRequestCustomAttributeFunction {
@@ -51,7 +46,7 @@ export interface StartIncomingSpanCustomAttributeFunction {
 }
 
 export interface StartOutgoingSpanCustomAttributeFunction {
-  (request: RequestOptions): Attributes;
+  (request: ClientRequest): Attributes;
 }
 
 /**
@@ -76,6 +71,8 @@ export interface HttpInstrumentationConfig extends InstrumentationConfig {
   startIncomingSpanHook?: StartIncomingSpanCustomAttributeFunction;
   /** Function for adding custom attributes before a span is started in outgoingRequest */
   startOutgoingSpanHook?: StartOutgoingSpanCustomAttributeFunction;
+  /** The primary server name of the matched virtual host. */
+  serverName?: string;
   /** Require parent to create span for outgoing requests */
   requireParentforOutgoingSpans?: boolean;
   /** Require parent to create span for incoming requests */

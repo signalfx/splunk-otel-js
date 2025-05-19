@@ -40,7 +40,11 @@ export class DummyPropagation implements TextMapPropagator {
   inject(context: Context, carrier: unknown, setter: TextMapSetter): void {
     const spanContext = trace.getSpanContext(context);
     if (!spanContext) return;
-    setter.set(carrier, DummyPropagation.TRACE_CONTEXT_KEY, spanContext.traceId);
+    setter.set(
+      carrier,
+      DummyPropagation.TRACE_CONTEXT_KEY,
+      spanContext.traceId
+    );
     setter.set(carrier, DummyPropagation.SPAN_CONTEXT_KEY, spanContext.spanId);
   }
   fields(): string[] {

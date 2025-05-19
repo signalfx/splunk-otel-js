@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import * as http from 'http';
-import * as assert from 'assert';
+import * as https from 'https';
 import { URL } from 'url';
-import { SpanKind } from '@opentelemetry/api';
-import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
+
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 type GetResult = Promise<{
   data: string;
@@ -25,15 +26,10 @@ type GetResult = Promise<{
   resHeaders: http.IncomingHttpHeaders;
   reqHeaders: http.OutgoingHttpHeaders;
   method: string | undefined;
-  address?: string;
-  clientRemotePort?: number;
-  clientRemoteAddress?: string;
-  req: http.OutgoingMessage;
-  res: http.IncomingMessage;
 }>;
 
-function get(input: string | URL, options?: http.RequestOptions): GetResult;
-function get(input: http.RequestOptions): GetResult;
+function get(input: string | URL, options?: https.RequestOptions): GetResult;
+function get(input: https.RequestOptions): GetResult;
 function get(input: any, options?: any): GetResult {
   return new Promise((resolve, reject) => {
     // eslint-disable-next-line prefer-const
@@ -54,11 +50,6 @@ function get(input: any, options?: any): GetResult {
           reqHeaders: req.getHeaders ? req.getHeaders() : (req as any)._headers,
           resHeaders: res.headers,
           method: res.req.method,
-          address: req.socket?.remoteAddress,
-          clientRemotePort: res.req.socket?.localPort,
-          clientRemoteAddress: res.req.socket?.localAddress,
-          req,
-          res,
         });
       });
       resp.on('error', (err) => {
@@ -67,35 +58,15 @@ function get(input: any, options?: any): GetResult {
     }
     req =
       options != null
-        ? http.get(input, options, onGetResponseCb)
-        : http.get(input, onGetResponseCb);
+        ? https.get(input, options, onGetResponseCb)
+        : https.get(input, onGetResponseCb);
     req.on('error', (err) => {
-      reject(err);
-    });
-    req.on('timeout', () => {
-      const err = new Error('timeout');
-      req.emit('error', err);
       reject(err);
     });
     return req;
   });
 }
 
-export const httpRequest = {
+export const httpsRequest = {
   get,
 };
-
-export function spanByKind(
-  kind: SpanKind,
-  spans: ReadableSpan[]
-): ReadableSpan {
-  const span = spans.find((s) => s.kind === kind);
-  assert.ok(span);
-  return span;
-}
-
-export function spanByName(name: string, spans: ReadableSpan[]): ReadableSpan {
-  const span = spans.find((s) => s.name === name);
-  assert.ok(span);
-  return span;
-}

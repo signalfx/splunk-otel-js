@@ -16,6 +16,7 @@
     "lint": "eslint . --ext .ts",
     "lint:commits": "commitlint",
     "test": "node ./test/runner.js",
+    "test:only": "node ./test/runner.js --test-only",
     "prebuild:current": "node scripts/prebuild-current.js",
     "prebuild:os": "node scripts/prebuild-os.js",
     "profile:proto": "pbjs -t static-module -w commonjs -o src/profiling/proto/profile.js protos/pprof/profile.proto",
