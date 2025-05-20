@@ -18,6 +18,7 @@ import * as assert from 'assert';
 import { URL } from 'url';
 import { SpanKind } from '@opentelemetry/api';
 import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
+import { gte } from 'semver';
 
 type GetResult = Promise<{
   data: string;
@@ -98,4 +99,8 @@ export function spanByName(name: string, spans: ReadableSpan[]): ReadableSpan {
   const span = spans.find((s) => s.name === name);
   assert.ok(span);
   return span;
+}
+
+export function isSupported() {
+  return gte(process.version, '22.15.0');
 }

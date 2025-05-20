@@ -80,7 +80,12 @@ instrumentation.disable();
 import * as http from 'http';
 import { assertSpan } from './utils/assertSpan';
 import { DummyPropagation } from './utils/DummyPropagation';
-import { httpRequest, spanByKind, spanByName } from './utils/utils';
+import {
+  httpRequest,
+  isSupported,
+  spanByKind,
+  spanByName,
+} from './utils/utils';
 import { getRemoteClientAddress } from '../../../src/instrumentations/httpdc/utils';
 
 let server: http.Server;
@@ -133,7 +138,7 @@ export const startOutgoingSpanHookFunction = (
   return { guid: request.getHeader('guid') };
 };
 
-describe('HttpInstrumentation', () => {
+describe('HttpInstrumentation', { skip: !isSupported() }, () => {
   let contextManager: ContextManager;
 
   before(() => {

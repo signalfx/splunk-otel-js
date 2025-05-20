@@ -49,7 +49,7 @@ instrumentation.disable();
 
 import * as https from 'https';
 import { httpsRequest } from './utils/httpsRequest';
-import { spanByKind } from './utils/utils';
+import { isSupported, spanByKind } from './utils/utils';
 
 const applyCustomAttributesOnSpanErrorMessage =
   'bad applyCustomAttributesOnSpan function';
@@ -74,7 +74,7 @@ export const customAttributeFunction = (span: ISpan): void => {
   span.setAttribute('span kind', SpanKind.CLIENT);
 };
 
-describe('HttpsInstrumentation', () => {
+describe('HttpsInstrumentation', { skip: isSupported() }, () => {
   let contextManager: ContextManager;
 
   beforeEach(() => {

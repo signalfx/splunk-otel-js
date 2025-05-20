@@ -17,7 +17,7 @@ import { after, afterEach, before, describe, it, mock } from 'node:test';
 import * as assert from 'assert';
 import { HttpDcInstrumentation } from '../../../src/instrumentations/httpdc/httpdc';
 import { AddressInfo } from 'net';
-import { httpRequest } from './utils/utils';
+import { httpRequest, isSupported } from './utils/utils';
 import { isWrapped } from '@opentelemetry/instrumentation';
 
 const instrumentation = new HttpDcInstrumentation();
@@ -31,7 +31,7 @@ import {
   INVALID_SPAN_CONTEXT,
 } from '@opentelemetry/api';
 
-describe('HttpInstrumentation', () => {
+describe('HttpInstrumentation', { skip: !isSupported() }, () => {
   let server: http.Server;
   let serverPort = 0;
 
