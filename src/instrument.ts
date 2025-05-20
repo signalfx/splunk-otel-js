@@ -18,13 +18,7 @@ import { defaultServiceName, getEnvArray, getNonEmptyEnvVar } from './utils';
 
 import { start } from './start';
 
-import { isMainThread } from 'node:worker_threads';
-
 function boot() {
-  if (!isMainThread) {
-    return;
-  }
-
   if (getNonEmptyEnvVar('SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES') !== undefined) {
     const limitToPackages = getEnvArray(
       'SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES',
