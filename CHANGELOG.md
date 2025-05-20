@@ -1,5 +1,10 @@
 # Change Log - @splunk/otel
 
+## 4.0.0-alpha1
+
+- Upgrade to OpenTelemetry SDK 2.0. [#1020](https://github.com/signalfx/splunk-otel-js/pull/1020)
+- Add an experimental HTTP instrumentation based on diagnostics channel. [#1021](https://github.com/signalfx/splunk-otel-js/pull/1021)
+
 ## 3.1.2
 
 - Add prebuilds for Apple silicon. [#1016](https://github.com/signalfx/splunk-otel-js/pull/1016)
