@@ -31,8 +31,8 @@ import {
   setRPCMetadata,
   isTracingSuppressed,
 } from '@opentelemetry/core';
+import { HttpDcInstrumentationConfig } from './types';
 import type * as http from 'http';
-import { HttpInstrumentationConfig } from './types';
 import { VERSION } from '../../version';
 import {
   InstrumentationBase,
@@ -53,7 +53,7 @@ import {
 import { Err, Http, SemconvStability } from './internal-types';
 import * as diagnostics_channel from 'node:diagnostics_channel';
 
-const SPAN_SYMBOL = Symbol.for('DCHTTP_SPAN');
+const SPAN_SYMBOL = Symbol.for('HTTPDC_SPAN');
 
 type WithSpan = { [SPAN_SYMBOL]?: Span };
 type TracedServerResponse = http.ServerResponse & WithSpan;
@@ -67,17 +67,17 @@ function closeHttpSpan(traced: WithSpan) {
 /**
  * `node:http` and `node:https` instrumentation for OpenTelemetry
  */
-export class HttpDcInstrumentation extends InstrumentationBase<HttpInstrumentationConfig> {
+export class HttpDcInstrumentation extends InstrumentationBase<HttpDcInstrumentationConfig> {
   private _headerCapture;
 
   private _semconvStability = SemconvStability.OLD;
 
-  constructor(config: HttpInstrumentationConfig = {}) {
+  constructor(config: HttpDcInstrumentationConfig = {}) {
     super('@opentelemetry/instrumentation-httpdc', VERSION, config);
     this._headerCapture = this._createHeaderCapture();
   }
 
-  override setConfig(config: HttpInstrumentationConfig = {}): void {
+  override setConfig(config: HttpDcInstrumentationConfig = {}): void {
     super.setConfig(config);
     this._headerCapture = this._createHeaderCapture();
   }

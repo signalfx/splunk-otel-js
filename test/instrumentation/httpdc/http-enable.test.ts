@@ -68,9 +68,9 @@ import {
 } from '@opentelemetry/semantic-conventions';
 import type { ClientRequest, IncomingMessage, ServerResponse } from 'http';
 import { getRPCMetadata, RPCType } from '@opentelemetry/core';
-import { HTTP_STATUS_TEXT } from '../../../src/instrumentations/dchttp/semconv';
-import { SemconvStability } from '../../../src/instrumentations/dchttp/internal-types';
-import { HttpDcInstrumentation } from '../../../src/instrumentations/dchttp/dchttp';
+import { HTTP_STATUS_TEXT } from '../../../src/instrumentations/httpdc/semconv';
+import { SemconvStability } from '../../../src/instrumentations/httpdc/internal-types';
+import { HttpDcInstrumentation } from '../../../src/instrumentations/httpdc/httpdc';
 import { isWrapped } from '@opentelemetry/instrumentation';
 
 const instrumentation = new HttpDcInstrumentation();
@@ -81,7 +81,7 @@ import * as http from 'http';
 import { assertSpan } from './utils/assertSpan';
 import { DummyPropagation } from './utils/DummyPropagation';
 import { httpRequest, spanByKind, spanByName } from './utils/utils';
-import { getRemoteClientAddress } from '../../../src/instrumentations/dchttp/utils';
+import { getRemoteClientAddress } from '../../../src/instrumentations/httpdc/utils';
 
 let server: http.Server;
 const serverPort = 22346;

@@ -41,9 +41,9 @@ import {
 } from '@opentelemetry/semantic-conventions';
 import * as assert from 'assert';
 import * as http from 'http';
-import * as utils from '../../../../src/instrumentations/dchttp/utils';
+import * as utils from '../../../../src/instrumentations/httpdc/utils';
 import { DummyPropagation } from './DummyPropagation';
-import { HTTP_ERROR_MESSAGE } from '../../../../src/instrumentations/dchttp/semconv';
+import { HTTP_ERROR_MESSAGE } from '../../../../src/instrumentations/httpdc/semconv';
 
 export const assertSpan = (
   span: ReadableSpan,

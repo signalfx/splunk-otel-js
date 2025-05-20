@@ -39,7 +39,7 @@ import {
 import * as assert from 'assert';
 import * as fs from 'fs';
 import * as path from 'path';
-import { HttpDcInstrumentation } from '../../../src/instrumentations/dchttp/dchttp';
+import { HttpDcInstrumentation } from '../../../src/instrumentations/httpdc/httpdc';
 import { assertSpan } from './utils/assertSpan';
 import { DummyPropagation } from './utils/DummyPropagation';
 
