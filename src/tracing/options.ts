@@ -272,10 +272,14 @@ export function consoleSpanExporterFactory(): SpanExporter {
 export function defaultSpanProcessorFactory(
   options: TracingOptions
 ): SpanProcessor[] {
-  let exporters = options.spanExporterFactory(options);
+  let exporters: SpanExporter | SpanExporter[] = [];
 
-  if (!Array.isArray(exporters)) {
-    exporters = [exporters];
+  const spanExporters = options.spanExporterFactory(options);
+
+  if (!Array.isArray(spanExporters)) {
+    exporters = [spanExporters];
+  } else {
+    exporters = spanExporters;
   }
 
   const nextJsFixEnabled = getEnvBoolean('SPLUNK_NEXTJS_FIX_ENABLED', false);

@@ -108,7 +108,6 @@ export function startTracing(options: TracingOptions): boolean {
   if (envTracesExporter !== undefined) {
     process.env.OTEL_TRACES_EXPORTER = '';
   }
-
   // processors
   let spanProcessors = options.spanProcessorFactory(options);
   if (!Array.isArray(spanProcessors)) {
