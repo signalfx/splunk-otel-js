@@ -24,7 +24,6 @@ import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 
 import { getInstrumentations } from '../instrumentations';
 import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
-import { WorkerExporter } from '../export/worker_exporter';
 import type * as OtlpGrpc from '@opentelemetry/exporter-trace-otlp-grpc';
 import type * as grpc from '@grpc/grpc-js';
 import { getDetectedResource } from '../resource';
@@ -275,17 +274,12 @@ export function defaultSpanProcessorFactory(
 ): SpanProcessor[] {
   let exporters: SpanExporter | SpanExporter[] = [];
 
-  if (process.env.ASYNC_EXPORT === 'true') {
-    exporters.push(new WorkerExporter());
-    console.log('creating new worker at span processor factory');
-  } else {
-    const spanExporters = options.spanExporterFactory(options);
+  const spanExporters = options.spanExporterFactory(options);
 
-    if (!Array.isArray(spanExporters)) {
-      exporters = [spanExporters];
-    } else {
-      exporters = spanExporters;
-    }
+  if (!Array.isArray(spanExporters)) {
+    exporters = [spanExporters];
+  } else {
+    exporters = spanExporters;
   }
 
   const nextJsFixEnabled = getEnvBoolean('SPLUNK_NEXTJS_FIX_ENABLED', false);

@@ -1,5 +1,5 @@
 /*
- * Copyright Splunk Inc.
+ * Copyright Splunk Inc., The OpenTelemetry Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ import {
   SEMATTRS_NET_HOST_PORT,
   SEMATTRS_NET_PEER_IP,
   SEMATTRS_NET_PEER_PORT,
+  SEMATTRS_NET_PEER_NAME,
   SEMATTRS_NET_TRANSPORT,
 } from '@opentelemetry/semantic-conventions';
 import {
@@ -80,17 +81,16 @@ import {
  * Get an absolute url
  */
 export function getAbsoluteUrl(req: ClientRequest): string {
-  const protocol = req.protocol;
   const port = req.socket?.remotePort;
   const path = req.path || '/';
 
   const isDefaultPort = port === 80 || port === 443;
 
   if (isDefaultPort) {
-    return `${protocol}//${req.host}${path}`;
+    return `${req.protocol}//${req.host}${path}`;
   }
 
-  return `${protocol}//${req.host}:${port}${path}`;
+  return `${req.protocol}//${req.host}:${port}${path}`;
 }
 
 /**
@@ -158,27 +158,6 @@ export const setRequestContentLengthAttribute = (
   }
 };
 
-/**
- * Adds attributes for response content-length and content-encoding HTTP headers
- * @param { IncomingMessage } Response object whose headers will be analyzed
- * @param { Attributes } Attributes object to be modified
- *
- * @deprecated this is for an older version of semconv. It is retained for compatibility using OTEL_SEMCONV_STABILITY_OPT_IN
- */
-export const setResponseContentLengthAttribute = (
-  response: IncomingMessage,
-  attributes: Attributes
-): void => {
-  const length = getContentLength(response.headers);
-  if (length === null) return;
-
-  if (isCompressed(response.headers)) {
-    attributes[SEMATTRS_HTTP_RESPONSE_CONTENT_LENGTH] = length;
-  } else {
-    attributes[SEMATTRS_HTTP_RESPONSE_CONTENT_LENGTH_UNCOMPRESSED] = length;
-  }
-};
-
 function getContentLength(
   headers: OutgoingHttpHeaders | IncomingHttpHeaders
 ): number | null {
@@ -217,6 +196,51 @@ export const setAttributesFromHttpKind = (
   }
 };
 
+function getOutgoingRequestAttributesOnResponseOldSemconv(
+  request: ClientRequest,
+  response: IncomingMessage
+): Attributes {
+  const socket = response.socket;
+
+  const attributes: Attributes = {
+    [SEMATTRS_HTTP_URL]: getAbsoluteUrl(request),
+    [SEMATTRS_NET_PEER_IP]: socket.remoteAddress,
+    [SEMATTRS_NET_PEER_PORT]: socket.remotePort,
+    [SEMATTRS_HTTP_STATUS_CODE]: response.statusCode,
+    [HTTP_STATUS_TEXT]: response.statusMessage || '',
+    [SEMATTRS_HTTP_FLAVOR]: response.httpVersion,
+    [SEMATTRS_NET_TRANSPORT]: NETTRANSPORTVALUES_IP_TCP,
+  };
+
+  const length = getContentLength(response.headers);
+
+  if (length === null) {
+    return attributes;
+  }
+
+  if (isCompressed(response.headers)) {
+    attributes[SEMATTRS_HTTP_RESPONSE_CONTENT_LENGTH] = length;
+  } else {
+    attributes[SEMATTRS_HTTP_RESPONSE_CONTENT_LENGTH_UNCOMPRESSED] = length;
+  }
+
+  return attributes;
+}
+
+function getOutgoingRequestAttributesOnResponseNewSemconv(
+  request: ClientRequest,
+  response: IncomingMessage
+): Attributes {
+  const socket = response.socket;
+  return {
+    [ATTR_URL_FULL]: getAbsoluteUrl(request),
+    [ATTR_HTTP_RESPONSE_STATUS_CODE]: response.statusCode,
+    [ATTR_NETWORK_PEER_ADDRESS]: socket.remoteAddress,
+    [ATTR_NETWORK_PEER_PORT]: socket.remotePort,
+    [ATTR_NETWORK_PROTOCOL_VERSION]: response.httpVersion,
+  };
+}
+
 /**
  * Returns outgoing request attributes scoped to the response data
  * @param {IncomingMessage} response the response object
@@ -227,104 +251,96 @@ export const getOutgoingRequestAttributesOnResponse = (
   response: IncomingMessage,
   semconvStability: SemconvStability
 ): Attributes => {
-  const { statusCode, statusMessage, httpVersion, socket } = response;
-  const oldAttributes: Attributes = {};
-  const stableAttributes: Attributes = {
-    [ATTR_URL_FULL]: getAbsoluteUrl(request),
+  if (semconvStability === SemconvStability.OLD) {
+    return getOutgoingRequestAttributesOnResponseOldSemconv(request, response);
+  }
+
+  if (semconvStability === SemconvStability.STABLE) {
+    return getOutgoingRequestAttributesOnResponseNewSemconv(request, response);
+  }
+
+  const oldAttributes = getOutgoingRequestAttributesOnResponseOldSemconv(
+    request,
+    response
+  );
+  const newAttributes = getOutgoingRequestAttributesOnResponseNewSemconv(
+    request,
+    response
+  );
+  return Object.assign(oldAttributes, newAttributes);
+};
+
+function getOutgoingRequestAttributesOldSemconv(
+  request: ClientRequest
+): Attributes {
+  const userAgent = request.getHeader('user-agent');
+  const hostHeader = request.getHeader('host');
+
+  return {
+    [SEMATTRS_HTTP_METHOD]: request.method,
+    [SEMATTRS_HTTP_TARGET]: request.path || '/',
+    [SEMATTRS_NET_PEER_NAME]: request.host,
+    [SEMATTRS_HTTP_HOST]: hostHeader,
+    [SEMATTRS_HTTP_USER_AGENT]: userAgent,
   };
+}
 
-  if (statusCode !== null) {
-    stableAttributes[ATTR_HTTP_RESPONSE_STATUS_CODE] = statusCode;
+function getOutgoingRequestAttributesNewSemconv(
+  request: ClientRequest
+): Attributes {
+  let port: number | undefined;
+
+  const hostHeader = request.getHeader('host');
+  if (typeof hostHeader === 'string') {
+    const portString = hostHeader.substring(hostHeader.indexOf(':') + 1);
+    port = Number(portString);
   }
 
-  if (socket) {
-    const { remoteAddress, remotePort } = socket;
-    oldAttributes[SEMATTRS_HTTP_URL] = getAbsoluteUrl(request);
-    oldAttributes[SEMATTRS_NET_PEER_IP] = remoteAddress;
-    oldAttributes[SEMATTRS_NET_PEER_PORT] = remotePort;
+  return {
+    // Required attributes
+    [ATTR_HTTP_REQUEST_METHOD]: request.method,
+    [ATTR_SERVER_ADDRESS]: request.host,
+    [ATTR_SERVER_PORT]: port,
+    [ATTR_URL_FULL]: getAbsoluteUrl(request),
+    //[ATTR_URL_FULL]: `${request.protocol}//${request.host}${request.path}`,
+    // leaving out protocol version, it is not yet negotiated
+    // leaving out protocol name, it is only required when protocol version is set
+    // retries and redirects not supported
 
-    // Recommended
-    stableAttributes[ATTR_NETWORK_PEER_ADDRESS] = remoteAddress;
-    stableAttributes[ATTR_NETWORK_PEER_PORT] = remotePort;
-    stableAttributes[ATTR_NETWORK_PROTOCOL_VERSION] = response.httpVersion;
-  }
-  setResponseContentLengthAttribute(response, oldAttributes);
+    // Opt-in attributes left off for now
+  };
+}
 
-  if (statusCode) {
-    oldAttributes[SEMATTRS_HTTP_STATUS_CODE] = statusCode;
-    oldAttributes[HTTP_STATUS_TEXT] = (statusMessage || '').toUpperCase();
-  }
-
-  setAttributesFromHttpKind(httpVersion, oldAttributes);
-
-  switch (semconvStability) {
-    case SemconvStability.STABLE:
-      return stableAttributes;
-    case SemconvStability.OLD:
-      return oldAttributes;
+export function getOutgoingRequestAttributes(
+  request: ClientRequest,
+  semconvStability: SemconvStability
+): Attributes {
+  if (semconvStability === SemconvStability.OLD) {
+    return getOutgoingRequestAttributesOldSemconv(request);
   }
 
-  return Object.assign(oldAttributes, stableAttributes);
-};
-
-/**
- * Returns outgoing request Metric attributes scoped to the response data
- * @param {Attributes} spanAttributes the span attributes
- */
-export const getOutgoingRequestMetricAttributesOnResponse = (
-  spanAttributes: Attributes
-): Attributes => {
-  const stableAttributes: Attributes = {};
-
-  if (spanAttributes[ATTR_NETWORK_PROTOCOL_VERSION]) {
-    stableAttributes[ATTR_NETWORK_PROTOCOL_VERSION] =
-      spanAttributes[ATTR_NETWORK_PROTOCOL_VERSION];
+  if (semconvStability === SemconvStability.STABLE) {
+    return getOutgoingRequestAttributesNewSemconv(request);
   }
 
-  if (spanAttributes[ATTR_HTTP_RESPONSE_STATUS_CODE]) {
-    stableAttributes[ATTR_HTTP_RESPONSE_STATUS_CODE] =
-      spanAttributes[ATTR_HTTP_RESPONSE_STATUS_CODE];
-  }
-
-  return stableAttributes;
-};
+  return Object.assign(
+    getOutgoingRequestAttributesOldSemconv(request),
+    getOutgoingRequestAttributesNewSemconv(request)
+  );
+}
 
 function parseHostHeader(
   hostHeader: string,
   proto?: string
 ): { host: string; port?: string } {
-  const parts = hostHeader.split(':');
+  const notIPv6 = !hostHeader.startsWith('[');
 
-  // no semicolon implies ipv4 dotted syntax or host name without port
-  // x.x.x.x
-  // example.com
-  if (parts.length === 1) {
-    if (proto === 'http') {
-      return { host: parts[0], port: '80' };
-    }
-
-    if (proto === 'https') {
-      return { host: parts[0], port: '443' };
-    }
-
-    return { host: parts[0] };
-  }
-
-  // single semicolon implies ipv4 dotted syntax or host name with port
-  // x.x.x.x:yyyy
-  // example.com:yyyy
-  if (parts.length === 2) {
-    return {
-      host: parts[0],
-      port: parts[1],
-    };
-  }
-
-  // more than 2 parts implies ipv6 syntax with multiple colons
-  // [x:x:x:x:x:x:x:x]
-  // [x:x:x:x:x:x:x:x]:yyyy
-  if (parts[0].startsWith('[')) {
-    if (parts[parts.length - 1].endsWith(']')) {
+  if (notIPv6) {
+    const firstColonIndex = hostHeader.indexOf(':');
+    // no semicolon implies ipv4 dotted syntax or host name without port
+    // x.x.x.x
+    // example.com
+    if (firstColonIndex === -1) {
       if (proto === 'http') {
         return { host: hostHeader, port: '80' };
       }
@@ -332,15 +348,44 @@ function parseHostHeader(
       if (proto === 'https') {
         return { host: hostHeader, port: '443' };
       }
-    } else if (parts[parts.length - 2].endsWith(']')) {
+
+      return { host: hostHeader };
+    }
+
+    const secondColonIndex = hostHeader.indexOf(':', firstColonIndex + 1);
+    // single semicolon implies ipv4 dotted syntax or host name with port
+    // x.x.x.x:yyyy
+    // example.com:yyyy
+    if (secondColonIndex === -1) {
       return {
-        host: parts.slice(0, -1).join(':'),
-        port: parts[parts.length - 1],
+        host: hostHeader.substring(0, firstColonIndex),
+        port: hostHeader.substring(firstColonIndex + 1),
       };
     }
+
+    // if nothing above matches just return the host header
+    return { host: hostHeader };
   }
 
-  // if nothing above matches just return the host header
+  // more than 2 parts implies ipv6 syntax with multiple colons
+  // [x:x:x:x:x:x:x:x]
+  // [x:x:x:x:x:x:x:x]:yyyy
+  const parts = hostHeader.split(':');
+  if (parts[parts.length - 1].endsWith(']')) {
+    if (proto === 'http') {
+      return { host: hostHeader, port: '80' };
+    }
+
+    if (proto === 'https') {
+      return { host: hostHeader, port: '443' };
+    }
+  } else if (parts[parts.length - 2].endsWith(']')) {
+    return {
+      host: parts.slice(0, -1).join(':'),
+      port: parts[parts.length - 1],
+    };
+  }
+
   return { host: hostHeader };
 }
 
@@ -445,11 +490,9 @@ function getInfoFromIncomingMessage(
   logger: DiagLogger
 ): { pathname?: string; search?: string; toString: () => string } {
   try {
-    if (request.headers.host) {
-      return new URL(
-        request.url ?? '/',
-        `${component}://${request.headers.host}`
-      );
+    const host = request.headers.host;
+    if (host) {
+      return new URL(request.url ?? '/', `${component}://${host}`);
     } else {
       const unsafeParsedUrl = new URL(
         request.url ?? '/',

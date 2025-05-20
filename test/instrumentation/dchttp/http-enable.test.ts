@@ -1,5 +1,5 @@
 /*
- * Copyright Splunk Inc.
+ * Copyright Splunk Inc., The OpenTelemetry Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,12 +161,14 @@ describe('HttpInstrumentation', () => {
     before((_ctx, done) => {
       instrumentation.setConfig({
         ignoreIncomingRequestHook: (request) => {
-          return request.headers['user-agent']?.match('ignored-string') != null;
+          return (
+            request.headers['user-agent']?.match('ignored-string') !== null
+          );
         },
         ignoreOutgoingRequestHook: (request) => {
           const header = request.getHeader('user-agent');
           if (header !== undefined) {
-            return String(header).match('ignored-string') != null;
+            return String(header).match('ignored-string') !== null;
           }
           return false;
         },
@@ -219,7 +221,7 @@ describe('HttpInstrumentation', () => {
         }
         if (request.url?.includes('/setroute')) {
           const rpcData = getRPCMetadata(context.active());
-          assert.ok(rpcData != null);
+          assert.ok(rpcData);
           assert.strictEqual(rpcData.type, RPCType.HTTP);
           assert.strictEqual(rpcData.route, undefined);
           rpcData.route = 'TheRoute';
@@ -339,7 +341,7 @@ describe('HttpInstrumentation', () => {
       });
     }
 
-    it.only('should create a child span for GET requests', async () => {
+    it('should create a child span for GET requests', async () => {
       const testPath = '/outgoing/rootSpan/childs/1';
       const name = 'TestRootSpan';
       const span = provider.getTracer('default').startSpan(name);
@@ -842,7 +844,7 @@ describe('HttpInstrumentation', () => {
         }
         if (request.url?.includes('/setroute')) {
           const rpcData = getRPCMetadata(context.active());
-          assert.ok(rpcData != null);
+          assert.ok(rpcData);
           assert.strictEqual(rpcData.type, RPCType.HTTP);
           assert.strictEqual(rpcData.route, undefined);
           rpcData.route = 'TheRoute';
@@ -946,7 +948,7 @@ describe('HttpInstrumentation', () => {
       server = http.createServer((request, response) => {
         if (request.url?.includes('/setroute')) {
           const rpcData = getRPCMetadata(context.active());
-          assert.ok(rpcData != null);
+          assert.ok(rpcData);
           assert.strictEqual(rpcData.type, RPCType.HTTP);
           assert.strictEqual(rpcData.route, undefined);
           rpcData.route = 'TheRoute';

@@ -1,5 +1,5 @@
 /*
- * Copyright Splunk Inc.
+ * Copyright Splunk Inc., The OpenTelemetry Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,23 +40,12 @@ import {
   safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
 import { errorMonitor } from 'events';
+import { ATTR_HTTP_ROUTE } from '@opentelemetry/semantic-conventions';
 import {
-  ATTR_HTTP_REQUEST_METHOD,
-  ATTR_HTTP_ROUTE,
-  ATTR_SERVER_ADDRESS,
-  ATTR_SERVER_PORT,
-  ATTR_URL_FULL,
-  SEMATTRS_HTTP_HOST,
-  SEMATTRS_HTTP_METHOD,
-  SEMATTRS_HTTP_TARGET,
-  SEMATTRS_HTTP_USER_AGENT,
-  SEMATTRS_NET_PEER_NAME,
-} from '@opentelemetry/semantic-conventions';
-import {
-  getAbsoluteUrl,
   getIncomingRequestAttributes,
   getIncomingRequestAttributesOnResponse,
   getOutgoingRequestAttributesOnResponse,
+  getOutgoingRequestAttributes,
   headerCapture,
   parseResponseStatus,
   setSpanWithError,
@@ -177,6 +166,7 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpInstrumentati
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _httpServerRequestStart(message: any) {
     if (!this.isEnabled()) {
       return;
@@ -193,7 +183,7 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpInstrumentati
         safeExecuteInTheMiddle(
           () => ignoreIncomingRequestHook(request),
           (e: unknown) => {
-            if (e != null) {
+            if (e !== null) {
               this._diag.error('caught ignoreIncomingRequestHook error: ', e);
             }
           },
@@ -204,17 +194,20 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpInstrumentati
       }
     }
 
-    const method = request.method || 'GET';
+    let hookAttributes: Attributes | undefined;
 
-    const headers = request.headers;
+    if (config.startIncomingSpanHook !== undefined) {
+      hookAttributes = this._callStartSpanHook(
+        request,
+        config.startIncomingSpanHook
+      );
+    }
+
     const spanAttributes = getIncomingRequestAttributes(
       request,
       {
         serverName: config.serverName,
-        hookAttributes: this._callStartSpanHook(
-          request,
-          config.startIncomingSpanHook
-        ),
+        hookAttributes,
         semconvStability: this._semconvStability,
       },
       this._diag
@@ -224,6 +217,9 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpInstrumentati
       kind: SpanKind.SERVER,
       attributes: spanAttributes,
     };
+
+    const headers = request.headers;
+    const method = request.method || 'GET';
 
     const ctx = propagation.extract(ROOT_CONTEXT, headers);
     const span = this.tracer.startSpan(method, spanOptions, ctx);
@@ -247,6 +243,7 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpInstrumentati
     );
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _httpServerResponseFinished(message: any) {
     if (!this.isEnabled()) {
       return;
@@ -261,6 +258,7 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpInstrumentati
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _httpClientRequestCreated(message: any) {
     if (!this.isEnabled()) {
       return;
@@ -281,7 +279,7 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpInstrumentati
         safeExecuteInTheMiddle(
           () => ignoreOutgoingRequestHook(request),
           (e: unknown) => {
-            if (e != null) {
+            if (e !== null) {
               this._diag.error('caught ignoreOutgoingRequestHook error: ', e);
             }
           },
@@ -291,54 +289,18 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpInstrumentati
         return;
       }
     }
-    const hostHeader = request.getHeader('host');
-    const userAgent = request.getHeader('user-agent');
-    let port: number | undefined;
-
-    if (typeof hostHeader === 'string') {
-      const portString = hostHeader.substring(hostHeader.indexOf(':') + 1);
-      port = Number(portString);
-    }
-
-    const oldAttributes: Attributes = {
-      [SEMATTRS_HTTP_METHOD]: request.method,
-      [SEMATTRS_HTTP_TARGET]: request.path || '/',
-      [SEMATTRS_NET_PEER_NAME]: request.host,
-      [SEMATTRS_HTTP_HOST]: hostHeader,
-    };
-
-    const newAttributes: Attributes = {
-      // Required attributes
-      [ATTR_HTTP_REQUEST_METHOD]: request.method,
-      [ATTR_SERVER_ADDRESS]: request.host,
-      [ATTR_SERVER_PORT]: port,
-      [ATTR_URL_FULL]: getAbsoluteUrl(request),
-      //[ATTR_URL_FULL]: `${request.protocol}//${request.host}${request.path}`,
-      // leaving out protocol version, it is not yet negotiated
-      // leaving out protocol name, it is only required when protocol version is set
-      // retries and redirects not supported
-
-      // Opt-in attributes left off for now
-    };
-
-    if (userAgent !== undefined) {
-      oldAttributes[SEMATTRS_HTTP_USER_AGENT] = userAgent;
-    }
-
-    let attributes: Attributes = {};
-
-    const hookAttributes = this._callStartSpanHook(
+    const attributes = getOutgoingRequestAttributes(
       request,
-      config.startOutgoingSpanHook
+      this._semconvStability
     );
-    if (this._semconvStability === SemconvStability.OLD) {
-      attributes = Object.assign(oldAttributes, hookAttributes);
-    } else if (this._semconvStability === SemconvStability.STABLE) {
-      attributes = Object.assign(newAttributes, hookAttributes);
-    } else {
-      attributes = Object.assign(oldAttributes, newAttributes, hookAttributes);
-    }
 
+    if (config.startOutgoingSpanHook !== undefined) {
+      const hookAttributes = this._callStartSpanHook(
+        request,
+        config.startOutgoingSpanHook
+      );
+      Object.assign(attributes, hookAttributes);
+    }
     const spanOptions: SpanOptions = {
       kind: SpanKind.CLIENT,
       attributes,
@@ -363,6 +325,7 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpInstrumentati
     });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _httpClientRequestError(message: any) {
     if (!this.isEnabled()) {
       return;
@@ -370,7 +333,7 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpInstrumentati
     const request = message.request as TracedClientRequest;
     const span = request[SPAN_SYMBOL];
 
-    if (span == undefined) {
+    if (span === undefined) {
       return;
     }
 
@@ -378,6 +341,7 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpInstrumentati
     closeHttpSpan(request);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private _httpClientResponseFinished(message: any) {
     if (!this.isEnabled()) {
       return;
@@ -385,7 +349,7 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpInstrumentati
     const req = message.request as TracedClientRequest;
     const span = req[SPAN_SYMBOL];
 
-    if (span == undefined) {
+    if (span === undefined) {
       return;
     }
 
@@ -506,12 +470,8 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpInstrumentati
 
   private _callStartSpanHook(
     request: http.IncomingMessage | http.RequestOptions,
-    hookFunc: Function | undefined
+    hookFunc: Function
   ) {
-    if (hookFunc === undefined) {
-      return;
-    }
-
     return safeExecuteInTheMiddle(
       () => hookFunc(request),
       () => {},

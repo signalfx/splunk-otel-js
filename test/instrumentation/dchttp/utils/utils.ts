@@ -1,5 +1,5 @@
 /*
- * Copyright Splunk Inc.
+ * Copyright Splunk Inc., The OpenTelemetry Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ function get(input: any, options?: any): GetResult {
       });
     }
     req =
-      options != null
+      options !== undefined
         ? http.get(input, options, onGetResponseCb)
         : http.get(input, onGetResponseCb);
     req.on('error', (err) => {

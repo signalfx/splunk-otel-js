@@ -1,5 +1,5 @@
 /*
- * Copyright Splunk Inc.
+ * Copyright Splunk Inc., The OpenTelemetry Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ export const assertSpan = (
     assert.strictEqual(span.events[0].name, 'exception');
 
     const eventAttributes = span.events[0].attributes;
-    assert.ok(eventAttributes != null);
+    assert.ok(eventAttributes);
     assert.deepStrictEqual(Object.keys(eventAttributes), [
       'exception.type',
       'exception.message',
