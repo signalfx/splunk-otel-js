@@ -74,7 +74,7 @@ export const customAttributeFunction = (span: ISpan): void => {
   span.setAttribute('span kind', SpanKind.CLIENT);
 };
 
-describe('HttpsInstrumentation', { skip: isSupported() }, () => {
+describe('HttpsInstrumentation', { skip: !isSupported() }, () => {
   let contextManager: ContextManager;
 
   beforeEach(() => {
