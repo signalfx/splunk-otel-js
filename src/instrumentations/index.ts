@@ -279,7 +279,6 @@ function getInstrumentationsToLoad() {
     (i) => i.shortName === 'httpdc'
   );
 
-  console.log('httpdc', httpDcInstrumentation);
   if (
     httpInstrumentation !== undefined &&
     httpDcInstrumentation !== undefined

@@ -59,7 +59,6 @@ describe('HttpInstrumentation', () => {
       server.listen(serverPort);
       server.once('listening', () => {
         serverPort = (server.address() as AddressInfo).port;
-        console.log(serverPort);
         done();
       });
     });

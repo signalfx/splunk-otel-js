@@ -161,9 +161,7 @@ describe('HttpInstrumentation', () => {
     before((_ctx, done) => {
       instrumentation.setConfig({
         ignoreIncomingRequestHook: (request) => {
-          return (
-            request.headers['user-agent']?.match('ignored-string') !== null
-          );
+          return !!request.headers['user-agent']?.match('ignored-string');
         },
         ignoreOutgoingRequestHook: (request) => {
           const header = request.getHeader('user-agent');
