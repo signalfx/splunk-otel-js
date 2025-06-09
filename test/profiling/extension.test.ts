@@ -51,14 +51,16 @@ describe('profiling native extension', () => {
     assert.equal(extension.collect(), null);
 
     // Use a lower interval to make sure we capture something
-    extension.start({
+    const handle = extension.start({
+      name: 'test-profiler',
       samplingIntervalMicroseconds: 1_000,
       recordDebugInfo: false,
     });
 
     utils.spinMs(200);
 
-    const result = extension.collect();
+    const result = extension.collect(handle);
+    console.log(result);
     // The types might not be what is declared in typescript, a sanity check.
     assert.equal(typeof result, 'object');
     const { stacktraces, startTimeNanos } = result;

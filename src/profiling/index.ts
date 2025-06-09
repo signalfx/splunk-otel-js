@@ -34,7 +34,7 @@ import type {
   MemoryProfilingOptions,
   ProfilingExporter,
   ProfilingExtension,
-  ProfilingStartOptions,
+  NativeProfilingOptions,
   ProfilingOptions,
   StartProfilingOptions,
 } from './types';
@@ -45,9 +45,9 @@ import { isTracingContextManagerEnabled } from '../tracing';
 export type { StartProfilingOptions, ProfilingOptions };
 
 /* The following are wrappers around native functions to give more context to profiling samples. */
-function extStopProfiling(extension: ProfilingExtension) {
+function extStopProfiling(handle: number, extension: ProfilingExtension) {
   diag.debug('profiling: Stopping');
-  return extension.stop();
+  return extension.stop(handle);
 }
 
 function extStopMemoryProfiling(extension: ProfilingExtension) {
@@ -56,10 +56,10 @@ function extStopMemoryProfiling(extension: ProfilingExtension) {
 
 function extStartProfiling(
   extension: ProfilingExtension,
-  opts: ProfilingStartOptions
-) {
+  opts: NativeProfilingOptions
+): number {
   diag.debug('profiling: Starting');
-  extension.start(opts);
+  return extension.start(opts);
 }
 
 function extStartMemoryProfiling(
@@ -75,9 +75,9 @@ function extCollectHeapProfile(
   return extension.collectHeapProfile();
 }
 
-function extCollectCpuProfile(extension: ProfilingExtension) {
+function extCollectCpuProfile(handle: number, extension: ProfilingExtension) {
   diag.debug('profiling: Collecting CPU profile');
-  return extension.collect();
+  return extension.collect(handle);
 }
 
 export function defaultExporterFactory(
@@ -102,6 +102,17 @@ export function isProfilingContextManagerSet(): boolean {
   return profilingContextManagerEnabled;
 }
 
+export function ensureProfilingContextManager() {
+  if (profilingContextManagerEnabled === true) {
+    return;
+  }
+
+  const contextManager = new ProfilingContextManager();
+  contextManager.enable();
+  context.setGlobalContextManager(contextManager);
+  profilingContextManagerEnabled = true;
+}
+
 export function startProfiling(options: ProfilingOptions) {
   const extension = loadExtension();
 
@@ -116,20 +127,18 @@ export function startProfiling(options: ProfilingOptions) {
       `Splunk profiling: unable to set up context manager due to tracing's context manager being active. Traces won't be correlated to profiling data. Please start profiling before tracing.`
     );
   } else if (!profilingContextManagerEnabled) {
-    const contextManager = new ProfilingContextManager();
-    contextManager.enable();
-    context.setGlobalContextManager(contextManager);
-    profilingContextManagerEnabled = true;
+    ensureProfilingContextManager();
   }
 
   const samplingIntervalMicroseconds = options.callstackInterval * 1_000;
   const startOptions = {
+    name: 'splunk-otel-js-profiler',
     samplingIntervalMicroseconds,
     maxSampleCutoffDelayMicroseconds: samplingIntervalMicroseconds / 2,
     recordDebugInfo: false,
   };
 
-  extStartProfiling(extension, startOptions);
+  const handle = extStartProfiling(extension, startOptions);
 
   let cpuSamplesCollectInterval: NodeJS.Timeout;
   let memSamplesCollectInterval: NodeJS.Timeout;
@@ -141,7 +150,8 @@ export function startProfiling(options: ProfilingOptions) {
   setImmediate(() => {
     exporters = options.exporterFactory(options);
     cpuSamplesCollectInterval = setInterval(async () => {
-      const cpuProfile = extCollectCpuProfile(extension);
+      console.log('collecting cpu profile for handle', handle);
+      const cpuProfile = extCollectCpuProfile(handle, extension);
 
       if (cpuProfile) {
         recordCpuProfilerMetrics(cpuProfile);
@@ -178,7 +188,7 @@ export function startProfiling(options: ProfilingOptions) {
       }
 
       clearInterval(cpuSamplesCollectInterval);
-      const cpuProfile = extStopProfiling(extension);
+      const cpuProfile = extStopProfiling(handle, extension);
 
       if (cpuProfile) {
         const sends = exporters.map((e) => e.send(cpuProfile));

@@ -16,9 +16,11 @@
 import type { Resource } from '@opentelemetry/resources';
 import type { ResourceFactory } from '../types';
 
-export interface ProfilingStartOptions {
+export interface NativeProfilingOptions {
+  name: string;
   samplingIntervalMicroseconds: number;
-  recordDebugInfo: boolean;
+  maxSampleCutoffDelayMicroseconds?: number;
+  recordDebugInfo?: boolean;
 }
 
 export interface ProfilingStacktrace {
@@ -72,9 +74,15 @@ export interface HeapProfile {
 }
 
 export interface ProfilingExtension {
-  start(options?: ProfilingStartOptions): void;
-  stop(): CpuProfile;
-  collect(): CpuProfile;
+  // Creates a profiler, but doesn't start it.
+  createCpuProfiler(options: NativeProfilingOptions): number;
+  // Start the profiler, no-op if it is already running.
+  startCpuProfiler(handle: number): boolean;
+  // Creates and immediately starts the profiler.
+  // Kept for backwards compat, can be refactored out.
+  start(options: NativeProfilingOptions): number;
+  stop(handle: number): CpuProfile;
+  collect(handle: number): CpuProfile;
   enterContext(context: unknown, traceId: string, spanId: string): void;
   exitContext(context: unknown): void;
   startMemoryProfiling(options?: MemoryProfilingOptions): void;
