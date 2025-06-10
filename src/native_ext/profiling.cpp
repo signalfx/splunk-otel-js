@@ -1,5 +1,6 @@
 #include "profiling.h"
 #include "khash.h"
+#include "xxhash/xxh3.h"
 #include "memory_profiling.h"
 #include "util/arena.h"
 #include "util/hex.h"
@@ -140,7 +141,7 @@ SpanActivation* ActivationStackPop(ActivationStack* stack) {
 }
 
 KHASH_MAP_INIT_INT(ActivationStack, ActivationStack);
-KHASH_MAP_INIT_INT(StackLine, String);
+KHASH_SET_INIT_INT64(TraceIdFilter);
 
 // Maximum offset in nanoseconds from profiling start from which a sample is considered alway valid.
 const int64_t DEFAULT_MAX_SAMPLE_CUTOFF_DELAY_NANOS = 500LL * 1000LL * 1000LL;
@@ -162,6 +163,7 @@ struct Profiling {
   int32_t profilerSeq;
   int32_t handle;
   khash_t(ActivationStack) * spanActivations;
+  khash_t(TraceIdFilter) * traceIdFilter;
   // The name/prefix given via JS.
   char name[64];
 
@@ -221,6 +223,7 @@ void ProfilingInit(Profiling* profiling, const char* name, size_t name_length) {
   const size_t kArenaPageSize = 1024ULL * 1024ULL * 64ULL;
   PagedArenaInit(&profiling->arena, kArenaPageSize);
   profiling->spanActivations = kh_init(ActivationStack);
+  profiling->traceIdFilter = kh_init(TraceIdFilter);
 
   snprintf(profiling->name, sizeof(profiling->name), "%.*s", (int)name_length, name);
 }
@@ -382,7 +385,7 @@ bool CreateCpuProfilingOptions(const Nan::FunctionCallbackInfo<v8::Value>& info,
   memset(profilingOptions, 0, sizeof(*profilingOptions));
 
   if (info.Length() < 1 || !info[0]->IsObject()) {
-    Nan::ThrowError("StartProfiling: invalid argument.");
+    Nan::ThrowError("CpuProfiler: invalid argument.");
     return false;
   }
 
@@ -391,14 +394,14 @@ bool CreateCpuProfilingOptions(const Nan::FunctionCallbackInfo<v8::Value>& info,
   auto maybeName = Nan::Get(options, Nan::New("name").ToLocalChecked());
 
   if (maybeName.IsEmpty() || !maybeName.ToLocalChecked()->IsString()) {
-    Nan::ThrowError("StartProfiling: name required.");
+    Nan::ThrowError("CpuProfiler: name required.");
     return false;
   }
 
   auto profilerName = Nan::To<v8::String>(maybeName.ToLocalChecked()).ToLocalChecked();
 
   if (profilerName->Length() == 0) {
-    Nan::ThrowError("StartProfiling: name can't be empty.");
+    Nan::ThrowError("CpuProfiler: name can't be empty.");
     return false;
   }
 
@@ -412,7 +415,7 @@ bool CreateCpuProfilingOptions(const Nan::FunctionCallbackInfo<v8::Value>& info,
   Profiling* existing = GetProfilingByName(*profilerNameUtf8, profilerNameUtf8.length());
 
   if (existing) {
-    Nan::ThrowError("StartProfiling: profiler already exists.");
+    Nan::ThrowError("CpuProfiler: profiler already exists.");
     return false;
   }
 
@@ -420,7 +423,7 @@ bool CreateCpuProfilingOptions(const Nan::FunctionCallbackInfo<v8::Value>& info,
     Nan::Get(options, Nan::New("samplingIntervalMicroseconds").ToLocalChecked());
 
   if (maybeInterval.IsEmpty() || !maybeInterval.ToLocalChecked()->IsNumber()) {
-    Nan::ThrowError("StartProfiling: samplingIntervalMicroseconds is not a number.");
+    Nan::ThrowError("CpuProfiler: samplingIntervalMicroseconds is not a number.");
     return false;
   }
 
@@ -466,7 +469,7 @@ NAN_METHOD(CreateCpuProfiler) {
   Profiling* profiling = SetupProfiling(&opts, info.GetIsolate());
 
   if (!profiling) {
-    Nan::ThrowError("StartProfiling: unable to allocate profiler.");
+    Nan::ThrowError("CreateCpuProfiler: unable to allocate profiler.");
     return;
   }
 
@@ -484,10 +487,60 @@ NAN_METHOD(StartCpuProfiler) {
   }
 
   if (profiling->running) {
-    return false;
+    return;
   }
 
+  char title[128];
+  ProfileTitle(title, sizeof(title), profiling->name, profiling->profilerSeq);
+
+  profiling->activationDepth = 0;
+  profiling->startTime = HrTime();
+  profiling->wallStartTime = MicroSecondsSinceEpoch() * 1000L;
+  V8StartProfiling(profiling->profiler, title);
+  profiling->sampleCutoffPoint = HrTime();
+  profiling->running = true;
+
   info.GetReturnValue().Set(true);
+  return;
+}
+
+NAN_METHOD(AddTraceIdFilter) {
+  info.GetReturnValue().SetUndefined();
+
+  if (info.Length() < 2 || !info[1]->IsString()) {
+    return;
+  }
+
+  auto handle = Nan::To<int32_t>(info[0]).ToChecked();
+
+  Profiling* profiling = GetProfilingByHandle(handle);
+
+  if (!profiling) {
+    return;
+  }
+
+  auto traceId = Nan::To<v8::String>(info[1]).ToLocalChecked();
+  v8::String::Utf8Value traceIdUtf8(info.GetIsolate(), traceId);
+
+  uint64_t hash = XXH3_64bits(*traceIdUtf8, traceIdUtf8.length());
+
+  int ret;
+  kh_put(TraceIdFilter, profiling->traceIdFilter, hash, &ret);
+
+  return;
+}
+
+NAN_METHOD(RemoveTraceIdFilter) {
+  info.GetReturnValue().SetUndefined();
+  auto handle = Nan::To<int32_t>(info[0]).ToChecked();
+
+  Profiling* profiling = GetProfilingByHandle(handle);
+
+  if (!profiling) {
+    info.GetReturnValue().Set(false);
+    return;
+  }
+
   return;
 }
 
@@ -848,6 +901,14 @@ void ProfilingEnterContext(
     int64_t timestamp,
     const v8::String::Utf8Value& traceId,
     const v8::String::Utf8Value& spanId) {
+
+  if (kh_size(profiling->traceIdFilter) > 0) {
+    uint64_t traceIdHash = XXH3_64bits(*traceId, traceId.length());
+    if (kh_get(TraceIdFilter, profiling->traceIdFilter, traceIdHash) == kh_end(profiling->traceIdFilter)) {
+      return;
+    }
+  }
+
   khiter_t it = kh_get(ActivationStack, profiling->spanActivations, contextHash);
 
   ActivationStack* stack;
@@ -959,6 +1020,14 @@ void Initialize(v8::Local<v8::Object> target) {
   Nan::Set(
     profilingModule, Nan::New("startCpuProfiler").ToLocalChecked(),
     Nan::GetFunction(Nan::New<v8::FunctionTemplate>(StartCpuProfiler)).ToLocalChecked());
+
+  Nan::Set(
+    profilingModule, Nan::New("addTraceIdFilter").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<v8::FunctionTemplate>(AddTraceIdFilter)).ToLocalChecked());
+
+  Nan::Set(
+    profilingModule, Nan::New("removeTraceIdFilter").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<v8::FunctionTemplate>(RemoveTraceIdFilter)).ToLocalChecked());
 
   Nan::Set(
     profilingModule, Nan::New("start").ToLocalChecked(),
