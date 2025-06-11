@@ -42,7 +42,7 @@ function normalizeRate(rate: number): number {
   return Math.min(1.0, Math.max(rate, 0.0));
 }
 
-export class SnapshotPropagator implements TextMapPropagator<never> {
+export class SnapshotPropagator implements TextMapPropagator<unknown> {
   selectionRate: number;
   sampler: TraceIdRatioBasedSampler;
 
@@ -53,21 +53,21 @@ export class SnapshotPropagator implements TextMapPropagator<never> {
 
   inject(
     _context: Context,
-    _carrier: never,
-    _setter: TextMapSetter<never>
+    _carrier: unknown,
+    _setter: TextMapSetter<unknown>
   ): void {}
 
   extract(
     context: Context,
-    _carrier: never,
-    _getter: TextMapGetter<never>
+    _carrier: unknown,
+    _getter: TextMapGetter<unknown>
   ): Context {
     const baggage = propagation.getBaggage(context);
 
     if (baggage === undefined) {
-      const attached = this.attachVolumeBaggage(context);
-      return attached;
+      return this.attachVolumeBaggage(context);
     }
+
     const volumeFromBaggage = baggage.getEntry(VOLUME_BAGGAGE_KEY)?.value;
 
     if (volumeFromBaggage === 'highest' || volumeFromBaggage === 'off') {
