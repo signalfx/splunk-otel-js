@@ -151,7 +151,6 @@ export function startProfiling(options: ProfilingOptions) {
   setImmediate(() => {
     exporters = options.exporterFactory(options);
     cpuSamplesCollectInterval = setInterval(async () => {
-      console.log('collecting cpu profile for handle', handle);
       const cpuProfile = extCollectCpuProfile(handle, extension);
 
       if (cpuProfile) {

@@ -60,7 +60,6 @@ describe('profiling native extension', () => {
     utils.spinMs(200);
 
     const result = extension.collect(handle);
-    console.log(result);
     // The types might not be what is declared in typescript, a sanity check.
     assert.equal(typeof result, 'object');
     const { stacktraces, startTimeNanos } = result;
