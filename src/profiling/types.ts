@@ -21,6 +21,8 @@ export interface NativeProfilingOptions {
   samplingIntervalMicroseconds: number;
   maxSampleCutoffDelayMicroseconds?: number;
   recordDebugInfo?: boolean;
+  // When set to true, only stacktraces with an active span context are reported.
+  omitStacktracesWithoutContext?: boolean;
 }
 
 export interface ProfilingStacktrace {
@@ -78,11 +80,13 @@ export interface ProfilingExtension {
   createCpuProfiler(options: NativeProfilingOptions): number;
   // Start the profiler, no-op if it is already running.
   startCpuProfiler(handle: number): boolean;
+  addTraceIdFilter(handle: number, traceId: string): void;
+  removeTraceIdFilter(handle: number, traceId: string): void;
   // Creates and immediately starts the profiler.
   // Kept for backwards compat, can be refactored out.
   start(options: NativeProfilingOptions): number;
-  stop(handle: number): CpuProfile;
-  collect(handle: number): CpuProfile;
+  stop(handle: number): CpuProfile | null;
+  collect(handle: number): CpuProfile | null;
   enterContext(context: unknown, traceId: string, spanId: string): void;
   exitContext(context: unknown): void;
   startMemoryProfiling(options?: MemoryProfilingOptions): void;

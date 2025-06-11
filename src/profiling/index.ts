@@ -90,6 +90,7 @@ export function defaultExporterFactory(
       endpoint,
       callstackInterval: options.callstackInterval,
       resource: options.resource,
+      instrumentationSource: 'continuous',
     }),
   ];
 
@@ -219,6 +220,23 @@ export function loadExtension(): ProfilingExtension | undefined {
   }
 
   return undefined;
+}
+
+export function noopExtension(): ProfilingExtension {
+  return {
+    createCpuProfiler: (_options: NativeProfilingOptions) => -1,
+    startCpuProfiler: (_handle: number) => false,
+    addTraceIdFilter: (_handle: number, _traceId: string) => {},
+    removeTraceIdFilter: (_handle: number, _traceId: string) => {},
+    start: (_options: NativeProfilingOptions) => -1,
+    stop: (_handle: number) => null,
+    collect: (_handle: number) => null,
+    enterContext: (_context: unknown, _traceId: string, _spanId: string) => {},
+    exitContext: (_context: unknown) => {},
+    startMemoryProfiling: (_options?: MemoryProfilingOptions) => {},
+    stopMemoryProfiling: () => {},
+    collectHeapProfile: () => null,
+  };
 }
 
 export function _setDefaultOptions(

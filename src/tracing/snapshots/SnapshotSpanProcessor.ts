@@ -23,7 +23,7 @@ export type TraceIdCallback = (traceId: string) => void;
 export interface SnapshotSpanProcessorOptions {
   traceSnapshotBegin: TraceIdCallback;
   traceSnapshotEnd: TraceIdCallback;
-};
+}
 
 function shouldProcessContext(context: Context): boolean {
   const parentSpan = trace.getSpan(context);
@@ -53,7 +53,9 @@ export class SnapshotSpanProcessor implements SpanProcessor {
       return;
     }
 
-    const volumeFromBaggage = baggage.getEntry('splunk.trace.snapshot.volume')?.value;
+    const volumeFromBaggage = baggage.getEntry(
+      'splunk.trace.snapshot.volume'
+    )?.value;
 
     if (volumeFromBaggage === 'highest') {
       span.setAttribute('splunk.snapshot.profiling', true);

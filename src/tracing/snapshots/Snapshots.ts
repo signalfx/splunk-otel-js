@@ -1,51 +1,155 @@
-import { ensureProfilingContextManager } from "../../profiling";
-import { getEnvBoolean, getEnvNumber } from "../../utils";
-import { SnapshotSpanProcessor } from "./SnapshotSpanProcessor";
-import type { ProfilingExtension } from "../../profiling/types";
-import { loadExtension } from "../../profiling";
+/*
+ * Copyright Splunk Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import { Resource } from '@opentelemetry/resources';
+import { ensureProfilingContextManager, noopExtension } from '../../profiling';
+import { getEnvBoolean, getEnvNumber } from '../../utils';
+import { SnapshotSpanProcessor } from './SnapshotSpanProcessor';
+import type { CpuProfile, ProfilingExtension } from '../../profiling/types';
+import { OtlpHttpProfilingExporter } from '../../profiling/OtlpHttpProfilingExporter';
+import { loadExtension } from '../../profiling';
 
-export interface SnapshotProfilingOptions {
-  samplingIntervalMicroseconds: number;
+export interface StartSnapshotProfilingOptions {
+  serviceName: string;
+  endpoint: string;
+  resource: Resource;
+  samplingIntervalMs?: number;
+  collectionIntervalMs?: number;
 }
+
+type SnapshotProfilingOptions = Required<StartSnapshotProfilingOptions>;
+
+// After the last snapshot has ended, keep the profiler running to avoid cold starts.
+const LINGER_PERIOD_MS = 60_000;
 
 export class SnapshotProfiler {
   processor: SnapshotSpanProcessor;
-  extension: ProfilingExtension | undefined = loadExtension();
-  profilerHandle: number;
+  extension: ProfilingExtension = loadExtension() || noopExtension();
+  profilerHandle: number = -1;
+  // The number traces currently being profiled.
+  activeSnapshots: number = 0;
+
+  collectionLoop: NodeJS.Timeout;
+  stopTimeout: NodeJS.Timeout | undefined;
+  exporter: OtlpHttpProfilingExporter | undefined;
+  exportLoop: NodeJS.Timeout | undefined;
 
   constructor(options: SnapshotProfilingOptions) {
     ensureProfilingContextManager();
+
     this.processor = new SnapshotSpanProcessor({
       traceSnapshotBegin: (traceId) => {
-        console.log('begin snapshot for traceId', traceId);
+        this.extension.addTraceIdFilter(this.profilerHandle, traceId);
+        this.extension.startCpuProfiler(this.profilerHandle);
+        this.activeSnapshots += 1;
       },
       traceSnapshotEnd: (traceId) => {
-        console.log('trace snapshot ended', traceId);
-      }
+        this.activeSnapshots = Math.max(this.activeSnapshots - 1, 0);
+        this.extension.removeTraceIdFilter(this.profilerHandle, traceId);
+
+        if (this.activeSnapshots === 0) {
+          if (this.stopTimeout !== undefined) {
+            clearTimeout(this.stopTimeout);
+            this.stopTimeout = undefined;
+          }
+
+          this.stopTimeout = setTimeout(async () => {
+            const profile = this.extension.stop(this.profilerHandle);
+            await this._export(profile);
+            this.stopTimeout = undefined;
+          }, LINGER_PERIOD_MS);
+          this.stopTimeout.unref();
+        }
+      },
     });
 
-    const samplingIntervalMicroseconds = options.samplingIntervalMicroseconds;
-    this.profilerHandle = this.extension?.createCpuProfiler({
-      name: 'splunk-snapshot-profiler',
-      samplingIntervalMicroseconds,
-      maxSampleCutoffDelayMicroseconds: samplingIntervalMicroseconds / 2,
-      recordDebugInfo: false,
-    }) ?? -1;
+    const samplingIntervalMicroseconds = options.samplingIntervalMs * 1_000;
 
-    console.log('profiler handle', this.profilerHandle);
+    this.profilerHandle =
+      this.extension.createCpuProfiler({
+        name: 'splunk-snapshot-profiler',
+        samplingIntervalMicroseconds,
+        maxSampleCutoffDelayMicroseconds: samplingIntervalMicroseconds / 2,
+        recordDebugInfo: false,
+        omitStacktracesWithoutContext: true,
+      }) ?? -1;
+
+    this.collectionLoop = setInterval(async () => {
+      const profile = this.extension.collect(this.profilerHandle);
+      await this._export(profile);
+    }, options.collectionIntervalMs);
+    this.collectionLoop.unref();
+
+    setImmediate(() => {
+      this.exporter = new OtlpHttpProfilingExporter({
+        endpoint: options.endpoint,
+        callstackInterval: options.samplingIntervalMs,
+        resource: options.resource,
+        instrumentationSource: 'continuous',
+      });
+    });
+  }
+
+  async _export(profile: CpuProfile | null) {
+    if (!profile || !this.exporter) {
+      return;
+    }
+
+    if (profile.stacktraces.length > 0) {
+      await this.exporter.send(profile);
+    }
+  }
+
+  async stop() {
+    clearTimeout(this.stopTimeout);
+    clearInterval(this.collectionLoop);
+    clearInterval(this.exportLoop);
+
+    const profile = this.extension.stop(this.profilerHandle);
+
+    if (profile) {
+      await this._export(profile);
+    }
   }
 }
 
 let profiler: SnapshotProfiler | undefined;
 
-export function startSnapshotProfiling() {
-  const intervalMs = getEnvNumber('SPLUNK_SNAPSHOT_PROFILER_SAMPLING_INTERVAL', 10);
-  const samplingIntervalMicroseconds = intervalMs * 1_000;
-
+export function startSnapshotProfiling(options: StartSnapshotProfilingOptions) {
+  const samplingIntervalMs =
+    options.samplingIntervalMs ??
+    getEnvNumber('SPLUNK_SNAPSHOT_PROFILER_SAMPLING_INTERVAL', 10);
+  const collectionIntervalMs =
+    options.collectionIntervalMs ??
+    getEnvNumber('SPLUNK_CPU_PROFILER_COLLECTION_INTERVAL', 30_000);
 
   profiler = new SnapshotProfiler({
-    samplingIntervalMicroseconds,
+    serviceName: options.serviceName,
+    endpoint: options.endpoint,
+    resource: options.resource,
+    samplingIntervalMs,
+    collectionIntervalMs,
   });
+}
+
+export async function stopSnapshotProfiling() {
+  if (!profiler) {
+    return;
+  }
+
+  await profiler.stop();
 }
 
 export function isSnapshotProfilingEnabled() {
@@ -55,71 +159,3 @@ export function isSnapshotProfilingEnabled() {
 export function snapshotSpanProcessor(): SnapshotSpanProcessor | undefined {
   return profiler?.processor;
 }
-
-/*
-export function startProfiling(options: ProfilingOptions) {
-  const extension = loadExtension();
-
-  if (extension === undefined) {
-    return {
-      stop: async () => {},
-    };
-  }
-
-  ensureProfilingContextManager();
-
-  const samplingIntervalMicroseconds = options.callstackInterval * 1_000;
-  const startOptions = {
-    name: 'splunk-otel-js-profiler',
-    samplingIntervalMicroseconds,
-    maxSampleCutoffDelayMicroseconds: samplingIntervalMicroseconds / 2,
-    recordDebugInfo: false,
-  };
-
-  const handle = extStartProfiling(extension, startOptions);
-
-  let cpuSamplesCollectInterval: NodeJS.Timeout;
-  let exporters: ProfilingExporter[] = [];
-
-  // Tracing needs to be started after profiling, setting up the profiling exporter
-  // causes @grpc/grpc-js to be loaded, but to avoid any loads before tracing's setup
-  // has finished, load it next event loop.
-  setImmediate(() => {
-    exporters = options.exporterFactory(options);
-    cpuSamplesCollectInterval = setInterval(async () => {
-      console.log('collecting cpu profile for handle', handle);
-      const cpuProfile = extCollectCpuProfile(handle, extension);
-
-      if (cpuProfile) {
-        recordCpuProfilerMetrics(cpuProfile);
-        const sends = exporters.map((exporter) => exporter.send(cpuProfile));
-        await Promise.allSettled(sends);
-      }
-    }, options.collectionDuration);
-
-    cpuSamplesCollectInterval.unref();
-  });
-
-  return {
-    stop: async () => {
-      clearInterval(cpuSamplesCollectInterval);
-      const cpuProfile = extStopProfiling(handle, extension);
-
-      if (cpuProfile) {
-        const sends = exporters.map((e) => e.send(cpuProfile));
-        await Promise.allSettled(sends).then((results) => {
-          for (const result of results) {
-            if (result.status === 'rejected') {
-              diag.error(
-                'Failed sending CPU profile on shutdown',
-                result.reason
-              );
-            }
-          }
-        });
-      }
-    },
-  };
-}
-*/
-

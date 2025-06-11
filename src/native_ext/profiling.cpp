@@ -159,6 +159,7 @@ struct Profiling {
   int32_t activationDepth;
   bool running;
   bool recordDebugInfo;
+  bool omitStacktracesWithoutContext;
   int64_t samplingIntervalNanos;
   int32_t profilerSeq;
   int32_t handle;
@@ -168,7 +169,6 @@ struct Profiling {
   char name[64];
 
   bool ShouldRecordDebugInfo() const { return recordDebugInfo; }
-  bool IsStarted() const { return running; }
 };
 
 struct ProfilingGlobals {
@@ -348,6 +348,7 @@ void ProfileTitle(char* buffer, size_t length, const char* prefix, int32_t seque
 struct ProfilingOptions {
   int32_t samplingIntervalMicros;
   bool recordDebugInfo;
+  bool omitStacktracesWithoutContext;
   int64_t maxSampleCutoffDelayNanos;
   char name[64];
   size_t name_length;
@@ -373,6 +374,7 @@ Profiling* SetupProfiling(const ProfilingOptions* options, v8::Isolate* isolate)
   }
 
   profiling->recordDebugInfo = options->recordDebugInfo;
+  profiling->omitStacktracesWithoutContext = options->omitStacktracesWithoutContext;
   profiling->maxSampleCutoffDelayNanos = options->maxSampleCutoffDelayNanos;
   profiling->samplingIntervalNanos = int64_t(options->samplingIntervalMicros) * 1000L;
   profiling->profiler->SetSamplingInterval(options->samplingIntervalMicros);
@@ -438,6 +440,16 @@ bool CreateCpuProfilingOptions(const Nan::FunctionCallbackInfo<v8::Value>& info,
     }
   }
 
+  auto maybeOmitStacktracesWithoutContext = Nan::Get(options, Nan::New("omitStacktracesWithoutContext").ToLocalChecked());
+
+  bool omitStacktracesWithoutContext = false;
+
+  if (!maybeOmitStacktracesWithoutContext.IsEmpty() && maybeOmitStacktracesWithoutContext.ToLocalChecked()->IsBoolean()) {
+    if (Nan::To<bool>(maybeOmitStacktracesWithoutContext.ToLocalChecked()).FromJust()) {
+      omitStacktracesWithoutContext = true;
+    }
+  }
+
   auto maybeMaxSampleCutoffDelay =
     Nan::Get(options, Nan::New("maxSampleCutoffDelayMicroseconds").ToLocalChecked());
   int64_t maxSampleCutoffDelayNanos = DEFAULT_MAX_SAMPLE_CUTOFF_DELAY_NANOS;
@@ -453,6 +465,7 @@ bool CreateCpuProfilingOptions(const Nan::FunctionCallbackInfo<v8::Value>& info,
   profilingOptions->samplingIntervalMicros = samplingIntervalMicros;
   profilingOptions->maxSampleCutoffDelayNanos = maxSampleCutoffDelayNanos;
   profilingOptions->recordDebugInfo = recordDebugInfo;
+  profilingOptions->omitStacktracesWithoutContext = omitStacktracesWithoutContext;
   memcpy(profilingOptions->name, *profilerNameUtf8, profilerNameUtf8.length());
   profilingOptions->name_length = profilerNameUtf8.length();
 
@@ -487,6 +500,7 @@ NAN_METHOD(StartCpuProfiler) {
   }
 
   if (profiling->running) {
+    v8::CpuProfiler::CollectSample(info.GetIsolate());
     return;
   }
 
@@ -499,6 +513,8 @@ NAN_METHOD(StartCpuProfiler) {
   V8StartProfiling(profiling->profiler, title);
   profiling->sampleCutoffPoint = HrTime();
   profiling->running = true;
+
+  v8::CpuProfiler::CollectSample(info.GetIsolate());
 
   info.GetReturnValue().Set(true);
   return;
@@ -537,8 +553,18 @@ NAN_METHOD(RemoveTraceIdFilter) {
   Profiling* profiling = GetProfilingByHandle(handle);
 
   if (!profiling) {
-    info.GetReturnValue().Set(false);
     return;
+  }
+
+  auto traceId = Nan::To<v8::String>(info[1]).ToLocalChecked();
+  v8::String::Utf8Value traceIdUtf8(info.GetIsolate(), traceId);
+
+  uint64_t traceIdHash = XXH3_64bits(*traceIdUtf8, traceIdUtf8.length());
+
+  khiter_t it = kh_get(TraceIdFilter, profiling->traceIdFilter, traceIdHash);
+
+  if (it != kh_end(profiling->traceIdFilter)) {
+    kh_del(TraceIdFilter, profiling->traceIdFilter, it);
   }
 
   return;
@@ -712,6 +738,12 @@ void ProfilingBuildStacktraces(
       continue;
     }
 
+    SpanActivation* match = FindClosestActivation(profiling, monotonicTs);
+
+    if (profiling->omitStacktracesWithoutContext && match == nullptr) {
+      continue;
+    }
+
     nextSampleTs += profiling->samplingIntervalNanos;
 
     const v8::CpuProfileNode* sample = profile->GetSample(i);
@@ -753,8 +785,6 @@ void ProfilingBuildStacktraces(
       Nan::New<v8::String>(tpBuf, tpLen).ToLocalChecked());
 #endif
 
-    SpanActivation* match = FindClosestActivation(profiling, monotonicTs);
-
     if (match) {
       uint8_t spanId[8];
       uint8_t traceId[16];
@@ -791,6 +821,10 @@ NAN_METHOD(CollectProfilingData) {
   Profiling* profiling = GetProfilingByHandle(handle);
 
   if (!profiling) {
+    return;
+  }
+
+  if (!profiling->running) {
     return;
   }
 
@@ -853,6 +887,10 @@ NAN_METHOD(StopProfiling) {
   Profiling* profiling = GetProfilingByHandle(handle);
 
   if (!profiling) {
+    return;
+  }
+
+  if (!profiling->running) {
     return;
   }
 

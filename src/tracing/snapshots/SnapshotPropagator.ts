@@ -14,15 +14,28 @@
  * limitations under the License.
  */
 
-import { Context, trace, TextMapPropagator, TextMapGetter, TextMapSetter, propagation, } from "@opentelemetry/api";
-import { SamplingDecision, TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
+import {
+  Context,
+  trace,
+  TextMapPropagator,
+  TextMapGetter,
+  TextMapSetter,
+  propagation,
+} from '@opentelemetry/api';
+import {
+  SamplingDecision,
+  TraceIdRatioBasedSampler,
+} from '@opentelemetry/sdk-trace-base';
 
 export const VOLUME_BAGGAGE_KEY = 'splunk.trace.snapshot.volume' as const;
 
 function withVolumeBaggage(context: Context, isSelected: boolean) {
-  return propagation.setBaggage(context, propagation.createBaggage({
-    [VOLUME_BAGGAGE_KEY]: { value: isSelected ? 'highest' : 'off', },
-  }));
+  return propagation.setBaggage(
+    context,
+    propagation.createBaggage({
+      [VOLUME_BAGGAGE_KEY]: { value: isSelected ? 'highest' : 'off' },
+    })
+  );
 }
 
 function normalizeRate(rate: number): number {
@@ -30,47 +43,60 @@ function normalizeRate(rate: number): number {
 }
 
 export class SnapshotPropagator implements TextMapPropagator<never> {
-    selectionRate: number;
-    sampler: TraceIdRatioBasedSampler;
+  selectionRate: number;
+  sampler: TraceIdRatioBasedSampler;
 
-    constructor(selectionRate: number) {
-      this.selectionRate = normalizeRate(selectionRate);
-      this.sampler = new TraceIdRatioBasedSampler(this.selectionRate);
+  constructor(selectionRate: number) {
+    this.selectionRate = normalizeRate(selectionRate);
+    this.sampler = new TraceIdRatioBasedSampler(this.selectionRate);
+  }
+
+  inject(
+    _context: Context,
+    _carrier: never,
+    _setter: TextMapSetter<never>
+  ): void {}
+
+  extract(
+    context: Context,
+    _carrier: never,
+    _getter: TextMapGetter<never>
+  ): Context {
+    const baggage = propagation.getBaggage(context);
+
+    if (baggage === undefined) {
+      const attached = this.attachVolumeBaggage(context);
+      return attached;
+    }
+    const volumeFromBaggage = baggage.getEntry(VOLUME_BAGGAGE_KEY)?.value;
+
+    if (volumeFromBaggage === 'highest' || volumeFromBaggage === 'off') {
+      return context;
     }
 
-    inject(_context: Context, _carrier: never, _setter: TextMapSetter<never>): void {}
+    return this.attachVolumeBaggage(context);
+  }
 
-    extract(context: Context, _carrier: never, _getter: TextMapGetter<never>): Context {
-      const baggage = propagation.getBaggage(context);
+  fields(): string[] {
+    return [];
+  }
 
-      if (baggage === undefined) {
-        const attached = this.attachVolumeBaggage(context);
-        return attached;
-      }
-      const volumeFromBaggage = baggage.getEntry(VOLUME_BAGGAGE_KEY)?.value;
+  attachVolumeBaggage(context: Context): Context {
+    const span = trace.getSpan(context);
 
-      if (volumeFromBaggage === 'highest' || volumeFromBaggage === 'off') {
-        return context;
-      }
-
-      return this.attachVolumeBaggage(context);
+    if (span === undefined) {
+      // We have no trace ID, so we can't use TraceIdRatioBasedSampler.
+      const isSelected = Math.random() < this.selectionRate;
+      return withVolumeBaggage(context, isSelected);
     }
 
-    fields(): string[] {
-      return [];
-    }
-
-    attachVolumeBaggage(context: Context): Context {
-      const span = trace.getSpan(context);
-
-      if (span === undefined) {
-        // We have no trace ID, so we can't use TraceIdRatioBasedSampler.
-        const isSelected = Math.random() < this.selectionRate;
-        return withVolumeBaggage(context, isSelected);
-      }
-
-      const decision = this.sampler.shouldSample(context, span.spanContext().traceId).decision;
-      return withVolumeBaggage(context, decision === SamplingDecision.RECORD_AND_SAMPLED);
-    }
-
+    const decision = this.sampler.shouldSample(
+      context,
+      span.spanContext().traceId
+    ).decision;
+    return withVolumeBaggage(
+      context,
+      decision === SamplingDecision.RECORD_AND_SAMPLED
+    );
+  }
 }
