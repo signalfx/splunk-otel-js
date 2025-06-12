@@ -66,13 +66,15 @@ export class SnapshotSpanProcessor implements SpanProcessor {
   }
 
   onEnd(span: ReadableSpan): void {
-    const traceId = this.snapshotSpans.get(span.spanContext().spanId);
+    const spanId = span.spanContext().spanId;
+    const traceId = this.snapshotSpans.get(spanId);
 
     if (traceId === undefined) {
       return;
     }
 
     this.traceSnapshotEnd(traceId);
+    this.snapshotSpans.delete(spanId);
   }
 
   forceFlush(): Promise<void> {
