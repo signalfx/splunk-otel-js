@@ -42,6 +42,10 @@ import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { StartLoggingOptions, startLogging } from './logging';
 import { Resource } from '@opentelemetry/resources';
 import { getDetectedResource } from './resource';
+import {
+  isSnapshotProfilingEnabled,
+  startSnapshotProfiling,
+} from './tracing/snapshots/Snapshots';
 
 export interface Options {
   accessToken: string;
@@ -120,6 +124,14 @@ export const start = (options: Partial<Options> = {}) => {
     if (profilingOptions.memoryProfilingEnabled) {
       metricsEnabledByDefault = true;
     }
+  }
+
+  if (isSnapshotProfilingEnabled()) {
+    startSnapshotProfiling({
+      endpoint: profilingOptions.endpoint,
+      serviceName: profilingOptions.serviceName,
+      resource: profilingOptions.resource,
+    });
   }
 
   if (isSignalEnabled(options.tracing, 'SPLUNK_TRACING_ENABLED', true)) {

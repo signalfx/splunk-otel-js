@@ -111,7 +111,7 @@ export function getEnvNumber(key: EnvVarKey, defaultValue: number): number {
     return defaultValue;
   }
 
-  const numberValue = parseInt(value);
+  const numberValue = parseFloat(value);
 
   if (isNaN(numberValue)) {
     return defaultValue;
