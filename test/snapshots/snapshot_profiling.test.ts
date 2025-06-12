@@ -41,7 +41,11 @@ describe('snapshot span processor', () => {
   });
 
   it('is possible to collect snapshot cpu profiles', async (t) => {
-    mock.timers.enable({ apis: ['setInterval'] });
+    if (process.versions.node.split('.').map(Number)[0] < 20) {
+      (mock.timers as any).enable(['setInterval']);
+    } else {
+      mock.timers.enable({ apis: ['setInterval'] });
+    }
 
     process.env.SPLUNK_SNAPSHOT_PROFILER_ENABLED = 'true';
 
