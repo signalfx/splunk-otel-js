@@ -23,7 +23,7 @@ import {
 } from '@opentelemetry/api';
 import { Span as SdkSpan } from '@opentelemetry/sdk-trace-node';
 import { strict as assert } from 'assert';
-import { beforeEach, describe, it, mock } from 'node:test';
+import { after, before, beforeEach, describe, it, mock } from 'node:test';
 import { VOLUME_BAGGAGE_KEY } from '../../src/tracing/snapshots/SnapshotPropagator';
 import { start } from '../../src';
 import { cleanEnvironment, spinMs } from '../utils';
@@ -39,13 +39,19 @@ const SPAN_ID = 'aaaabbbbccccdddd';
 
 // Skipped on Node <20 due to the mock.timers API not yet working.
 describe('snapshot profiling', { skip: NODE_MAJOR_VERSION < 20 }, () => {
+  before(() => {
+    mock.timers.enable({ apis: ['setInterval'] });
+  });
+
+  after(() => {
+    mock.timers.reset();
+  });
+
   beforeEach(() => {
     cleanEnvironment();
   });
 
   it('is possible to collect snapshot cpu profiles', async (t) => {
-    mock.timers.enable({ apis: ['setInterval'] });
-
     process.env.SPLUNK_SNAPSHOT_PROFILER_ENABLED = 'true';
 
     start({
