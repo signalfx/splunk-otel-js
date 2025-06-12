@@ -83,7 +83,7 @@ export class SnapshotProfiler {
         samplingIntervalMicroseconds,
         maxSampleCutoffDelayMicroseconds: samplingIntervalMicroseconds / 2,
         recordDebugInfo: false,
-        omitStacktracesWithoutContext: true,
+        onlyFilteredStacktraces: true,
       }) ?? -1;
 
     this.collectionLoop = setInterval(async () => {
@@ -92,12 +92,15 @@ export class SnapshotProfiler {
     }, options.collectionIntervalMs);
     this.collectionLoop.unref();
 
+    // Tracing needs to be started after profiling, setting up the profiling exporter
+    // causes @grpc/grpc-js to be loaded, but to avoid any loads before tracing's setup
+    // has finished, load it next event loop.
     setImmediate(() => {
       this.exporter = new OtlpHttpProfilingExporter({
         endpoint: options.endpoint,
         callstackInterval: options.samplingIntervalMs,
         resource: options.resource,
-        instrumentationSource: 'continuous',
+        instrumentationSource: 'snapshot',
       });
     });
   }
@@ -158,4 +161,8 @@ export function isSnapshotProfilingEnabled() {
 
 export function snapshotSpanProcessor(): SnapshotSpanProcessor | undefined {
   return profiler?.processor;
+}
+
+export function snapshotProfiler(): SnapshotProfiler | undefined {
+  return profiler;
 }

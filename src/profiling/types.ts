@@ -21,8 +21,9 @@ export interface NativeProfilingOptions {
   samplingIntervalMicroseconds: number;
   maxSampleCutoffDelayMicroseconds?: number;
   recordDebugInfo?: boolean;
-  // When set to true, only stacktraces with an active span context are reported.
-  omitStacktracesWithoutContext?: boolean;
+  // Stacktraces not matching a filter will be discarded.
+  // If no filter is active, everything is discarded.
+  onlyFilteredStacktraces?: boolean;
 }
 
 export interface ProfilingStacktrace {

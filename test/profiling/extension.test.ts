@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { Context, ROOT_CONTEXT } from '@opentelemetry/api';
 import { strict as assert } from 'assert';
 import { afterEach, describe, it } from 'node:test';
 import {
@@ -22,8 +23,10 @@ import {
   ProfilingExtension,
 } from '../../src/profiling/types';
 import * as utils from '../utils';
+import { RandomIdGenerator } from '@opentelemetry/sdk-trace-base';
 
-const extension: ProfilingExtension = require('../../src/native_ext').profiling;
+const extension: ProfilingExtension =
+  require('../../src/native_ext').profiling!;
 
 function assertNanoSecondString(timestamp: any) {
   assert.equal(typeof timestamp, 'string');
@@ -38,17 +41,103 @@ function assertNanoSecondString(timestamp: any) {
 const expectedStacktraceCount = 5;
 
 describe('profiling native extension', () => {
-  afterEach(() => {
-    extension.stop();
+  it('calling stop without initialized profiling returns null', () => {
+    assert.equal(extension.stop(0), null);
   });
 
-  it('calling stop without initialized profiling returns null', () => {
-    assert.equal(extension.stop(), null);
+  it('is possible to create a profiler', () => {
+    const handle = extension.createCpuProfiler({
+      name: 'create-test',
+      samplingIntervalMicroseconds: 10_000,
+    });
+
+    assert.ok(handle >= 0);
+  });
+
+  it('is possible to call start and stop multiple times', () => {
+    const handle = extension.createCpuProfiler({
+      name: 'stop-test',
+      samplingIntervalMicroseconds: 10_000,
+    });
+
+    assert.ok(extension.startCpuProfiler(handle));
+    assert.strictEqual(extension.startCpuProfiler(handle), false);
+
+    assert.notEqual(extension.stop(handle), null);
+    assert.strictEqual(extension.stop(handle), null);
+  });
+
+  it('is possible to add trace id filters', () => {
+    const handle = extension.createCpuProfiler({
+      name: 'filter-test',
+      samplingIntervalMicroseconds: 1000,
+      onlyFilteredStacktraces: true,
+    });
+
+    const idGenerator = new RandomIdGenerator();
+    const traceIdMatchingFilter = idGenerator.generateTraceId();
+    const traceIdNotMatchingFilter = idGenerator.generateTraceId();
+
+    extension.addTraceIdFilter(handle, traceIdMatchingFilter);
+
+    assert.ok(extension.startCpuProfiler(handle));
+
+    const ctx1 = ROOT_CONTEXT.setValue(Symbol(), 1);
+    const ctx2 = ROOT_CONTEXT.setValue(Symbol(), 2);
+
+    extension.enterContext(
+      ctx1,
+      traceIdMatchingFilter,
+      idGenerator.generateSpanId()
+    );
+    utils.spinMs(20);
+    extension.exitContext(ctx1);
+
+    extension.enterContext(
+      ctx2,
+      traceIdNotMatchingFilter,
+      idGenerator.generateSpanId()
+    );
+    utils.spinMs(20);
+    extension.exitContext(ctx2);
+
+    const profile1 = extension.stop(handle)!;
+    assert.ok(profile1.stacktraces.length > 0);
+
+    const matchingTraceIdBuffer = Buffer.from(traceIdMatchingFilter, 'hex');
+    assert.ok(
+      profile1.stacktraces.every((st) =>
+        st.traceId.equals(matchingTraceIdBuffer)
+      )
+    );
+
+    extension.removeTraceIdFilter(handle, traceIdMatchingFilter);
+
+    assert.ok(extension.startCpuProfiler(handle));
+
+    extension.enterContext(
+      ctx1,
+      traceIdMatchingFilter,
+      idGenerator.generateSpanId()
+    );
+    utils.spinMs(100);
+    extension.exitContext(ctx1);
+
+    extension.enterContext(
+      ctx2,
+      traceIdNotMatchingFilter,
+      idGenerator.generateSpanId()
+    );
+    utils.spinMs(100);
+    extension.exitContext(ctx2);
+
+    const profile2 = extension.stop(handle)!;
+    assert.strictEqual(profile2.stacktraces.length, 0);
   });
 
   it('is possible to collect a cpu profile', () => {
     // returns null if no profiling started
-    assert.equal(extension.collect(), null);
+    assert.equal(extension.collect(0), null);
 
     // Use a lower interval to make sure we capture something
     const handle = extension.start({
@@ -60,6 +149,9 @@ describe('profiling native extension', () => {
     utils.spinMs(200);
 
     const result = extension.collect(handle);
+
+    assert.ok(result);
+
     // The types might not be what is declared in typescript, a sanity check.
     assert.equal(typeof result, 'object');
     const { stacktraces, startTimeNanos } = result;
@@ -101,6 +193,8 @@ describe('profiling native extension', () => {
         assert.equal(typeof traceline[3], 'number'); // column number
       }
     }
+
+    extension.stop(handle);
   });
 
   it('is possible to collect a heap profile', () => {
@@ -109,7 +203,7 @@ describe('profiling native extension', () => {
     extension.startMemoryProfiling();
 
     function doAllocations() {
-      const dump = [];
+      const dump: string[] = [];
 
       for (let i = 0; i < 4096; i++) {
         dump.push(`abcd-${i}`.repeat(2048));
@@ -122,7 +216,7 @@ describe('profiling native extension', () => {
 
     const profile = extension.collectHeapProfile();
 
-    assert.notEqual(profile, null);
+    assert.ok(profile);
     assert.equal(typeof profile.timestamp, 'number');
     assert(
       Date.now() - profile.timestamp <= 60_000,
@@ -188,5 +282,7 @@ describe('profiling native extension', () => {
     const sample = maybeSample!;
     assert.deepEqual(typeof sample.size, 'number');
     assert(sample.size > 0, 'sample with zero size');
+
+    extension.stopMemoryProfiling();
   });
 });
