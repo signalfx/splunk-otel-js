@@ -32,20 +32,19 @@ import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { CpuProfile } from '../../src/profiling/types';
 import { RandomIdGenerator } from '@opentelemetry/sdk-trace-base';
 
+const NODE_MAJOR_VERSION = process.versions.node.split('.').map(Number)[0];
+
 const TRACE_ID = 'aaaabbbbccccddddeeeeffff11112222';
 const SPAN_ID = 'aaaabbbbccccdddd';
 
-describe('snapshot span processor', () => {
+// Skipped on Node <20 due to the mock.timers API not yet working.
+describe('snapshot profiling', { skip: NODE_MAJOR_VERSION < 20 }, () => {
   beforeEach(() => {
     cleanEnvironment();
   });
 
   it('is possible to collect snapshot cpu profiles', async (t) => {
-    if (process.versions.node.split('.').map(Number)[0] < 20) {
-      (mock.timers as any).enable(['setInterval']);
-    } else {
-      mock.timers.enable({ apis: ['setInterval'] });
-    }
+    mock.timers.enable({ apis: ['setInterval'] });
 
     process.env.SPLUNK_SNAPSHOT_PROFILER_ENABLED = 'true';
 
