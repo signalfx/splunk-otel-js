@@ -90,7 +90,7 @@ describe('profiling native extension', () => {
       traceIdMatchingFilter,
       idGenerator.generateSpanId()
     );
-    utils.spinMs(20);
+    utils.spinMs(100);
     extension.exitContext(ctx1);
 
     extension.enterContext(
@@ -98,7 +98,7 @@ describe('profiling native extension', () => {
       traceIdNotMatchingFilter,
       idGenerator.generateSpanId()
     );
-    utils.spinMs(20);
+    utils.spinMs(100);
     extension.exitContext(ctx2);
 
     const profile1 = extension.stop(handle)!;
