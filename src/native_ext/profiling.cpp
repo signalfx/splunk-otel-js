@@ -485,6 +485,7 @@ bool CreateCpuProfilingOptions(const Nan::FunctionCallbackInfo<v8::Value> &info,
   profilingOptions->maxSampleCutoffDelayNanos = maxSampleCutoffDelayNanos;
   profilingOptions->recordDebugInfo = recordDebugInfo;
   profilingOptions->onlyFilteredStacktraces = onlyFilteredStacktraces;
+  printf("profiler name length %u (%.*s)\n", profilerNameUtf8.length(), profilerNameUtf8.length(), *profilerNameUtf8);
   memcpy(profilingOptions->name, *profilerNameUtf8, profilerNameUtf8.length());
   profilingOptions->name_length = profilerNameUtf8.length();
 
@@ -555,7 +556,8 @@ NAN_METHOD(AddTraceIdFilter) {
     return;
   }
 
-  auto traceId = Nan::To<v8::String>(info[1]).ToLocalChecked();
+  auto traceId = Nan::MaybeLocal<v8::String>(info[1].As<v8::String>()).ToLocalChecked();
+  //auto traceId = Nan::To<v8::String>(info[1]).ToLocalChecked();
   v8::String::Utf8Value traceIdUtf8(info.GetIsolate(), traceId);
 
   uint64_t hash = XXH3_64bits(*traceIdUtf8, traceIdUtf8.length());
