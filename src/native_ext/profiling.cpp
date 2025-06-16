@@ -510,7 +510,6 @@ NAN_METHOD(StartCpuProfiler) {
   }
 
   if (profiling->running) {
-    v8::CpuProfiler::CollectSample(info.GetIsolate());
     info.GetReturnValue().Set(false);
     return;
   }
@@ -524,8 +523,6 @@ NAN_METHOD(StartCpuProfiler) {
   V8StartProfiling(profiling->profiler, title);
   profiling->sampleCutoffPoint = HrTime();
   profiling->running = true;
-
-  v8::CpuProfiler::CollectSample(info.GetIsolate());
 
   info.GetReturnValue().Set(true);
   return;
