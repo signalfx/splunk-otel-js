@@ -508,16 +508,6 @@ NAN_METHOD(CreateCpuProfiler) {
   info.GetReturnValue().Set(profiling->handle);
 }
 
-uint64_t Hash(const char* s, size_t length) {
-    uint64_t hash = 5381;
-
-    for (size_t i = 0; i < length; i++) {
-      hash = ((hash << 5) + hash) + s[i];
-    }
-
-    return hash;
-}
-
 NAN_METHOD(StartCpuProfiler) {
   auto handle = Nan::To<int32_t>(info[0]).ToChecked();
 
@@ -568,8 +558,7 @@ NAN_METHOD(AddTraceIdFilter) {
   auto traceId = Nan::To<v8::String>(info[1]).ToLocalChecked();
   v8::String::Utf8Value traceIdUtf8(info.GetIsolate(), traceId);
 
-  uint64_t hash = Hash(*traceIdUtf8, traceIdUtf8.length());
-  //uint64_t hash = XXH3_64bits(*traceIdUtf8, traceIdUtf8.length());
+  uint64_t hash = XXH3_64bits(*traceIdUtf8, traceIdUtf8.length());
 
   int ret;
   kh_put(TraceIdFilter, profiling->traceIdFilter, hash, &ret);
@@ -590,7 +579,7 @@ NAN_METHOD(RemoveTraceIdFilter) {
   auto traceId = Nan::To<v8::String>(info[1]).ToLocalChecked();
   v8::String::Utf8Value traceIdUtf8(info.GetIsolate(), traceId);
 
-  uint64_t traceIdHash = Hash(*traceIdUtf8, traceIdUtf8.length());
+  uint64_t traceIdHash = XXH3_64bits(*traceIdUtf8, traceIdUtf8.length());
 
   khiter_t it = kh_get(TraceIdFilter, profiling->traceIdFilter, traceIdHash);
 
@@ -973,7 +962,7 @@ void ProfilingEnterContext(Profiling *profiling, int32_t contextHash,
                            const v8::String::Utf8Value &spanId) {
 
   if (profiling->onlyFilteredStacktraces) {
-    uint64_t traceIdHash = Hash(*traceId, traceId.length());
+    uint64_t traceIdHash = XXH3_64bits(*traceId, traceId.length());
     if (kh_get(TraceIdFilter, profiling->traceIdFilter, traceIdHash) ==
         kh_end(profiling->traceIdFilter)) {
       return;
