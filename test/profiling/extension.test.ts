@@ -41,7 +41,6 @@ describe('profiling native extension', () => {
     assert.equal(extension.stop(0), null);
   });
 
-  /*
   it('is possible to create a profiler', () => {
     const handle = extension.createCpuProfiler({
       name: 'create-test',
@@ -64,6 +63,7 @@ describe('profiling native extension', () => {
     assert.strictEqual(extension.stop(handle), null);
   });
 
+  /*
   it('is possible to add trace id filters', () => {
     const handle = extension.createCpuProfiler({
       name: 'filter-test',
