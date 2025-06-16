@@ -60,16 +60,6 @@ struct ActivationPeriod {
   ActivationPeriod *next;
 };
 
-struct String {
-  const char *data = nullptr;
-  size_t length = 0;
-
-  String() = default;
-  String(const char *data, size_t length) : data(data), length(length) {}
-
-  bool IsEmpty() const { return data == nullptr; }
-};
-
 /* Only used while tracking activations */
 struct ActivationStack {
   static const int32_t kMaxActivations = 2;

@@ -28,23 +28,22 @@
 #define TINYSTL_ALLOCATOR_H
 
 #include "stddef.h"
+#include <stdlib.h>
 
 #ifndef TINYSTL_ALLOCATOR
 
 namespace tinystl {
 
-	struct allocator {
-		static void* static_allocate(size_t bytes) {
-			return operator new(bytes);
-		}
+struct allocator {
+  static void *static_allocate(size_t bytes) { return malloc(bytes); }
 
-		static void static_deallocate(void* ptr, size_t /*bytes*/) {
-			operator delete(ptr);
-		}
-	};
-}
+  static void static_deallocate(void *ptr, size_t /*bytes*/) {
+    return free(ptr);
+  }
+};
+} // namespace tinystl
 
-#	define TINYSTL_ALLOCATOR ::tinystl::allocator
+#define TINYSTL_ALLOCATOR ::tinystl::allocator
 #endif // TINYSTL_ALLOCATOR
 
 #endif
