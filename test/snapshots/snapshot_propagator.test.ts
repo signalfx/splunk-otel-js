@@ -100,18 +100,22 @@ describe('snapshot propagator', () => {
 
     const tracer = trace.getTracer('test-tracer');
     const span = tracer.startSpan('test');
+    const spanBaggage = propagation.createBaggage({ foo: { value: 'bar' } });
 
-    const extractedCtx = propagator.extract(
-      trace.setSpan(ROOT_CONTEXT, span),
-      undefined,
-      NoopGetter
+    const propagatedBaggage = propagation.getBaggage(
+      propagator.extract(
+        propagation.setBaggage(trace.setSpan(ROOT_CONTEXT, span), spanBaggage),
+        undefined,
+        NoopGetter
+      )
     );
-    const propagatedBaggage = propagation.getBaggage(extractedCtx);
 
     assert.strictEqual(
       propagatedBaggage?.getEntry(VOLUME_BAGGAGE_KEY)?.value,
       'highest'
     );
+
+    assert.strictEqual(propagatedBaggage?.getEntry('foo')?.value, 'bar');
   });
 
   it('returns baggage with "off" volume if a span is active and trace is not sampled', () => {

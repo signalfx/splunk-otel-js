@@ -30,12 +30,18 @@ import {
 export const VOLUME_BAGGAGE_KEY = 'splunk.trace.snapshot.volume' as const;
 
 function withVolumeBaggage(context: Context, isSelected: boolean) {
-  return propagation.setBaggage(
-    context,
-    propagation.createBaggage({
-      [VOLUME_BAGGAGE_KEY]: { value: isSelected ? 'highest' : 'off' },
-    })
-  );
+  let baggage = propagation.getBaggage(context);
+
+  const entry = { value: isSelected ? 'highest' : 'off' };
+  if (baggage === undefined) {
+    baggage = propagation.createBaggage({
+      [VOLUME_BAGGAGE_KEY]: entry,
+    });
+  } else {
+    baggage = baggage.setEntry(VOLUME_BAGGAGE_KEY, entry);
+  }
+
+  return propagation.setBaggage(context, baggage);
 }
 
 function normalizeRate(rate: number): number {

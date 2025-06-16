@@ -146,7 +146,7 @@ KHASH_MAP_INIT_INT(ActivationStack, ActivationStack);
 KHASH_SET_INIT_INT64(TraceIdFilter);
 
 // Maximum offset in nanoseconds from profiling start from which a sample is
-// considered alway valid.
+// considered always valid.
 const int64_t DEFAULT_MAX_SAMPLE_CUTOFF_DELAY_NANOS = 500LL * 1000LL * 1000LL;
 
 struct Profiling {
