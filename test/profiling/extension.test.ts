@@ -63,7 +63,6 @@ describe('profiling native extension', () => {
     assert.strictEqual(extension.stop(handle), null);
   });
 
-  /*
   it('is possible to add trace id filters', () => {
     const handle = extension.createCpuProfiler({
       name: 'filter-test',
@@ -132,6 +131,7 @@ describe('profiling native extension', () => {
     assert.strictEqual(profile2.stacktraces.length, 0);
   });
 
+  /*
   it('is possible to collect a cpu profile', () => {
     // returns null if no profiling started
     assert.equal(extension.collect(0), null);
