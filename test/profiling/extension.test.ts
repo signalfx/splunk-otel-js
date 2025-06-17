@@ -85,20 +85,26 @@ describe('profiling native extension', () => {
     const ctx1 = ROOT_CONTEXT.setValue(Symbol(), 1);
     const ctx2 = ROOT_CONTEXT.setValue(Symbol(), 2);
 
+    console.log('traceIdFilterTest', 'enterContext');
     extension.enterContext(
       ctx1,
       traceIdMatchingFilter,
       idGenerator.generateSpanId()
     );
+    console.log('traceIdFilterTest', 'spin1');
     utils.spinMs(100);
+    console.log('traceIdFilterTest', 'exitContext');
     extension.exitContext(ctx1);
 
+    console.log('traceIdFilterTest', 'enterContext 2');
     extension.enterContext(
       ctx2,
       traceIdNotMatchingFilter,
       idGenerator.generateSpanId()
     );
+    console.log('traceIdFilterTest', 'spin 2');
     utils.spinMs(100);
+    console.log('traceIdFilterTest', 'exitContext 2');
     extension.exitContext(ctx2);
     console.log('traceIdFilterTest', 'stopping to collect');
 

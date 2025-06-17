@@ -194,7 +194,7 @@ jobs:
       - name: Install npm dependencies
         run: npm ci --unsafe-perm
       - name: Test
-        run: npm run test
+        run: npm run test extension
 
   build:
     runs-on: ubuntu-latest
