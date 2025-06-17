@@ -915,6 +915,7 @@ NAN_METHOD(StopProfiling) {
   if (!profile) {
     // profile with this title might've already be ended using a previous stop
     // call
+    ProfilingReset(profiling);
     return;
   }
 

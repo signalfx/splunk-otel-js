@@ -78,7 +78,6 @@ describe('profiling native extension', () => {
 
     assert.ok(extension.startCpuProfiler(handle));
 
-    /*
     const ctx1 = ROOT_CONTEXT.setValue(Symbol(), 1);
     const ctx2 = ROOT_CONTEXT.setValue(Symbol(), 2);
 
@@ -130,10 +129,10 @@ describe('profiling native extension', () => {
 
     const profile2 = extension.stop(handle)!;
     assert.strictEqual(profile2.stacktraces.length, 0);
-    */
+
+    extension.stop(handle);
   });
 
-  /*
   it('is possible to collect a cpu profile', () => {
     // returns null if no profiling started
     assert.equal(extension.collect(0), null);
@@ -288,5 +287,4 @@ describe('profiling native extension', () => {
 
     extension.stopMemoryProfiling();
   });
-  */
 });

@@ -44,7 +44,6 @@ export class SnapshotProfiler {
   collectionLoop: NodeJS.Timeout;
   stopTimeout: NodeJS.Timeout | undefined;
   exporter: OtlpHttpProfilingExporter | undefined;
-  exportLoop: NodeJS.Timeout | undefined;
 
   constructor(options: SnapshotProfilingOptions) {
     ensureProfilingContextManager();
@@ -59,12 +58,12 @@ export class SnapshotProfiler {
         this.activeSnapshots = Math.max(this.activeSnapshots - 1, 0);
         this.extension.removeTraceIdFilter(this.profilerHandle, traceId);
 
-        if (this.activeSnapshots === 0) {
-          if (this.stopTimeout !== undefined) {
-            clearTimeout(this.stopTimeout);
-            this.stopTimeout = undefined;
-          }
+        if (this.stopTimeout !== undefined) {
+          clearTimeout(this.stopTimeout);
+          this.stopTimeout = undefined;
+        }
 
+        if (this.activeSnapshots === 0) {
           this.stopTimeout = setTimeout(async () => {
             const profile = this.extension.stop(this.profilerHandle);
             await this._export(profile);
@@ -92,6 +91,10 @@ export class SnapshotProfiler {
     }, options.collectionIntervalMs);
     this.collectionLoop.unref();
 
+    process.on('exit', () => {
+      this.extension.stop(this.profilerHandle);
+    });
+
     // Tracing needs to be started after profiling, setting up the profiling exporter
     // causes @grpc/grpc-js to be loaded, but to avoid any loads before tracing's setup
     // has finished, load it next event loop.
@@ -118,7 +121,6 @@ export class SnapshotProfiler {
   async stop() {
     clearTimeout(this.stopTimeout);
     clearInterval(this.collectionLoop);
-    clearInterval(this.exportLoop);
 
     const profile = this.extension.stop(this.profilerHandle);
 

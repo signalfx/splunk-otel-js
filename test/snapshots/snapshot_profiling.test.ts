@@ -137,5 +137,7 @@ describe('snapshot profiling', { skip: NODE_MAJOR_VERSION < 20 }, () => {
         st.traceId.equals(matchingTraceIdBuffer)
       )
     );
+
+    await profiler.stop();
   });
 });
