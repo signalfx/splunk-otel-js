@@ -996,29 +996,37 @@ void ProfilingEnterContext(Profiling *profiling, int32_t contextHash,
 
 void ProfilingExitContext(Profiling *profiling, int32_t contextHash,
                           int64_t timestamp) {
+  printf("ProfilingExitContext handle=%d for hash %d\n", profiling->handle, contextHash);
   khiter_t it =
       kh_get(ActivationStack, profiling->spanActivations, contextHash);
 
   if (it == kh_end(profiling->spanActivations)) {
+    printf("no activation for hash %d\n", contextHash);
     return;
   }
 
+  printf("query for activation\n");
   ActivationStack *stack = &kh_value(profiling->spanActivations, it);
   SpanActivation *activation = ActivationStackPop(stack);
 
   if (!activation) {
+    printf("no activation\n");
     return;
   }
 
   activation->endTime = timestamp;
 
+  printf("inserting activation\n");
   InsertActivation(profiling, activation);
+  printf("inserted\n");
 
   if (stack->count == 0) {
+    printf("deleting activation\n");
     kh_del(ActivationStack, profiling->spanActivations, it);
   }
 
   profiling->activationDepth--;
+  printf("ProfilingExitContext handle=%d for hash %d DONE\n", profiling->handle, contextHash);
 }
 
 NAN_METHOD(EnterContext) {
@@ -1050,10 +1058,12 @@ NAN_METHOD(EnterContext) {
 }
 
 NAN_METHOD(ExitContext) {
+  printf("Native: ExitContext\n");
   if (globals.profilers.empty()) {
     return;
   }
 
+  printf("Get Identity hash\n");
   int hash = info[0].As<v8::Object>()->GetIdentityHash();
   int64_t timestamp = HrTime();
 
