@@ -951,6 +951,10 @@ void ProfilingEnterContext(Profiling *profiling, int32_t contextHash,
                            const v8::String::Utf8Value &traceId,
                            const v8::String::Utf8Value &spanId) {
 
+  if (!profiling->running) {
+    return;
+  }
+
   if (profiling->onlyFilteredStacktraces) {
     uint64_t traceIdHash = XXH3_64bits(*traceId, traceId.length());
     if (kh_get(TraceIdFilter, profiling->traceIdFilter, traceIdHash) ==
@@ -996,6 +1000,10 @@ void ProfilingEnterContext(Profiling *profiling, int32_t contextHash,
 
 void ProfilingExitContext(Profiling *profiling, int32_t contextHash,
                           int64_t timestamp) {
+  if (!profiling->running) {
+    return;
+  }
+
   printf("ProfilingExitContext handle=%d for hash %d\n", profiling->handle, contextHash);
   khiter_t it =
       kh_get(ActivationStack, profiling->spanActivations, contextHash);
