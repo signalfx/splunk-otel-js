@@ -64,19 +64,23 @@ describe('profiling native extension', () => {
   });
 
   it('is possible to add trace id filters', () => {
+    console.log('traceIdFilterTest', 'begin');
     const handle = extension.createCpuProfiler({
       name: 'filter-test',
       samplingIntervalMicroseconds: 1000,
       onlyFilteredStacktraces: true,
     });
+    console.log('traceIdFilterTest', 'created profiler, handle=', handle);
 
     const idGenerator = new RandomIdGenerator();
     const traceIdMatchingFilter = idGenerator.generateTraceId();
     const traceIdNotMatchingFilter = idGenerator.generateTraceId();
 
     extension.addTraceIdFilter(handle, traceIdMatchingFilter);
+    console.log('traceIdFilterTest', 'added trace id filter');
 
     assert.ok(extension.startCpuProfiler(handle));
+    console.log('traceIdFilterTest', 'started profiler');
 
     const ctx1 = ROOT_CONTEXT.setValue(Symbol(), 1);
     const ctx2 = ROOT_CONTEXT.setValue(Symbol(), 2);
@@ -96,6 +100,7 @@ describe('profiling native extension', () => {
     );
     utils.spinMs(100);
     extension.exitContext(ctx2);
+    console.log('traceIdFilterTest', 'stopping to collect');
 
     const profile1 = extension.stop(handle)!;
     assert.ok(profile1.stacktraces.length > 0);
@@ -107,9 +112,12 @@ describe('profiling native extension', () => {
       )
     );
 
+    console.log('traceIdFilterTest', 'removing trace id filter');
     extension.removeTraceIdFilter(handle, traceIdMatchingFilter);
+    console.log('traceIdFilterTest', 'starting profiler again');
 
     assert.ok(extension.startCpuProfiler(handle));
+    console.log('traceIdFilterTest', 'started profiler againn');
 
     extension.enterContext(
       ctx1,
@@ -127,10 +135,10 @@ describe('profiling native extension', () => {
     utils.spinMs(100);
     extension.exitContext(ctx2);
 
+    console.log('traceIdFilterTest', 'stopping');
     const profile2 = extension.stop(handle)!;
+    console.log('traceIdFilterTest', 'stopped');
     assert.strictEqual(profile2.stacktraces.length, 0);
-
-    extension.stop(handle);
   });
 
   it('is possible to collect a cpu profile', () => {
