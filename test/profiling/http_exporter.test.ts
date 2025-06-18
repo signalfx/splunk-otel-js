@@ -28,6 +28,7 @@ describe('profiling OTLP HTTP exporter', () => {
       endpoint: 'http://localhost:4318',
       callstackInterval: 1000,
       resource: new Resource({}),
+      instrumentationSource: 'continuous',
     });
 
     assert.strictEqual(exporter._endpoint, 'http://localhost:4318/v1/logs');
@@ -38,6 +39,7 @@ describe('profiling OTLP HTTP exporter', () => {
       endpoint: 'http://abc:4200/v1/logs',
       callstackInterval: 1000,
       resource: new Resource({}),
+      instrumentationSource: 'continuous',
     });
 
     assert.strictEqual(exporter._endpoint, 'http://abc:4200/v1/logs');
@@ -48,6 +50,7 @@ describe('profiling OTLP HTTP exporter', () => {
       endpoint: 'http://foobar:8181',
       callstackInterval: 1000,
       resource: new Resource({ xyz: 'foo' }),
+      instrumentationSource: 'continuous',
     });
 
     const logExporter = new InMemoryLogRecordExporter();
@@ -72,6 +75,7 @@ describe('profiling OTLP HTTP exporter', () => {
       'profiling.data.type': 'cpu',
       'com.splunk.sourcetype': 'otel.profiling',
       'profiling.data.total.frame.count': 2,
+      'profiling.instrumentation.source': 'continuous',
     });
   });
 
@@ -80,6 +84,7 @@ describe('profiling OTLP HTTP exporter', () => {
       endpoint: 'http://foobar:8181',
       callstackInterval: 1000,
       resource: new Resource({ xyz: 'foo' }),
+      instrumentationSource: 'continuous',
     });
 
     const logExporter = new InMemoryLogRecordExporter();
@@ -105,6 +110,7 @@ describe('profiling OTLP HTTP exporter', () => {
       'profiling.data.type': 'allocation',
       'com.splunk.sourcetype': 'otel.profiling',
       'profiling.data.total.frame.count': 3,
+      'profiling.instrumentation.source': 'continuous',
     });
   });
 });

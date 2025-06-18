@@ -35,9 +35,12 @@ import {
 import { serialize, serializeHeapProfile, encode } from './utils';
 import { ReadableLogRecord } from '@opentelemetry/sdk-logs';
 
+export type ProfilerInstrumentationSource = 'continuous' | 'snapshot';
+
 export interface ExporterOptions {
   callstackInterval: number;
   endpoint: string;
+  instrumentationSource: ProfilerInstrumentationSource;
   resource: Resource;
 }
 
@@ -53,13 +56,15 @@ function countSamples(stacktraces: ProfilingStacktrace[]) {
 
 function commonAttributes(
   profilingType: 'cpu' | 'allocation',
-  sampleCount: number
+  sampleCount: number,
+  instrumentationSource: ProfilerInstrumentationSource
 ) {
   return {
     'profiling.data.format': 'pprof-gzip-base64',
     'profiling.data.type': profilingType,
     'com.splunk.sourcetype': 'otel.profiling',
     'profiling.data.total.frame.count': sampleCount,
+    'profiling.instrumentation.source': instrumentationSource,
   };
 }
 
@@ -78,6 +83,7 @@ export class OtlpHttpProfilingExporter implements ProfilingExporter {
   _endpoint: string;
   _exporter: OTLPLogExporter | undefined;
   _resource: Resource;
+  _instrumentationSource: ProfilerInstrumentationSource;
   _scope: InstrumentationScope;
 
   constructor(options: ExporterOptions) {
@@ -87,6 +93,7 @@ export class OtlpHttpProfilingExporter implements ProfilingExporter {
       [ATTR_TELEMETRY_SDK_LANGUAGE]: 'node',
       [ATTR_TELEMETRY_SDK_VERSION]: VERSION,
     }).merge(options.resource);
+    this._instrumentationSource = options.instrumentationSource;
 
     this._scope = {
       name: 'otel.profiling',
@@ -100,7 +107,11 @@ export class OtlpHttpProfilingExporter implements ProfilingExporter {
     const sampleCount = countSamples(stacktraces);
 
     diag.debug(`profiling: Exporting ${sampleCount} CPU samples`);
-    const attributes = commonAttributes('cpu', sampleCount);
+    const attributes = commonAttributes(
+      'cpu',
+      sampleCount,
+      this._instrumentationSource
+    );
 
     return encode(
       serialize(profile, { samplingPeriodMillis: this._callstackInterval })
@@ -136,7 +147,11 @@ export class OtlpHttpProfilingExporter implements ProfilingExporter {
   async sendHeapProfile(profile: HeapProfile) {
     const serialized = serializeHeapProfile(profile);
     const sampleCount = profile.samples.length;
-    const attributes = commonAttributes('allocation', sampleCount);
+    const attributes = commonAttributes(
+      'allocation',
+      sampleCount,
+      'continuous'
+    );
     diag.debug(`profiling: Exporting ${sampleCount} heap samples`);
     return encode(serialized)
       .then((serializedProfile) => {
