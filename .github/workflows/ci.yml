@@ -14,11 +14,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        container: ['node:16.0.0']
-        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '24.0.0']
-        include:
-          - container: 'node:18.0.0'
-            node_api_target: '23.0.0'
+        container: ['node:18.0.0']
+        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0']
     container: ${{ matrix.container }}
     steps:
       - name: Checkout
@@ -39,11 +36,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        container: ['node:16.0.0']
-        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '24.0.0']
-        include:
-          - container: 'node:18.0.0'
-            node_api_target: '23.0.0'
+        container: ['node:18.0.0']
+        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0']
     container: ${{ matrix.container }}
     steps:
       - name: Checkout
@@ -79,7 +73,7 @@ jobs:
           python-version: ${{ matrix.python_version }}
       - uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '18'
       - name: Install npm dependencies
         run: npm ci --ignore-scripts
       - name: Prebuild
@@ -101,7 +95,7 @@ jobs:
           python-version: '3.11'
       - uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '18'
       - name: Download all prebuilds
         uses: actions/download-artifact@v4
         with:
@@ -172,7 +166,7 @@ jobs:
         env:
           NEO4J_TEST_WITH_LOCAL: ${{ (matrix.os == 'ubuntu-latest') && 'true' || 'false' }}
       - name: Report Coverage
-        if: ${{matrix.nodejs == '16' && matrix.os == 'ubuntu-latest'}}
+        if: ${{matrix.nodejs == '22' && matrix.os == 'ubuntu-latest'}}
         uses: codecov/codecov-action@v3
         with:
           verbose: true
