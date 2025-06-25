@@ -65,15 +65,16 @@ async function getBuildArtifact() {
 
   console.log('found finished workflow run', run);
 
+  const tgzName = `splunk-otel-${version}.tgz`
   const { data: artifacts } = await octokit.rest.actions.listWorkflowRunArtifacts({
     owner,
     repo,
     run_id: run.id,
+    name: tgzName,
   });
 
   console.log('found artifacts for workflow', artifacts);
 
-  const tgzName = `splunk-otel-${version}.tgz`
   const packageArtifact = artifacts.artifacts.find(artifact => artifact.name === tgzName);
 
   if (packageArtifact === undefined) {
