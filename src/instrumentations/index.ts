@@ -72,7 +72,7 @@ import { TediousInstrumentation } from '@opentelemetry/instrumentation-tedious';
 import { WinstonInstrumentation } from '@opentelemetry/instrumentation-winston';
 import { ElasticsearchInstrumentation } from './external/elasticsearch';
 import { SequelizeInstrumentation } from './external/sequelize';
-import { TypeormInstrumentation } from './external/typeorm';
+import { TypeormInstrumentation } from '@opentelemetry/instrumentation-typeorm';
 import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici';
 import { HttpDcInstrumentation } from './httpdc/httpdc';
 
