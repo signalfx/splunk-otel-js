@@ -158,7 +158,8 @@
     "nan": "^2.22.2",
     "node-gyp-build": "^4.8.4",
     "protobufjs": "^7.5.3",
-    "semver": "^7.7.2"
+    "semver": "^7.7.2",
+    "yaml": "^2.8.0"
   },
   "peerDependencies": {
     "@opentelemetry/api": "^1.9.0"
