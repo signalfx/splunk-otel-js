@@ -1,0 +1,90 @@
+---
+# Upgrade Splunk Node.js Agent
+- name: Upgrade Splunk Node.js Agent
+  become: true
+  block:
+    - name: Take Backup of the current Splunk Node.js agent before upgrade
+      ansible.builtin.include_tasks: backup.yml
+
+    - name: Check current installed version
+      ansible.builtin.shell: "npm list @splunk/otel --depth=0 --json"
+      args:
+        chdir: "{{ splunk_dest_folder }}"
+      register: current_version_check
+      ignore_errors: true
+
+    - name: Parse current version
+      ansible.builtin.set_fact:
+        current_installed_version: "{{ (current_version_check.stdout | from_json).dependencies['@splunk/otel'].version | default('none') }}"
+      when: current_version_check.rc == 0
+
+    - name: Display current version
+      ansible.builtin.debug:
+        msg: "Current installed version: {{ current_installed_version | default('none') }}"
+
+    - name: Upgrade "@splunk/otel" Node.js package
+      community.general.npm:
+        name: "@splunk/otel"
+        version: "{{ agent_version | regex_replace('^[~^]+', '') }}"
+        path: "{{ splunk_dest_folder }}"
+        registry: "https://registry.npmjs.org"
+        state: latest
+      environment:
+        CXXFLAGS: "-std=c++17"
+
+    - name: Verify upgrade was successful
+      ansible.builtin.shell: "npm list @splunk/otel --depth=0 --json"
+      args:
+        chdir: "{{ splunk_dest_folder }}"
+      register: upgraded_version_check
+      ignore_errors: true
+
+    - name: Parse upgraded version
+      ansible.builtin.set_fact:
+        upgraded_version: "{{ (upgraded_version_check.stdout | from_json).dependencies['@splunk/otel'].version | default('unknown') }}"
+      when: upgraded_version_check.rc == 0
+
+    - name: Display upgrade result
+      ansible.builtin.debug:
+        msg: "Upgrade successful: {{ current_installed_version | default('unknown') }} -> {{ upgraded_version | default('unknown') }}"
+
+    - name: splunk_agent_status nodejs upgrade
+      ansible.builtin.debug:
+        msg: '{ "agentUpgrade": "Splunk Node.js agent upgrade was successful" }'
+
+    - name: Agent upgrade result set fact
+      ansible.builtin.set_fact:
+        agent_result:
+          node: >-
+            {{ agent_node_name if (no_node_name_suffix | default('false') | lower == 'true') or (agent_node_name | default('') | regex_search('-0$')) else agent_node_name | default('') + '-0' }}
+          error: false
+          install_path: "{{ splunk_dest_folder | default('') }}"
+          agent_type: "{{ agent_type | default('node') }}"
+          agent_version: "{{ upgraded_version | default(agent_version) }}"
+          previous_version: "{{ current_installed_version | default('unknown') }}"
+          action: "upgrade"
+
+    - name: splunk.agent.result
+      ansible.builtin.debug:
+        msg: "{{ agent_result | to_json }}"
+
+  rescue:
+    - name: Splunk_agent_status Upgrade of the Node.js agent failed
+      ansible.builtin.debug:
+        msg: "Splunk Node.js agent upgrade failed. Error: {{ ansible_failed_task.name }}"
+
+    - name: Set Node Agent Result Fact
+      ansible.builtin.set_fact:
+        splunk_agent_result:
+          app: null
+          tier: null
+          node: null
+          error: true
+          install_path: null
+          agent_type: "{{ agent_type | default('splunk-node') }}"
+          agent_version: null
+          action: "upgrade"
+
+    - name: splunk.agent.result
+      ansible.builtin.debug:
+        msg: "{{ splunk_agent_result | to_json }}"
