@@ -1,0 +1,11 @@
+---
+- name: Install and configure Splunk Node.js Agent on localhost
+  hosts: localhost
+  become: true
+  vars:
+    agent_action: install
+    agent_version: "latest"  # Set your desired agent version
+    # splunk_access_token: "{{ vault_splunk_access_token }}"  # Use ansible-vault for security
+    # otel_exporter_otlp_endpoint: "https://ingest.us1.signalfx.com/v2/trace"
+  roles:
+    - role: ansible/node

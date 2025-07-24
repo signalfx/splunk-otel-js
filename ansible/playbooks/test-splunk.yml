@@ -1,0 +1,15 @@
+---
+- name: Test Splunk Node.js Agent on localhost (without sudo)
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  vars:
+    agent_action: install
+    agent_version: "latest"
+    # Override default paths to use user directory for testing
+    splunk_dest_folder: "{{ ansible_env.HOME }}/test-splunk-node-agent"
+    splunk_backup_folder: "{{ ansible_env.HOME }}/test-splunk-node-agent/backup"
+    # splunk_access_token: "{{ vault_splunk_access_token }}"  # Use ansible-vault for security
+    # otel_exporter_otlp_endpoint: "https://ingest.us1.signalfx.com/v2/trace"
+  roles:
+    - role: ../node
