@@ -18,8 +18,8 @@ jobs:
       - name: Build
         run: npm run compile
       - name: Generate metadata
-        run: npm run gen-metadata > splunk-otel-js-metadata.yml
+        run: npm run gen-metadata > splunk-otel-js-metadata.yaml
       - name: Upload metadata
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload ${{ github.ref }} splunk-otel-js-metadata.yml
+        run: gh release upload ${{ github.ref }} splunk-otel-js-metadata.yaml
