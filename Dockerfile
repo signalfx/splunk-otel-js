@@ -1,28 +1,28 @@
-FROM node:16 AS build-amd64
+FROM node:18 AS build-amd64
 WORKDIR /splunk-otel-js
 COPY . .
 RUN npm install
 RUN npm run compile
-RUN npm run prebuild:os '18.0.0' '20.0.0' '21.2.0' '22.0.0'
+RUN npm run prebuild:os
 RUN npm pack && tar xf splunk-otel-$(npm view @splunk/otel version).tgz
 RUN npm prune --omit=dev && cp -r node_modules/ package
 
-FROM node:16 AS build-arm64
+FROM node:18 AS build-arm64
 
 WORKDIR /splunk-otel-js
 COPY . .
 RUN npm install
 RUN npm run compile
-RUN npm run prebuild:os '18.0.0' '20.0.0' '21.2.0' '22.0.0'
+RUN npm run prebuild:os
 RUN npm pack && tar xf splunk-otel-$(npm view @splunk/otel version).tgz
 RUN npm prune --omit=dev && cp -r node_modules/ package
 
-FROM ppc64le/node:16 AS build-ppc64le
+FROM ppc64le/node:18 AS build-ppc64le
 WORKDIR /splunk-otel-js
 COPY . .
 RUN npm install
 RUN npm run compile
-RUN npm run prebuild:os '18.0.0' '20.0.0' '21.2.0' '22.0.0'
+RUN npm run prebuild:os
 RUN npm pack && tar xf splunk-otel-$(npm view @splunk/otel version).tgz
 RUN npm prune --omit=dev && cp -r node_modules/ package
 

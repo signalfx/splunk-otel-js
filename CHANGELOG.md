@@ -1,5 +1,15 @@
 # Change Log - @splunk/otel
 
+## 3.3.0
+
+- Add the option to use AWS Xray propagator. [#1028](https://github.com/signalfx/splunk-otel-js/pull/1028)
+
+## 3.2.0
+
+- Upgrade to OpenTelemetry `1.30.1` / `0.57.2`. [#1024](https://github.com/signalfx/splunk-otel-js/pull/1024)
+- Add prebuilt binaries for Node.js 24. [#1024](https://github.com/signalfx/splunk-otel-js/pull/1024)
+- Add support for snapshot profiling (callgraphs). [#1023](https://github.com/signalfx/splunk-otel-js/pull/1023)
+
 ## 3.1.2
 
 - Add prebuilds for Apple silicon. [#1016](https://github.com/signalfx/splunk-otel-js/pull/1016)

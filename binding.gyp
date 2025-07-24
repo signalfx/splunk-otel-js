@@ -12,7 +12,8 @@
       "src/native_ext/memory_profiling.cpp",
       "src/native_ext/profiling.cpp",
       "src/native_ext/util/modp_numtoa.cpp",
-      "src/native_ext/util/platform.cpp"
+      "src/native_ext/util/platform.cpp",
+      "src/native_ext/xxhash/xxhash.cpp"
     ],
     "include_dirs": [
       "<!(node -e \"require('nan')\")"

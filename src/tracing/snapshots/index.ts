@@ -13,5 +13,4 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-export const VERSION = '3.3.0';
+export { SnapshotPropagator } from './SnapshotPropagator';

@@ -15,7 +15,6 @@
  */
 
 import { strict as assert } from 'assert';
-import { gte } from 'semver';
 
 import {
   context,
@@ -30,12 +29,16 @@ import {
   Instrumentation,
   registerInstrumentations,
 } from '@opentelemetry/instrumentation';
-import {
-  AsyncHooksContextManager,
-  AsyncLocalStorageContextManager,
-} from '@opentelemetry/context-async-hooks';
+import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
 import type { StartTracingOptions, TracingOptions } from './types';
 import { isProfilingContextManagerSet } from '../profiling';
+import { getEnvNumber } from '../utils';
+import {
+  isSnapshotProfilingEnabled,
+  snapshotSpanProcessor,
+} from './snapshots/Snapshots';
+import { SnapshotPropagator } from './snapshots';
+import { CompositePropagator } from '@opentelemetry/core';
 
 export type { StartTracingOptions, TracingOptions };
 
@@ -85,16 +88,24 @@ export function startTracing(options: TracingOptions): boolean {
   assert(!isStarted, 'Splunk APM already started');
   isStarted = true;
 
-  // propagator
-  propagation.setGlobalPropagator(options.propagatorFactory(options));
+  let propagator = options.propagatorFactory(options);
+
+  if (isSnapshotProfilingEnabled()) {
+    propagator = new CompositePropagator({
+      propagators: [
+        propagator,
+        new SnapshotPropagator(
+          getEnvNumber('SPLUNK_SNAPSHOT_SELECTION_RATE', 0.01)
+        ),
+      ],
+    });
+  }
+  propagation.setGlobalPropagator(propagator);
 
   // OpenTelemetry would log an error diagnostic when attempting to overwrite a global.
   // Once profiling has set its context manager, we should not attempt to overwrite it.
   if (!isProfilingContextManagerSet()) {
-    const ContextManager = gte(process.version, '14.8.0')
-      ? AsyncLocalStorageContextManager
-      : AsyncHooksContextManager;
-    const contextManager = new ContextManager();
+    const contextManager = new AsyncLocalStorageContextManager();
     contextManager.enable();
     context.setGlobalContextManager(contextManager);
     tracingContextManagerEnabled = true;
@@ -126,6 +137,13 @@ export function startTracing(options: TracingOptions): boolean {
 
   for (const i in processors) {
     provider.addSpanProcessor(processors[i]);
+  }
+
+  if (isSnapshotProfilingEnabled()) {
+    const processor = snapshotSpanProcessor();
+    if (processor !== undefined) {
+      provider.addSpanProcessor(processor);
+    }
   }
 
   // register global provider
