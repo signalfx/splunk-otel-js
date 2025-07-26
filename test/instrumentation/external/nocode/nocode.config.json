@@ -1,0 +1,38 @@
+[
+  {
+    "absolutePath": "C:\\Users\\Marten\\Repos\\splunk\\splunk-otel-js\\test\\instrumentation\\external\\nocode\\sample-utils.ts",
+    "files": [
+      {
+        "name": "sample-utils",
+        "method": "muchWork",
+        "spanName": "util.js.muchWork"
+      },
+      {
+        "name": "sample-utils",
+        "method": "muchWorkWithPromise",
+        "spanName": "util.js.muchWorkWithPromise"
+      },
+      {
+        "name": "sample-utils",
+        "method": "funWithNestedArgs",
+        "attributes": [
+          {
+            "attrIndex": 0,
+            "attrPath": "user.preferences.theme",
+            "key": "userTheme"
+          },
+          {
+            "attrIndex": 0,
+            "attrPath": "user.preferences.notifications.push.enabled",
+            "key": "pushEnabled"
+          },
+          {
+            "attrIndex": 0,
+            "attrPath": "items.0.details.category",
+            "key": "firstItemCategory"
+          }
+        ]
+      }
+    ]
+  }
+]

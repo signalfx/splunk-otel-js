@@ -71,6 +71,7 @@ import { ElasticsearchInstrumentation } from './external/elasticsearch';
 import { SequelizeInstrumentation } from './external/sequelize';
 import { TypeormInstrumentation } from './external/typeorm';
 import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici';
+import { NoCodeInstrumentation } from './external/nocode';
 
 type InstrumentationInfo = {
   shortName: string;
@@ -190,6 +191,10 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
   {
     create: () => new NetInstrumentation(),
     shortName: 'net',
+  },
+  {
+    create: () => new NoCodeInstrumentation(),
+    shortName: 'nocode',
   },
   {
     create: () => new PgInstrumentation(),
