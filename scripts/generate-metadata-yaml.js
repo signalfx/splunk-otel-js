@@ -64,7 +64,8 @@ const INSTRUMENTATIONS = [
   { name: "splunk-opentelemetry-instrumentation-elasticsearch", target: "@elastic/elasticsearch", support: "supported", },
   { name: "splunk-opentelemetry-instrumentation-sequelize", target: "sequelize", support: "supported", },
   { name: "splunk-opentelemetry-instrumentation-typeorm", target: "typeorm", support: "supported", },
-  { name: "splunk-opentelemetry-instrumentation-neo4j", target: "neo4j", support: "supported", }
+  { name: "splunk-opentelemetry-instrumentation-neo4j", target: "neo4j", support: "supported", },
+  { name: "splunk-opentelemetry-instrumentation-nocode", target: "nocode", support: "supported", }
 ];
 
 const INSTRUMENTATION_ADDITIONAL_DATA = new Map([
@@ -145,7 +146,7 @@ const INDENT = '  ';
 /**
  * Convert JS object to YAML string
  *
- * @param {*} input 
+ * @param {*} input
  * @param {number} objIndent Indent level for objects
  * @returns {string}
  */
