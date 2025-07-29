@@ -11,6 +11,7 @@ const KNOWN_TARGET_LIBRARY_VERSIONS = new Map([
   ["splunk-opentelemetry-instrumentation-sequelize", ["*"]],
   ["splunk-opentelemetry-instrumentation-typeorm", [">0.2.28"]],
   ["splunk-opentelemetry-instrumentation-neo4j", [">=4.0.0 <6"]],
+  ["splunk-opentelemetry-instrumentation-nocode", ["*"]],
   ["@opentelemetry/instrumentation-dns", ["*"]],
   ["@opentelemetry/instrumentation-net", ["*"]],
   ["@opentelemetry/instrumentation-http",  ["*"]],
