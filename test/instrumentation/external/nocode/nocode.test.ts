@@ -27,6 +27,7 @@ import {
   muchWork,
   muchWorkWithPromise,
   funWithNestedArgs,
+  funWithNestedArrays,
 } from './sample-utils';
 import { NoCodeInstrumentationConfig } from '../../../../src/instrumentations/external/nocode/nocode';
 
@@ -96,7 +97,6 @@ describe('nocode', () => {
 
       assert.strictEqual(spans.length, 1);
       const attributes = spans[0].attributes;
-      console.log(spans[0]);
       assert.strictEqual(attributes['userTheme'], 'dark');
       assert.strictEqual(attributes['pushEnabled'], true);
       assert.strictEqual(attributes['firstItemCategory'], 'electronics');
@@ -114,6 +114,35 @@ describe('nocode', () => {
         spans[0].duration[0] * 1e3 + spans[0].duration[1] / 1e6;
       assert(durationMs >= 2000);
       assert.strictEqual(result, 'Done after timeout');
+    });
+    it('extracts attributes from nested arrays', () => {
+      const testArgs = {
+        orders: [
+          {
+            id: 'order1',
+            items: [
+              { name: 'Laptop', price: 999, tags: ['electronics', 'computer'] },
+              { name: 'Mouse', price: 25, tags: ['electronics', 'accessory'] },
+            ],
+          },
+          {
+            id: 'order2',
+            items: [
+              { name: 'Book', price: 15, tags: ['literature', 'fiction'] },
+            ],
+          },
+        ],
+      };
+
+      const result = funWithNestedArrays(testArgs);
+      const spans = getTestSpans();
+
+      assert.strictEqual(spans.length, 1);
+      const attributes = spans[0].attributes;
+      assert.strictEqual(attributes['firstOrderFirstItem'], 'Laptop');
+      assert.strictEqual(attributes['secondOrderFirstTag'], 'literature');
+      assert.strictEqual(attributes['firstOrderSecondPrice'], 25);
+      assert.strictEqual(result, 'Processed 2 orders');
     });
   });
 });

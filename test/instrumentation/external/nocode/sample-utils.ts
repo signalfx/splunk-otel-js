@@ -58,3 +58,7 @@ export function funWithNestedArgs(args: {
   const firstItemCategory = args.items[0]?.details.category ?? 'none';
   return `User ${args.user.name} prefers ${userTheme} theme, push notifications: ${pushEnabled}, first item category: ${firstItemCategory}`;
 }
+
+export function funWithNestedArrays(args: any): string {
+  return `Processed ${args.orders?.length} orders`;
+}

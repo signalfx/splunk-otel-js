@@ -209,7 +209,7 @@ export class NoCodeInstrumentation extends InstrumentationBase<NoCodeInstrumenta
         moduleDefs.push(
           new InstrumentationNodeModuleDefinition(
             def.absolutePath,
-            ['*'],
+            ['*'], // for absolute paths otel does no version checking
             undefined,
             undefined,
             fileDefs

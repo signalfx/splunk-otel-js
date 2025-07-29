@@ -32,6 +32,27 @@
             "key": "firstItemCategory"
           }
         ]
+      },
+      {
+        "name": "sample-utils",
+        "method": "funWithNestedArrays",
+        "attributes": [
+          {
+            "attrIndex": 0,
+            "attrPath": "orders.0.items.0.name",
+            "key": "firstOrderFirstItem"
+          },
+          {
+            "attrIndex": 0,
+            "attrPath": "orders.1.items.0.tags.0",
+            "key": "secondOrderFirstTag"
+          },
+          {
+            "attrIndex": 0,
+            "attrPath": "orders.0.items.1.price",
+            "key": "firstOrderSecondPrice"
+          }
+        ]
       }
     ]
   }
