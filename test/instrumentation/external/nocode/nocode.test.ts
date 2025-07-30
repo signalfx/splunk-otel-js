@@ -14,13 +14,88 @@
  * limitations under the License.
  */
 
+import * as path from 'path';
+import * as fs from 'fs';
 import { strict as assert } from 'assert';
-import { afterEach, before, beforeEach, describe, it } from 'node:test';
+import { after, before, beforeEach, describe, it } from 'node:test';
 import { NoCodeInstrumentation } from '../../../../src/instrumentations/external/nocode';
 import { getTestSpans, setInstrumentation, provider, exporter } from '../setup';
 
-process.env.NOCODE_CONFIG_PATH =
-  'C:\\Users\\Marten\\Repos\\splunk\\splunk-otel-js\\test\\instrumentation\\external\\nocode\\nocode.config.json';
+const configPath = './test/instrumentation/external/nocode/nocode.config.json';
+const absolutePathToUtils = process.env.GITHUB_WORKSPACE
+  ? path.join(
+      process.env.GITHUB_WORKSPACE,
+      'test/instrumentation/external/nocode/sample-utils.ts'
+    )
+  : path.resolve(__dirname, 'sample-utils.ts');
+
+console.log('SAMPLE UTIL PATH', absolutePathToUtils);
+process.env.NOCODE_CONFIG_PATH = configPath;
+
+console.log('process.env.GITHUB_WORKSPACE', process.env.GITHUB_WORKSPACE);
+console.log('configPath', configPath);
+
+const config = [
+  {
+    absolutePath: absolutePathToUtils,
+    files: [
+      {
+        name: 'sample-utils',
+        method: 'muchWork',
+        spanName: 'util.js.muchWork',
+      },
+      {
+        name: 'sample-utils',
+        method: 'muchWorkWithPromise',
+        spanName: 'util.js.muchWorkWithPromise',
+      },
+      {
+        name: 'sample-utils',
+        method: 'funWithNestedArgs',
+        attributes: [
+          {
+            attrIndex: 0,
+            attrPath: 'user.preferences.theme',
+            key: 'userTheme',
+          },
+          {
+            attrIndex: 0,
+            attrPath: 'user.preferences.notifications.push.enabled',
+            key: 'pushEnabled',
+          },
+          {
+            attrIndex: 0,
+            attrPath: 'items.0.details.category',
+            key: 'firstItemCategory',
+          },
+        ],
+      },
+      {
+        name: 'sample-utils',
+        method: 'funWithNestedArrays',
+        attributes: [
+          {
+            attrIndex: 0,
+            attrPath: 'orders.0.items.0.name',
+            key: 'firstOrderFirstItem',
+          },
+          {
+            attrIndex: 0,
+            attrPath: 'orders.1.items.0.tags.0',
+            key: 'secondOrderFirstTag',
+          },
+          {
+            attrIndex: 0,
+            attrPath: 'orders.0.items.1.price',
+            key: 'firstOrderSecondPrice',
+          },
+        ],
+      },
+    ],
+  },
+];
+fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+
 const instrumentation = new NoCodeInstrumentation();
 provider.register();
 import {
@@ -38,22 +113,21 @@ describe('nocode', () => {
 
   beforeEach(() => {
     exporter.reset();
-    // instrumentation.setConfig({});
-    // instrumentation.enable();
   });
 
-  afterEach(() => {
-    // instrumentation.disable();
+  after(() => {
+    fs.unlinkSync(configPath);
   });
 
   describe('nocode', () => {
     it('can load config via file', () => {
       const config = instrumentation.getConfig() as NoCodeInstrumentationConfig;
-      const path =
-        'C:\\Users\\Marten\\Repos\\splunk\\splunk-otel-js\\test\\instrumentation\\external\\nocode\\sample-utils.ts';
       assert.ok(config.definitions, 'config.definitions should be defined');
       assert.strictEqual(config.definitions.length, 1);
-      assert.strictEqual(config.definitions[0].absolutePath, path);
+      assert.strictEqual(
+        config.definitions[0].absolutePath,
+        absolutePathToUtils
+      );
       assert.deepStrictEqual(config.definitions[0].files[0], {
         name: 'sample-utils',
         method: 'muchWork',
