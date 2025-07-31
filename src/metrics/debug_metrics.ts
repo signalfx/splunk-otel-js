@@ -15,10 +15,7 @@
  */
 
 import { Histogram, metrics, Meter } from '@opentelemetry/api';
-import {
-  ExplicitBucketHistogramAggregation,
-  View,
-} from '@opentelemetry/sdk-metrics';
+import { ViewOptions, AggregationType } from '@opentelemetry/sdk-metrics';
 
 interface Meters {
   meter: Meter;
@@ -101,19 +98,19 @@ export function recordHeapProfilerMetrics(metrics: {
   );
 }
 
-export function getDebugMetricsViews(): View[] {
+export function getDebugMetricsViews(): ViewOptions[] {
   return [
     instrumentCpuProfilerStart,
     instrumentCpuProfilerStop,
     instrumentCpuProfilerProcess,
-  ].map(
-    (instrumentName) =>
-      new View({
-        instrumentName,
-        aggregation: new ExplicitBucketHistogramAggregation(
-          [1e6, 1e8, 1e9, 1e10],
-          true
-        ),
-      })
-  );
+  ].map((instrumentName) => ({
+    instrumentName,
+    aggregation: {
+      type: AggregationType.EXPLICIT_BUCKET_HISTOGRAM,
+      options: {
+        boundaries: [1e6, 1e8, 1e9, 1e10],
+        recordMinMax: true,
+      },
+    },
+  }));
 }

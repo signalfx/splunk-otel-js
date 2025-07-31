@@ -116,7 +116,7 @@ export const start = (options: Partial<Options> = {}) => {
   const serviceName =
     options.serviceName ||
     getNonEmptyEnvVar('OTEL_SERVICE_NAME') ||
-    envResource.attributes[ATTR_SERVICE_NAME];
+    envResource.attributes?.[ATTR_SERVICE_NAME];
 
   if (!serviceName) {
     diag.warn(

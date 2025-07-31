@@ -1,10 +1,10 @@
 // a console.log from a previous run
 module.exports = [
   {
-    traceId: 'zMEy3eC1iaInGGIWbtULUg==',
-    id: 'X0ohVf0SuXA=',
-    startTime: '2024-10-23T12:20:31.979Z',
-    hrStartTime: 1729686031979000000n,
+    traceId: 'n6aK3UvG1e9HE/sme/YC7g==',
+    id: '0tXjwSObNpU=',
+    startTime: '2025-04-25T07:27:14.467Z',
+    hrStartTime: 1745566034467000000n,
     name: 'main',
     kind: 'internal',
     parentSpanId: undefined,

@@ -15,12 +15,12 @@
  */
 
 import { Counter, diag, metrics, ValueType } from '@opentelemetry/api';
-import { Resource } from '@opentelemetry/resources';
+import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
 import {
   MeterProvider,
   MetricReader,
   PeriodicExportingMetricReader,
-  View,
+  ViewOptions,
 } from '@opentelemetry/sdk-metrics';
 import { OTLPMetricExporter as OTLPHttpProtoMetricExporter } from '@opentelemetry/exporter-metrics-otlp-proto';
 import type * as grpc from '@grpc/grpc-js';
@@ -234,7 +234,7 @@ export const allowedMetricsOptions = [
 ];
 
 export function startMetrics(options: MetricsOptions) {
-  const debugMetricsViews: View[] = options.debugMetricsEnabled
+  const debugMetricsViews: ViewOptions[] = options.debugMetricsEnabled
     ? getDebugMetricsViews()
     : [];
 
@@ -391,16 +391,18 @@ export function _setDefaultOptions(
 
   const serviceName = String(
     options.serviceName ||
-      envResource.attributes[ATTR_SERVICE_NAME] ||
+      envResource.attributes?.[ATTR_SERVICE_NAME] ||
       defaultServiceName()
   );
 
   const resourceFactory =
     options.resourceFactory || ((resource: Resource) => resource);
-  let resource = resourceFactory(envResource);
+  let resource = resourceFactory(
+    resourceFromAttributes(envResource.attributes || {})
+  );
 
   resource = resource.merge(
-    new Resource({
+    resourceFromAttributes({
       [ATTR_SERVICE_NAME]: serviceName,
     })
   );
