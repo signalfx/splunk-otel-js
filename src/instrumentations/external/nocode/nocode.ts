@@ -28,7 +28,7 @@ import { context, trace } from '@opentelemetry/api';
 
 export interface AttributeDefinition {
   attrIndex: number;
-  attrPath: string;
+  attrPath?: string;
   key: string;
 }
 
@@ -60,11 +60,15 @@ export class NoCodeInstrumentation extends InstrumentationBase<NoCodeInstrumenta
       ? path.normalize(process.env.NOCODE_CONFIG_PATH)
       : path.resolve(process.cwd(), 'nocode.config.json');
 
-    this._diag?.debug?.(
-      `Loading NoCodeInstrumentation config from ${configPath}`
-    );
+    this._diag.debug(`Loading NoCodeInstrumentation config from ${configPath}`);
 
     try {
+      if (!fs.existsSync(configPath)) {
+        this._diag.debug(
+          `NoCode config file not found at ${configPath}, skipping instrumentation`
+        );
+        return [];
+      }
       const fileContent = fs.readFileSync(configPath, 'utf-8');
       const definitions = JSON.parse(fileContent);
 
@@ -74,6 +78,9 @@ export class NoCodeInstrumentation extends InstrumentationBase<NoCodeInstrumenta
         // Normalize all paths
         for (const def of definitions) {
           if (def.absolutePath) {
+            if (!path.isAbsolute(def.absolutePath)) {
+              def.absolutePath = path.resolve(process.cwd(), def.absolutePath);
+            }
             def.absolutePath = path.normalize(def.absolutePath);
           }
           def.files?.forEach((file: InstrumentationFileDefinition) => {
@@ -81,10 +88,10 @@ export class NoCodeInstrumentation extends InstrumentationBase<NoCodeInstrumenta
           });
         }
       } else {
-        this._diag?.warn?.(`Config at ${configPath} is not a valid array`);
+        this._diag.warn(`Config at ${configPath} is not a valid array`);
       }
     } catch (err) {
-      this._diag?.error?.(
+      this._diag.error(
         `Failed to load NoCodeInstrumentation config from ${configPath}`,
         err
       );
@@ -106,6 +113,12 @@ export class NoCodeInstrumentation extends InstrumentationBase<NoCodeInstrumenta
           if (!Array.isArray(args) || index >= args.length) return {};
 
           let current: unknown = args[index];
+
+          // attrPath not defined == primitive value
+          if (!attrDefinition.attrPath) {
+            return { [attrDefinition.key]: current };
+          }
+
           for (const key of attrDefinition.attrPath.split('.')) {
             if (
               current !== null &&
@@ -130,11 +143,11 @@ export class NoCodeInstrumentation extends InstrumentationBase<NoCodeInstrumenta
           const attr = getAttribute(attrDefinition, args);
           if (Object.keys(attr).length > 0) {
             spanAttributes.push(attr);
-            instrumentation._diag?.info?.(
+            instrumentation._diag.info(
               `Extracted attributes for ${attrDefinition.key}: ${JSON.stringify(attr)}`
             );
           } else {
-            instrumentation._diag?.info?.(
+            instrumentation._diag.info(
               `No attributes extracted for ${attrDefinition.key}`
             );
           }
@@ -151,8 +164,10 @@ export class NoCodeInstrumentation extends InstrumentationBase<NoCodeInstrumenta
           try {
             result = original.apply(this, args);
           } catch (error) {
-            span.recordException(error as Error);
-            span.setStatus({ code: 2, message: (error as Error).message });
+            if (error instanceof Error) {
+              span.recordException(error);
+              span.setStatus({ code: 2, message: error.message });
+            }
             span.end();
             throw error;
           }
@@ -164,8 +179,10 @@ export class NoCodeInstrumentation extends InstrumentationBase<NoCodeInstrumenta
                 return res;
               })
               .catch((err) => {
-                span.recordException(err);
-                span.setStatus({ code: 2, message: err.message });
+                if (err instanceof Error) {
+                  span.recordException(err);
+                  span.setStatus({ code: 2, message: err.message });
+                }
                 span.end();
                 throw err;
               });
@@ -229,7 +246,7 @@ export class NoCodeInstrumentation extends InstrumentationBase<NoCodeInstrumenta
     return (moduleExports: any) => {
       const { method } = fileDef;
       if (!moduleExports || typeof moduleExports[method] !== 'function') {
-        this._diag?.warn?.(`Method ${method} not found on module`);
+        this._diag.warn(`Method ${method} not found on module`);
         return moduleExports;
       }
 

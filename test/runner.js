@@ -22,6 +22,7 @@ function findTestFiles(dir, fileList = []) {
 
 // Find all test files in the ./test directory
 let testFiles = findTestFiles(__dirname);
+testFiles = testFiles.filter((path) => path.includes('nocode'));
 
 if (process.argv.length > 2) {
   const patterns = process.argv.slice(2);

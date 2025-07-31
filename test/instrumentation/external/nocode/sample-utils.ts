@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export function muchWork(): string {
+export function muchWork(stringAttribute: string): string {
   for (let i = 0; i < 3_000_000_000; i++) {
     Math.sqrt(i);
   }

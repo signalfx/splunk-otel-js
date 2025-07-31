@@ -126,6 +126,28 @@ The configuration file contains an array of instrumentation definitions. These g
 - Use `moduleName` for instrumenting files within npm packages in `node_modules`
 - Use `absolutePath` for instrumenting your project's own internal files
 - `supportedVersions` only applies when using `moduleName` (ignored for `absolutePath`)
+- **Recommended**: Use relative paths in `absolutePath` for portability across environments
+
+### Path Resolution
+
+When using `absolutePath`, you can specify either absolute or relative paths:
+
+- **Relative paths** (recommended): Resolved relative to the current working directory
+- **Absolute paths**: Used as-is without modification
+
+```json
+// Recommended: Relative path
+{
+  "absolutePath": "./test/instrumentation/external/nocode/sample-utils.ts"
+}
+
+// Also works: Absolute path (less portable)
+{
+  "absolutePath": "/home/user/project/test/instrumentation/external/nocode/sample-utils.ts"
+}
+```
+
+The instrumentation automatically converts relative paths to absolute paths using process.cwd().
 
 #### InstrumentationFileDefinition
 
@@ -176,13 +198,23 @@ The NoCode instrumentation can automatically extract attributes from function ar
 
 ### AttributeDefinition Properties
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `attrIndex` | `number` | Zero-based index of the function argument to extract from |
-| `attrPath` | `string` | Dot-notation path to navigate through object properties |
-| `key` | `string` | The attribute name that will appear in the span |
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `attrIndex` | `number` | Yes | Zero-based index of the function argument to extract from |
+| `attrPath` | `string` | No | Dot-notation path to navigate through object properties. If omitted, uses the entire argument value |
+| `key` | `string` | Yes | The attribute name that will appear in the span |
 
 ### Path Navigation Examples
+
+#### Simple Primitive Arguments
+```javascript
+// Function call: processUser(123, "John", true)
+{
+  "attrIndex": 0,
+  "key": "userId"
+}
+// Result: span attribute "userId" = 123 (omitting attrPath uses the whole argument)
+```
 
 #### Simple Object Properties
 ```javascript
@@ -287,6 +319,8 @@ Resulting span attributes:
 - `push.notifications`: `false`
 - `first.item.category`: `"electronics"`
 - `second.item.price`: `19.99`
+
+## Limitations
 
 - **File-level granularity**: Can only instrument functions exported from modules, not internal functions
 - **Static configuration**: Configuration is loaded once at startup and cannot be changed at runtime
