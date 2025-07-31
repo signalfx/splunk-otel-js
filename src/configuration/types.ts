@@ -14,11 +14,34 @@
  * limitations under the License.
  */
 
-import { OpenTelemetryConfiguration } from './schema';
+import { ComponentProviderRegistry } from './ComponentProviderRegistry';
+import {
+  OpenTelemetryConfiguration,
+  SpanProcessor,
+  TextMapPropagator,
+} from './schema';
 
-export interface LoadedConfig {
-  config: OpenTelemetryConfiguration | null;
+export type TypeComponentConfigMapping = {
+  sdk: {
+    sdk: OpenTelemetryConfiguration;
+  };
+  propagator: TextMapPropagator;
+  span_procssor: SpanProcessor;
+  [k: string]: {
+    [k: string]: unknown;
+  };
+};
+export type ComponentTypes = keyof TypeComponentConfigMapping;
 
-  errors: Error[];
-  warnings: Error[];
+export interface ComponentProvider<
+  T extends ComponentTypes = ComponentTypes,
+  N extends string = string,
+> {
+  readonly type: T;
+  readonly name: N;
+
+  create(
+    config: TypeComponentConfigMapping[T][N],
+    providerRegistry: ComponentProviderRegistry
+  ): unknown;
 }

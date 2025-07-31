@@ -46,6 +46,7 @@ import {
   isSnapshotProfilingEnabled,
   startSnapshotProfiling,
 } from './tracing/snapshots/Snapshots';
+import { createConfiguration } from './configuration';
 
 export interface Options {
   accessToken: string;
@@ -92,6 +93,16 @@ export const start = (options: Partial<Options> = {}) => {
   ) {
     throw new Error('Splunk APM already started');
   }
+
+  const configFile = getNonEmptyEnvVar('OTEL_EXPERIMENTAL_CONFIG_FILE');
+  if (configFile) {
+    const configuration = createConfiguration();
+    const config = configuration.parse(configFile);
+
+    configuration.create(config);
+    return;
+  }
+
   const logLevel = options.logLevel
     ? toDiagLogLevel(options.logLevel)
     : parseLogLevel(getNonEmptyEnvVar('OTEL_LOG_LEVEL'));

@@ -13,21 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { existsSync, readFileSync } from 'node:fs';
-import { parseDocument } from 'yaml';
-import { OpenTelemetryConfiguration } from './schema';
 
-export function loadFile(path: string): OpenTelemetryConfiguration {
-  if (!existsSync(path)) {
-    throw new Error(`Config file ${path} does not exist`);
+import { B3InjectEncoding, B3Propagator } from '@opentelemetry/propagator-b3';
+import { ComponentProviderRegistry } from '../../ComponentProviderRegistry';
+import { B3Propagator as B3PropagatorConfig } from '../../schema';
+
+export class B3MultiPropagatorProvider {
+  readonly type = 'propagator';
+  readonly name = 'b3multi';
+
+  create(
+    _config: B3PropagatorConfig,
+    _providerRegistry: ComponentProviderRegistry
+  ) {
+    return new B3Propagator({ injectEncoding: B3InjectEncoding.MULTI_HEADER });
   }
-
-  const file = readFileSync(path, { encoding: 'utf-8' });
-  const doc = parseDocument(file);
-
-  if (doc.errors.length > 0) {
-    throw doc.errors[0];
-  }
-
-  return doc.toJS();
 }

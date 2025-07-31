@@ -13,21 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { existsSync, readFileSync } from 'node:fs';
-import { parseDocument } from 'yaml';
-import { OpenTelemetryConfiguration } from './schema';
 
-export function loadFile(path: string): OpenTelemetryConfiguration {
-  if (!existsSync(path)) {
-    throw new Error(`Config file ${path} does not exist`);
+import { W3CTraceContextPropagator } from '@opentelemetry/core';
+import { ComponentProviderRegistry } from '../../ComponentProviderRegistry';
+import { TraceContextPropagator } from '../../schema';
+
+export class TraceContextPropagatorProvider {
+  readonly type = 'propagator';
+  readonly name = 'tracecontext';
+
+  create(
+    _config: TraceContextPropagator,
+    _providerRegistry: ComponentProviderRegistry
+  ) {
+    return new W3CTraceContextPropagator();
   }
-
-  const file = readFileSync(path, { encoding: 'utf-8' });
-  const doc = parseDocument(file);
-
-  if (doc.errors.length > 0) {
-    throw doc.errors[0];
-  }
-
-  return doc.toJS();
 }

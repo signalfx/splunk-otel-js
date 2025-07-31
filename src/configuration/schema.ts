@@ -5,7 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  *
  * Manual modifications:
- * - HttpsOpentelemetryIoOtelconfigInstrumentationJson add undefined to index type and ts-expect-error to general
+ * - HttpsOpentelemetryIoOtelconfigInstrumentationJson add undefined to index type
  * - ExperimentalGeneralInstrumentation add index type
  */
 

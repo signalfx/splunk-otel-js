@@ -21,31 +21,25 @@ import { join } from 'path';
 
 describe('YAML config file', () => {
   test('missing file', () => {
-    const result = loadFile(join(__dirname, 'missing-no.yml'));
-
-    assert.equal(result.config, null);
-    assert.equal(result.errors.length, 1);
-    assert(result.errors[0].message.includes('does not exist'));
-    assert.equal(result.warnings.length, 0);
+    try {
+      const _res = loadFile(join(__dirname, 'missing-no.yml'));
+      assert(false, "loadFile didn't throw an error");
+    } catch (e) {
+      assert(e.message.includes('does not exist'));
+    }
   });
 
   test('valid file', () => {
-    const result = loadFile(join(__dirname, 'example-config.yaml'));
+    const config = loadFile(join(__dirname, 'example-config.yaml'));
 
-    assert.ok(result.config);
+    assert.ok(config);
     // Some basic sanity checks
-    assert.equal(result.config.file_format, '1.0-rc.1');
-    assert.equal(
-      result.config.attribute_limits?.attribute_value_length_limit,
-      null
-    );
+    assert.equal(config.file_format, '1.0-rc.1');
+    assert.equal(config.attribute_limits?.attribute_value_length_limit, null);
     assert.deepEqual(
-      result.config['instrumentation/development']?.general?.http?.client
+      config['instrumentation/development']?.general?.http?.client
         ?.request_captured_headers,
       ['Content-Type', 'Accept']
     );
-
-    assert.equal(result.errors.length, 0);
-    assert.equal(result.warnings.length, 0);
   });
 });

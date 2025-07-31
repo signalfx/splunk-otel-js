@@ -22,6 +22,7 @@ export type ResourceFactory = (resource: Resource) => Resource;
 
 export type EnvVarKey =
   | 'OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT'
+  | 'OTEL_EXPERIMENTAL_CONFIG_FILE'
   | 'OTEL_EXPORTER_OTLP_CERTIFICATE'
   | 'OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE'
   | 'OTEL_EXPORTER_OTLP_CLIENT_KEY'
