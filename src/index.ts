@@ -28,7 +28,7 @@ export {
 import { startProfiling as _startProfiling } from './profiling';
 export { start, stop } from './start';
 export { listEnvVars } from './utils';
-
+export { splunkOtelEsbuild } from './esbuild-plugin';
 /**
  * @deprecated Use generic start() function instead
  */
