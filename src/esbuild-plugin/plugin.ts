@@ -99,7 +99,6 @@ export const require = globalThis.require;
 // and requires the instrumentation packages. To ensure these dependencies resolve correctly
 // at runtime, we redirect their resolution to the SDK root using this plugin.
 export function resolveInstrumentationDepsPlugin(): Plugin {
-  console.log("Root SDK path:", SDK_ROOT);
   return {
     name: 'instrumentation-deps-resolver',
     setup(build) {
