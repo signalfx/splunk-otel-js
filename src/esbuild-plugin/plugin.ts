@@ -17,7 +17,7 @@ import { promises as fs, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
 import type { Plugin, PluginBuild } from 'esbuild';
 import { tmpdir } from 'node:os';
-import { SDK_ROOT } from './constants.js';
+import { SDK_ROOT } from './constants';
 
 export function nativeExtSupportPlugin(): Plugin {
   let shouldCopyPrebuilds = false; // if we use autoInstrumentation, then copying prebuilds is not needed
@@ -99,6 +99,7 @@ export const require = globalThis.require;
 // and requires the instrumentation packages. To ensure these dependencies resolve correctly
 // at runtime, we redirect their resolution to the SDK root using this plugin.
 export function resolveInstrumentationDepsPlugin(): Plugin {
+  console.log("Root SDK path:", SDK_ROOT);
   return {
     name: 'instrumentation-deps-resolver',
     setup(build) {
