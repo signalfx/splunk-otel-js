@@ -18,9 +18,13 @@ import {
   OpenTelemetryPluginParams,
 } from 'opentelemetry-esbuild-plugin-node';
 import { getInstrumentations } from '../instrumentations';
-import { nativeExtSupportPlugin, esmRequireShimPlugin } from './plugin';
+import {
+  nativeExtSupportPlugin,
+  esmRequireShimPlugin,
+  resolveInstrumentationDepsPlugin,
+} from './plugin';
 import type { Plugin } from 'esbuild';
-import * as path from 'node:path';
+
 export function splunkOtelEsbuild(opts?: OpenTelemetryPluginParams): Plugin {
   const otel = openTelemetryPlugin({
     instrumentations: getInstrumentations(),
@@ -28,16 +32,11 @@ export function splunkOtelEsbuild(opts?: OpenTelemetryPluginParams): Plugin {
   });
   const native = nativeExtSupportPlugin();
   const requireShim = esmRequireShimPlugin();
-  const sdkRoot = path.resolve(__dirname, '..', '..');
+  const instrDeps = resolveInstrumentationDepsPlugin();
   return {
     name: 'splunk-otel-esbuild',
     setup(build) {
-      build.onResolve(
-        { filter: /^@opentelemetry\/instrumentation-|^semver$/ },
-        (args) => ({
-          path: require.resolve(args.path, { paths: [sdkRoot] }),
-        })
-      );
+      void instrDeps.setup(build);
       void otel.setup(build);
       void native.setup(build);
       void requireShim.setup(build);

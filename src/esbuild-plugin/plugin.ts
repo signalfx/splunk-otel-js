@@ -17,10 +17,7 @@ import { promises as fs, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
 import type { Plugin, PluginBuild } from 'esbuild';
 import { tmpdir } from 'node:os';
-
-function distroRoot(): string {
-  return path.resolve(__dirname, '..', '..');
-}
+import { SDK_ROOT } from './constants.js';
 
 export function nativeExtSupportPlugin(): Plugin {
   let shouldCopyPrebuilds = false; // if we use autoInstrumentation, then copying prebuilds is not needed
@@ -46,7 +43,7 @@ export function nativeExtSupportPlugin(): Plugin {
           build.initialOptions.outdir ??
           path.dirname(build.initialOptions.outfile!);
 
-        const srcPrebuilds = path.join(distroRoot(), 'prebuilds');
+        const srcPrebuilds = path.join(SDK_ROOT, 'prebuilds');
         const destPrebuilds = path.join(outDir, SUBDIR, 'prebuilds');
 
         const copyDir = async (src: string, dest: string): Promise<void> => {
@@ -94,6 +91,23 @@ export const require = globalThis.require;
         ...(build.initialOptions.inject ?? []),
         shimFile,
       ];
+    },
+  };
+}
+
+// The wrapModule function in the 'opentelemetry-esbuild-plugin-node' library uses require('semver')
+// and requires the instrumentation packages. To ensure these dependencies resolve correctly
+// at runtime, we redirect their resolution to the SDK root using this plugin.
+export function resolveInstrumentationDepsPlugin(): Plugin {
+  return {
+    name: 'instrumentation-deps-resolver',
+    setup(build) {
+      build.onResolve(
+        { filter: /^@opentelemetry\/instrumentation-|^semver$/ },
+        (args) => ({
+          path: require.resolve(args.path, { paths: [SDK_ROOT] }),
+        })
+      );
     },
   };
 }
