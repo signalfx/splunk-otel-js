@@ -32,18 +32,22 @@ export interface AttributeDefinition {
   key: string;
 }
 
-export interface InstrumentationFileDefinition {
-  name: string;
-  method: string;
+export interface MethodInstrumentation {
+  methodName: string;
   spanName?: string;
   attributes?: AttributeDefinition[];
+}
+
+export interface InstrumentationFileDefinition extends MethodInstrumentation {
+  name: string;
 }
 
 export interface InstrumentationDefinition {
   moduleName?: string;
   absolutePath?: string;
   supportedVersions?: string[];
-  files: InstrumentationFileDefinition[];
+  mainModuleMethods?: MethodInstrumentation[];
+  files?: InstrumentationFileDefinition[];
 }
 
 export interface NoCodeInstrumentationConfig extends InstrumentationConfig {
@@ -100,7 +104,9 @@ export class NoCodeInstrumentation extends InstrumentationBase<NoCodeInstrumenta
     return this.parseConfig(this._config);
   }
 
-  private _wrappedFunction(fileDef: InstrumentationFileDefinition) {
+  private _wrappedFunction(
+    def: InstrumentationFileDefinition | MethodInstrumentation
+  ) {
     return (original: Function) => {
       const instrumentation = this;
 
@@ -134,9 +140,8 @@ export class NoCodeInstrumentation extends InstrumentationBase<NoCodeInstrumenta
           return { [attrDefinition.key]: current };
         }
 
-        const spanName =
-          fileDef.spanName || `${fileDef.name}.${fileDef.method}`;
-        const attrDefinitions = fileDef.attributes || [];
+        const spanName = def.spanName || `${def.methodName}`;
+        const attrDefinitions = def.attributes || [];
         const spanAttributes: Record<string, unknown>[] = [];
 
         for (const attrDefinition of attrDefinitions) {
@@ -202,7 +207,7 @@ export class NoCodeInstrumentation extends InstrumentationBase<NoCodeInstrumenta
     const moduleDefs: InstrumentationNodeModuleDefinition[] = [];
 
     for (const def of definitions) {
-      const fileDefs = def.files.map(
+      const fileDefs = (def.files || []).map(
         (f) =>
           new InstrumentationNodeModuleFile(
             f.name,
@@ -217,8 +222,8 @@ export class NoCodeInstrumentation extends InstrumentationBase<NoCodeInstrumenta
           new InstrumentationNodeModuleDefinition(
             def.moduleName,
             def.supportedVersions || ['*'],
-            undefined,
-            undefined,
+            this.generatePatchFunction(def.mainModuleMethods || []),
+            this.generateUnpatchFunction(def.mainModuleMethods || []),
             fileDefs
           )
         );
@@ -239,28 +244,44 @@ export class NoCodeInstrumentation extends InstrumentationBase<NoCodeInstrumenta
   }
 
   private generatePatchFunction(
-    fileDef: InstrumentationFileDefinition
+    targets: InstrumentationFileDefinition | MethodInstrumentation[]
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): (moduleExports: any) => any {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (moduleExports: any) => {
-      const { method } = fileDef;
-      if (!moduleExports || typeof moduleExports[method] !== 'function') {
-        this._diag.warn(`Method ${method} not found on module`);
-        return moduleExports;
-      }
+      const targetArray = Array.isArray(targets) ? targets : [targets];
 
-      this._wrap(moduleExports, method, this._wrappedFunction(fileDef));
+      for (const target of targetArray) {
+        const methodName = target.methodName;
+        if (!moduleExports || typeof moduleExports[methodName] !== 'function') {
+          this._diag.warn(`Method ${methodName} not found on module`);
+          continue;
+        }
+
+        this._wrap(moduleExports, methodName, this._wrappedFunction(target));
+      }
       return moduleExports;
     };
   }
 
-  private generateUnpatchFunction(fileDef: InstrumentationFileDefinition) {
+  private generateUnpatchFunction(
+    targets: InstrumentationFileDefinition | MethodInstrumentation[]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ): (moduleExports: any) => void {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (moduleExports: any) => {
-      const original = moduleExports?.[fileDef.method];
-      if (isWrapped(original)) {
-        this._unwrap?.(moduleExports, fileDef.method);
+      const targetArray = Array.isArray(targets) ? targets : [targets];
+
+      for (const target of targetArray) {
+        const methodName = target.methodName;
+        if (!moduleExports || typeof moduleExports[methodName] !== 'function') {
+          this._diag.debug(`Method ${methodName} not found on module`);
+          continue;
+        }
+
+        if (isWrapped(moduleExports[methodName])) {
+          this._unwrap(moduleExports, methodName);
+        }
       }
     };
   }

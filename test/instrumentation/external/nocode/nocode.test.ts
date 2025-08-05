@@ -31,7 +31,7 @@ const config = [
     files: [
       {
         name: 'sample-utils',
-        method: 'muchWork',
+        methodName: 'muchWork',
         spanName: 'util.js.muchWork',
         attributes: [
           {
@@ -42,12 +42,12 @@ const config = [
       },
       {
         name: 'sample-utils',
-        method: 'muchWorkWithPromise',
+        methodName: 'muchWorkWithPromise',
         spanName: 'util.js.muchWorkWithPromise',
       },
       {
         name: 'sample-utils',
-        method: 'funWithNestedArgs',
+        methodName: 'funWithNestedArgs',
         attributes: [
           {
             attrIndex: 0,
@@ -68,7 +68,7 @@ const config = [
       },
       {
         name: 'sample-utils',
-        method: 'funWithNestedArrays',
+        methodName: 'funWithNestedArrays',
         attributes: [
           {
             attrIndex: 0,
@@ -89,8 +89,50 @@ const config = [
       },
     ],
   },
+  {
+    moduleName: 'fake-module',
+    supportedVersions: ['*'],
+    mainModuleMethods: [
+      {
+        methodName: 'testFunction',
+        spanName: 'fake-module.testFunction',
+        attributes: [
+          {
+            attrIndex: 0,
+            key: 'data',
+          },
+        ],
+      },
+    ],
+  },
 ];
 fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+const moduleContent = `
+      module.exports = {
+        testFunction: function(data) {
+          console.log('testFunction called with:', data);
+          return 'processed: ' + data;
+        }
+      };
+      `;
+const testDir = __dirname;
+const nodeModulesPath = path.join(testDir, 'node_modules');
+const fakeModulePath = path.join(nodeModulesPath, 'fake-module');
+
+fs.mkdirSync(fakeModulePath, { recursive: true });
+
+const packageJson = {
+  name: 'fake-module',
+  version: '1.0.0',
+  main: 'index.js',
+};
+fs.writeFileSync(
+  path.join(fakeModulePath, 'package.json'),
+  JSON.stringify(packageJson, null, 2)
+);
+
+fs.writeFileSync(path.join(fakeModulePath, 'index.js'), moduleContent);
+fs.writeFileSync(path.join(fakeModulePath, 'fake-utils.js'), moduleContent);
 
 const instrumentation = new NoCodeInstrumentation();
 provider.register();
@@ -113,20 +155,21 @@ describe('nocode', () => {
 
   after(() => {
     fs.unlinkSync(configPath);
+    fs.rmdirSync(fakeModulePath, { recursive: true });
   });
 
   describe('nocode', () => {
     it('can load config via file', () => {
       const config = instrumentation.getConfig() as NoCodeInstrumentationConfig;
       assert.ok(config.definitions, 'config.definitions should be defined');
-      assert.strictEqual(config.definitions.length, 1);
+      assert.strictEqual(config.definitions.length, 2);
       assert.strictEqual(
         config.definitions[0].absolutePath,
         absolutePathToUtils
       );
-      assert.deepStrictEqual(config.definitions[0].files[0], {
+      assert.deepStrictEqual(config.definitions[0].files?.[0], {
         name: 'sample-utils',
-        method: 'muchWork',
+        methodName: 'muchWork',
         spanName: 'util.js.muchWork',
         attributes: [
           {
@@ -224,6 +267,15 @@ describe('nocode', () => {
       assert.strictEqual(attributes['secondOrderFirstTag'], 'literature');
       assert.strictEqual(attributes['firstOrderSecondPrice'], 25);
       assert.strictEqual(result, 'Processed 2 orders');
+    });
+    it('can instrument a node module', () => {
+      // eslint-disable-next-line n/no-extraneous-require
+      const fakeModule = require('fake-module');
+      const result = fakeModule.testFunction('test data');
+      const spans = getTestSpans();
+      assert.strictEqual(spans.length, 1);
+      assert.strictEqual(spans[0].name, 'fake-module.testFunction');
+      assert.strictEqual(result, 'processed: test data');
     });
   });
 });

@@ -15,11 +15,6 @@
  */
 
 export function muchWork(stringAttribute: string): string {
-  for (let i = 0; i < 3_000_000_000; i++) {
-    Math.sqrt(i);
-  }
-  console.log('Work done!');
-
   return 'Work completed successfully!';
 }
 
