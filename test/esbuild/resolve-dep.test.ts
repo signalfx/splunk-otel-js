@@ -22,21 +22,22 @@ import { SDK_ROOT } from '../../src/esbuild-plugin/constants';
 import type { PluginBuild } from 'esbuild';
 describe('resolveInstrumentationDepsPlugin', () => {
   it('rewrites module paths so they start inside SDK_ROOT', () => {
-    
     // The plugin will call build.onResolve and pass in this callback
     let resolver: (a: { path: string }) => { path: string };
-    
+
     // default resolver behavior
     resolver = ({ path: id }) => {
-    try {
+      try {
         // We add a non-existent directory to the paths to ensure that
         // the resolver will not find the proper modules
         return {
-        path: require.resolve(id, { paths: [path.join("/ definitely / not / exist / anywhere")] }),
+          path: require.resolve(id, {
+            paths: [path.join('/ definitely / not / exist / anywhere')],
+          }),
         };
-    } catch {
+      } catch {
         return { path: '' };
-    }
+      }
     };
 
     const fakeBuild = {
