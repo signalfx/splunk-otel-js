@@ -43,4 +43,8 @@ export function splunkOtelEsbuild(opts?: OpenTelemetryPluginParams): Plugin {
     },
   };
 }
-export { nativeExtSupportPlugin, esmRequireShimPlugin, resolveInstrumentationDepsPlugin };
+export {
+  nativeExtSupportPlugin,
+  esmRequireShimPlugin,
+  resolveInstrumentationDepsPlugin,
+};

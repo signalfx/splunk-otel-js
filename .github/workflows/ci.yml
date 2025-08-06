@@ -232,6 +232,8 @@ jobs:
             name: 'Profiling'
           - target: '-f typescript.override.yml'
             name: 'TypeScript'
+          - target: '-f esbuild.override.yml'
+            name: 'ESBuild'
     name: e2e local ${{ matrix.name }}
     steps:
       - name: Checkout

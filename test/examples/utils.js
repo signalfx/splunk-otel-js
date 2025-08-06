@@ -81,6 +81,19 @@ const logSpanTable = (spans) => {
   );
 };
 
+const logMetricTable = (metrics) => {
+  console.table(
+    metrics.map(({ name, unit, scope, resource }) => ({
+      name,
+      unit,
+      scope,
+      'service.name'   : resource?.['service.name'] ?? 'None',
+      'resource fields': Object.keys(resource ?? {}).length,
+    })),
+  );
+};
+
+
 const getParentSpan = (arr, span) => {
   assert.strictEqual(typeof span.parentSpanId, 'string', `Invalid parentSpanId: ${util.inspect(span)}`);
   const parent = arr.find((s) => s.id === span.parentSpanId);
@@ -129,6 +142,74 @@ const waitSpans = (count, timeout = 60) => {
       return res.map(entryToSpan);
     });
 };
+
+function entryToMetric(entry) {
+  const resource = Object.fromEntries(
+    (entry.resource?.attributes ?? []).map(({ key, value }) => [
+      key,
+      value.stringValue ??
+      value.intValue   ??
+      value.doubleValue??
+      value.boolValue  ??
+      null, 
+    ]),
+  );
+
+  return (entry.scopeMetrics ?? []).flatMap((scope) =>
+    (scope.metrics ?? []).map((m) => ({
+      resource,
+      scope : scope.scope?.name,
+      name  : m.name,
+      unit  : m.unit,
+    })),
+  );
+}
+
+const waitMetrics = (timeout = 60) => {
+  console.error(`Waiting for metrics for ${timeout}s`);
+  console.time('waitMetrics');
+
+  const collectorUrl = new URL(
+    process.env.COLLECTOR_METRICS_URL ?? 'http://localhost:8379/metrics'
+  );
+  collectorUrl.searchParams.set('timeout', timeout);
+
+  return fetch(collectorUrl)
+    .then((res) => res.text())
+    .then((content) => {
+      if (content.match(/timed.*out.*while.*waiting.*for.*results/i)) {
+        assert.fail(`Timed out waiting for metrics for ${timeout}s.`);
+      }
+      return JSON.parse(content);
+    })
+    .then((msgs) =>
+    msgs 
+      .flatMap((m) => m.resourceMetrics ?? [])
+      .flatMap(entryToMetric)  
+ );
+};
+
+function assertMetrics(actual, expected) {
+  assert.ok(Array.isArray(actual), 'Expected actual metrics to be an array');
+  assert.ok(Array.isArray(expected), 'Expected expected metrics to be an array');
+
+  expected.forEach((exp) => {
+    const found = actual.find(
+      (m) =>
+        m.name  === exp.name &&
+        m.unit  === exp.unit &&
+        (exp.scope ? m.scope === exp.scope : true) &&
+        matchResource(m.resource, exp.resource ?? {})
+    );
+    assert.ok(found, `metric "${exp.name}" not found`);
+  });
+
+  return true;
+}
+
+function matchResource(actual, expected) {
+  return Object.entries(expected).every(([k, v]) => actual[k] === v);
+}
 
 const request = async (url) => {
   for (let i = 0; i < 30; i++) {
@@ -233,6 +314,9 @@ const assertSpans = (actualSpans, expectedSpans) => {
 module.exports = {
   assertSpans,
   logSpanTable,
+  logMetricTable,
   request,
   waitSpans,
+  waitMetrics,
+  assertMetrics
 };
