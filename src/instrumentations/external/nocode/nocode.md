@@ -1,3 +1,9 @@
+# "nocode" instrumentation
+
+Stability: under active development; breaking changes can occur
+
+Please don't use this if you have the ability to edit the code being instrumented.
+
 ## What Does It Do?
 
 **NoCodeInstrumentation** enables tracing in Node.js applications without modifying the source code. It uses OpenTelemetry's instrumentation package to automatically trace functions defined in:
@@ -28,57 +34,13 @@ The configuration file contains an array of instrumentation definitions. These g
     "files": [
       {
         "name": "lib/util.js",
-        "method": "processData",
+        "methodName": "processData",
         "spanName": "mynodemodule.processData",
         "attributes": [
           {
             "attrIndex": 0,
             "attrPath": "user.id",
             "key": "user.id"
-          }
-        ]
-      },
-      {
-        "name": "lib/processor.js",
-        "method": "validateInput",
-        "spanName": "mynodemodule.validation",
-        "attributes": [
-          {
-            "attrIndex": 0,
-            "attrPath": "schema.version",
-            "key": "schema.version"
-          },
-          {
-            "attrIndex": 0,
-            "attrPath": "data.type",
-            "key": "input.type"
-          },
-          {
-            "attrIndex": 1,
-            "attrPath": "strict",
-            "key": "validation.strict"
-          }
-        ]
-      },
-      {
-        "name": "lib/transformer.js",
-        "method": "transform",
-        "spanName": "mynodemodule.transform",
-        "attributes": [
-          {
-            "attrIndex": 0,
-            "attrPath": "source.format",
-            "key": "source.format"
-          },
-          {
-            "attrIndex": 0,
-            "attrPath": "target.format",
-            "key": "target.format"
-          },
-          {
-            "attrIndex": 1,
-            "attrPath": "options.preserveMetadata",
-            "key": "preserve.metadata"
           }
         ]
       }
@@ -88,8 +50,8 @@ The configuration file contains an array of instrumentation definitions. These g
     "absolutePath": "/absolute/path/to/your/project/src/utils/helper.js",
     "files": [
       {
-        "name": "utils/helper.js",
-        "method": "calculateTotal",
+        "name": "utils/helper",
+        "methodName": "calculateTotal",
         "spanName": "helper.calculateTotal",
         "attributes": [
           {
@@ -105,6 +67,32 @@ The configuration file contains an array of instrumentation definitions. These g
         ]
       }
     ]
+  },
+  {
+    "moduleName": "lodash",
+    "supportedVersions": [">=4.0.0"],
+    "mainModuleMethods": [
+      {
+        "methodName": "chunk",
+        "spanName": "lodash.chunk",
+        "attributes": [
+          {
+            "attrIndex": 1,
+            "key": "chunkSize"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "moduleName": "express",
+    "files": [
+      {
+        "name": "lib/router/index.js",
+        "methodName": "use",
+        "spanName": "express.router.use"
+      }
+    ]
   }
 ]
 ```
@@ -118,210 +106,38 @@ The configuration file contains an array of instrumentation definitions. These g
 | `moduleName` | `string` | No* | Name of the npm module to instrument (e.g., "express", "lodash") |
 | `absolutePath` | `string` | No* | Absolute path to a specific file to instrument |
 | `supportedVersions` | `string[]` | No | Array of supported version ranges (defaults to `["*"]`). Only applies to `moduleName` |
-| `files` | `InstrumentationFileDefinition[]` | Yes | Array of files within the module/path to instrument |
+| `mainModuleMethods` | `MethodInstrumentation[]` | No | Array of methods to instrument on the main module export (only applies to `moduleName`) |
+| `files` | `InstrumentationFileDefinition[]` | No | Array of files within the module/path to instrument |
 
 *Either `moduleName` or `absolutePath` must be specified.
 
 **Usage Guidelines:**
 - Use `moduleName` for instrumenting files within npm packages in `node_modules`
 - Use `absolutePath` for instrumenting your project's own internal files
+- Use `mainModuleMethods` to instrument methods directly exported by a module's main file
+- Use `files` to instrument methods in specific files within a module
 - `supportedVersions` only applies when using `moduleName` (ignored for `absolutePath`)
-- **Recommended**: Use relative paths in `absolutePath` for portability across environments
-
-### Path Resolution
-
-When using `absolutePath`, you can specify either absolute or relative paths:
-
-- **Relative paths** (recommended): Resolved relative to the current working directory
-- **Absolute paths**: Used as-is without modification
-
-```json
-// Recommended: Relative path
-{
-  "absolutePath": "./test/instrumentation/external/nocode/sample-utils.ts"
-}
-
-// Also works: Absolute path (less portable)
-{
-  "absolutePath": "/home/user/project/test/instrumentation/external/nocode/sample-utils.ts"
-}
-```
-
-The instrumentation automatically converts relative paths to absolute paths using process.cwd().
+- When using absolutePath, the name property in files should not include file extensions
+- When using moduleName, include file extensions in the name property as needed
 
 #### InstrumentationFileDefinition
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 | `name` | `string` | Yes | Relative path to the file within the module |
-| `method` | `string` | Yes | Name of the function/method to instrument |
-| `spanName` | `string` | No | Custom span name (defaults to `"${name}.${method}"`) |
+| `methodName` | `string` | Yes | Name of the function/method to instrument |
+| `spanName` | `string` | No | Custom span name (defaults to `"${methodName}"`) |
 | `attributes` | `AttributeDefinition[]` | No | Array of attributes to extract from function arguments |
 
-## Span Creation and Function Wrapping
-
-The NoCode instrumentation creates **client spans** that wrap around your target functions, providing complete observability of function execution.
-
-### How Functions Are Wrapped
-
-When a function is instrumented, it gets wrapped with tracing logic that:
-
-1. **Creates a span** before the function executes
-2. **Sets the span as active** during function execution
-3. **Extracts custom attributes** from function arguments
-4. **Ends the span** after the function completes
-5. **Handles errors** by recording exceptions and setting error status
-
-### Span Characteristics
-
-Each instrumented function creates:
-
-- **Span Type**: Client span (internal operation)
-- **Span Name**: Configurable via `spanName` field, defaults to `"${fileName}.${methodName}"`
-- **Duration**: Measures the complete function execution time
-- **Context**: Becomes the active span during execution, allowing child spans to be created
-- **Attributes**: Custom attributes extracted from function arguments
-- **Status**: Set to error if the function throws an exception
-
-### Synchronous vs Asynchronous Handling
-
-The instrumentation automatically handles both sync and async functions:
-
-- **Synchronous Functions**: Span ends immediately when function returns
-- **Asynchronous Functions**: Span remains active until the Promise resolves or rejects
-
-For async functions, proper timing and error handling are maintained throughout the Promise lifecycle.
-
-## Attribute Extraction
-
-The NoCode instrumentation can automatically extract attributes from function arguments and add them to spans. This allows you to capture contextual information without modifying your code.
-
-### AttributeDefinition Properties
+#### MethodInstrumentation
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `attrIndex` | `number` | Yes | Zero-based index of the function argument to extract from |
-| `attrPath` | `string` | No | Dot-notation path to navigate through object properties. If omitted, uses the entire argument value |
-| `key` | `string` | Yes | The attribute name that will appear in the span |
-
-### Path Navigation Examples
-
-#### Simple Primitive Arguments
-```javascript
-// Function call: processUser(123, "John", true)
-{
-  "attrIndex": 0,
-  "key": "userId"
-}
-// Result: span attribute "userId" = 123 (omitting attrPath uses the whole argument)
-```
-
-#### Simple Object Properties
-```javascript
-// Function call: processUser({ id: 123, name: "John" })
-{
-  "attrIndex": 0,
-  "attrPath": "name",
-  "key": "user.name"
-}
-// Result: span attribute "user.name" = "John"
-```
-
-#### Nested Objects
-```javascript
-// Function call: processUser({ user: { profile: { theme: "dark" } } })
-{
-  "attrIndex": 0,
-  "attrPath": "user.profile.theme",
-  "key": "userTheme"
-}
-// Result: span attribute "userTheme" = "dark"
-```
-
-#### Array Access
-```javascript
-// Function call: processItems({ items: [{ name: "first" }, { name: "second" }] })
-{
-  "attrIndex": 0,
-  "attrPath": "items.0.name",
-  "key": "firstItemName"
-}
-// Result: span attribute "firstItemName" = "first"
-```
-
-#### Multiple Arguments
-```javascript
-// Function call: processData(userData, { debug: true })
-[
-  {
-    "attrIndex": 0,
-    "attrPath": "id",
-    "key": "user.id"
-  },
-  {
-    "attrIndex": 1,
-    "attrPath": "debug",
-    "key": "debug.enabled"
-  }
-]
-```
-
-### Complex Example
-
-Given this function call:
-```javascript
-processOrder({
-  user: {
-    id: 123,
-    preferences: {
-      notifications: {
-        push: { enabled: false, time: "9:00" }
-      }
-    }
-  },
-  items: [
-    { id: "item1", category: "electronics", price: 299.99 },
-    { id: "item2", category: "books", price: 19.99 }
-  ]
-})
-```
-
-Configuration:
-```json
-{
-  "attributes": [
-    {
-      "attrIndex": 0,
-      "attrPath": "user.id",
-      "key": "user.id"
-    },
-    {
-      "attrIndex": 0,
-      "attrPath": "user.preferences.notifications.push.enabled",
-      "key": "push.notifications"
-    },
-    {
-      "attrIndex": 0,
-      "attrPath": "items.0.category",
-      "key": "first.item.category"
-    },
-    {
-      "attrIndex": 0,
-      "attrPath": "items.1.price",
-      "key": "second.item.price"
-    }
-  ]
-}
-```
-
-Resulting span attributes:
-- `user.id`: `123`
-- `push.notifications`: `false`
-- `first.item.category`: `"electronics"`
-- `second.item.price`: `19.99`
+| `methodName` | `string` | Yes | Name of the function/method to instrument |
+| `spanName` | `string` | No | Custom span name (defaults to `"${methodName}"`) |
+| `attributes` | `AttributeDefinition[]` | No | Array of attributes to extract from function arguments |
 
 ## Limitations
 
 - **File-level granularity**: Can only instrument functions exported from modules, not internal functions
 - **Static configuration**: Configuration is loaded once at startup and cannot be changed at runtime
-- **Path sensitivity**: File paths must exactly match the module structure
