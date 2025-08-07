@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { diag } from '@opentelemetry/api';
 import {
-  Resource,
-  envDetectorSync,
-  hostDetectorSync,
-  osDetectorSync,
-  processDetectorSync,
+  DetectedResource,
+  detectResources,
+  envDetector,
+  hostDetector,
+  osDetector,
+  processDetector,
 } from '@opentelemetry/resources';
 import { containerDetector } from '@opentelemetry/resource-detector-container';
 import { distroDetector } from './detectors/DistroDetector';
@@ -28,32 +28,19 @@ import { distroDetector } from './detectors/DistroDetector';
 const detectors = [
   distroDetector,
   containerDetector,
-  envDetectorSync,
-  hostDetectorSync,
-  osDetectorSync,
-  processDetectorSync,
+  envDetector,
+  hostDetector,
+  osDetector,
+  processDetector,
 ];
 
-let detectedResource: Resource | undefined;
+let detectedResource: DetectedResource | undefined;
 
-export const detect = (): Resource => {
-  return detectors
-    .map((detector) => {
-      try {
-        return detector.detect();
-      } catch (e) {
-        diag.error(`${detector.constructor.name} failed:`, e);
-        return Resource.empty();
-      }
-    })
-    .reduce((acc, resource) => {
-      return acc.merge(resource);
-    }, Resource.empty());
-};
-
-export function getDetectedResource(): Resource {
+export function getDetectedResource() {
   if (detectedResource === undefined) {
-    detectedResource = detect();
+    detectedResource = detectResources({
+      detectors,
+    });
   }
 
   return detectedResource;

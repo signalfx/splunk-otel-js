@@ -15,19 +15,18 @@
  */
 
 import {
-  Resource,
-  ResourceAttributes,
+  DetectedResource,
   ResourceDetectionConfig,
+  resourceFromAttributes,
 } from '@opentelemetry/resources';
 import { VERSION } from '../version';
 
 class DistroDetector {
-  detect(_config?: ResourceDetectionConfig): Resource {
-    const distroAttributes: ResourceAttributes = {
+  detect(_config?: ResourceDetectionConfig): DetectedResource {
+    return resourceFromAttributes({
       'telemetry.distro.name': 'splunk-nodejs',
       'telemetry.distro.version': VERSION,
-    };
-    return new Resource(distroAttributes);
+    });
   }
 }
 
