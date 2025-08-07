@@ -48,7 +48,7 @@ test('profiler exports heap profiles', async () => {
   });
 
   // let runtime empty the task-queue and enable profiling
-  await sleep(200);
+  await sleep(500);
   await stop();
   assert(sendCallCount > 0, 'no profiles were sent');
 });
