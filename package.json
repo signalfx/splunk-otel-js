@@ -66,6 +66,7 @@
     "@types/bunyan": "1.8.11",
     "@typescript-eslint/eslint-plugin": "^8.19.0",
     "@typescript-eslint/parser": "^8.19.0",
+    "@typescript-eslint/typescript-estree": "^8.39.0",
     "bunyan": "1.8.15",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
