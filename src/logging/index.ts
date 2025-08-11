@@ -38,19 +38,16 @@ import type { LoggingOptions, StartLoggingOptions } from './types';
 export type { LoggingOptions, StartLoggingOptions };
 
 export function startLogging(options: LoggingOptions) {
-  const loggerProvider = new LoggerProvider({
-    resource: options.resource,
-  });
-
   let processors = options.logRecordProcessorFactory(options);
 
   if (!Array.isArray(processors)) {
     processors = [processors];
   }
 
-  processors.forEach((processor) =>
-    loggerProvider.addLogRecordProcessor(processor)
-  );
+  const loggerProvider = new LoggerProvider({
+    resource: options.resource,
+    processors
+  });
 
   logsAPI.logs.setGlobalLoggerProvider(loggerProvider);
 
