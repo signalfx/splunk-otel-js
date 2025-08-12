@@ -64,7 +64,6 @@ import { NetInstrumentation } from '@opentelemetry/instrumentation-net';
 import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
 import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
 import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
-import { RedisInstrumentation as Redis4Instrumentation } from '@opentelemetry/instrumentation-redis-4';
 import { RestifyInstrumentation } from '@opentelemetry/instrumentation-restify';
 import { RouterInstrumentation } from '@opentelemetry/instrumentation-router';
 import { SocketIoInstrumentation } from '@opentelemetry/instrumentation-socket.io';
@@ -212,10 +211,6 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
   {
     create: () => new RedisInstrumentation(),
     shortName: 'redis',
-  },
-  {
-    create: () => new Redis4Instrumentation(),
-    shortName: 'redis_4',
   },
   {
     create: () => new RestifyInstrumentation(),
