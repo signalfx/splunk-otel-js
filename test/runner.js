@@ -20,8 +20,8 @@ function findTestFiles(dir, fileList = []) {
   return fileList;
 }
 
-// Find all test files in the ./test directory
-let testFiles = findTestFiles(__dirname);
+// Find all test files in the ./test directory and ../packages directory
+let testFiles = [...findTestFiles(__dirname), ...findTestFiles(path.resolve(__dirname, '..', 'packages'))];
 
 if (process.argv.length > 2) {
   const patterns = process.argv.slice(2);
