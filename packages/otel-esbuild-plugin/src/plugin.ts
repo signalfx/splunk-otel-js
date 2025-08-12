@@ -43,6 +43,7 @@ export function loadEsmHelpersPlugin(): Plugin {
     },
   };
 }
+
 interface NativeExtSupportOptions {
   splunkOtelRoot?: string;
 }
