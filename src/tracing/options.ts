@@ -21,6 +21,7 @@ import {
   SpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
+import { AWSXRayPropagator } from '@opentelemetry/propagator-aws-xray';
 
 import { getInstrumentations } from '../instrumentations';
 import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
@@ -322,6 +323,11 @@ export function defaultPropagatorFactory(
         break;
       case 'b3':
         propagators.push(new B3Propagator());
+        break;
+      case 'xray':
+        propagators.push(new AWSXRayPropagator());
+        break;
+      default:
         break;
     }
   }

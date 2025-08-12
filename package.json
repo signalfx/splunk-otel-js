@@ -10,6 +10,7 @@
   "scripts": {
     "clean": "tsc --build --clean",
     "compile": "tsc --build",
+    "gen-metadata": "node scripts/generate-metadata-yaml.js",
     "prepare-release-artifact": "node scripts/prepare-release-artifact.js",
     "install": "node-gyp-build",
     "lint:fix": "eslint . --ext .ts --fix",
@@ -84,6 +85,7 @@
     "prebuildify": "^6.0.1",
     "prettier": "^3.4.2",
     "redis": "^3.1.2",
+    "semver": "^7.7.2",
     "sequelize": "^6.32.1",
     "ts-node": "^10.9.2",
     "typescript": "5.8.3",
@@ -139,6 +141,7 @@
     "@opentelemetry/instrumentation-typeorm": "0.4.0",
     "@opentelemetry/instrumentation-undici": "0.14.0",
     "@opentelemetry/instrumentation-winston": "0.48.0",
+    "@opentelemetry/propagator-aws-xray": "2.1.0",
     "@opentelemetry/propagator-b3": "2.0.1",
     "@opentelemetry/resource-detector-container": "0.7.3",
     "@opentelemetry/resources": "2.0.1",
