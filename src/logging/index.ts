@@ -46,7 +46,7 @@ export function startLogging(options: LoggingOptions) {
 
   const loggerProvider = new LoggerProvider({
     resource: options.resource,
-    processors
+    processors,
   });
 
   logsAPI.logs.setGlobalLoggerProvider(loggerProvider);
