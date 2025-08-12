@@ -19,7 +19,9 @@ import type { Plugin, PluginBuild } from 'esbuild';
 import { tmpdir } from 'node:os';
 
 let getDirname: undefined | (() => string) = () => __dirname ?? undefined;
-let requireResolve: ((id: string, options?: { paths?: string[] }) => string) | undefined;
+let requireResolve:
+  | ((id: string, options?: { paths?: string[] }) => string)
+  | undefined;
 
 if (typeof require !== 'undefined') {
   requireResolve = require.resolve;
@@ -31,29 +33,23 @@ export function loadEsmHelpersPlugin(): Plugin {
     name: 'load-helpers',
     async setup() {
       try {
-        const helpers = await (Function('return import("./esm-helpers.js")')());
-        getDirname = helpers.getDirname;
-        requireResolve = helpers.requireResolve;
-      } catch {}
-    },
-  };
-}
-(async function(){
-        try {
-        const helpers = await (Function('return import("./esm-helpers.js")')());
+        const helpers = await Function('return import("./esm-helpers.js")')();
         getDirname = helpers.getDirname;
         requireResolve = helpers.requireResolve;
       } catch {
         getDirname = () => __dirname;
         requireResolve = require.resolve;
       }
-})()
-
+    },
+  };
+}
 interface NativeExtSupportOptions {
   splunkOtelRoot?: string;
 }
 
-export function nativeExtSupportPlugin(options: NativeExtSupportOptions = {}): Plugin {
+export function nativeExtSupportPlugin(
+  options: NativeExtSupportOptions = {}
+): Plugin {
   let shouldCopyPrebuilds = false; // if we use autoInstrumentation, then copying prebuilds is not needed
   const SUBDIR = 'splunk-profiling';
   return {
@@ -76,7 +72,8 @@ export function nativeExtSupportPlugin(options: NativeExtSupportOptions = {}): P
         const outDir =
           build.initialOptions.outdir ??
           path.dirname(build.initialOptions.outfile!);
-          const SPLUNK_OTEL_ROOT = options.splunkOtelRoot ?? 
+        const SPLUNK_OTEL_ROOT =
+          options.splunkOtelRoot ??
           path.dirname(requireResolve!('@splunk/otel/package.json'));
         const srcPrebuilds = path.join(SPLUNK_OTEL_ROOT, 'prebuilds');
         const destPrebuilds = path.join(outDir, SUBDIR, 'prebuilds');
@@ -137,16 +134,12 @@ export function resolveInstrumentationDepsPlugin(): Plugin {
     name: 'resolve-semver',
     setup(build) {
       const PLUGIN_ROOT = path.resolve(getDirname!(), '..');
-      build.onResolve(
-        { filter: /^semver$/ },
-        (args) => ({
-          path: requireResolve!(args.path, { paths: [PLUGIN_ROOT] }),
-        })
-      );
+      build.onResolve({ filter: /^semver$/ }, (args) => ({
+        path: requireResolve!(args.path, { paths: [PLUGIN_ROOT] }),
+      }));
     },
   };
 }
-
 
 // When you need an ES-module bundle, pass format: "esm" in your esbuild config. Otherwise esbuild defaults to CommonJS
 const isEsmOutput = (build: PluginBuild): boolean =>
