@@ -57,7 +57,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2019, macos-13, macos-14]
+        os: [windows-2022, macos-13, macos-14]
         node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0']
         include:
           - os: macos-13
@@ -106,7 +106,7 @@ jobs:
           mkdir -p prebuilds
           cp -r allprebuilds/prebuilds-linux-arm64-*/* prebuilds
           cp -r allprebuilds/prebuilds-linux-*/* prebuilds
-          cp -r allprebuilds/prebuilds-windows-2019-*/* prebuilds
+          cp -r allprebuilds/prebuilds-windows-2022-*/* prebuilds
           cp -r allprebuilds/prebuilds-macos-13-*/* prebuilds
           cp -r allprebuilds/prebuilds-macos-14-*/* prebuilds
       - name: Install npm dependencies
@@ -133,16 +133,18 @@ jobs:
         include:
           - os: 'macos-latest'
             python_version: '3.11'
-          - os: 'windows-2019'
+          - os: 'windows-2022'
             nodejs: '18.20.1'
-          - os: 'windows-2019'
+          - os: 'windows-2022'
             nodejs: '20.12.1'
-          - os: 'windows-2019'
+          - os: 'windows-2022'
             nodejs: '21.7.2'
-          - os: 'windows-2019'
+          - os: 'windows-2022'
             nodejs: '22.10.0'
-          - os: 'windows-2019'
+          - os: 'windows-2022'
             nodejs: '23.0.0'
+          - os: 'windows-2022'
+            nodejs: '24.0.0'
     services:
       neo4j:
         image: ${{ (matrix.os == 'ubuntu-latest') && 'neo4j:4.4.42' || '' }}

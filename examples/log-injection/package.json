@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@opentelemetry/api": "^1.8.0",
-    "@splunk/otel": "3.0.1",
+    "@splunk/otel": "3.3.0",
     "pino": "^6.13.3"
   }
 }
