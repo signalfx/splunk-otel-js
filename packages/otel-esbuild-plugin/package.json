@@ -11,12 +11,11 @@
   ],
   "scripts": {
     "compile": "tsc --build",
-    "build:cjs": "tsc -p tsconfig.cjs.json",
-    "build:esm": "tsc -p tsconfig.esm.json",
     "clean": "tsc --build --clean",
     "prepublishOnly": "npm run clean && npm run compile",
-    "test": "node --require ts-node/register/transpile-only --test test/**/*.test.ts",
-    "postbuild:pkgjson": "node scripts/write-pkg-json.mjs cjs && node scripts/write-pkg-json.mjs esm"
+    "lint:fix": "eslint . --ext .ts --fix",
+    "lint": "eslint . --ext .ts",
+    "test": "node --require ts-node/register/transpile-only --test test/**/*.test.ts"
   },
   "repository": {
     "type": "git",
