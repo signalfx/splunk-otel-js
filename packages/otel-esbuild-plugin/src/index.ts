@@ -21,7 +21,6 @@ import {
   nativeExtSupportPlugin,
   esmRequireShimPlugin,
   resolveInstrumentationDepsPlugin,
-  loadEsmHelpersPlugin,
 } from './plugin.js';
 import type { Plugin } from 'esbuild';
 
@@ -29,14 +28,11 @@ export function splunkOtelEsbuild(opts: OpenTelemetryPluginParams): Plugin {
   return {
     name: 'splunk-otel-esbuild',
     async setup(build) {
-      const helpers = loadEsmHelpersPlugin();
-
       const otel = openTelemetryPlugin(opts);
       const native = nativeExtSupportPlugin();
       const requireShim = esmRequireShimPlugin();
       const instrDeps = resolveInstrumentationDepsPlugin();
 
-      await helpers.setup(build);
       void instrDeps.setup(build);
       void otel.setup(build);
       void native.setup(build);

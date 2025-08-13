@@ -32,5 +32,9 @@
   "exclude": [
     "node_modules"
   ],
-  "references": []
+  "references": [
+    {
+      "path": "./packages/otel-esbuild-plugin"
+    }
+  ]
 }

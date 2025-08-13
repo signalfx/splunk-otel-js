@@ -18,32 +18,6 @@ import * as path from 'node:path';
 import type { Plugin, PluginBuild } from 'esbuild';
 import { tmpdir } from 'node:os';
 
-let getDirname: undefined | (() => string) = () => __dirname ?? undefined;
-let requireResolve:
-  | ((id: string, options?: { paths?: string[] }) => string)
-  | undefined;
-
-if (typeof require !== 'undefined') {
-  requireResolve = require.resolve;
-}
-
-// this plugin needs to be setup firstly
-export function loadEsmHelpersPlugin(): Plugin {
-  return {
-    name: 'load-helpers',
-    async setup() {
-      try {
-        const helpers = await Function('return import("./esm-helpers.js")')();
-        getDirname = helpers.getDirname;
-        requireResolve = helpers.requireResolve;
-      } catch {
-        getDirname = () => __dirname;
-        requireResolve = require.resolve;
-      }
-    },
-  };
-}
-
 interface NativeExtSupportOptions {
   splunkOtelRoot?: string;
 }
@@ -75,7 +49,7 @@ export function nativeExtSupportPlugin(
           path.dirname(build.initialOptions.outfile!);
         const SPLUNK_OTEL_ROOT =
           options.splunkOtelRoot ??
-          path.dirname(requireResolve!('@splunk/otel/package.json'));
+          path.dirname(require.resolve!('@splunk/otel/package.json'));
         const srcPrebuilds = path.join(SPLUNK_OTEL_ROOT, 'prebuilds');
         const destPrebuilds = path.join(outDir, SUBDIR, 'prebuilds');
 
@@ -134,9 +108,9 @@ export function resolveInstrumentationDepsPlugin(): Plugin {
   return {
     name: 'resolve-semver',
     setup(build) {
-      const PLUGIN_ROOT = path.resolve(getDirname!(), '..');
+      const PLUGIN_ROOT = path.resolve(__dirname, '..');
       build.onResolve({ filter: /^semver$/ }, (args) => ({
-        path: requireResolve!(args.path, { paths: [PLUGIN_ROOT] }),
+        path: require.resolve(args.path, { paths: [PLUGIN_ROOT] }),
       }));
     },
   };

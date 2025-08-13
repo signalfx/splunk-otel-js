@@ -2,30 +2,19 @@
   "name": "@splunk/otel-esbuild-plugin-node",
   "version": "1.0.0",
   "description": "Splunk OpenTelemetry esbuild plugin for Node.js",
-  "main": "dist/cjs/index.js",
-  "module": "dist/esm/index.js",
-  "types": "dist/cjs/index.d.ts",
-  "exports": {
-      ".": {
-        "types": "./dist/cjs/index.d.ts",
-        "import": "./dist/esm/index.js",
-        "require": "./dist/cjs/index.js"
-      }
-    },
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
   "files": [
-    "build/cjs/**/*.js",
-    "build/cjs/**/*.js.map",
-    "build/cjs/**/*.d.ts",
-    "build/esm/**/*.js",
-    "build/esm/**/*.js.map",
-    "build/esm/**/*.d.ts"
+    "build/**/*.js",
+    "build/**/*.js.map",
+    "build/**/*.d.ts"
   ],
   "scripts": {
-    "compile": "npm run build:cjs && npm run build:esm && npm run postbuild:pkgjson",
+    "compile": "tsc --build",
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:esm": "tsc -p tsconfig.esm.json",
-    "clean": "rm -rf dist",
-    "prepublishOnly": "npm run clean && npm run build",
+    "clean": "tsc --build --clean",
+    "prepublishOnly": "npm run clean && npm run compile",
     "test": "node --require ts-node/register/transpile-only --test test/**/*.test.ts",
     "postbuild:pkgjson": "node scripts/write-pkg-json.mjs cjs && node scripts/write-pkg-json.mjs esm"
   },
