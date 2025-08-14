@@ -12,7 +12,6 @@ module.exports = [
     attributes: {
       'otel.scope.name': '@opentelemetry/instrumentation-express',
       'otel.scope.version': '0.48.1',
-      'http.route': '/',
       'express.name': 'query',
       'express.type': 'middleware',
       'span.kind': 'internal'
@@ -31,7 +30,6 @@ module.exports = [
     attributes: {
       'otel.scope.name': '@opentelemetry/instrumentation-express',
       'otel.scope.version': '0.48.1',
-      'http.route': '/',
       'express.name': 'expressInit',
       'express.type': 'middleware',
       'span.kind': 'internal'

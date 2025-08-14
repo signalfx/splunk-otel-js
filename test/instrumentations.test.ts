@@ -28,7 +28,7 @@ describe('instrumentations', () => {
 
   it('loads instrumentations if they are installed', () => {
     const loadedInstrumentations = getInstrumentations();
-    assert.equal(loadedInstrumentations.length, 41);
+    assert.equal(loadedInstrumentations.length, 40);
   });
 
   it('does not load instrumentations if OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED is false', () => {
@@ -67,15 +67,15 @@ describe('instrumentations', () => {
   });
 
   it('can disable a specific instrumentation', () => {
-    process.env.OTEL_INSTRUMENTATION_REDIS_4_ENABLED = 'false';
+    process.env.OTEL_INSTRUMENTATION_REDIS_ENABLED = 'false';
     const loadedInstrumentations = getInstrumentations();
     assert.equal(
       loadedInstrumentations.find(
         (instr) =>
-          instr.instrumentationName === '@opentelemetry/instrumentation-redis-4'
+          instr.instrumentationName === '@opentelemetry/instrumentation-redis'
       ),
       undefined
     );
-    assert.equal(loadedInstrumentations.length, 40);
+    assert.equal(loadedInstrumentations.length, 39);
   });
 });
