@@ -7,7 +7,8 @@
   "files": [
     "build/**/*.js",
     "build/**/*.js.map",
-    "build/**/*.d.ts"
+    "build/**/*.d.ts",
+    "LICENSE"
   ],
   "scripts": {
     "compile": "tsc --build",
