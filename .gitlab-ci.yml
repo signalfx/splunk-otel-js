@@ -5,15 +5,32 @@ include:
   - project: 'ci-cd/templates'
     ref: master
     file: '/prodsec/.oss-scan.yml'
+  - project: 'core-ee/signing/api-integration'
+    ref: develop
+    file: '/templates/.sign-client.yml'
 
 stages:
   - scan
+  - prepare
+  - checksums-sign
   - release
 
 .prepare_dist: &prepare_dist
   - npm install
   - npm run prepare-release-artifact
   - shasum -a 256 dist/* > dist/checksums.txt
+
+prepare:
+  stage: prepare
+  script:
+    - *prepare_dist
+
+checksums-sign:
+  stage: checksums-sign
+  extends: .submit-signing-request
+  variables:
+    ARTIFACT: dist/checksums.txt
+    SIGN_TYPE: GPG
 
 oss-scan:
   stage: scan
@@ -27,7 +44,6 @@ release:
   rules:
     - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+.*/
   script:
-    - *prepare_dist
     - npm run release:github
     - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
     - npm publish ./dist/splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz
@@ -42,7 +58,6 @@ prerelease:
   rules:
     - if: $CI_COMMIT_TAG =~ /^prerelease-v[0-9]+\.[0-9]+\.[0-9]+(?:-.+)?$/
   script:
-    - *prepare_dist
     - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
     - npm publish --tag prerelease ./dist/splunk-otel-${CI_COMMIT_REF_NAME:12}.tgz
     - rm -f ~/.npmrc
