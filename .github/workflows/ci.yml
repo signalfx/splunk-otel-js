@@ -125,8 +125,12 @@ jobs:
       - name: Pack workspace packages
         id: pack_ws
         run: |
-          WS_PKGS="$(npm pack --workspaces --if-present | tr '\n' ' ')"
-          echo "::set-output name=files::$WS_PKGS"
+          WS_PKGS="$(npm pack --workspaces --if-present)"
+          {
+            echo 'files<<EOF'
+            echo "$WS_PKGS"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
       - name: Upload workspace packages
         uses: actions/upload-artifact@v4
         with:
