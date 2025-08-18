@@ -85,7 +85,7 @@ jobs:
           path: prebuilds
 
   create-package:
-    needs: [prebuilds-linux, prebuilds-linux-arm64, prebuilds-macos-windows]
+    needs: [prebuilds-linux]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
