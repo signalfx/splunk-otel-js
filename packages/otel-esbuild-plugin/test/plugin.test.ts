@@ -67,7 +67,7 @@ void describe('nativeExtSupportPlugin', () => {
     await rm(fakePrebuildsDir, { recursive: true, force: true });
   });
 
-  void it('rewrites node-gyp-build path and copies prebuilds from @splunk/otel', async () => {
+  void it('copies prebuilds from @splunk/otel', async () => {
     const inputCode = `
       const path = require('path');
       const x = require('node-gyp-build')(path.join(__dirname, '../..'));
