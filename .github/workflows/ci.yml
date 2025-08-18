@@ -122,17 +122,16 @@ jobs:
         with:
           name: ${{ steps.pack.outputs.package_file }}
           path: ${{ steps.pack.outputs.package_file }}
-      # - name: Pack workspace packages 
-      #   id: pack_ws
-      #   run: |
-      #     WS_PKGS="$(npm pack --workspaces --if-present | tr '\n' ' ')"
-      #     echo "files=$WS_PKGS" >> "$GITHUB_OUTPUT"
-      # - name: Upload workspace packages
-      #   if: ${{ steps.pack_ws.outputs.files != '' }}
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: workspace-packages
-      #     path: ${{ steps.pack_ws.outputs.files }}
+      - name: Pack workspace packages
+        id: pack_ws
+        run: |
+          WS_PKGS="$(npm pack --workspaces --if-present | tr '\n' ' ')"
+          echo "::set-output name=files::$WS_PKGS"
+      - name: Upload workspace packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: workspace-packages
+          path: ${{ steps.pack_ws.outputs.files }}
 
   unit-tests:
     runs-on: ${{ matrix.os }}
