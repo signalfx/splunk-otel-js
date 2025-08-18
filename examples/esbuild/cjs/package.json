@@ -1,0 +1,19 @@
+{
+  "name": "splunk-otel-example-esbuild",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "clear-bundle": "rm -rf dist_bundle",
+    "esbuild": "node build.js",
+    "esbuild-start": "SPLUNK_PROFILER_ENABLED=true SPLUNK_PROFILER_ENABLED=true SPLUNK_METRICS_ENABLED=true node dist_bundle/bundle.js",
+    "start": "npm run clear-bundle && npm run esbuild && npm run esbuild-start"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^1.8.0",
+    "@opentelemetry/instrumentation-express": "0.47.1",
+    "@splunk/otel": "3.3.0",
+    "@splunk/otel-esbuild-plugin-node": "file:../../../packages/otel-esbuild-plugin",
+    "axios": "^0.28.0",
+    "express": "^4.17.1"
+  }
+}

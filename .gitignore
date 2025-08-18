@@ -106,3 +106,5 @@ prebuilds
 docs/test.js
 !test/node_modules
 examples/*/package-lock.json
+examples/esbuild/*/package-lock.json
+examples/esbuild/*/dist_bundle
