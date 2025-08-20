@@ -67,12 +67,12 @@ describe('instrumentations', () => {
   });
 
   it('can disable a specific instrumentation', () => {
-    process.env.OTEL_INSTRUMENTATION_REDIS_4_ENABLED = 'false';
+    process.env.OTEL_INSTRUMENTATION_REDIS_ENABLED = 'false';
     const loadedInstrumentations = getInstrumentations();
     assert.equal(
       loadedInstrumentations.find(
         (instr) =>
-          instr.instrumentationName === '@opentelemetry/instrumentation-redis-4'
+          instr.instrumentationName === '@opentelemetry/instrumentation-redis'
       ),
       undefined
     );

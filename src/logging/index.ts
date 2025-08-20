@@ -17,7 +17,7 @@
 import * as util from 'util';
 import * as logsAPI from '@opentelemetry/api-logs';
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
-import { Resource } from '@opentelemetry/resources';
+import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import {
   LoggerProvider,
@@ -38,19 +38,16 @@ import type { LoggingOptions, StartLoggingOptions } from './types';
 export type { LoggingOptions, StartLoggingOptions };
 
 export function startLogging(options: LoggingOptions) {
-  const loggerProvider = new LoggerProvider({
-    resource: options.resource,
-  });
-
   let processors = options.logRecordProcessorFactory(options);
 
   if (!Array.isArray(processors)) {
     processors = [processors];
   }
 
-  processors.forEach((processor) =>
-    loggerProvider.addLogRecordProcessor(processor)
-  );
+  const loggerProvider = new LoggerProvider({
+    resource: options.resource,
+    processors,
+  });
 
   logsAPI.logs.setGlobalLoggerProvider(loggerProvider);
 
@@ -69,11 +66,13 @@ export function _setDefaultOptions(
   const serviceName =
     options.serviceName ||
     getNonEmptyEnvVar('OTEL_SERVICE_NAME') ||
-    envResource.attributes[ATTR_SERVICE_NAME];
+    envResource.attributes?.[ATTR_SERVICE_NAME];
 
   const resourceFactory = options.resourceFactory || ((r: Resource) => r);
-  const resource = resourceFactory(envResource).merge(
-    new Resource({
+  const resource = resourceFactory(
+    resourceFromAttributes(envResource.attributes || {})
+  ).merge(
+    resourceFromAttributes({
       [ATTR_SERVICE_NAME]: serviceName || defaultServiceName(),
     })
   );

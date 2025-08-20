@@ -28,7 +28,10 @@ import { _setDefaultOptions as setDefaultProfilingOptions } from '../profiling';
 import { _setDefaultOptions as setDefaultMetricsOptions } from '../metrics';
 import { getEnvBoolean, assertNoExtraneousProperties } from '../utils';
 import { configureGraphQlInstrumentation } from './graphql';
-import { configureHttpInstrumentation } from './http';
+import {
+  configureHttpInstrumentation,
+  configureHttpDcInstrumentation,
+} from './http';
 import { configureLogInjection, disableLogSending } from './logging';
 import { configureRedisInstrumentation } from './redis';
 import { AmqplibInstrumentation } from '@opentelemetry/instrumentation-amqplib';
@@ -39,7 +42,7 @@ import { ConnectInstrumentation } from '@opentelemetry/instrumentation-connect';
 import { DataloaderInstrumentation } from '@opentelemetry/instrumentation-dataloader';
 import { DnsInstrumentation } from '@opentelemetry/instrumentation-dns';
 import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
-import { FastifyInstrumentation } from '@opentelemetry/instrumentation-fastify';
+import { FastifyOtelInstrumentation } from '@fastify/otel';
 import { GenericPoolInstrumentation } from '@opentelemetry/instrumentation-generic-pool';
 import { GraphQLInstrumentation } from '@opentelemetry/instrumentation-graphql';
 import { GrpcInstrumentation } from '@opentelemetry/instrumentation-grpc';
@@ -61,7 +64,6 @@ import { NetInstrumentation } from '@opentelemetry/instrumentation-net';
 import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
 import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
 import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
-import { RedisInstrumentation as Redis4Instrumentation } from '@opentelemetry/instrumentation-redis-4';
 import { RestifyInstrumentation } from '@opentelemetry/instrumentation-restify';
 import { RouterInstrumentation } from '@opentelemetry/instrumentation-router';
 import { SocketIoInstrumentation } from '@opentelemetry/instrumentation-socket.io';
@@ -69,12 +71,15 @@ import { TediousInstrumentation } from '@opentelemetry/instrumentation-tedious';
 import { WinstonInstrumentation } from '@opentelemetry/instrumentation-winston';
 import { ElasticsearchInstrumentation } from './external/elasticsearch';
 import { SequelizeInstrumentation } from './external/sequelize';
-import { TypeormInstrumentation } from './external/typeorm';
+import { TypeormInstrumentation } from '@opentelemetry/instrumentation-typeorm';
 import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici';
+import { NoCodeInstrumentation } from './external/nocode';
+import { HttpDcInstrumentation } from './httpdc/httpdc';
 
 type InstrumentationInfo = {
   shortName: string;
   create: () => Instrumentation;
+  enabledByDefault?: boolean;
 };
 
 interface Options {
@@ -116,7 +121,7 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
     shortName: 'express',
   },
   {
-    create: () => new FastifyInstrumentation(),
+    create: () => new FastifyOtelInstrumentation(),
     shortName: 'fastify',
   },
   {
@@ -192,6 +197,10 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
     shortName: 'net',
   },
   {
+    create: () => new NoCodeInstrumentation(),
+    shortName: 'nocode',
+  },
+  {
     create: () => new PgInstrumentation(),
     shortName: 'pg',
   },
@@ -202,10 +211,6 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
   {
     create: () => new RedisInstrumentation(),
     shortName: 'redis',
-  },
-  {
-    create: () => new Redis4Instrumentation(),
-    shortName: 'redis_4',
   },
   {
     create: () => new RestifyInstrumentation(),
@@ -243,6 +248,11 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
     create: () => new UndiciInstrumentation(),
     shortName: 'undici',
   },
+  {
+    create: () => new HttpDcInstrumentation(),
+    shortName: 'httpdc',
+    enabledByDefault: false,
+  },
 ];
 
 function envKey(info: InstrumentationInfo) {
@@ -254,13 +264,35 @@ function getInstrumentationsToLoad() {
     'OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED',
     true
   );
-  return bundledInstrumentations.filter((info) =>
-    getEnvBoolean(envKey(info), enabledByDefault)
+
+  const instrumentations = bundledInstrumentations.filter((info) => {
+    return getEnvBoolean(
+      envKey(info),
+      info.enabledByDefault ?? enabledByDefault
+    );
+  });
+
+  const httpInstrumentation = instrumentations.find(
+    (i) => i.shortName === 'http'
   );
+  const httpDcInstrumentation = instrumentations.find(
+    (i) => i.shortName === 'httpdc'
+  );
+
+  if (
+    httpInstrumentation !== undefined &&
+    httpDcInstrumentation !== undefined
+  ) {
+    throw new Error(
+      'Can not enable both HTTP and the experimental HTTPDC instrumentation.'
+    );
+  }
+
+  return instrumentations;
 }
 
-export function getInstrumentations() {
-  const instrumentations = [];
+export function getInstrumentations(): Instrumentation[] {
+  const instrumentations: Instrumentation[] = [];
 
   for (const desc of getInstrumentationsToLoad()) {
     instrumentations.push(desc.create());
@@ -281,6 +313,9 @@ export function configureInstrumentations(options: Options) {
         break;
       case '@opentelemetry/instrumentation-http':
         configureHttpInstrumentation(instr, options.tracing);
+        break;
+      case '@opentelemetry/instrumentation-httpdc':
+        configureHttpDcInstrumentation(instr, options.tracing);
         break;
       case '@opentelemetry/instrumentation-redis':
         configureRedisInstrumentation(instr, options.tracing);
