@@ -6,28 +6,28 @@
       block:
         - name: Check if splunk-agent-version exists in backup
           ansible.builtin.stat:
-            path: "{{ splunk_backup_folder }}/splunk-agent-version.txt"
+            path: "{{ node_agent_backup_folder }}/splunk-agent-version.txt"
           register: backup_splunk_version_exists
 
         - name: Check if backup config exists
           ansible.builtin.stat:
-            path: "{{ splunk_backup_folder }}/splunk-config.js"
+            path: "{{ node_agent_backup_folder }}/splunk-config.js"
           register: backup_config_exists
 
         - name: Restore splunk-config.js file in case it exists
-          ansible.builtin.shell: "cp {{ splunk_backup_folder }}/splunk-config.js {{ splunk_dest_folder }}/"
+          ansible.builtin.shell: "cp {{ node_agent_backup_folder }}/splunk-config.js {{ node_agent_dest_folder }}/"
           when: backup_config_exists.stat.exists
 
         - name: Read the backed-up version of Splunk Node.js agent
           ansible.builtin.slurp:
-            src: "{{ splunk_backup_folder }}/splunk-agent-version.txt"
+            src: "{{ node_agent_backup_folder }}/splunk-agent-version.txt"
           register: node_backup_version
 
         - name: Run npm install on restored Splunk Node.js agent version
-          community.general.npm:
-            name: "@splunk/otel"
+          ansible.builtin.npm:
+            name: splunk-agent
             version: "{{ node_backup_version['content'] | b64decode | regex_replace('^[~^]+', '') }}"
-            path: "{{ splunk_dest_folder }}"
+            path: "{{ node_agent_dest_folder }}"
             state: present
           when: backup_splunk_version_exists.stat.exists
 
@@ -39,7 +39,7 @@
           ansible.builtin.set_fact:
             agent_result:
               error: false
-              install_path: "{{ splunk_dest_folder }}"
+              install_path: "{{ node_agent_dest_folder }}"
               agent_type: "node"
               action: "rollback"
 

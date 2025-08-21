@@ -3,7 +3,7 @@
   become: true
   block:
     - name: Remove the package "@splunk/otel"
-      community.general.npm:
+      ansible.builtin.npm:
         name: "@splunk/otel"
         state: absent
         path: "{{ splunk_dest_folder }}"

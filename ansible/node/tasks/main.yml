@@ -18,5 +18,5 @@
   when: agent_action == "rollback"
 
 - name: Upgrade Splunk Agent
-  include_tasks: agent-upgrade.yml
+  include_tasks: agent-install.yml
   when: agent_action == "upgrade"

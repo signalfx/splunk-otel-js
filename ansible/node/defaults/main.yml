@@ -3,8 +3,8 @@
 
 # Agent directory permissions
 agent_dir_permission:
-  user: "{{ splunk_user | default('splunk') }}"
-  group: "{{ splunk_group | default('splunk') }}"
+  user: "{{ appdynamics_user | default('splunk') }}"
+  group: "{{ appdynamics_group }}"
 
 create_splunk_user: true
 
@@ -12,8 +12,8 @@ create_splunk_user: true
 # This will need to be updated as required
 agent_dir: "{{ linux_custom_agent_install_path | default(splunk_dest_folder) }}"
 
-splunk_dest_folder: /opt/splunk-node-agent
-splunk_backup_folder: /opt/splunk-node-agent/backup
+splunk_dest_folder: /opt/splunk-nodejs-agent
+splunk_backup_folder: /opt/splunk-nodejs-agent/backup
 
 install_agent_from: "https://registry.npmjs.org/"
 

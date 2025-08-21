@@ -27,14 +27,14 @@
 
     - name: Create a splunk-agent-version.txt file
       ansible.builtin.copy:
-        dest: "{{ splunk_backup_folder }}/splunk-agent-version.txt"
+        dest: "{{ node_agent_backup_folder }}/splunk-agent-version.txt"
         content: "{{ version }}"
         mode: '0755'
       when: package_json_stat.stat.exists and old_agent_found is defined and old_agent_found.rc == 0
 
     - name: Read the version to be backed up
       ansible.builtin.slurp:
-        src: "{{ splunk_backup_folder }}/splunk-agent-version.txt"
+        src: "{{ node_agent_backup_folder }}/splunk-agent-version.txt"
       register: version
       when: package_json_stat.stat.exists and old_agent_found is defined and old_agent_found.rc == 0
 
@@ -45,11 +45,11 @@
 
     - name: Check if splunk-config.js exists
       ansible.builtin.stat:
-        path: "{{ splunk_dest_folder }}/splunk-config.js"
+        path: "{{ node_agent_dest_folder }}/splunk-config.js"
       register: config_exists
 
     - name: Backing up splunk-config.js file in case it exists
-      ansible.builtin.command: "cp {{ splunk_dest_folder }}/splunk-config.js {{ splunk_backup_folder }}/"
+      ansible.builtin.command: "cp {{ node_agent_dest_folder }}/splunk-config.js {{ node_agent_backup_folder }}/"
       when: config_exists.stat.exists
 
     - name: splunk_agent_status Node.js agent backup success log
