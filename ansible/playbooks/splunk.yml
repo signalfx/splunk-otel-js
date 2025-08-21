@@ -1,11 +1,15 @@
 ---
-- name: Install and configure Splunk Node.js Agent on localhost
+- name: Install and configure Splunk Node.js Agent on localhost (Go-based)
   hosts: localhost
-  become: true
+  become: false
   vars:
-    agent_action: uninstall
+    agent_action: install
     agent_version: "latest"  # Set your desired agent version
-    splunk_access_token: "YOUR_SPLUNK_ACCESS_TOKEN"
-    otel_exporter_otlp_endpoint: "https://ingest.us0.signalfx.com/v2/trace"
+    splunk_access_token: "PeZlDQLdXr3zDMmm9vWW_g"
+    otel_exporter_otlp_endpoint: "https://ingest.us1.signalfx.com/v2/trace"
+    # Use a user-writable directory for testing (no sudo required)
+    splunk_dest_folder: "/tmp/splunk-nodejs-agent"
+    # Path to the Go binary (absolute path)
+    go_binary_path: "/Users/abhinama/Documents/splunk/splunk-otel-js/go-module/bin/splunk-otel-manager"
   roles:
-    - role: ansible/node
+    - role: ../node-go
