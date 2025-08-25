@@ -61,6 +61,8 @@ import { MySQL2Instrumentation } from '@opentelemetry/instrumentation-mysql2';
 import { NestInstrumentation } from '@opentelemetry/instrumentation-nestjs-core';
 import { Neo4jInstrumentation } from './external/neo4j';
 import { NetInstrumentation } from '@opentelemetry/instrumentation-net';
+import { OpenAIInstrumentation } from '@opentelemetry/instrumentation-openai';
+import { OracleInstrumentation } from '@opentelemetry/instrumentation-oracledb';
 import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
 import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
 import { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
@@ -199,6 +201,14 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
   {
     create: () => new NoCodeInstrumentation(),
     shortName: 'nocode',
+  },
+  {
+    create: () => new OpenAIInstrumentation(),
+    shortName: 'openai',
+  },
+  {
+    create: () => new OracleInstrumentation(),
+    shortName: 'oracle',
   },
   {
     create: () => new PgInstrumentation(),
