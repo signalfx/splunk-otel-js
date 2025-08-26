@@ -10,9 +10,10 @@
   "scripts": {
     "clean": "tsc --build --clean",
     "clean:workspaces": "npm run --ws clean --",
+    "clean:all": "npm run clean && npm run clean:workspaces",
     "compile": "tsc --build",
     "compile:workspaces": "npm run --ws compile --",
-    "compile:all": "npm run clean:workspaces && npm run compile:workspaces",
+    "compile:all": "npm run compile && npm run compile:workspaces",
     "gen-metadata": "node scripts/generate-metadata-yaml.js",
     "prepare-release-artifact": "node scripts/prepare-release-artifact.js",
     "install": "node-gyp-build",
