@@ -62,7 +62,7 @@
 - Add an experimental HTTP instrumentation based on diagnostics channel. [#1021](https://github.com/signalfx/splunk-otel-js/pull/1021)
 - Add `oracledb` and `openai` instrumentations. [#1041](https://github.com/signalfx/splunk-otel-js/pull/1041)
 - New `nocode` instrumentation that allows instrumenting of custom code. Refer to the [overview](https://github.com/signalfx/splunk-otel-js/blob/main/src/instrumentations/external/nocode/nocode.md) for usage.
-- `typeorm` instrumentation has migrated to [upstream](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/packages/instrumentation-typeorm) and is now using updated semantic conventions, e.g. `db.namespace`, `db.operatio.name`, `db.collection.name`, `db.query.text`, `db.system.name`.
+- `typeorm` instrumentation has migrated to [upstream](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/packages/instrumentation-typeorm) and is now using updated semantic conventions, e.g. `db.namespace`, `db.operation.name`, `db.collection.name`, `db.query.text`, `db.system.name`.
 - `@opentelemetry/instrumentation-redis-4` has been removed as it has been merged to `@opentelemetry/instrumentation-redis` in the upstream.
 
 ## 3.3.0
