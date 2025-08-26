@@ -1,5 +1,5 @@
 /*
- * Copyright Splunk Inc.
+ * Copyright Splunk Inc., The OpenTelemetry Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/gm;
-const ARGUMENT_NAMES = /([^\s,]+)/g;
-
-export function getParamNames(func: Function) {
-  const fnStr = func.toString().replace(STRIP_COMMENTS, '');
-  return fnStr
-    .slice(fnStr.indexOf('(') + 1, fnStr.indexOf(')'))
-    .match(ARGUMENT_NAMES);
-}
+export const HTTP_ERROR_NAME = 'http.error_name' as const;
+export const HTTP_ERROR_MESSAGE = 'http.error_message' as const;
+export const HTTP_STATUS_TEXT = 'http.status_text' as const;

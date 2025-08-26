@@ -19,7 +19,11 @@ import { W3CBaggagePropagator } from '@opentelemetry/core';
 import { OTLPTraceExporter as OTLPGrpcTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 import { InstrumentationBase } from '@opentelemetry/instrumentation';
-import { Resource } from '@opentelemetry/resources';
+import {
+  emptyResource,
+  Resource,
+  resourceFromAttributes,
+} from '@opentelemetry/resources';
 import {
   ATTR_CONTAINER_ID,
   ATTR_HOST_ARCH,
@@ -51,7 +55,7 @@ import {
   defaultSpanProcessorFactory,
 } from '../src/tracing/options';
 import * as utils from './utils';
-import { ContainerDetector } from '@opentelemetry/resource-detector-container';
+import { containerDetector } from '@opentelemetry/resource-detector-container';
 import { SplunkBatchSpanProcessor } from '../src/tracing/SplunkBatchSpanProcessor';
 import { NextJsSpanProcessor } from '../src/tracing/NextJsSpanProcessor';
 
@@ -107,7 +111,7 @@ describe('options', () => {
       const options = _setDefaultOptions();
 
       const resAttrs =
-        options.tracerConfig.resource?.attributes || Resource.empty();
+        options.tracerConfig.resource?.attributes || emptyResource();
 
       assertVersion(resAttrs['telemetry.distro.version']);
 
@@ -182,16 +186,17 @@ describe('options', () => {
     it('reads the container when setting default options', async () => {
       mock.method(os, 'platform', () => 'linux');
 
-      const containerDetector = ContainerDetector as any;
-      mock.method(containerDetector, 'readFileAsync', (path, encoding) => {
-        if (path === '/proc/self/cgroup' && encoding === 'utf8') {
-          return '11:devices:/docker/1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcde\n';
-        }
-        return ''; // Default return if different path or encoding
+      mock.method(containerDetector, 'detect', () => {
+        return {
+          attributes: {
+            [ATTR_CONTAINER_ID]:
+              '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcde',
+          },
+        };
       });
 
       const options = _setDefaultOptions();
-      const resource = options.tracerConfig.resource || Resource.empty();
+      const resource = options.tracerConfig.resource || emptyResource();
       await resource.waitForAsyncAttributes?.();
       assertContainerId(resource.attributes[ATTR_CONTAINER_ID]);
     });
@@ -212,7 +217,7 @@ describe('options', () => {
       accessToken: 'custom-access-token',
       instrumentations: [testInstrumentation],
       tracerConfig: {
-        resource: new Resource({ attr1: 'value1' }),
+        resource: resourceFromAttributes({ attr1: 'value1' }),
         sampler: new AlwaysOffSampler(),
         idGenerator: idGenerator,
       },
@@ -231,7 +236,7 @@ describe('options', () => {
       captureHttpRequestUriParams: [],
       instrumentations: [testInstrumentation],
       tracerConfig: {
-        resource: new Resource({ attr1: 'value1' }),
+        resource: resourceFromAttributes({ attr1: 'value1' }),
         sampler: new AlwaysOffSampler(),
         idGenerator: idGenerator,
       },
@@ -247,7 +252,7 @@ describe('options', () => {
     const options = _setDefaultOptions({
       resourceFactory: (resource) => {
         return resource.merge(
-          new Resource({ 'splunk.distro.version': 'v9001', abc: 42 })
+          resourceFromAttributes({ 'splunk.distro.version': 'v9001', abc: 42 })
         );
       },
     });

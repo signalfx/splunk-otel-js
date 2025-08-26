@@ -18,20 +18,20 @@ import {
   InMemorySpanExporter,
   SimpleSpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
-import { Resource } from '@opentelemetry/resources';
-import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
+import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { Instrumentation } from '@opentelemetry/instrumentation';
 import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
+import { resourceFromAttributes } from '@opentelemetry/resources';
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ERROR);
 
 export const exporter = new InMemorySpanExporter();
 export const provider: NodeTracerProvider = new NodeTracerProvider({
-  resource: new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]: 'instrumentations-test',
+  resource: resourceFromAttributes({
+    [ATTR_SERVICE_NAME]: 'instrumentations-test',
   }),
+  spanProcessors: [new SimpleSpanProcessor(exporter)],
 });
-provider.addSpanProcessor(new SimpleSpanProcessor(exporter));
 export let instrumentation: Instrumentation | undefined = undefined;
 
 export function getTestSpans() {

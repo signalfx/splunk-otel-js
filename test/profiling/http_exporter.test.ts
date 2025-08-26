@@ -14,21 +14,26 @@
  * limitations under the License.
  */
 
-import { VERSION } from '@opentelemetry/core';
-import { Resource } from '@opentelemetry/resources';
+import { dependencies } from '../../package.json';
+import {
+  emptyResource,
+  resourceFromAttributes,
+} from '@opentelemetry/resources';
 import { strict as assert } from 'assert';
 import { describe, it, mock } from 'node:test';
 import { OtlpHttpProfilingExporter } from '../../src/profiling/OtlpHttpProfilingExporter';
 import { cpuProfile, heapProfile } from './profiles';
 import { InMemoryLogRecordExporter } from '@opentelemetry/sdk-logs';
 
+const OTEL_SDK_VERSION = dependencies['@opentelemetry/core'];
+
 describe('profiling OTLP HTTP exporter', () => {
   it('appends the logs path to the endpoint', () => {
     const exporter = new OtlpHttpProfilingExporter({
       endpoint: 'http://localhost:4318',
       callstackInterval: 1000,
-      resource: new Resource({}),
       instrumentationSource: 'continuous',
+      resource: emptyResource(),
     });
 
     assert.strictEqual(exporter._endpoint, 'http://localhost:4318/v1/logs');
@@ -38,8 +43,8 @@ describe('profiling OTLP HTTP exporter', () => {
     const exporter = new OtlpHttpProfilingExporter({
       endpoint: 'http://abc:4200/v1/logs',
       callstackInterval: 1000,
-      resource: new Resource({}),
       instrumentationSource: 'continuous',
+      resource: emptyResource(),
     });
 
     assert.strictEqual(exporter._endpoint, 'http://abc:4200/v1/logs');
@@ -49,8 +54,8 @@ describe('profiling OTLP HTTP exporter', () => {
     const exporter = new OtlpHttpProfilingExporter({
       endpoint: 'http://foobar:8181',
       callstackInterval: 1000,
-      resource: new Resource({ xyz: 'foo' }),
       instrumentationSource: 'continuous',
+      resource: resourceFromAttributes({ xyz: 'foo' }),
     });
 
     const logExporter = new InMemoryLogRecordExporter();
@@ -66,7 +71,7 @@ describe('profiling OTLP HTTP exporter', () => {
 
     assert.deepStrictEqual(log.resource.attributes, {
       'telemetry.sdk.language': 'node',
-      'telemetry.sdk.version': VERSION,
+      'telemetry.sdk.version': OTEL_SDK_VERSION,
       xyz: 'foo',
     });
 
@@ -83,8 +88,8 @@ describe('profiling OTLP HTTP exporter', () => {
     const exporter = new OtlpHttpProfilingExporter({
       endpoint: 'http://foobar:8181',
       callstackInterval: 1000,
-      resource: new Resource({ xyz: 'foo' }),
       instrumentationSource: 'continuous',
+      resource: resourceFromAttributes({ xyz: 'foo' }),
     });
 
     const logExporter = new InMemoryLogRecordExporter();
@@ -101,7 +106,7 @@ describe('profiling OTLP HTTP exporter', () => {
 
     assert.deepStrictEqual(log.resource.attributes, {
       'telemetry.sdk.language': 'node',
-      'telemetry.sdk.version': VERSION,
+      'telemetry.sdk.version': OTEL_SDK_VERSION,
       xyz: 'foo',
     });
 
