@@ -58,7 +58,7 @@
         metrics: { views: [{ name: 'clicks', instrumentName: 'my-counter', }], },
       })
       ```
-  * [`@opentelemetry/instrumentation-fastify`](https://www.npmjs.com/package/@opentelemetry/instrumentation-fastify) has been deprecated and is replaced with [`@fastify/otel`](https://www.npmjs.com/package/@fastify/otel).
+- [`@opentelemetry/instrumentation-fastify`](https://www.npmjs.com/package/@opentelemetry/instrumentation-fastify) has been deprecated and is replaced with [`@fastify/otel`](https://www.npmjs.com/package/@fastify/otel).
 - Add an experimental HTTP instrumentation based on diagnostics channel. [#1021](https://github.com/signalfx/splunk-otel-js/pull/1021)
 - Add `oracledb` and `openai` instrumentations. [#1041](https://github.com/signalfx/splunk-otel-js/pull/1041)
 - New `nocode` instrumentation that allows instrumenting of custom code. Refer to the [overview](https://github.com/signalfx/splunk-otel-js/blob/main/src/instrumentations/external/nocode/nocode.md) for usage.
