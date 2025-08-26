@@ -23,7 +23,12 @@
     "url": "git+https://github.com/signalfx/splunk-otel-js.git"
   },
   "keywords": [
-    "esbuild"
+    "esbuild",
+    "opentelemetry",
+    "tracing",
+    "profiling",
+    "metrics",
+    "splunk"
   ],
   "author": "Splunk Observability Instrumentals Team <ssg-observability-instrumentals-npm@splunk.com>",
   "license": "Apache-2.0",
@@ -32,9 +37,7 @@
   },
   "homepage": "https://github.com/signalfx/splunk-otel-js#readme",
   "devDependencies": {
-    "@typescript-eslint/typescript-estree": "^8.39.0",
-    "ts-node": "^10.9.2",
-    "typescript": "5.7.3"
+    "@typescript-eslint/typescript-estree": "^8.39.0"
   },
   "dependencies": {
     "esbuild": "^0.25.8",
@@ -42,7 +45,7 @@
     "semver": "^7.7.2"
   },
   "peerDependencies": {
-    "@splunk/otel": "^3.3.0"
+    "@splunk/otel": "4.0.0-alpha1"
   },
   "engines": {
     "node": ">=18"

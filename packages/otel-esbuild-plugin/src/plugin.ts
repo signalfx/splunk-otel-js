@@ -25,7 +25,9 @@ interface NativeExtSupportOptions {
 export function nativeExtSupportPlugin(
   options: NativeExtSupportOptions = {}
 ): Plugin {
-  let shouldCopyPrebuilds = false; // if we use autoInstrumentation, then copying prebuilds is not needed
+  // When bundling @splunk/otel with esbuild, prebuilds need to be copied to the output directory.
+  // When using auto-instrumentation (not bundling), prebuilds are already available in node_modules.
+  let shouldCopyPrebuilds = false;
   const SUBDIR = 'splunk-profiling';
   return {
     name: 'native-ext-support',

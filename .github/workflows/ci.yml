@@ -122,8 +122,38 @@ jobs:
         with:
           name: ${{ steps.pack.outputs.package_file }}
           path: ${{ steps.pack.outputs.package_file }}
-      - name: Pack workspace packages
-        id: pack_ws
+
+  create-workspace-packages:
+    needs: [prebuilds-linux, prebuilds-linux-arm64, prebuilds-macos-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Download all prebuilds
+        uses: actions/download-artifact@v4
+        with:
+          pattern: prebuilds-*
+          path: allprebuilds
+      - name: copy prebuilds
+        run: |
+          mkdir -p prebuilds
+          cp -r allprebuilds/prebuilds-linux-arm64-*/* prebuilds
+          cp -r allprebuilds/prebuilds-linux-*/* prebuilds
+          cp -r allprebuilds/prebuilds-windows-2022-*/* prebuilds
+          cp -r allprebuilds/prebuilds-macos-13-*/* prebuilds
+          cp -r allprebuilds/prebuilds-macos-14-*/* prebuilds
+      - name: Install npm dependencies
+        run: npm ci --ignore-scripts
+      - name: Build workspace packages
+        run: npm run compile:workspaces
+      - name: Pack workspace packages 
+        id: pack
         run: |
           WS_PKGS="$(npm pack --workspaces --if-present)"
           {
@@ -135,7 +165,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: workspace-packages
-          path: ${{ steps.pack_ws.outputs.files }}
+          path: ${{ steps.pack.outputs.files }}
 
   unit-tests:
     runs-on: ${{ matrix.os }}
@@ -206,6 +236,56 @@ jobs:
       - name: Test
         run: npm run test
 
+  workspaces-unit-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['ubuntu-latest', 'macos-latest']
+        nodejs: ['18', '20', '21', '22', '23', '24']
+        include:
+          - os: 'macos-latest'
+            python_version: '3.11'
+          - os: 'windows-2022'
+            nodejs: '18.20.1'
+          - os: 'windows-2022'
+            nodejs: '20.12.1'
+          - os: 'windows-2022'
+            nodejs: '21.7.2'
+          - os: 'windows-2022'
+            nodejs: '22.10.0'
+          - os: 'windows-2022'
+            nodejs: '23.0.0'
+          - os: 'windows-2022'
+            nodejs: '24.0.0'
+    services:
+      neo4j:
+        image: ${{ (matrix.os == 'ubuntu-latest') && 'neo4j:4.4.42' || '' }}
+        ports:
+          - 11011:7687
+        env:
+          NEO4J_AUTH: neo4j/test_pw
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python_version }}
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.nodejs }}
+      - name: Install npm dependencies
+        run: npm ci
+      - name: Test workspace packages
+        run: npm run test:workspaces
+        env:
+          NEO4J_TEST_WITH_LOCAL: ${{ (matrix.os == 'ubuntu-latest') && 'true' || 'false' }}
+      - name: Report Coverage
+        if: ${{matrix.nodejs == '22' && matrix.os == 'ubuntu-latest'}}
+        uses: codecov/codecov-action@v3
+        with:
+          verbose: true
+
   build:
     runs-on: ubuntu-latest
     steps:
@@ -219,7 +299,7 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
       - name: Build
-        run: npm run compile
+        run: npm run compile:all
       - name: Generate metadata YAML
         run: node scripts/generate-metadata-yaml.js > splunk-otel-js-metadata.yaml
       - name: Upload metadata yaml
