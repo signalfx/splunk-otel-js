@@ -30,7 +30,7 @@
     "metrics",
     "splunk"
   ],
-  "author": "Splunk Observability Instrumentals Team <ssg-observability-instrumentals-npm@splunk.com>",
+  "author": "Splunk <splunk-oss@splunk.com>",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/signalfx/splunk-otel-js/issues"
