@@ -9,7 +9,11 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "clean": "tsc --build --clean",
+    "clean:workspaces": "npm run --ws clean --",
+    "clean:all": "npm run clean && npm run clean:workspaces",
     "compile": "tsc --build",
+    "compile:workspaces": "npm run --ws compile --",
+    "compile:all": "npm run compile && npm run compile:workspaces",
     "gen-metadata": "node scripts/generate-metadata-yaml.js",
     "prepare-release-artifact": "node scripts/prepare-release-artifact.js",
     "install": "node-gyp-build",
@@ -17,6 +21,7 @@
     "lint": "eslint . --ext .ts",
     "lint:commits": "commitlint",
     "test": "node ./test/runner.js",
+    "test:workspaces": "cross-env TEST_DIR=../packages npm run test",
     "test:only": "node ./test/runner.js --test-only",
     "prebuild:current": "node scripts/prebuild-current.js",
     "prebuild:os": "node scripts/prebuild-os.js",
@@ -69,6 +74,7 @@
     "@typescript-eslint/eslint-plugin": "^8.31.1",
     "@typescript-eslint/parser": "^8.31.1",
     "bunyan": "1.8.15",
+    "cross-env": "^10.0.0",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-header": "^3.1.1",
@@ -160,5 +166,8 @@
   },
   "peerDependencies": {
     "@opentelemetry/api": "^1.9.0"
-  }
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }
