@@ -1,13 +1,13 @@
-const { version } = require('../package.json');
+const { version: splunkOtelVersion } = require('../package.json');
 const { dependencies } = require('../package-lock.json');
 const { readFileSync } = require('fs');
 const path = require('path');
 
-exports.getReleaseMessage = () => {
-  const changelog = readFileSync(
-    path.resolve(__dirname, '../CHANGELOG.md'),
-    { encoding: 'utf-8' }
-  );
+exports.getReleaseMessage = (targetFileName, dirPackage) => {
+  const changelogPath = path.resolve(__dirname, dirPackage, 'CHANGELOG.md')
+  const { version } = require(path.resolve(__dirname, dirPackage, 'package.json'));
+
+  const changelog = readFileSync(changelogPath, { encoding: 'utf-8' });
   const changeHeaderBegin = changelog.indexOf(`## ${version}`);
 
   if (changeHeaderBegin === -1) {
@@ -21,16 +21,25 @@ exports.getReleaseMessage = () => {
 
   const versionChanges = changelog.substring(changesBegin, changesBegin + nextVersionBegin - 1);
 
-  const otelApiVersion = dependencies['@opentelemetry/api'].version;
-  const otelCoreVersion = dependencies['@opentelemetry/core'].version;
-  const otelInstrumentationVersion = dependencies['@opentelemetry/instrumentation-http'].version;
+  const splunkOtelArtifactName = `splunk-otel-${splunkOtelVersion}.tgz`;
 
-  return [
-    '| Open Telemetry API | Core | Instrumentations |',
-    '| --- | --- | --- |',
-    `| ${otelApiVersion} | ${otelCoreVersion} | ${otelInstrumentationVersion} |`,
-    '',
-    '## Changes',
-    versionChanges,
-  ].join('\n');
+  if (targetFileName === splunkOtelArtifactName){
+    const otelApiVersion = dependencies['@opentelemetry/api'].version;
+    const otelCoreVersion = dependencies['@opentelemetry/core'].version;
+    const otelInstrumentationVersion = dependencies['@opentelemetry/instrumentation-http'].version;
+
+    return [
+      '| Open Telemetry API | Core | Instrumentations |',
+      '| --- | --- | --- |',
+      `| ${otelApiVersion} | ${otelCoreVersion} | ${otelInstrumentationVersion} |`,
+      '',
+      '## Changes',
+      versionChanges,
+    ].join('\n');
+  } else {
+    return [
+      '## Changes',
+      versionChanges,
+    ].join('\n');
+  }
 };
