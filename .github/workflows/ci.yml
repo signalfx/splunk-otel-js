@@ -124,7 +124,6 @@ jobs:
           path: ${{ steps.pack.outputs.package_file }}
 
   create-workspace-packages:
-    needs: [prebuilds-linux, prebuilds-linux-arm64, prebuilds-macos-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -135,19 +134,6 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '18'
-      - name: Download all prebuilds
-        uses: actions/download-artifact@v4
-        with:
-          pattern: prebuilds-*
-          path: allprebuilds
-      - name: copy prebuilds
-        run: |
-          mkdir -p prebuilds
-          cp -r allprebuilds/prebuilds-linux-arm64-*/* prebuilds
-          cp -r allprebuilds/prebuilds-linux-*/* prebuilds
-          cp -r allprebuilds/prebuilds-windows-2022-*/* prebuilds
-          cp -r allprebuilds/prebuilds-macos-13-*/* prebuilds
-          cp -r allprebuilds/prebuilds-macos-14-*/* prebuilds
       - name: Install npm dependencies
         run: npm ci --ignore-scripts
       - name: Build workspace packages
@@ -258,13 +244,6 @@ jobs:
             nodejs: '23.0.0'
           - os: 'windows-2022'
             nodejs: '24.0.0'
-    services:
-      neo4j:
-        image: ${{ (matrix.os == 'ubuntu-latest') && 'neo4j:4.4.42' || '' }}
-        ports:
-          - 11011:7687
-        env:
-          NEO4J_AUTH: neo4j/test_pw
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -278,8 +257,6 @@ jobs:
         run: npm ci
       - name: Test workspace packages
         run: npm run test:workspaces
-        env:
-          NEO4J_TEST_WITH_LOCAL: ${{ (matrix.os == 'ubuntu-latest') && 'true' || 'false' }}
       - name: Report Coverage
         if: ${{matrix.nodejs == '22' && matrix.os == 'ubuntu-latest'}}
         uses: codecov/codecov-action@v3
