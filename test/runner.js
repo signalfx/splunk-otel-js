@@ -20,8 +20,14 @@ function findTestFiles(dir, fileList = []) {
   return fileList;
 }
 
-// Find all test files in the ./test directory
-let testFiles = findTestFiles(__dirname);
+let testDir;
+if (process.env.TEST_DIR) {
+  testDir = path.resolve(__dirname, process.env.TEST_DIR)
+} else {
+  testDir = __dirname;
+}
+// Find all test files in the ./test directory (or custom path if TEST_DIR is set)
+let testFiles = findTestFiles(testDir);
 let extraArgs = [];
 
 if (process.argv.length > 2) {

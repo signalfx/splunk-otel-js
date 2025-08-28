@@ -16,7 +16,7 @@
     "prepublishOnly": "npm run clean && npm run compile",
     "lint:fix": "eslint . --ext .ts --fix",
     "lint": "eslint . --ext .ts",
-    "test": "node --require ts-node/register/transpile-only --test test/**/*.test.ts"
+    "test": "cross-env TEST_DIR=../packages/otel-esbuild-plugin node ../../test/runner.js"
   },
   "repository": {
     "type": "git",
