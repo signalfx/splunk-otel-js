@@ -78,19 +78,17 @@ async function downloadArtifact(octokit, owner, repo, runId, artifactName) {
   });
 
   console.log('downloaded', downloadedArtifact);
-  
-  return {
-    name: artifact.name,
-    data: downloadedArtifact.data
-  };
+
+  return downloadedArtifact.data;
+
 }
 
-function extractArtifact(artifact, targetFile) {
+function extractArtifact(artifactData, targetFile) {
   const tempFile = 'artifact-temp.zip';
 
   console.log(`writing content to ${tempFile} and unzipping`);
-  
-  fs.writeFileSync(tempFile, Buffer.from(artifact.data));
+
+  fs.writeFileSync(tempFile, Buffer.from(artifactData));
   
   execSync(`unzip -o ${tempFile}`);
 
@@ -128,15 +126,15 @@ async function getBuildArtifact() {
   
   if (targetFileName === tgzName) {
     // Download and extract main package artifact
-    const splunkOtelArtifact = await downloadArtifact(octokit, owner, repo, run.id, tgzName);
+    const splunkOtelArtifactData = await downloadArtifact(octokit, owner, repo, run.id, tgzName);
 
-    return extractArtifact(splunkOtelArtifact, targetFileName);
+    return extractArtifact(splunkOtelArtifactData, targetFileName);
   } else {
     // Download and extract workspace packages artifact which contains all workspace packages
     const workspacePackageName = 'workspace-packages';
-    const workspaceArtifact = await downloadArtifact(octokit, owner, repo, run.id, workspacePackageName);
+    const workspaceArtifactData = await downloadArtifact(octokit, owner, repo, run.id, workspacePackageName);
 
-    return extractArtifact(workspaceArtifact, targetFileName);
+    return extractArtifact(workspaceArtifactData, targetFileName);
   }
 }
 
