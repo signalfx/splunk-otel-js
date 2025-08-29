@@ -21,8 +21,8 @@ exports.getReleaseMessage = (dirPackage) => {
   const versionChanges = changelog.substring(changesBegin, changesBegin + nextVersionBegin - 1);
 
   const rootDir = '../'
-  
-  if (dirPackage == rootDir){
+
+  if (dirPackage === rootDir){
     const otelApiVersion = dependencies['@opentelemetry/api'].version;
     const otelCoreVersion = dependencies['@opentelemetry/core'].version;
     const otelInstrumentationVersion = dependencies['@opentelemetry/instrumentation-http'].version;
