@@ -1,9 +1,8 @@
-const { version: splunkOtelVersion } = require('../package.json');
 const { dependencies } = require('../package-lock.json');
 const { readFileSync } = require('fs');
 const path = require('path');
 
-exports.getReleaseMessage = (targetFileName, dirPackage) => {
+exports.getReleaseMessage = (dirPackage) => {
   const changelogPath = path.resolve(__dirname, dirPackage, 'CHANGELOG.md')
   const { version } = require(path.resolve(__dirname, dirPackage, 'package.json'));
 
@@ -21,9 +20,9 @@ exports.getReleaseMessage = (targetFileName, dirPackage) => {
 
   const versionChanges = changelog.substring(changesBegin, changesBegin + nextVersionBegin - 1);
 
-  const splunkOtelArtifactName = `splunk-otel-${splunkOtelVersion}.tgz`;
-
-  if (targetFileName === splunkOtelArtifactName){
+  const rootDir = '../'
+  
+  if (dirPackage == rootDir){
     const otelApiVersion = dependencies['@opentelemetry/api'].version;
     const otelCoreVersion = dependencies['@opentelemetry/core'].version;
     const otelInstrumentationVersion = dependencies['@opentelemetry/instrumentation-http'].version;
