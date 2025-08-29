@@ -22,7 +22,7 @@ oss-scan:
 release:
   before_script:
     - export PACKAGE_FILE="splunk-otel-${CI_COMMIT_REF_NAME:1}.tgz"
-    - export DIR_PACKAGE="../" # directory for package location
+    - export PACKAGE_DIR="../" # directory for package location
   stage: release
   artifacts:
     paths:
@@ -31,7 +31,7 @@ release:
     - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+.*/
   script:
     - *prepare_dist
-    - npm run release:github -- --dir_package=${DIR_PACKAGE}
+    - npm run release:github -- --package_dir=${PACKAGE_DIR}
     - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
     - npm publish ./dist/${PACKAGE_FILE}
     - rm -f ~/.npmrc
@@ -40,7 +40,7 @@ release:
 esbuild-plugin-release:
   before_script:
     - export PACKAGE_FILE="splunk-otel-esbuild-plugin-node-${CI_COMMIT_REF_NAME:16}.tgz"
-    - export DIR_PACKAGE="../packages/otel-esbuild-plugin/"
+    - export PACKAGE_DIR="../packages/otel-esbuild-plugin/"
   stage: release
   artifacts:
     paths:
@@ -49,7 +49,7 @@ esbuild-plugin-release:
     - if: $CI_COMMIT_TAG =~ /^esbuild-plugin-v[0-9]+\.[0-9]+\.[0-9]+.*/
   script:
     - *prepare_dist
-    - npm run release:github -- --dir_package=${DIR_PACKAGE}
+    - npm run release:github -- --package_dir=${PACKAGE_DIR}
     - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
     - npm publish ./dist/${PACKAGE_FILE}
     - rm -f ~/.npmrc

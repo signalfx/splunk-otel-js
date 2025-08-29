@@ -2,9 +2,9 @@ const { dependencies } = require('../package-lock.json');
 const { readFileSync } = require('fs');
 const path = require('path');
 
-exports.getReleaseMessage = (dirPackage) => {
-  const changelogPath = path.resolve(__dirname, dirPackage, 'CHANGELOG.md')
-  const { version } = require(path.resolve(__dirname, dirPackage, 'package.json'));
+exports.getReleaseMessage = (packageDir) => {
+  const changelogPath = path.resolve(__dirname, packageDir, 'CHANGELOG.md')
+  const { version } = require(path.resolve(__dirname, packageDir, 'package.json'));
 
   const changelog = readFileSync(changelogPath, { encoding: 'utf-8' });
   const changeHeaderBegin = changelog.indexOf(`## ${version}`);
@@ -22,7 +22,7 @@ exports.getReleaseMessage = (dirPackage) => {
 
   const rootDir = '../'
 
-  if (dirPackage === rootDir){
+  if (packageDir === rootDir){
     const otelApiVersion = dependencies['@opentelemetry/api'].version;
     const otelCoreVersion = dependencies['@opentelemetry/core'].version;
     const otelInstrumentationVersion = dependencies['@opentelemetry/instrumentation-http'].version;

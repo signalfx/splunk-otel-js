@@ -7,13 +7,13 @@ const { getReleaseMessage } = require('./release-message');
 async function createRelease() {
   const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
   
-  const dirPackageArg = process.argv.find(arg => arg.startsWith('--dir_package='));
+  const packageDirArg = process.argv.find(arg => arg.startsWith('--package_dir='));
   
-  if (!dirPackageArg) {
-    throw new Error('Missing --dir_package=PATH');
+  if (!packageDirArg) {
+    throw new Error('Missing --package_dir=PATH');
   }
 
-  const dirPackage = dirPackageArg.split('=')[1]; 
+  const packageDir = packageDirArg.split('=')[1]; 
 
   const {
     data: { login },
@@ -46,7 +46,7 @@ async function createRelease() {
     owner,
     repo,
     tag_name: tag,
-    body: getReleaseMessage(dirPackage),
+    body: getReleaseMessage(packageDir),
   });
   console.log(`Release created ${githubRelease.id}.`);
 
