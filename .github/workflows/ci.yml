@@ -293,6 +293,10 @@ jobs:
         include:
           - target: ''
             name: 'Basic'
+          - target: '-f esbuild-cjs.override.yml'
+            name: 'ESBuild CJS'
+          - target: '-f esbuild-esm.override.yml'  
+            name: 'ESBuild ESM'
           - target: '-f express.override.yml'
             name: 'Express'
           - target: '-f mixed.override.yml'
