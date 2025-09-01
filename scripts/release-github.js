@@ -5,8 +5,14 @@ const { Octokit } = require('octokit');
 const { getReleaseMessage } = require('./release-message');
 
 async function createRelease() {
-  const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
-  
+  const github_token = process.env.GITHUB_TOKEN;
+
+  if (!github_token) {
+    throw new Error('Missing GITHUB_TOKEN. Aborting release.');
+  }
+
+  const octokit = new Octokit({ auth: github_token });
+
   const packageDirArg = process.argv.find(arg => arg.startsWith('--package_dir='));
   
   if (!packageDirArg) {
