@@ -1,6 +1,6 @@
 {
   "name": "@splunk/otel-esbuild-plugin-node",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Splunk OpenTelemetry esbuild plugin for Node.js",
   "main": "build/index.js",
   "types": "build/index.d.ts",
