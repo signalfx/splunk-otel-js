@@ -17,6 +17,9 @@
     "lint:fix": "eslint . --ext .ts --fix",
     "lint": "eslint . --ext .ts",
     "test": "cross-env TEST_DIR=../packages/otel-esbuild-plugin node ../../test/runner.js"
+  }, 
+  "publishConfig": {
+    "access": "public"
   },
   "repository": {
     "type": "git",
