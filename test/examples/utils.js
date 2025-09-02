@@ -296,17 +296,22 @@ function assertMetrics(actualMetrics, expectedMetrics) {
     return 0;
   }
   assert.ok(Array.isArray(actualMetrics), 'Expected actual metrics to be an array');
-  assert.ok(Array.isArray(expectedMetrics), 'Expected expected metrics to be an array');
 
-  expectedMetrics.forEach((exp) => {
-    const found = actualMetrics.find(
-      (m) =>
-        m.name  === exp.name &&
-        m.unit  === exp.unit &&
-        (m.scope === exp.scope) &&
-        matchResource(m.resource, exp.resource ?? {})
+  const actualMetricsMap = new Map();
+  actualMetrics.forEach(metric => {
+    actualMetricsMap.set(metric.name, metric);
+  });
+
+  Object.entries(expectedMetrics).forEach(([expectedName, expectedProps]) => {
+    const actualMetric = actualMetricsMap.get(expectedName);
+    
+    assert.ok(actualMetric, `metric "${expectedName}" not found`);
+    assert.strictEqual(actualMetric.unit, expectedProps.unit, `metric "${expectedName}" unit mismatch`);
+    assert.strictEqual(actualMetric.scope, expectedProps.scope, `metric "${expectedName}" scope mismatch`);
+    assert.ok(
+      matchResource(actualMetric.resource, expectedProps.resource ?? {}),
+      `metric "${expectedName}" resource mismatch`
     );
-    assert.ok(found, `metric "${exp.name}" not found`);
   });
 
   return true;

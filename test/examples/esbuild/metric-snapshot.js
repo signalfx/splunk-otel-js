@@ -4,9 +4,8 @@ if (!serviceName){
   throw new Error('OTEL_SERVICE_NAME is not set');
 }
 
-module.exports =[
-  {
-    name : 'process.runtime.nodejs.memory.heap.total',
+module.exports = {
+  'process.runtime.nodejs.memory.heap.total': {
     unit : 'By',
     scope: 'splunk-otel-js-runtime-metrics',
     resource: {
@@ -14,46 +13,39 @@ module.exports =[
       'deployment.environment' : 'dev',
     },
   },
-  {
-    name : 'process.runtime.nodejs.memory.heap.used',
+  'process.runtime.nodejs.memory.heap.used': {
     unit : 'By',
     scope: 'splunk-otel-js-runtime-metrics',
     resource: { 'service.name': serviceName },
   },
-  {
-    name : 'process.runtime.nodejs.memory.rss',
+  'process.runtime.nodejs.memory.rss': {
     unit : 'By',
     scope: 'splunk-otel-js-runtime-metrics',
     resource: { 'service.name': serviceName },
   },
-  {
-    name : 'process.runtime.nodejs.event_loop.lag.max',
+  'process.runtime.nodejs.event_loop.lag.max': {
     unit : 'ns',
     scope: 'splunk-otel-js-runtime-metrics',
     resource: { 'service.name': serviceName },
   },
-  {
-    name : 'process.runtime.nodejs.event_loop.lag.min',
+  'process.runtime.nodejs.event_loop.lag.min': {
     unit : 'ns',
     scope: 'splunk-otel-js-runtime-metrics',
     resource: { 'service.name': serviceName },
   },
-  {
-    name : 'process.runtime.nodejs.memory.gc.size',
+  'process.runtime.nodejs.memory.gc.size': {
     unit : 'By',
     scope: 'splunk-otel-js-runtime-metrics',
     resource: { 'service.name': serviceName },
   },
-  {
-    name : 'process.runtime.nodejs.memory.gc.pause',
+  'process.runtime.nodejs.memory.gc.pause': {
     unit : 'By',
     scope: 'splunk-otel-js-runtime-metrics',
     resource: { 'service.name': serviceName },
   },
-  {
-    name : 'process.runtime.nodejs.memory.gc.count',
+  'process.runtime.nodejs.memory.gc.count': {
     unit : '1',
     scope: 'splunk-otel-js-runtime-metrics',
     resource: { 'service.name': serviceName },
   },
-];
+};
