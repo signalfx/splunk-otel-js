@@ -1,11 +1,11 @@
 const {
   request,
   waitSpans,
-//  waitMetrics,
+  waitMetrics,
   logSpanTable,
-//  logMetricTable,
+  logMetricTable,
   assertSpans,
-//  assertMetrics
+  assertMetrics
 } = require('../utils.js');
 const snapshot = require('./snapshot.js');
 
@@ -26,9 +26,10 @@ const METRICS_TIMEOUT = Number(process.env.METRICS_TIMEOUT ?? 30);
   assertSpans(spans, snapshot);
   console.log(`${spans.length} spans validated`);
 
-  // const metrics = await waitMetrics(METRICS_TIMEOUT);
-  // logMetricTable(metrics);
-  // assertMetrics(metrics, metricsSnapshot);
-  // console.log("metrics validated");
+  const metrics = await waitMetrics(METRICS_TIMEOUT);
+  logMetricTable(metrics);
+  
+  assertMetrics(metrics, metricsSnapshot);
+  console.log("metrics validated");
   
 })();

@@ -81,6 +81,17 @@ const logSpanTable = (spans) => {
   );
 };
 
+const logMetricTable = (metrics) => {
+  console.table(
+    metrics.map(({ name, unit, scope, resource }) => ({
+      name,
+      unit,
+      scope,
+      'service.name': resource?.['service.name']
+    })),
+  );
+};
+
 const getParentSpan = (arr, span) => {
   assert.strictEqual(typeof span.parentSpanId, 'string', `Invalid parentSpanId: ${util.inspect(span)}`);
   const parent = arr.find((s) => s.id === span.parentSpanId);
@@ -129,6 +140,32 @@ const waitSpans = (count, timeout = 60) => {
       return res.map(entryToSpan);
     });
 };
+
+const waitMetrics = (timeout = 60) => {
+  console.error(`Waiting for metrics for ${timeout}s`);
+  console.time('waitMetrics');
+
+  const collectorUrl = new URL(
+    process.env.COLLECTOR_METRICS_URL ?? 'http://localhost:8379/metrics'
+  );
+  collectorUrl.searchParams.set('timeout', timeout);
+
+  return fetch(collectorUrl)
+    .then((res) => res.text())
+    .then((content) => {
+      if (content.match(/timed.*out.*while.*waiting.*for.*results/i)) {
+        assert.fail(`Timed out waiting for metrics for ${timeout}s.`);
+      }
+      return JSON.parse(content);
+    })
+    .then((msgs) => {
+      console.timeEnd('waitMetrics');
+      return msgs
+        .flatMap((m) => m.resourceMetrics ?? [])
+        .flatMap(entryToMetric);
+    });
+};
+
 
 const request = async (url) => {
   for (let i = 0; i < 30; i++) {
@@ -230,9 +267,61 @@ const assertSpans = (actualSpans, expectedSpans) => {
   return expectedSpans.length;
 };
 
+function entryToMetric(entry) {
+  const resource = Object.fromEntries(
+    (entry.resource?.attributes ?? []).map(({ key, value }) => [
+      key,
+      value.stringValue ??
+      value.intValue   ??
+      value.doubleValue??
+      value.boolValue  ??
+      null, 
+    ]),
+  );
+
+  return (entry.scopeMetrics ?? []).flatMap((scope) =>
+    (scope.metrics ?? []).map((m) => ({
+      resource,
+      scope : scope.scope?.name,
+      name  : m.name,
+      unit  : m.unit,
+    })),
+  );
+}
+
+function assertMetrics(actualMetrics, expectedMetrics) {
+  if (process.env.LOG_NEW_SNAPSHOTS === 'true') {
+    console.error(actualMetrics);
+    console.error('skipping checking asserting metrics');
+    return 0;
+  }
+  assert.ok(Array.isArray(actualMetrics), 'Expected actual metrics to be an array');
+  assert.ok(Array.isArray(expectedMetrics), 'Expected expected metrics to be an array');
+
+  expectedMetrics.forEach((exp) => {
+    const found = actualMetrics.find(
+      (m) =>
+        m.name  === exp.name &&
+        m.unit  === exp.unit &&
+        (m.scope === exp.scope) &&
+        matchResource(m.resource, exp.resource ?? {})
+    );
+    assert.ok(found, `metric "${exp.name}" not found`);
+  });
+
+  return true;
+}
+
+function matchResource(actual, expected) {
+  return Object.entries(expected).every(([k, v]) => actual[k] === v);
+}
+
 module.exports = {
   assertSpans,
   logSpanTable,
+  logMetricTable,
   request,
   waitSpans,
+  waitMetrics,
+  assertMetrics
 };

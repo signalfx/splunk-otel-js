@@ -2,6 +2,8 @@ services:
   app:
     working_dir: /home/node/app/examples/esbuild/cjs
     env_file: ./esbuild/cjs/app.env
+    environment:
+      OTEL_SERVICE_NAME: esbuild-cjs-example
     depends_on:
       - collector
   test:
@@ -10,6 +12,7 @@ services:
       REQ_URL: http://app/main
       COLLECTOR_URL: http://collector:8378/spans
       COLLECTOR_METRICS_URL: http://collector:8379/metrics
+      OTEL_SERVICE_NAME: esbuild-cjs-example
     depends_on:
       - app
       - collector
