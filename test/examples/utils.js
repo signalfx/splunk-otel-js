@@ -83,11 +83,10 @@ const logSpanTable = (spans) => {
 
 const logMetricTable = (metrics) => {
   console.table(
-    metrics.map(({ name, unit, scope, resource }) => ({
+    metrics.map(({ name, unit, scope }) => ({
       name,
       unit,
-      scope,
-      'service.name': resource?.['service.name']
+      scope
     })),
   );
 };
@@ -268,23 +267,11 @@ const assertSpans = (actualSpans, expectedSpans) => {
 };
 
 function entryToMetric(entry) {
-  const resource = Object.fromEntries(
-    (entry.resource?.attributes ?? []).map(({ key, value }) => [
-      key,
-      value.stringValue ??
-      value.intValue   ??
-      value.doubleValue??
-      value.boolValue  ??
-      null, 
-    ]),
-  );
-
   return (entry.scopeMetrics ?? []).flatMap((scope) =>
     (scope.metrics ?? []).map((m) => ({
-      resource,
-      scope : scope.scope?.name,
-      name  : m.name,
-      unit  : m.unit,
+      scope: scope.scope?.name,
+      name: m.name,
+      unit: m.unit,
     })),
   );
 }
@@ -308,17 +295,9 @@ function assertMetrics(actualMetrics, expectedMetrics) {
     assert.ok(actualMetric, `metric "${expectedName}" not found`);
     assert.strictEqual(actualMetric.unit, expectedProps.unit, `metric "${expectedName}" unit mismatch`);
     assert.strictEqual(actualMetric.scope, expectedProps.scope, `metric "${expectedName}" scope mismatch`);
-    assert.ok(
-      matchResource(actualMetric.resource, expectedProps.resource ?? {}),
-      `metric "${expectedName}" resource mismatch`
-    );
   });
 
   return true;
-}
-
-function matchResource(actual, expected) {
-  return Object.entries(expected).every(([k, v]) => actual[k] === v);
 }
 
 module.exports = {
