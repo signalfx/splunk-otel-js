@@ -19,6 +19,7 @@ import {
   Span,
   context,
   DiagLogger,
+  AttributeValue,
 } from '@opentelemetry/api';
 import {
   ATTR_CLIENT_ADDRESS,
@@ -65,17 +66,34 @@ import {
   ClientRequest,
   IncomingHttpHeaders,
   IncomingMessage,
+  OutgoingHttpHeader,
   OutgoingHttpHeaders,
   ServerResponse,
 } from 'http';
 import { getRPCMetadata, RPCType } from '@opentelemetry/core';
-import { Err, SemconvStability } from './internal-types';
+import {
+  Err,
+  SYNTHETIC_BOT_NAMES,
+  SYNTHETIC_TEST_NAMES,
+} from './internal-types';
 import forwardedParse = require('forwarded-parse');
 import {
   HTTP_STATUS_TEXT,
   HTTP_ERROR_NAME,
   HTTP_ERROR_MESSAGE,
+  ATTR_HTTP_SCHEME,
+  ATTR_HTTP_METHOD,
+  ATTR_NET_HOST_NAME,
+  ATTR_HTTP_FLAVOR,
+  ATTR_HTTP_STATUS_CODE,
+  ATTR_NET_HOST_PORT,
+  ATTR_USER_AGENT_SYNTHETIC_TYPE,
+  USER_AGENT_SYNTHETIC_TYPE_VALUE_TEST,
+  USER_AGENT_SYNTHETIC_TYPE_VALUE_BOT,
+  ATTR_NET_PEER_NAME,
+  ATTR_NET_PEER_PORT,
 } from './semconv';
+import { SemconvStability } from '@opentelemetry/instrumentation';
 
 /**
  * Get an absolute url
@@ -530,6 +548,7 @@ export const getIncomingRequestAttributes = (
     serverName?: string;
     hookAttributes?: Attributes;
     semconvStability: SemconvStability;
+    enableSyntheticSourceDetection: boolean;
   },
   logger: DiagLogger
 ): Attributes => {
@@ -581,7 +600,9 @@ export const getIncomingRequestAttributes = (
   if (method !== normalizedMethod) {
     newAttributes[ATTR_HTTP_REQUEST_METHOD_ORIGINAL] = method;
   }
-
+  if (options.enableSyntheticSourceDetection && userAgent) {
+    newAttributes[ATTR_USER_AGENT_SYNTHETIC_TYPE] = getSyntheticType(userAgent);
+  }
   const oldAttributes: Attributes = {
     [SEMATTRS_HTTP_URL]: parsedUrl.toString(),
     [SEMATTRS_HTTP_HOST]: host,
@@ -751,3 +772,183 @@ function parseForwardedHeader(header: string): Record<string, string>[] {
     return [];
   }
 }
+
+/**
+ * Returns incoming request Metric attributes scoped to the request data
+ * @param {Attributes} spanAttributes the span attributes
+ * @param {{ component: string }} options used to pass data needed to create attributes
+ */
+export const getIncomingRequestMetricAttributes = (
+  spanAttributes: Attributes
+): Attributes => {
+  const metricAttributes: Attributes = {};
+  metricAttributes[ATTR_HTTP_SCHEME] = spanAttributes[ATTR_HTTP_SCHEME];
+  metricAttributes[ATTR_HTTP_METHOD] = spanAttributes[ATTR_HTTP_METHOD];
+  metricAttributes[ATTR_NET_HOST_NAME] = spanAttributes[ATTR_NET_HOST_NAME];
+  metricAttributes[ATTR_HTTP_FLAVOR] = spanAttributes[ATTR_HTTP_FLAVOR];
+  //TODO: http.target attribute, it should substitute any parameters to avoid high cardinality.
+  return metricAttributes;
+};
+
+/**
+ * Returns incoming request Metric attributes scoped to the request data
+ * @param {Attributes} spanAttributes the span attributes
+ */
+export const getIncomingRequestMetricAttributesOnResponse = (
+  spanAttributes: Attributes
+): Attributes => {
+  const metricAttributes: Attributes = {};
+  metricAttributes[ATTR_HTTP_STATUS_CODE] =
+    spanAttributes[ATTR_HTTP_STATUS_CODE];
+  metricAttributes[ATTR_NET_HOST_PORT] = spanAttributes[ATTR_NET_HOST_PORT];
+  if (spanAttributes[ATTR_HTTP_ROUTE] !== undefined) {
+    metricAttributes[ATTR_HTTP_ROUTE] = spanAttributes[ATTR_HTTP_ROUTE];
+  }
+  return metricAttributes;
+};
+
+/**
+ * Returns the type of synthetic source based on the user agent
+ * @param {OutgoingHttpHeader} userAgent the user agent string
+ */
+const getSyntheticType = (
+  userAgent: OutgoingHttpHeader
+): AttributeValue | undefined => {
+  const userAgentString: string = String(userAgent).toLowerCase();
+  for (const name of SYNTHETIC_TEST_NAMES) {
+    if (userAgentString.includes(name)) {
+      return USER_AGENT_SYNTHETIC_TYPE_VALUE_TEST;
+    }
+  }
+  for (const name of SYNTHETIC_BOT_NAMES) {
+    if (userAgentString.includes(name)) {
+      return USER_AGENT_SYNTHETIC_TYPE_VALUE_BOT;
+    }
+  }
+  return;
+};
+
+/**
+ * Returns outgoing request Metric attributes scoped to the request data
+ * @param {Attributes} spanAttributes the span attributes
+ */
+export const getOutgoingRequestMetricAttributes = (
+  spanAttributes: Attributes
+): Attributes => {
+  const metricAttributes: Attributes = {};
+  metricAttributes[ATTR_HTTP_METHOD] = spanAttributes[ATTR_HTTP_METHOD];
+  metricAttributes[ATTR_NET_PEER_NAME] = spanAttributes[ATTR_NET_PEER_NAME];
+  //TODO: http.url attribute, it should substitute any parameters to avoid high cardinality.
+  return metricAttributes;
+};
+
+/**
+ * Returns outgoing request Metric attributes scoped to the response data
+ * @param {Attributes} spanAttributes the span attributes
+ */
+export const getOutgoingRequestMetricAttributesOnResponse = (
+  spanAttributes: Attributes
+): Attributes => {
+  const metricAttributes: Attributes = {};
+  metricAttributes[ATTR_NET_PEER_PORT] = spanAttributes[ATTR_NET_PEER_PORT];
+  metricAttributes[ATTR_HTTP_STATUS_CODE] =
+    spanAttributes[ATTR_HTTP_STATUS_CODE];
+  metricAttributes[ATTR_HTTP_FLAVOR] = spanAttributes[ATTR_HTTP_FLAVOR];
+
+  return metricAttributes;
+};
+
+export const getOutgoingStableRequestMetricAttributesOnResponse = (
+  spanAttributes: Attributes
+): Attributes => {
+  const metricAttributes: Attributes = {};
+
+  if (spanAttributes[ATTR_NETWORK_PROTOCOL_VERSION]) {
+    metricAttributes[ATTR_NETWORK_PROTOCOL_VERSION] =
+      spanAttributes[ATTR_NETWORK_PROTOCOL_VERSION];
+  }
+
+  if (spanAttributes[ATTR_HTTP_RESPONSE_STATUS_CODE]) {
+    metricAttributes[ATTR_HTTP_RESPONSE_STATUS_CODE] =
+      spanAttributes[ATTR_HTTP_RESPONSE_STATUS_CODE];
+  }
+  return metricAttributes;
+};
+
+
+
+
+// /**
+//  * Returns outgoing request attributes scoped to the options passed to the request
+//  * @param {ParsedRequestOptions} requestOptions the same options used to make the request
+//  * @param {{ component: string, hostname: string, hookAttributes?: Attributes }} options used to pass data needed to create attributes
+//  * @param {SemconvStability} semconvStability determines which semconv version to use
+//  */
+// export const getOutgoingRequestAttributes = (
+//   requestOptions: ParsedRequestOptions,
+//   options: {
+//     component: string;
+//     hostname: string;
+//     port: string | number;
+//     hookAttributes?: Attributes;
+//     redactedQueryParams?: string[];
+//   },
+//   semconvStability: SemconvStability,
+//   enableSyntheticSourceDetection: boolean
+// ): Attributes => {
+//   const hostname = options.hostname;
+//   const port = options.port;
+//   const method = requestOptions.method ?? 'GET';
+//   const normalizedMethod = normalizeMethod(method);
+//   const headers = requestOptions.headers || {};
+//   const userAgent = headers['user-agent'];
+//   const urlFull = getAbsoluteUrl(
+//     requestOptions,
+//     headers,
+//     `${options.component}:`,
+//     options.redactedQueryParams
+//   );
+
+//   const oldAttributes: Attributes = {
+//     [ATTR_HTTP_URL]: urlFull,
+//     [ATTR_HTTP_METHOD]: method,
+//     [ATTR_HTTP_TARGET]: requestOptions.path || '/',
+//     [ATTR_NET_PEER_NAME]: hostname,
+//     [ATTR_HTTP_HOST]: headers.host ?? `${hostname}:${port}`,
+//   };
+
+//   const newAttributes: Attributes = {
+//     // Required attributes
+//     [ATTR_HTTP_REQUEST_METHOD]: normalizedMethod,
+//     [ATTR_SERVER_ADDRESS]: hostname,
+//     [ATTR_SERVER_PORT]: Number(port),
+//     [ATTR_URL_FULL]: urlFull,
+//     [ATTR_USER_AGENT_ORIGINAL]: userAgent,
+//     // leaving out protocol version, it is not yet negotiated
+//     // leaving out protocol name, it is only required when protocol version is set
+//     // retries and redirects not supported
+
+//     // Opt-in attributes left off for now
+//   };
+
+//   // conditionally required if request method required case normalization
+//   if (method !== normalizedMethod) {
+//     newAttributes[ATTR_HTTP_REQUEST_METHOD_ORIGINAL] = method;
+//   }
+
+//   if (enableSyntheticSourceDetection && userAgent) {
+//     newAttributes[ATTR_USER_AGENT_SYNTHETIC_TYPE] = getSyntheticType(userAgent);
+//   }
+//   if (userAgent !== undefined) {
+//     oldAttributes[ATTR_HTTP_USER_AGENT] = userAgent;
+//   }
+
+//   switch (semconvStability) {
+//     case SemconvStability.STABLE:
+//       return Object.assign(newAttributes, options.hookAttributes);
+//     case SemconvStability.OLD:
+//       return Object.assign(oldAttributes, options.hookAttributes);
+//   }
+
+//   return Object.assign(oldAttributes, newAttributes, options.hookAttributes);
+// };
