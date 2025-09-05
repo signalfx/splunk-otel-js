@@ -15,7 +15,10 @@
  */
 import { Span, Attributes, SpanKind, HrTime } from '@opentelemetry/api';
 import { ClientRequest, IncomingMessage, ServerResponse } from 'http';
-import { InstrumentationConfig, SemconvStability } from '@opentelemetry/instrumentation';
+import {
+  InstrumentationConfig,
+  SemconvStability,
+} from '@opentelemetry/instrumentation';
 
 export interface SpanDetails {
   span: Span;
@@ -95,14 +98,14 @@ export interface HttpDcInstrumentationConfig extends InstrumentationConfig {
    * @experimental
    **/
   enableSyntheticSourceDetection?: boolean;
-    /**
+  /**
    * Controls which semantic-convention attributes are emitted on spans.
    * Default: 'OLD'.
    * When this option is set, it takes precedence over any value provided via
    * the OTEL_SEMCONV_STABILITY_OPT_IN environment variable.
    */
   semconvStability?: SemconvStability;
-    /**
+  /**
    * [Optional] Additional query parameters to redact.
    * Use this to specify custom query strings that contain sensitive information.
    * These will replace/overwrite the default query strings that are to be redacted.

@@ -472,9 +472,9 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpDcInstrumenta
     const attributes = getOutgoingRequestAttributes(
       request,
       this._semconvStability,
-      
-    //  redactedQueryParams: instrumentation.getConfig().redactedQueryParams, // Added config for adding custom query strings
-    ); // lack of many args
+      config.redactedQueryParams,
+      config.enableSyntheticSourceDetection || false
+    );
 
     if (config.startOutgoingSpanHook !== undefined) {
       const hookAttributes = this._callStartSpanHook(
@@ -575,6 +575,7 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpDcInstrumenta
       req,
       response,
       this._semconvStability,
+      this.getConfig().redactedQueryParams
     );
 
     let status: SpanStatus;
@@ -686,9 +687,9 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpDcInstrumenta
     ctx = context.active()
   ) {
     /*
-      * If a parent is required but not present, we use a `NoopSpan` to still
-      * propagate context without recording it.
-      */
+     * If a parent is required but not present, we use a `NoopSpan` to still
+     * propagate context without recording it.
+     */
     const requireParent =
       options.kind === SpanKind.CLIENT
         ? this.getConfig().requireParentforOutgoingSpans
@@ -742,7 +743,6 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpDcInstrumenta
 
     clearSymbols(traced);
   }
-  
 
   private _callResponseHook(
     span: Span,
