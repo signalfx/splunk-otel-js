@@ -324,7 +324,7 @@ function getOutgoingRequestAttributesOldSemconv(
 ): Attributes {
   const userAgent = request.getHeader('user-agent');
   const hostHeader = request.getHeader('host');
-  // brakuje SEMATTR_HTTP_URL
+
   return {
     [SEMATTRS_HTTP_METHOD]: request.method,
     [SEMATTRS_HTTP_TARGET]: request.path || '/',
@@ -352,7 +352,7 @@ function getOutgoingRequestAttributesNewSemconv(
   const attributes: Attributes = {};
   Object.assign(attributes, {
     // Required attributes
-    [ATTR_HTTP_REQUEST_METHOD]: method,
+    [ATTR_HTTP_REQUEST_METHOD]: normalizedMethod,
     [ATTR_SERVER_ADDRESS]: request.host,
     [ATTR_SERVER_PORT]: port,
     [ATTR_URL_FULL]: getAbsoluteUrl(request, redactedQueryParams),
@@ -929,3 +929,47 @@ export const getOutgoingStableRequestMetricAttributesOnResponse = (
   }
   return metricAttributes;
 };
+
+/**
+ * Parses HTTP request arguments from http.request() or http.get() calls
+ * Handles both signatures: (url[, options][, cb]) and (options[, cb])
+ * @param args Arguments passed to http.request/get
+ * @returns Parsed request information
+ */
+export function parseHttpRequestArgs(args: unknown[]): { 
+  method: string; 
+  hostname: string; 
+  port?: number;
+  path?: string;
+  protocol?: string; 
+} {
+  let method = 'GET';
+  let hostname = 'localhost';
+  let port: number | undefined;
+  let path = '/';
+  let protocol = 'http:';
+
+  const first = args[0] as any;
+
+  if (typeof first === 'string' || first instanceof URL) {
+    const urlObj = new URL(first.toString());
+    hostname = urlObj.hostname;
+    port = urlObj.port ? Number(urlObj.port) : undefined;
+    path = urlObj.pathname + urlObj.search;
+    protocol = urlObj.protocol;
+    
+    // Check second argument for options that might override method
+    const second = args[1] as any;
+    if (typeof second === 'object' && second !== null && second.method) {
+      method = second.method.toUpperCase();
+    }
+  } else if (typeof first === 'object' && first !== null) {
+    method = (first.method || 'GET').toUpperCase();
+    hostname = first.hostname || first.host || hostname;
+    if (first.port !== undefined) port = Number(first.port);
+    path = first.path || path;
+    protocol = first.protocol || protocol;
+  }
+
+  return { method, hostname, port, path, protocol };
+}

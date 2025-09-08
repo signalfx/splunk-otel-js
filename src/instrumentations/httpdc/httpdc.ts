@@ -27,7 +27,6 @@ import {
   Histogram,
   ValueType,
   HrTime,
-  INVALID_SPAN_CONTEXT,
 } from '@opentelemetry/api';
 import {
   RPCMetadata,
@@ -60,6 +59,9 @@ import {
   ATTR_URL_SCHEME,
   METRIC_HTTP_CLIENT_REQUEST_DURATION,
   METRIC_HTTP_SERVER_REQUEST_DURATION,
+  SEMATTRS_HTTP_METHOD,
+  SEMATTRS_NET_PEER_NAME,
+  SEMATTRS_NET_PEER_PORT,
 } from '@opentelemetry/semantic-conventions';
 import {
   getIncomingRequestAttributes,
@@ -75,9 +77,11 @@ import {
   getIncomingStableRequestMetricAttributesOnResponse,
   getOutgoingRequestMetricAttributesOnResponse,
   getOutgoingStableRequestMetricAttributesOnResponse,
+  parseHttpRequestArgs,
 } from './utils';
 import { Err, Http } from './internal-types';
 import * as diagnostics_channel from 'node:diagnostics_channel';
+
 
 const SPAN_SYMBOL = Symbol.for('HTTPDC_SPAN');
 const SPAN_KIND_SYMBOL = Symbol.for('HTTPDC_SPAN_KIND');
@@ -89,17 +93,17 @@ const STABLE_METRICS_ATTRIBUTES_SYMBOL = Symbol.for(
   'HTTPDC_STABLE_METRICS_ATTRIBUTES'
 );
 
-type WithSpan = {
+type WithInstrumentation = {
   [SPAN_SYMBOL]?: Span;
   [SPAN_KIND_SYMBOL]?: SpanKind;
   [START_TIME_SYMBOL]?: HrTime;
   [OLD_METRICS_ATTRIBUTES_SYMBOL]?: Attributes;
   [STABLE_METRICS_ATTRIBUTES_SYMBOL]?: Attributes;
 };
-type TracedServerResponse = http.ServerResponse & WithSpan;
-type TracedClientRequest = http.ClientRequest & WithSpan;
+type TracedServerResponse = http.ServerResponse & WithInstrumentation;
+type TracedClientRequest = http.ClientRequest & WithInstrumentation;
 
-function assignSymbols(traced: WithSpan, spanDetails: SpanDetails): void {
+function assignSymbols(traced: WithInstrumentation, spanDetails: SpanDetails): void {
   traced[SPAN_SYMBOL] = spanDetails.span;
   traced[SPAN_KIND_SYMBOL] = spanDetails.spanKind;
   traced[START_TIME_SYMBOL] = spanDetails.startTime;
@@ -108,7 +112,7 @@ function assignSymbols(traced: WithSpan, spanDetails: SpanDetails): void {
     spanDetails.stableMetricsAttributes;
 }
 
-function clearSymbols(traced: WithSpan): void {
+function clearSymbols(traced: WithInstrumentation): void {
   delete traced[SPAN_SYMBOL];
   delete traced[SPAN_KIND_SYMBOL];
   delete traced[START_TIME_SYMBOL];
@@ -232,6 +236,44 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpDcInstrumenta
         );
   }
 
+private _wrapSyncClientError() {
+const instrumentation = this;
+return (original: Function) =>
+function patched(this: unknown, ...args: unknown[]) {
+const start = hrTime();
+try {
+return original.apply(this, args);
+} catch (err: any) {
+instrumentation._handleClientRequestError(start, args, err as Error);
+throw err;
+}
+};
+}
+
+
+private _handleClientRequestError(start: HrTime, args: unknown[], err: Error) {
+const durationMs = hrTimeToMilliseconds(hrTimeDuration(start, hrTime()));
+
+const { method, hostname, port } = parseHttpRequestArgs(args);
+
+const oldSpanAttrs: Attributes = {
+  [SEMATTRS_HTTP_METHOD]: method,
+  [SEMATTRS_NET_PEER_NAME]: hostname,
+};
+if (port !== undefined) oldSpanAttrs[SEMATTRS_NET_PEER_PORT] = port;
+
+const oldMetricAttrs = getOutgoingRequestMetricAttributes(oldSpanAttrs);
+
+const stableMetricAttrs: Attributes = {
+  [ATTR_HTTP_REQUEST_METHOD]: method,
+  [ATTR_SERVER_ADDRESS]: hostname,
+  [ATTR_ERROR_TYPE]: err.name,
+};
+if (port !== undefined) stableMetricAttrs[ATTR_SERVER_PORT] = port;
+
+this._recordClientDuration(durationMs, oldMetricAttrs, stableMetricAttrs);
+}
+
   init(): [InstrumentationNodeModuleDefinition] {
     diagnostics_channel.subscribe(
       'http.server.request.start',
@@ -271,11 +313,16 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpDcInstrumenta
           'emit',
           this._getPatchServerEmit()
         );
+
+        this._wrap(moduleExports, 'request', this._wrapSyncClientError());
+        this._wrap(moduleExports, 'get', this._wrapSyncClientError());
         return moduleExports;
       },
       (moduleExports: Http) => {
         if (moduleExports === undefined) return;
         this._unwrap(moduleExports.Server.prototype, 'emit');
+        this._unwrap(moduleExports, 'request');
+        this._unwrap(moduleExports, 'get');
       }
     );
   }
@@ -388,8 +435,7 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpDcInstrumenta
     const method = request.method || 'GET';
 
     const ctx = propagation.extract(ROOT_CONTEXT, headers);
-    const span = this._startHttpSpan(method, spanOptions, ctx);
-
+    const span =  this.tracer.startSpan(method, spanOptions, ctx)
     assignSymbols(response, {
       span,
       spanKind: SpanKind.SERVER,
@@ -511,11 +557,7 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpDcInstrumenta
       kind: SpanKind.CLIENT,
       attributes,
     };
-    const span = this._startHttpSpan(
-      request.method,
-      spanOptions,
-      parentContext
-    );
+    const span = this.tracer.startSpan(request.method, spanOptions, parentContext); 
 
     this._callRequestHook(span, request);
 
@@ -681,34 +723,8 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpDcInstrumenta
     this._closeHttpSpan(response);
   }
 
-  private _startHttpSpan(
-    name: string,
-    options: SpanOptions,
-    ctx = context.active()
-  ) {
-    /*
-     * If a parent is required but not present, we use a `NoopSpan` to still
-     * propagate context without recording it.
-     */
-    const requireParent =
-      options.kind === SpanKind.CLIENT
-        ? this.getConfig().requireParentforOutgoingSpans
-        : this.getConfig().requireParentforIncomingSpans;
 
-    let span: Span;
-    const currentSpan = trace.getSpan(ctx);
-
-    if (requireParent === true && currentSpan === undefined) {
-      span = trace.wrapSpanContext(INVALID_SPAN_CONTEXT);
-    } else if (requireParent === true && currentSpan?.spanContext().isRemote) {
-      span = currentSpan;
-    } else {
-      span = this.tracer.startSpan(name, options, ctx);
-    }
-    return span;
-  }
-
-  private _closeHttpSpan(traced: WithSpan) {
+  private _closeHttpSpan(traced: WithInstrumentation) {
     traced[SPAN_SYMBOL]?.end();
 
     const startTime = traced[START_TIME_SYMBOL];

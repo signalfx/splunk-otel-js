@@ -69,9 +69,8 @@ import {
 import type { ClientRequest, IncomingMessage, ServerResponse } from 'http';
 import { getRPCMetadata, RPCType } from '@opentelemetry/core';
 import { HTTP_STATUS_TEXT } from '../../../src/instrumentations/httpdc/semconv';
-import { SemconvStability } from '../../../src/instrumentations/httpdc/internal-types';
 import { HttpDcInstrumentation } from '../../../src/instrumentations/httpdc/httpdc';
-import { isWrapped } from '@opentelemetry/instrumentation';
+import { isWrapped, SemconvStability } from '@opentelemetry/instrumentation';
 
 const instrumentation = new HttpDcInstrumentation();
 instrumentation.enable();
@@ -820,8 +819,7 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
     });
 
     before((_ctx, done) => {
-      instrumentation.setConfig({});
-      instrumentation['_semconvStability'] = SemconvStability.STABLE;
+      instrumentation.setConfig({ semconvStability: SemconvStability.STABLE});
       instrumentation.enable();
       server = http.createServer((request, response) => {
         if (request.url?.includes('/premature-close')) {
@@ -942,11 +940,10 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
   describe('with semconv stability set to http/dup', () => {
     beforeEach(() => {
       memoryExporter.reset();
-      instrumentation.setConfig({});
     });
 
     before((_ctx, done) => {
-      instrumentation['_semconvStability'] = SemconvStability.DUPLICATE;
+      instrumentation.setConfig({ semconvStability: SemconvStability.DUPLICATE});
       instrumentation.enable();
       server = http.createServer((request, response) => {
         if (request.url?.includes('/setroute')) {
