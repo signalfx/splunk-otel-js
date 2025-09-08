@@ -1,11 +1,11 @@
 /*
- * Copyright The OpenTelemetry Authors
+ * Copyright Splunk Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      https://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -85,7 +85,7 @@ describe('metrics', () => {
     instrumentation.enable();
     server = http.createServer((request, response) => {
       const rpcData = getRPCMetadata(context.active());
-      assert.ok(rpcData != null);
+      assert.ok(rpcData);
       assert.strictEqual(rpcData.type, RPCType.HTTP);
       assert.strictEqual(rpcData.route, undefined);
       rpcData.route = 'TheRoute';
@@ -186,7 +186,7 @@ describe('metrics', () => {
 
   describe('with semconv stability set to stable', () => {
     before(() => {
-        instrumentation.setConfig({ semconvStability: SemconvStability.STABLE });
+      instrumentation.setConfig({ semconvStability: SemconvStability.STABLE });
     });
 
     it('should add server/client duration metrics', async () => {
@@ -285,7 +285,7 @@ describe('metrics', () => {
         [ATTR_SERVER_PORT]: 22346,
         [ATTR_ERROR_TYPE]: 'TypeError',
       });
-     });
+    });
   });
 
   describe('with semconv stability set to duplicate', () => {
@@ -426,7 +426,7 @@ describe('metrics', () => {
         [ATTR_HTTP_RESPONSE_STATUS_CODE]: 200,
       });
 
-       metricsMemoryExporter.reset();
+      metricsMemoryExporter.reset();
 
       assert.throws(() =>
         http.request({
@@ -437,10 +437,10 @@ describe('metrics', () => {
         })
       );
 
-       await metricReader.collectAndExport();
-       resourceMetrics = metricsMemoryExporter.getMetrics();
-       scopeMetrics = resourceMetrics[0].scopeMetrics;
-       assert.strictEqual(scopeMetrics.length, 1, 'scopeMetrics count');
+      await metricReader.collectAndExport();
+      resourceMetrics = metricsMemoryExporter.getMetrics();
+      scopeMetrics = resourceMetrics[0].scopeMetrics;
+      assert.strictEqual(scopeMetrics.length, 1, 'scopeMetrics count');
       metrics = scopeMetrics[0].metrics;
       assert.strictEqual(metrics.length, 2, 'metrics count');
 

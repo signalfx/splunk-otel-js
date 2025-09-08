@@ -82,7 +82,6 @@ import {
 import { Err, Http } from './internal-types';
 import * as diagnostics_channel from 'node:diagnostics_channel';
 
-
 const SPAN_SYMBOL = Symbol.for('HTTPDC_SPAN');
 const SPAN_KIND_SYMBOL = Symbol.for('HTTPDC_SPAN_KIND');
 const START_TIME_SYMBOL = Symbol.for('HTTPDC_START_TIME');
@@ -103,7 +102,10 @@ type WithInstrumentation = {
 type TracedServerResponse = http.ServerResponse & WithInstrumentation;
 type TracedClientRequest = http.ClientRequest & WithInstrumentation;
 
-function assignSymbols(traced: WithInstrumentation, spanDetails: SpanDetails): void {
+function assignSymbols(
+  traced: WithInstrumentation,
+  spanDetails: SpanDetails
+): void {
   traced[SPAN_SYMBOL] = spanDetails.span;
   traced[SPAN_KIND_SYMBOL] = spanDetails.spanKind;
   traced[START_TIME_SYMBOL] = spanDetails.startTime;
@@ -236,43 +238,46 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpDcInstrumenta
         );
   }
 
-private _wrapSyncClientError() {
-const instrumentation = this;
-return (original: Function) =>
-function patched(this: unknown, ...args: unknown[]) {
-const start = hrTime();
-try {
-return original.apply(this, args);
-} catch (err: any) {
-instrumentation._handleClientRequestError(start, args, err as Error);
-throw err;
-}
-};
-}
+  private _wrapSyncClientError() {
+    const instrumentation = this;
+    return (original: Function) =>
+      function patched(this: unknown, ...args: unknown[]) {
+        const start = hrTime();
+        try {
+          return original.apply(this, args);
+        } catch (err: unknown) {
+          instrumentation._handleClientRequestError(start, args, err as Error);
+          throw err;
+        }
+      };
+  }
 
+  private _handleClientRequestError(
+    start: HrTime,
+    args: unknown[],
+    err: Error
+  ) {
+    const durationMs = hrTimeToMilliseconds(hrTimeDuration(start, hrTime()));
 
-private _handleClientRequestError(start: HrTime, args: unknown[], err: Error) {
-const durationMs = hrTimeToMilliseconds(hrTimeDuration(start, hrTime()));
+    const { method, hostname, port } = parseHttpRequestArgs(args);
 
-const { method, hostname, port } = parseHttpRequestArgs(args);
+    const oldSpanAttrs: Attributes = {
+      [SEMATTRS_HTTP_METHOD]: method,
+      [SEMATTRS_NET_PEER_NAME]: hostname,
+    };
+    if (port !== undefined) oldSpanAttrs[SEMATTRS_NET_PEER_PORT] = port;
 
-const oldSpanAttrs: Attributes = {
-  [SEMATTRS_HTTP_METHOD]: method,
-  [SEMATTRS_NET_PEER_NAME]: hostname,
-};
-if (port !== undefined) oldSpanAttrs[SEMATTRS_NET_PEER_PORT] = port;
+    const oldMetricAttrs = getOutgoingRequestMetricAttributes(oldSpanAttrs);
 
-const oldMetricAttrs = getOutgoingRequestMetricAttributes(oldSpanAttrs);
+    const stableMetricAttrs: Attributes = {
+      [ATTR_HTTP_REQUEST_METHOD]: method,
+      [ATTR_SERVER_ADDRESS]: hostname,
+      [ATTR_ERROR_TYPE]: err.name,
+    };
+    if (port !== undefined) stableMetricAttrs[ATTR_SERVER_PORT] = port;
 
-const stableMetricAttrs: Attributes = {
-  [ATTR_HTTP_REQUEST_METHOD]: method,
-  [ATTR_SERVER_ADDRESS]: hostname,
-  [ATTR_ERROR_TYPE]: err.name,
-};
-if (port !== undefined) stableMetricAttrs[ATTR_SERVER_PORT] = port;
-
-this._recordClientDuration(durationMs, oldMetricAttrs, stableMetricAttrs);
-}
+    this._recordClientDuration(durationMs, oldMetricAttrs, stableMetricAttrs);
+  }
 
   init(): [InstrumentationNodeModuleDefinition] {
     diagnostics_channel.subscribe(
@@ -435,7 +440,7 @@ this._recordClientDuration(durationMs, oldMetricAttrs, stableMetricAttrs);
     const method = request.method || 'GET';
 
     const ctx = propagation.extract(ROOT_CONTEXT, headers);
-    const span =  this.tracer.startSpan(method, spanOptions, ctx)
+    const span = this.tracer.startSpan(method, spanOptions, ctx);
     assignSymbols(response, {
       span,
       spanKind: SpanKind.SERVER,
@@ -557,7 +562,11 @@ this._recordClientDuration(durationMs, oldMetricAttrs, stableMetricAttrs);
       kind: SpanKind.CLIENT,
       attributes,
     };
-    const span = this.tracer.startSpan(request.method, spanOptions, parentContext); 
+    const span = this.tracer.startSpan(
+      request.method,
+      spanOptions,
+      parentContext
+    );
 
     this._callRequestHook(span, request);
 
@@ -722,7 +731,6 @@ this._recordClientDuration(durationMs, oldMetricAttrs, stableMetricAttrs);
 
     this._closeHttpSpan(response);
   }
-
 
   private _closeHttpSpan(traced: WithInstrumentation) {
     traced[SPAN_SYMBOL]?.end();

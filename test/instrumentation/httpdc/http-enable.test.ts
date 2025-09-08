@@ -819,7 +819,7 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
     });
 
     before((_ctx, done) => {
-      instrumentation.setConfig({ semconvStability: SemconvStability.STABLE});
+      instrumentation.setConfig({ semconvStability: SemconvStability.STABLE });
       instrumentation.enable();
       server = http.createServer((request, response) => {
         if (request.url?.includes('/premature-close')) {
@@ -943,7 +943,9 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
     });
 
     before((_ctx, done) => {
-      instrumentation.setConfig({ semconvStability: SemconvStability.DUPLICATE});
+      instrumentation.setConfig({
+        semconvStability: SemconvStability.DUPLICATE,
+      });
       instrumentation.enable();
       server = http.createServer((request, response) => {
         if (request.url?.includes('/setroute')) {

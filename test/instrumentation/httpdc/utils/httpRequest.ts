@@ -1,11 +1,11 @@
 /*
- * Copyright The OpenTelemetry Authors
+ * Copyright Splunk Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      https://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,7 +41,7 @@ function get(input: any, options?: any): GetResult {
         req: http.IncomingMessage;
       };
       let data = '';
-      resp.on('data', chunk => {
+      resp.on('data', (chunk) => {
         data += chunk;
       });
       resp.on('end', () => {
@@ -58,15 +58,14 @@ function get(input: any, options?: any): GetResult {
           res,
         });
       });
-      resp.on('error', err => {
+      resp.on('error', (err) => {
         reject(err);
       });
     }
-    req =
-      options != null
-        ? http.get(input, options, onGetResponseCb)
-        : http.get(input, onGetResponseCb);
-    req.on('error', err => {
+    req = options
+      ? http.get(input, options, onGetResponseCb)
+      : http.get(input, onGetResponseCb);
+    req.on('error', (err) => {
       reject(err);
     });
     req.on('timeout', () => {

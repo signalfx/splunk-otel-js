@@ -936,19 +936,19 @@ export const getOutgoingStableRequestMetricAttributesOnResponse = (
  * @param args Arguments passed to http.request/get
  * @returns Parsed request information
  */
-export function parseHttpRequestArgs(args: unknown[]): { 
-  method: string; 
-  hostname: string; 
+export function parseHttpRequestArgs(args: unknown[]): {
+  method: string;
+  hostname: string;
   port?: number;
   path?: string;
-  protocol?: string; 
+  protocol?: string;
 } {
   let method = 'GET';
   let hostname = 'localhost';
   let port: number | undefined;
   let path = '/';
   let protocol = 'http:';
-
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const first = args[0] as any;
 
   if (typeof first === 'string' || first instanceof URL) {
@@ -957,8 +957,9 @@ export function parseHttpRequestArgs(args: unknown[]): {
     port = urlObj.port ? Number(urlObj.port) : undefined;
     path = urlObj.pathname + urlObj.search;
     protocol = urlObj.protocol;
-    
+
     // Check second argument for options that might override method
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const second = args[1] as any;
     if (typeof second === 'object' && second !== null && second.method) {
       method = second.method.toUpperCase();
