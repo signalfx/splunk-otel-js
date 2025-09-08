@@ -1241,7 +1241,7 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
       await new Promise<void>((resolve) => server.listen(PORT, resolve));
       await httpRequest.get(`${protocol}://${hostname}:${PORT}`);
       const spans = memoryExporter.getFinishedSpans();
-      assert.strictEqual(spans.length, 2);
+      assert.strictEqual(spans.length, 1);
       const span = spanByKind(SpanKind.SERVER, spans);
       assert.strictEqual(span.attributes.key, 'value');
     });

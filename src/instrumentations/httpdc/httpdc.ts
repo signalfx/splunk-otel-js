@@ -27,6 +27,7 @@ import {
   Histogram,
   ValueType,
   HrTime,
+  INVALID_SPAN_CONTEXT,
 } from '@opentelemetry/api';
 import {
   RPCMetadata,
@@ -440,7 +441,7 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpDcInstrumenta
     const method = request.method || 'GET';
 
     const ctx = propagation.extract(ROOT_CONTEXT, headers);
-    const span = this.tracer.startSpan(method, spanOptions, ctx);
+    const span = this._startHttpSpan(method, spanOptions, ctx);
     assignSymbols(response, {
       span,
       spanKind: SpanKind.SERVER,
@@ -562,7 +563,8 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpDcInstrumenta
       kind: SpanKind.CLIENT,
       attributes,
     };
-    const span = this.tracer.startSpan(
+
+    const span = this._startHttpSpan(
       request.method,
       spanOptions,
       parentContext
@@ -730,6 +732,33 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpDcInstrumenta
     }
 
     this._closeHttpSpan(response);
+  }
+
+  private _startHttpSpan(
+    name: string,
+    options: SpanOptions,
+    ctx = context.active()
+  ) {
+    /*
+     * If a parent is required but not present, we use a `NoopSpan` to still
+     * propagate context without recording it.
+     */
+    const requireParent =
+      options.kind === SpanKind.CLIENT
+        ? this.getConfig().requireParentforOutgoingSpans
+        : this.getConfig().requireParentforIncomingSpans;
+
+    let span: Span;
+    const currentSpan = trace.getSpan(ctx);
+
+    if (requireParent === true && currentSpan === undefined) {
+      span = trace.wrapSpanContext(INVALID_SPAN_CONTEXT);
+    } else if (requireParent === true && currentSpan?.spanContext().isRemote) {
+      span = currentSpan;
+    } else {
+      span = this.tracer.startSpan(name, options, ctx);
+    }
+    return span;
   }
 
   private _closeHttpSpan(traced: WithInstrumentation) {
