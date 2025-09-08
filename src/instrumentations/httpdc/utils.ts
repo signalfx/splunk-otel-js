@@ -108,7 +108,6 @@ export function getAbsoluteUrl(
   let path = req.path || '/';
 
   const isDefaultPort = port === 80 || port === 443;
-
   if (path.includes('?')) {
     const [pathname, query] = path.split('?', 2);
     const searchParams = new URLSearchParams(query);
@@ -124,7 +123,15 @@ export function getAbsoluteUrl(
     const redactedQuery = searchParams.toString();
     path = `${pathname}?${redactedQuery}`;
   }
-  const base = `${req.protocol}//${req.host}`;
+
+  let authPart = '';
+  const hasAuth = Boolean(req.getHeader('authorization'));
+  if (hasAuth) {
+    authPart = `${STR_REDACTED}:${STR_REDACTED}@`;
+  }
+
+  const protocol = req.protocol || 'http:';
+  const base = `${protocol}//${authPart}${req.host}`;
   return isDefaultPort ? `${base}${path}` : `${base}:${port}${path}`;
 }
 
