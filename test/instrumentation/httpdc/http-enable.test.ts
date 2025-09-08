@@ -913,6 +913,20 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
       });
     });
 
+    it('should redact auth from the `url.full` attribute (client side and server side)', async () => {
+      await httpRequest.get(
+        `${protocol}://user:pass@${hostname}:${PORT}${pathname}`
+      );
+      const spans = memoryExporter.getFinishedSpans();
+      const [_, outgoingSpan] = spans;
+      assert.strictEqual(spans.length, 2);
+      assert.strictEqual(outgoingSpan.kind, SpanKind.CLIENT);
+      assert.strictEqual(
+        outgoingSpan.attributes[ATTR_URL_FULL],
+        `${protocol}://REDACTED:REDACTED@${hostname}:${PORT}${pathname}`
+      );
+    });
+
     it('should generate semconv 1.27 server spans with route when RPC metadata is available', async () => {
       const response = await httpRequest.get(
         `${protocol}://${hostname}:${PORT}${pathname}/setroute`
