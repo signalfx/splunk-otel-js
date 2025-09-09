@@ -1,0 +1,401 @@
+/*
+ * Copyright The OpenTelemetry Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+import { strict as assert } from 'assert';
+import { beforeEach, describe, it } from 'node:test';
+import {
+  Attributes,
+  SpanStatusCode,
+  context,
+  Span,
+  diag,
+} from '@opentelemetry/api';
+import {
+  ATTR_HTTP_ROUTE,
+  ATTR_USER_AGENT_ORIGINAL,
+} from '@opentelemetry/semantic-conventions';
+import { IncomingMessage, ServerResponse } from 'http';
+import { Socket } from 'net';
+import * as sinon from 'sinon';
+import * as url from 'url';
+import {
+  SEMATTRS_HTTP_REQUEST_CONTENT_LENGTH,
+  SEMATTRS_HTTP_REQUEST_CONTENT_LENGTH_UNCOMPRESSED,
+  SEMATTRS_HTTP_RESPONSE_CONTENT_LENGTH,
+  SEMATTRS_HTTP_RESPONSE_CONTENT_LENGTH_UNCOMPRESSED,
+  SEMATTRS_HTTP_TARGET,
+  SEMATTRS_HTTP_USER_AGENT,
+} from '@opentelemetry/semantic-conventions';
+import {
+  ATTR_USER_AGENT_SYNTHETIC_TYPE,
+  USER_AGENT_SYNTHETIC_TYPE_VALUE_BOT,
+  HTTP_ERROR_NAME,
+  HTTP_ERROR_MESSAGE,
+} from '../../../src/instrumentations/httpdc/semconv';
+import * as utils from '../../../src/instrumentations/httpdc/utils';
+import { RPCType, setRPCMetadata } from '@opentelemetry/core';
+import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
+import { SemconvStability } from '@opentelemetry/instrumentation';
+
+describe('Utility', () => {
+  describe('parseResponseStatus()', () => {
+    it('should return ERROR code by default', () => {
+      const status = utils.parseResponseStatus(400, undefined);
+      assert.deepStrictEqual(status, SpanStatusCode.ERROR);
+    });
+
+    it('should return UNSET for Success HTTP status code', () => {
+      // For client (upperBound = 400), 1xx, 2xx, 3xx should be UNSET
+      for (let index = 100; index < 400; index++) {
+        const status = utils.parseResponseStatus(400, index);
+        assert.deepStrictEqual(status, SpanStatusCode.UNSET);
+      }
+      // For server (upperBound = 500), 1xx, 2xx, 3xx, 4xx should be UNSET
+      for (let index = 100; index < 500; index++) {
+        const status = utils.parseResponseStatus(500, index);
+        assert.deepStrictEqual(status, SpanStatusCode.UNSET);
+      }
+    });
+
+    it('should return ERROR for bad status codes', () => {
+      // For client, 4xx and above should be ERROR
+      for (let index = 400; index <= 600; index++) {
+        const status = utils.parseResponseStatus(400, index);
+        assert.notStrictEqual(status, SpanStatusCode.UNSET);
+      }
+      // For server, 5xx and above should be ERROR
+      for (let index = 500; index <= 600; index++) {
+        const status = utils.parseResponseStatus(500, index);
+        assert.notStrictEqual(status, SpanStatusCode.UNSET);
+      }
+    });
+  });
+
+  describe('setSpanWithError()', () => {
+    it('should have error attributes', () => {
+      const errorMessage = 'test error';
+      const error = new Error(errorMessage);
+      const span = {
+        setAttribute: () => undefined,
+        setStatus: () => undefined,
+        recordException: () => undefined,
+      } as unknown as Span;
+      const mock = sinon.mock(span);
+      mock
+        .expects('setAttribute')
+        .calledWithExactly(HTTP_ERROR_NAME, 'error');
+      mock
+        .expects('setAttribute')
+        .calledWithExactly(HTTP_ERROR_MESSAGE, errorMessage);
+      mock.expects('setStatus').calledWithExactly({
+        code: SpanStatusCode.ERROR,
+        message: errorMessage,
+      });
+      mock.expects('recordException').calledWithExactly(error);
+
+      utils.setSpanWithError(span, error, SemconvStability.OLD);
+      mock.verify();
+    });
+  });
+
+  describe('getIncomingRequestAttributesOnResponse()', () => {
+    it('should correctly parse the middleware stack if present', async () => {
+      context.setGlobalContextManager(new AsyncHooksContextManager().enable());
+      const request = {
+        socket: {},
+      } as IncomingMessage;
+      const result = await new Promise<void>((resolve) => {
+        context.with(
+          setRPCMetadata(context.active(), {
+            type: RPCType.HTTP,
+            route: '/user/:id',
+            span: null as unknown as Span,
+          }),
+          () => {
+            const attributes = utils.getIncomingRequestAttributesOnResponse(
+              request,
+              {} as ServerResponse,
+              SemconvStability.OLD
+            );
+            assert.deepStrictEqual(attributes[ATTR_HTTP_ROUTE], '/user/:id');
+            context.disable();
+            resolve();
+          }
+        );
+      });
+    });
+
+    it('should successfully process without middleware stack', () => {
+      const request = {
+        socket: {},
+      } as IncomingMessage;
+      const attributes = utils.getIncomingRequestAttributesOnResponse(
+        request,
+        {
+          socket: {},
+        } as ServerResponse & { socket: Socket },
+        SemconvStability.OLD
+      );
+      assert.deepEqual(attributes[ATTR_HTTP_ROUTE], undefined);
+    });
+  });
+
+  describe('getIncomingRequestMetricAttributesOnResponse()', () => {
+    it('should correctly add http_route if span has it', () => {
+      const spanAttributes: Attributes = {
+        [ATTR_HTTP_ROUTE]: '/user/:id',
+      };
+      const metricAttributes =
+        utils.getIncomingRequestMetricAttributesOnResponse(spanAttributes);
+
+      assert.deepStrictEqual(metricAttributes[ATTR_HTTP_ROUTE], '/user/:id');
+    });
+
+    it('should skip http_route if span does not have it', () => {
+      const spanAttributes: Attributes = {};
+      const metricAttributes =
+        utils.getIncomingRequestMetricAttributesOnResponse(spanAttributes);
+      assert.deepEqual(metricAttributes[ATTR_HTTP_ROUTE], undefined);
+    });
+  });
+
+  // Verify the key in the given attributes is set to the given value,
+  // and that no other HTTP Content Length attributes are set.
+  function verifyValueInAttributes(
+    attributes: Attributes,
+    key: string | undefined,
+    value: number
+  ) {
+    const SemanticAttributess = [
+      SEMATTRS_HTTP_RESPONSE_CONTENT_LENGTH_UNCOMPRESSED,
+      SEMATTRS_HTTP_RESPONSE_CONTENT_LENGTH,
+      SEMATTRS_HTTP_REQUEST_CONTENT_LENGTH_UNCOMPRESSED,
+      SEMATTRS_HTTP_REQUEST_CONTENT_LENGTH,
+    ];
+
+    for (const attr of SemanticAttributess) {
+      if (attr === key) {
+        assert.strictEqual(attributes[attr], value);
+      } else {
+        assert.strictEqual(attributes[attr], undefined);
+      }
+    }
+  }
+
+  describe('setRequestContentLengthAttribute()', () => {
+    it('should set request content-length uncompressed attribute with no content-encoding header', () => {
+      const attributes: Attributes = {};
+      const request = {} as IncomingMessage;
+
+      request.headers = {
+        'content-length': '1200',
+      };
+      utils.setRequestContentLengthAttribute(request, attributes);
+
+      verifyValueInAttributes(
+        attributes,
+        SEMATTRS_HTTP_REQUEST_CONTENT_LENGTH_UNCOMPRESSED,
+        1200
+      );
+    });
+
+    it('should set request content-length uncompressed attribute with "identity" content-encoding header', () => {
+      const attributes: Attributes = {};
+      const request = {} as IncomingMessage;
+      request.headers = {
+        'content-length': '1200',
+        'content-encoding': 'identity',
+      };
+      utils.setRequestContentLengthAttribute(request, attributes);
+
+      verifyValueInAttributes(
+        attributes,
+        SEMATTRS_HTTP_REQUEST_CONTENT_LENGTH_UNCOMPRESSED,
+        1200
+      );
+    });
+
+    it('should set request content-length compressed attribute with "gzip" content-encoding header', () => {
+      const attributes: Attributes = {};
+      const request = {} as IncomingMessage;
+      request.headers = {
+        'content-length': '1200',
+        'content-encoding': 'gzip',
+      };
+      utils.setRequestContentLengthAttribute(request, attributes);
+
+      verifyValueInAttributes(
+        attributes,
+        SEMATTRS_HTTP_REQUEST_CONTENT_LENGTH,
+        1200
+      );
+    });
+  });
+
+  describe('getIncomingRequestAttributes()', () => {
+    it('should not set http.route in http span attributes', () => {
+      const request = {
+        url: 'http://hostname/user/:id',
+        method: 'GET',
+        socket: {},
+      } as IncomingMessage;
+      request.headers = {
+        'user-agent': 'chrome',
+        'x-forwarded-for': '<client>, <proxy1>, <proxy2>',
+      };
+      const attributes = utils.getIncomingRequestAttributes(
+        request,
+        {
+          semconvStability: SemconvStability.OLD,
+          enableSyntheticSourceDetection: false,
+        },
+        diag
+      );
+      assert.strictEqual(attributes[ATTR_HTTP_ROUTE], undefined);
+    });
+
+    it('should set http.target as path in http span attributes', () => {
+      const request = {
+        url: 'http://hostname/user/?q=val',
+        method: 'GET',
+        socket: {},
+      } as IncomingMessage;
+      request.headers = {
+        'user-agent': 'chrome',
+      };
+      const attributes = utils.getIncomingRequestAttributes(
+        request,
+        {
+          semconvStability: SemconvStability.OLD,
+          enableSyntheticSourceDetection: false,
+        },
+        diag
+      );
+      assert.strictEqual(attributes[SEMATTRS_HTTP_TARGET], '/user/?q=val');
+      assert.strictEqual(attributes[ATTR_USER_AGENT_SYNTHETIC_TYPE], undefined);
+    });
+
+    it('should set synthetic attributes on requests', () => {
+      const request = {
+        url: 'http://hostname/user/:id',
+        method: 'GET',
+        socket: {},
+      } as IncomingMessage;
+      request.headers = {
+        'user-agent': 'Googlebot',
+      };
+      const attributes = utils.getIncomingRequestAttributes(
+        request,
+        {
+          semconvStability: SemconvStability.STABLE,
+          enableSyntheticSourceDetection: true,
+        },
+        diag
+      );
+      assert.strictEqual(attributes[ATTR_USER_AGENT_ORIGINAL], 'Googlebot');
+      assert.strictEqual(
+        attributes[ATTR_USER_AGENT_SYNTHETIC_TYPE],
+        USER_AGENT_SYNTHETIC_TYPE_VALUE_BOT
+      );
+    });
+  });
+
+  describe('headers to span attributes capture', () => {
+    let span: Span;
+    let mock: sinon.SinonMock;
+
+    beforeEach(() => {
+      span = {
+        setAttribute: () => undefined,
+      } as unknown as Span;
+      mock = sinon.mock(span);
+    });
+
+    it('should set attributes for request and response keys', () => {
+      mock
+        .expects('setAttribute')
+        .calledWithExactly('http.request.header.origin', ['localhost']);
+      mock
+        .expects('setAttribute')
+        .calledWithExactly('http.response.header.cookie', ['token=123']);
+
+      utils.headerCapture('request', ['Origin'])(span, () => 'localhost');
+      utils.headerCapture('response', ['Cookie'])(span, () => 'token=123');
+      mock.verify();
+    });
+
+    it('should set attributes for multiple values', () => {
+      mock
+        .expects('setAttribute')
+        .calledWithExactly('http.request.header.origin', [
+          'localhost',
+          'www.example.com',
+        ]);
+
+      utils.headerCapture('request', ['Origin'])(span, () => [
+        'localhost',
+        'www.example.com',
+      ]);
+      mock.verify();
+    });
+
+    it('sets attributes for multiple headers', () => {
+      mock
+        .expects('setAttribute')
+        .calledWithExactly('http.request.header.origin', ['localhost']);
+      mock
+        .expects('setAttribute')
+        .calledWithExactly('http.request.header.foo', [42]);
+
+      utils.headerCapture('request', ['Origin', 'Foo'])(span, header => {
+        if (header === 'origin') {
+          return 'localhost';
+        }
+
+        if (header === 'foo') {
+          return 42;
+        }
+
+        return undefined;
+      });
+      mock.verify();
+    });
+
+    it('should normalize header names', () => {
+      mock
+        .expects('setAttribute')
+        .calledWithExactly('http.request.header.x_forwarded_for', ['foo']);
+
+      utils.headerCapture('request', ['X-Forwarded-For'])(span, () => 'foo');
+      mock.verify();
+    });
+
+    it('ignores non-existent headers', () => {
+      mock
+        .expects('setAttribute')
+        .once()
+        .calledWithExactly('http.request.header.origin', ['localhost']);
+
+      utils.headerCapture('request', ['Origin', 'Accept'])(span, header => {
+        if (header === 'origin') {
+          return 'localhost';
+        }
+
+        return undefined;
+      });
+      mock.verify();
+    });
+  });
+});
