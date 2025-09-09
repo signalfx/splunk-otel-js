@@ -77,6 +77,7 @@ describe('metrics', () => {
   beforeEach(() => {
     contextManager = new AsyncHooksContextManager().enable();
     context.setGlobalContextManager(contextManager);
+    instrumentation['_updateMetricInstruments']();
     metricsMemoryExporter.reset();
   });
 
