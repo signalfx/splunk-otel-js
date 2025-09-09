@@ -78,7 +78,6 @@ import {
   getIncomingStableRequestMetricAttributesOnResponse,
   getOutgoingRequestMetricAttributesOnResponse,
   getOutgoingStableRequestMetricAttributesOnResponse,
-  parseHttpRequestArgs,
 } from './utils';
 import { Err, Http } from './internal-types';
 import * as diagnostics_channel from 'node:diagnostics_channel';
@@ -259,8 +258,11 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpDcInstrumenta
     err: Error
   ) {
     const durationMs = hrTimeToMilliseconds(hrTimeDuration(start, hrTime()));
-
-    const { method, hostname, port } = parseHttpRequestArgs(args);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const request = args[0] as any;
+    const method = (request.method ?? 'GET').toUpperCase();
+    const hostname = request.hostname ?? 'localhost';
+    const port = request.port ?? 80;
 
     const oldSpanAttrs: Attributes = {
       [SEMATTRS_HTTP_METHOD]: method,
