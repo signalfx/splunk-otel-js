@@ -31,8 +31,8 @@ const sleep = (ms: number) => {
 test('profiler exports heap profiles', async () => {
   let sendCallCount = 0;
   const exporter: ProfilingExporter = {
-    send(_cpuProfile: CpuProfile) {},
-    sendHeapProfile(_profile: HeapProfile) {
+    async send(_cpuProfile: CpuProfile) {},
+    async sendHeapProfile(_profile: HeapProfile) {
       sendCallCount += 1;
     },
   };

@@ -27,7 +27,7 @@ const proto = perftools.profiles;
 const toBuffer = (profile: any) => {
   return perftools.profiles.Profile.encode(profile).finish();
 };
-const toProfileObject = (buffer: Buffer) => {
+const toProfileObject = (buffer: Uint8Array) => {
   return perftools.profiles.Profile.decode(buffer);
 };
 const clone = (serializedProfile: any) => {
