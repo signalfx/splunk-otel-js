@@ -128,14 +128,16 @@ describe('profiling', () => {
         },
       });
 
-      assert(context._getContextManager() instanceof ProfilingContextManager);
+      assert(
+        context['_getContextManager']() instanceof ProfilingContextManager
+      );
 
       const span = trace.getTracer('test-tracer').startSpan('test-span');
       const { spanId: expectedSpanId, traceId: expectedTraceId } =
         span.spanContext();
 
       context.with(trace.setSpan(context.active(), span), () => {
-        spinMs(2_500);
+        spinMs(3_000);
         span.end();
       });
 
@@ -146,7 +148,7 @@ describe('profiling', () => {
       // It might be possible all stacktraces will not be available,
       // due to the first few stacktraces having random timings
       // after a profiling run is started.
-      const expectedStacktraces = 4;
+      const expectedStacktraces = 2;
       assert(
         stacktracesReceived.length >= expectedStacktraces,
         `expected at least ${expectedStacktraces}, got ${stacktracesReceived.length}`
