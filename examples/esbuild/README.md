@@ -14,6 +14,7 @@ Navigate to either the `cjs` or `esm` folder, depending on whether you want to r
 - `npm run clear-bundle` - Remove the bundle directory
 - `npm run esbuild` - Build bundle
 - `npm run esbuild-start` - Start the bundled app
+- `npm run start:collector` - Build and run the app with profiling and metrics enabled
 - `npm start` - Build and run the app (default for e2e tests)
 
 ## How it works
@@ -37,6 +38,11 @@ keepNames: true
 npm start
 ```
 
+For profiling and metrics (uses `.env.collector` configuration):
+
+```bash
+npm run start:collector
+```
 
 Then visit:
 - http://localhost:8080/main - Direct main endpoint

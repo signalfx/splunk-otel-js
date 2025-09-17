@@ -4,9 +4,21 @@ PKG=$1
 echo "Installing in all examples: $PKG"
 
 for d in ./examples/*/ ; do
-  echo "$d"
-  (
-  	cd "$d";
-  	npm install $PKG
-  )
+  if [ -f "$d/package.json" ]; then
+    echo "$d"
+    (
+      cd "$d";
+      npm install $PKG
+    )
+  fi
+done
+
+for d in ./examples/esbuild/*/ ; do
+  if [ -f "$d/package.json" ]; then
+    echo "$d"
+    (
+      cd "$d";
+      npm install
+    )
+  fi
 done
