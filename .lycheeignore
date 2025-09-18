@@ -6,3 +6,4 @@ http://collector:4317/
 http://localhost:8080/
 https://quickdraw.splunk.com/
 step-*
+https:\/\/github\.com\/signalfx\/splunk-otel-js\/pull\/*
