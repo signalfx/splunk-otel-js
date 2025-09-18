@@ -42,3 +42,28 @@ export const enum SemconvStability {
   /** Emit both stable and old semantic conventions*/
   DUPLICATE = 0x1 | 0x2,
 }
+
+/**
+ * Names of possible synthetic test sources.
+ */
+export const SYNTHETIC_TEST_NAMES = ['alwayson'];
+
+/**
+ * Names of possible synthetic bot sources.
+ */
+export const SYNTHETIC_BOT_NAMES = ['googlebot', 'bingbot'];
+
+/**
+ * REDACTED string used to replace sensitive information in URLs.
+ */
+export const STR_REDACTED = 'REDACTED';
+
+/**
+ * List of URL query keys that are considered sensitive and whose value should be redacted.
+ */
+export const DEFAULT_QUERY_STRINGS_TO_REDACT = [
+  'sig',
+  'Signature',
+  'AWSAccessKeyId',
+  'X-Goog-Signature',
+] as const;
