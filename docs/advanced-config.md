@@ -91,7 +91,7 @@ The following config options can be set by passing them as tracing arguments to 
 
 - `tracing.captureHttpRequestUriParams`: Either a list of keys (case-sensitive) of HTTP query parameters to capture or a function that gets invoked with the current span and query parameters to set a custom span attribute. When using the former, parameters are set as span attributes as `http.request.param.${key}`. Attribute keys are normalized at capture time, meaning `.` is replaced with `_` to avoid any attribute namespacing issues.
 
-- `tracing.tracerConfig`: An object that is merged into the default tracer config replacing any existing keys. It's passed to the tracer provider during initialization. This can be used to customize the tracer provider or tracer. Must satisfy [`TracerConfig` interface](https://open-telemetry.github.io/opentelemetry-js/interfaces/_opentelemetry_sdk_trace_base.TracerConfig.html)
+- `tracing.tracerConfig`: An object that is merged into the default tracer config replacing any existing keys. It's passed to the tracer provider during initialization. This can be used to customize the tracer provider or tracer.
 
 
 ### Metrics

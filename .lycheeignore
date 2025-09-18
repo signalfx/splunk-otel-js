@@ -3,4 +3,7 @@ https://docs.github.com/
 http://localhost:4318/
 http://localhost:4317/
 http://collector:4317/
+http://localhost:8080/
 https://quickdraw.splunk.com/
+step-*
+https:\/\/github\.com\/signalfx\/splunk-otel-js\/pull\/*
