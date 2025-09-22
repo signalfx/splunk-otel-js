@@ -17,7 +17,6 @@ import { describe, before, beforeEach, after, it } from 'node:test';
 import {
   AggregationTemporality,
   DataPointType,
-  InMemoryMetricExporter,
   MeterProvider,
 } from '@opentelemetry/sdk-metrics';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
@@ -43,11 +42,10 @@ import {
 } from '../../../src/instrumentations/httpdc/semconv';
 import * as assert from 'assert';
 import { HttpDcInstrumentation } from '../../../src/instrumentations/httpdc/httpdc';
-import { httpRequest } from './utils/httpRequest';
-import { TestMetricReader } from './utils/TestMetricReader';
+import { httpRequest } from './utils/utils';
+import { TestMetricReader } from '../../utils';
 import { context, ContextManager } from '@opentelemetry/api';
 import { SemconvStability } from '@opentelemetry/instrumentation';
-
 const instrumentation = new HttpDcInstrumentation();
 instrumentation.enable();
 instrumentation.disable();
@@ -62,11 +60,10 @@ const protocol = 'http';
 const hostname = 'localhost';
 const pathname = '/test';
 const tracerProvider = new NodeTracerProvider();
-const metricsMemoryExporter = new InMemoryMetricExporter(
-  AggregationTemporality.DELTA
-);
-const metricReader = new TestMetricReader(metricsMemoryExporter);
+
+const metricReader = new TestMetricReader(AggregationTemporality.DELTA);
 const meterProvider = new MeterProvider({ readers: [metricReader] });
+
 
 instrumentation.setTracerProvider(tracerProvider);
 instrumentation.setMeterProvider(meterProvider);
@@ -74,13 +71,12 @@ instrumentation.setMeterProvider(meterProvider);
 describe('metrics', () => {
   let contextManager: ContextManager;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     contextManager = new AsyncHooksContextManager().enable();
     context.setGlobalContextManager(contextManager);
     instrumentation['_updateMetricInstruments']();
-    metricsMemoryExporter.reset();
   });
-
+ 
   before(() => {
     instrumentation.enable();
     server = http.createServer((request, response) => {
@@ -106,9 +102,9 @@ describe('metrics', () => {
           `${protocol}://${hostname}:${serverPort}${pathname}`
         );
       }
-      await metricReader.collectAndExport();
-      const resourceMetrics = metricsMemoryExporter.getMetrics();
-      const scopeMetrics = resourceMetrics[0].scopeMetrics;
+
+      const {resourceMetrics} = await metricReader.collect();
+      const scopeMetrics = resourceMetrics.scopeMetrics;
       assert.strictEqual(scopeMetrics.length, 1, 'scopeMetrics count');
       const metrics = scopeMetrics[0].metrics;
       assert.strictEqual(metrics.length, 2, 'metrics count');
@@ -196,9 +192,9 @@ describe('metrics', () => {
           `${protocol}://${hostname}:${serverPort}${pathname}`
         );
       }
-      await metricReader.collectAndExport();
-      let resourceMetrics = metricsMemoryExporter.getMetrics();
-      let scopeMetrics = resourceMetrics[0].scopeMetrics;
+      
+      let { resourceMetrics } = await metricReader.collect();
+      let scopeMetrics = resourceMetrics.scopeMetrics;
       assert.strictEqual(scopeMetrics.length, 1, 'scopeMetrics count');
       let metrics = scopeMetrics[0].metrics;
       assert.strictEqual(metrics.length, 2, 'metrics count');
@@ -249,7 +245,6 @@ describe('metrics', () => {
         [ATTR_HTTP_RESPONSE_STATUS_CODE]: 200,
       });
 
-      metricsMemoryExporter.reset();
 
       assert.throws(() =>
         http.request({
@@ -260,9 +255,8 @@ describe('metrics', () => {
         })
       );
 
-      await metricReader.collectAndExport();
-      resourceMetrics = metricsMemoryExporter.getMetrics();
-      scopeMetrics = resourceMetrics[0].scopeMetrics;
+      ({ resourceMetrics } = await metricReader.collect());
+      scopeMetrics = resourceMetrics.scopeMetrics;
       assert.strictEqual(scopeMetrics.length, 1, 'scopeMetrics count');
       metrics = scopeMetrics[0].metrics;
       assert.strictEqual(metrics.length, 1, 'metrics count');
@@ -300,9 +294,9 @@ describe('metrics', () => {
           `${protocol}://${hostname}:${serverPort}${pathname}`
         );
       }
-      await metricReader.collectAndExport();
-      let resourceMetrics = metricsMemoryExporter.getMetrics();
-      let scopeMetrics = resourceMetrics[0].scopeMetrics;
+
+      let { resourceMetrics } = await metricReader.collect();
+      let scopeMetrics = resourceMetrics.scopeMetrics;
       assert.strictEqual(scopeMetrics.length, 1, 'scopeMetrics count');
       let metrics = scopeMetrics[0].metrics;
       assert.strictEqual(metrics.length, 4, 'metrics count');
@@ -426,7 +420,6 @@ describe('metrics', () => {
         [ATTR_HTTP_RESPONSE_STATUS_CODE]: 200,
       });
 
-      metricsMemoryExporter.reset();
 
       assert.throws(() =>
         http.request({
@@ -437,9 +430,8 @@ describe('metrics', () => {
         })
       );
 
-      await metricReader.collectAndExport();
-      resourceMetrics = metricsMemoryExporter.getMetrics();
-      scopeMetrics = resourceMetrics[0].scopeMetrics;
+      ({ resourceMetrics } = await metricReader.collect());
+      scopeMetrics = resourceMetrics.scopeMetrics;
       assert.strictEqual(scopeMetrics.length, 1, 'scopeMetrics count');
       metrics = scopeMetrics[0].metrics;
       assert.strictEqual(metrics.length, 2, 'metrics count');
