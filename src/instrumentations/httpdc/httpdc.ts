@@ -493,11 +493,7 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpDcInstrumenta
     if (!this.isEnabled()) {
       return;
     }
-    // lack of isValidOptionsType(options)) and       const { method, invalidUrl, optionsParsed } = getRequestInfo(
-    //   instrumentation._diag,
-    //   options,
-    //   extraOptions
-    // );
+
     const parentContext = context.active();
 
     if (isTracingSuppressed(parentContext)) {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { strict as assert } from 'assert';
-import { beforeEach, describe, it } from 'node:test';
+import { beforeEach, describe, it, TestContext } from 'node:test';
 import {
   Attributes,
   SpanStatusCode,
@@ -48,7 +48,6 @@ import {
 } from '@opentelemetry/semantic-conventions';
 import { IncomingMessage, ServerResponse } from 'http';
 import { Socket } from 'net';
-import * as sinon from 'sinon';
 import * as url from 'url';
 import {
   SEMATTRS_HTTP_REQUEST_CONTENT_LENGTH,
@@ -206,7 +205,7 @@ describe('Utility', () => {
   });
 
   describe('setSpanWithError()', () => {
-    it('should have error attributes', () => {
+    it('should have error attributes', (t) => {
       const errorMessage = 'test error';
       const error = new Error(errorMessage);
       const span = {
@@ -214,19 +213,23 @@ describe('Utility', () => {
         setStatus: () => undefined,
         recordException: () => undefined,
       } as unknown as Span;
-      const mock = sinon.mock(span);
-      mock.expects('setAttribute').calledWithExactly(HTTP_ERROR_NAME, 'error');
-      mock
-        .expects('setAttribute')
-        .calledWithExactly(HTTP_ERROR_MESSAGE, errorMessage);
-      mock.expects('setStatus').calledWithExactly({
-        code: SpanStatusCode.ERROR,
-        message: errorMessage,
-      });
-      mock.expects('recordException').calledWithExactly(error);
+
+      const setAttributeSpy = t.mock.method(span, 'setAttribute');
+      const setStatusSpy = t.mock.method(span, 'setStatus');
+      const recordExcSpy = t.mock.method(span, 'recordException');
 
       utils.setSpanWithError(span, error, SemconvStability.OLD);
-      mock.verify();
+
+      const attrCalls = setAttributeSpy.mock.calls.map((c) => c.arguments);
+      assert.deepStrictEqual(attrCalls, [
+        [HTTP_ERROR_NAME, 'Error'],
+        [HTTP_ERROR_MESSAGE, errorMessage],
+      ]);
+
+      assert.deepStrictEqual(setStatusSpy.mock.calls[0].arguments, [
+        { code: SpanStatusCode.ERROR, message: errorMessage },
+      ]);
+      assert.deepStrictEqual(recordExcSpy.mock.calls[0].arguments, [error]);
     });
   });
 
@@ -434,51 +437,39 @@ describe('Utility', () => {
 
   describe('headers to span attributes capture', () => {
     let span: Span;
-    let mock: sinon.SinonMock;
-
-    beforeEach(() => {
+    let setAttributeSpy: ReturnType<TestContext['mock']['method']>;
+    beforeEach((t) => {
       span = {
         setAttribute: () => undefined,
       } as unknown as Span;
-      mock = sinon.mock(span);
+      setAttributeSpy = (t as TestContext).mock.method(span, 'setAttribute');
     });
 
-    it('should set attributes for request and response keys', () => {
-      mock
-        .expects('setAttribute')
-        .calledWithExactly('http.request.header.origin', ['localhost']);
-      mock
-        .expects('setAttribute')
-        .calledWithExactly('http.response.header.cookie', ['token=123']);
-
+    it('should set attributes for request and response keys', (t) => {
       utils.headerCapture('request', ['Origin'])(span, () => 'localhost');
       utils.headerCapture('response', ['Cookie'])(span, () => 'token=123');
-      mock.verify();
+      assert.deepStrictEqual(
+        setAttributeSpy.mock.calls.map((c) => c.arguments),
+        [
+          ['http.request.header.origin', ['localhost']],
+          ['http.response.header.cookie', ['token=123']],
+        ]
+      );
+      assert.strictEqual(setAttributeSpy.mock.callCount(), 2);
     });
 
     it('should set attributes for multiple values', () => {
-      mock
-        .expects('setAttribute')
-        .calledWithExactly('http.request.header.origin', [
-          'localhost',
-          'www.example.com',
-        ]);
-
       utils.headerCapture('request', ['Origin'])(span, () => [
         'localhost',
         'www.example.com',
       ]);
-      mock.verify();
+      assert.deepStrictEqual(
+        setAttributeSpy.mock.calls.map((c) => c.arguments),
+        [['http.request.header.origin', ['localhost', 'www.example.com']]]
+      );
     });
 
     it('sets attributes for multiple headers', () => {
-      mock
-        .expects('setAttribute')
-        .calledWithExactly('http.request.header.origin', ['localhost']);
-      mock
-        .expects('setAttribute')
-        .calledWithExactly('http.request.header.foo', [42]);
-
       utils.headerCapture('request', ['Origin', 'Foo'])(span, (header) => {
         if (header === 'origin') {
           return 'localhost';
@@ -490,24 +481,26 @@ describe('Utility', () => {
 
         return undefined;
       });
-      mock.verify();
+
+      assert.deepStrictEqual(
+        setAttributeSpy.mock.calls.map((c) => c.arguments),
+        [
+          ['http.request.header.origin', ['localhost']],
+          ['http.request.header.foo', [42]],
+        ]
+      );
+      assert.strictEqual(setAttributeSpy.mock.callCount(), 2);
     });
 
     it('should normalize header names', () => {
-      mock
-        .expects('setAttribute')
-        .calledWithExactly('http.request.header.x_forwarded_for', ['foo']);
-
       utils.headerCapture('request', ['X-Forwarded-For'])(span, () => 'foo');
-      mock.verify();
+      assert.deepStrictEqual(
+        setAttributeSpy.mock.calls.map((c) => c.arguments),
+        [['http.request.header.x_forwarded_for', ['foo']]]
+      );
     });
 
     it('ignores non-existent headers', () => {
-      mock
-        .expects('setAttribute')
-        .once()
-        .calledWithExactly('http.request.header.origin', ['localhost']);
-
       utils.headerCapture('request', ['Origin', 'Accept'])(span, (header) => {
         if (header === 'origin') {
           return 'localhost';
@@ -515,7 +508,11 @@ describe('Utility', () => {
 
         return undefined;
       });
-      mock.verify();
+      assert.deepStrictEqual(
+        setAttributeSpy.mock.calls.map((c) => c.arguments),
+        [['http.request.header.origin', ['localhost']]]
+      );
+      assert.strictEqual(setAttributeSpy.mock.callCount(), 1);
     });
   });
 
@@ -818,12 +815,11 @@ describe('Utility', () => {
   });
 
   describe('headerCapture() with missing headers', () => {
-    it('sets nothing when headers are absent', () => {
+    it('sets nothing when headers are absent', (t) => {
       const span = { setAttribute: () => undefined } as unknown as Span;
-      const mock = sinon.mock(span);
-      mock.expects('setAttribute').never();
+      const setAttrSpy = t.mock.method(span, 'setAttribute');
       utils.headerCapture('request', ['X-Foo'])(span, () => undefined);
-      mock.verify();
+      assert.strictEqual(setAttrSpy.mock.callCount(), 0);
     });
   });
 });
