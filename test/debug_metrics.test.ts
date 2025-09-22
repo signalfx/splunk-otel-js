@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-import { AggregationTemporality } from '@opentelemetry/sdk-metrics';
+import {
+  AggregationTemporality,
+  DataPointType,
+  MetricData,
+} from '@opentelemetry/sdk-metrics';
 import { strict as assert } from 'assert';
 import { after, test } from 'node:test';
 import { start, stop } from '../src';
 import { TestMetricReader } from './utils';
+import { ValueType } from '@opentelemetry/api';
 
 test('debug metrics', async () => {
   const reader: TestMetricReader = new TestMetricReader(
@@ -39,8 +44,8 @@ test('debug metrics', async () => {
       exporterFactory: () => {
         return [
           {
-            send: () => {},
-            sendHeapProfile: () => {},
+            send: async () => {},
+            sendHeapProfile: async () => {},
           },
         ];
       },
@@ -62,7 +67,7 @@ test('debug metrics', async () => {
 
   assert.notStrictEqual(scopeMetrics, undefined);
 
-  const { metrics: debugMetrics } = scopeMetrics!;
+  const debugMetrics: MetricData[] = scopeMetrics!.metrics;
 
   const allowedNames = new Set([
     'splunk.profiler.cpu.start.duration',
@@ -74,13 +79,15 @@ test('debug metrics', async () => {
 
   assert.deepStrictEqual(debugMetrics.length, allowedNames.size);
 
-  for (const { descriptor, dataPoints } of debugMetrics) {
+  for (const { descriptor, dataPoints, dataPointType } of debugMetrics) {
+    assert.deepStrictEqual(dataPointType, DataPointType.HISTOGRAM);
     assert(
       allowedNames.has(descriptor.name),
       `invalid metric name ${descriptor.name}`
     );
-    assert.deepStrictEqual(descriptor.type, 'HISTOGRAM');
+    assert.deepStrictEqual(descriptor.valueType, ValueType.DOUBLE);
     assert.deepStrictEqual(descriptor.unit, 'ns');
+
     assert(
       dataPoints[0].value['count'] > 0,
       'expected datapoint count to be more than 0'

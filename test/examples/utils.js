@@ -81,6 +81,16 @@ const logSpanTable = (spans) => {
   );
 };
 
+const logMetricTable = (metrics) => {
+  console.table(
+    metrics.map(({ name, unit, scope }) => ({
+      name,
+      unit,
+      scope
+    })),
+  );
+};
+
 const getParentSpan = (arr, span) => {
   assert.strictEqual(typeof span.parentSpanId, 'string', `Invalid parentSpanId: ${util.inspect(span)}`);
   const parent = arr.find((s) => s.id === span.parentSpanId);
@@ -129,6 +139,32 @@ const waitSpans = (count, timeout = 60) => {
       return res.map(entryToSpan);
     });
 };
+
+const waitMetrics = (timeout = 60) => {
+  console.error(`Waiting for metrics for ${timeout}s`);
+  console.time('waitMetrics');
+
+  const collectorUrl = new URL(
+    process.env.COLLECTOR_METRICS_URL ?? 'http://localhost:8379/metrics'
+  );
+  collectorUrl.searchParams.set('timeout', timeout);
+
+  return fetch(collectorUrl)
+    .then((res) => res.text())
+    .then((content) => {
+      if (content.match(/timed.*out.*while.*waiting.*for.*results/i)) {
+        assert.fail(`Timed out waiting for metrics for ${timeout}s.`);
+      }
+      return JSON.parse(content);
+    })
+    .then((msgs) => {
+      console.timeEnd('waitMetrics');
+      return msgs
+        .flatMap((m) => m.resourceMetrics ?? [])
+        .flatMap(entryToMetric);
+    });
+};
+
 
 const request = async (url) => {
   for (let i = 0; i < 30; i++) {
@@ -230,9 +266,46 @@ const assertSpans = (actualSpans, expectedSpans) => {
   return expectedSpans.length;
 };
 
+function entryToMetric(entry) {
+  return (entry.scopeMetrics ?? []).flatMap((scope) =>
+    (scope.metrics ?? []).map((m) => ({
+      scope: scope.scope?.name,
+      name: m.name,
+      unit: m.unit,
+    })),
+  );
+}
+
+function assertMetrics(actualMetrics, expectedMetrics) {
+  if (process.env.LOG_NEW_SNAPSHOTS === 'true') {
+    console.error(actualMetrics);
+    console.error('skipping checking asserting metrics');
+    return 0;
+  }
+  assert.ok(Array.isArray(actualMetrics), 'Expected actual metrics to be an array');
+
+  const actualMetricsMap = new Map();
+  actualMetrics.forEach(metric => {
+    actualMetricsMap.set(metric.name, metric);
+  });
+
+  Object.entries(expectedMetrics).forEach(([expectedName, expectedProps]) => {
+    const actualMetric = actualMetricsMap.get(expectedName);
+    
+    assert.ok(actualMetric, `metric "${expectedName}" not found`);
+    assert.strictEqual(actualMetric.unit, expectedProps.unit, `metric "${expectedName}" unit mismatch`);
+    assert.strictEqual(actualMetric.scope, expectedProps.scope, `metric "${expectedName}" scope mismatch`);
+  });
+
+  return true;
+}
+
 module.exports = {
   assertSpans,
   logSpanTable,
+  logMetricTable,
   request,
   waitSpans,
+  waitMetrics,
+  assertMetrics
 };
