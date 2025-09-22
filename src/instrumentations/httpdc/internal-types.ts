@@ -16,6 +16,7 @@
 
 import type * as http from 'http';
 import type * as https from 'https';
+import { Span, Attributes, SpanKind, HrTime } from '@opentelemetry/api';
 
 export type Http = typeof http;
 export type Https = typeof https;
@@ -67,3 +68,14 @@ export const DEFAULT_QUERY_STRINGS_TO_REDACT = [
   'AWSAccessKeyId',
   'X-Goog-Signature',
 ] as const;
+
+/**
+ * Holds metadata (span, kind, start time, metric attributes) for an HTTP span used when recording duration
+ */
+export interface SpanDetails {
+  span: Span;
+  spanKind: SpanKind;
+  startTime: HrTime;
+  oldMetricsAttributes: Attributes;
+  stableMetricsAttributes: Attributes;
+}

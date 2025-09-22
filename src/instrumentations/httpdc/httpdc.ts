@@ -38,7 +38,8 @@ import {
   hrTimeDuration,
   hrTime,
 } from '@opentelemetry/core';
-import { HttpDcInstrumentationConfig, SpanDetails } from './types';
+import { HttpDcInstrumentationConfig } from './types';
+import { SpanDetails } from './internal-types';
 import type * as http from 'http';
 import { VERSION } from '../../version';
 import {

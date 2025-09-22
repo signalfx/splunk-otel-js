@@ -13,20 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Span, Attributes, SpanKind, HrTime } from '@opentelemetry/api';
+import { Span, Attributes } from '@opentelemetry/api';
 import { ClientRequest, IncomingMessage, ServerResponse } from 'http';
 import {
   InstrumentationConfig,
   SemconvStability,
 } from '@opentelemetry/instrumentation';
-
-export interface SpanDetails {
-  span: Span;
-  spanKind: SpanKind;
-  startTime: HrTime;
-  oldMetricsAttributes: Attributes;
-  stableMetricsAttributes: Attributes;
-}
 
 export interface HttpCustomAttributeFunction {
   (

@@ -64,7 +64,6 @@ const tracerProvider = new NodeTracerProvider();
 const metricReader = new TestMetricReader(AggregationTemporality.DELTA);
 const meterProvider = new MeterProvider({ readers: [metricReader] });
 
-
 instrumentation.setTracerProvider(tracerProvider);
 instrumentation.setMeterProvider(meterProvider);
 
@@ -76,7 +75,7 @@ describe('metrics', () => {
     context.setGlobalContextManager(contextManager);
     instrumentation['_updateMetricInstruments']();
   });
- 
+
   before(() => {
     instrumentation.enable();
     server = http.createServer((request, response) => {
@@ -103,7 +102,7 @@ describe('metrics', () => {
         );
       }
 
-      const {resourceMetrics} = await metricReader.collect();
+      const { resourceMetrics } = await metricReader.collect();
       const scopeMetrics = resourceMetrics.scopeMetrics;
       assert.strictEqual(scopeMetrics.length, 1, 'scopeMetrics count');
       const metrics = scopeMetrics[0].metrics;
@@ -192,7 +191,7 @@ describe('metrics', () => {
           `${protocol}://${hostname}:${serverPort}${pathname}`
         );
       }
-      
+
       let { resourceMetrics } = await metricReader.collect();
       let scopeMetrics = resourceMetrics.scopeMetrics;
       assert.strictEqual(scopeMetrics.length, 1, 'scopeMetrics count');
@@ -244,7 +243,6 @@ describe('metrics', () => {
         [ATTR_NETWORK_PROTOCOL_VERSION]: '1.1',
         [ATTR_HTTP_RESPONSE_STATUS_CODE]: 200,
       });
-
 
       assert.throws(() =>
         http.request({
@@ -419,7 +417,6 @@ describe('metrics', () => {
         [ATTR_NETWORK_PROTOCOL_VERSION]: '1.1',
         [ATTR_HTTP_RESPONSE_STATUS_CODE]: 200,
       });
-
 
       assert.throws(() =>
         http.request({
