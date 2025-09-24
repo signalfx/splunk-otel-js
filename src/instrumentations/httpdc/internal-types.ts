@@ -76,6 +76,6 @@ export interface SpanDetails {
   span: Span;
   spanKind: SpanKind;
   startTime: HrTime;
-  oldMetricsAttributes: Attributes;
-  stableMetricsAttributes: Attributes;
+  oldMetricAttributes?: Attributes;
+  stableMetricAttributes?: Attributes;
 }
