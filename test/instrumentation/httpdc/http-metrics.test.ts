@@ -55,7 +55,7 @@ import { getRPCMetadata, RPCType } from '@opentelemetry/core';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 
 let server: http.Server;
-const serverPort = 22346;
+const serverPort = 22446;
 const protocol = 'http';
 const hostname = 'localhost';
 const pathname = '/test';
@@ -141,7 +141,7 @@ describe('metrics', () => {
       );
       assert.strictEqual(
         metrics[0].dataPoints[0].attributes[ATTR_NET_HOST_PORT],
-        22346
+        serverPort
       );
 
       assert.strictEqual(metrics[1].dataPointType, DataPointType.HISTOGRAM);
@@ -166,7 +166,7 @@ describe('metrics', () => {
       );
       assert.strictEqual(
         metrics[1].dataPoints[0].attributes[ATTR_NET_PEER_PORT],
-        22346
+        serverPort
       );
       assert.strictEqual(
         metrics[1].dataPoints[0].attributes[ATTR_HTTP_STATUS_CODE],
@@ -239,7 +239,7 @@ describe('metrics', () => {
       assert.deepStrictEqual(metrics[1].dataPoints[0].attributes, {
         [ATTR_HTTP_REQUEST_METHOD]: 'GET',
         [ATTR_SERVER_ADDRESS]: 'localhost',
-        [ATTR_SERVER_PORT]: 22346,
+        [ATTR_SERVER_PORT]: serverPort,
         [ATTR_NETWORK_PROTOCOL_VERSION]: '1.1',
         [ATTR_HTTP_RESPONSE_STATUS_CODE]: 200,
       });
@@ -274,7 +274,7 @@ describe('metrics', () => {
       assert.deepStrictEqual(metrics[0].dataPoints[0].attributes, {
         [ATTR_HTTP_REQUEST_METHOD]: 'GET',
         [ATTR_SERVER_ADDRESS]: 'localhost',
-        [ATTR_SERVER_PORT]: 22346,
+        [ATTR_SERVER_PORT]: serverPort,
         [ATTR_ERROR_TYPE]: 'TypeError',
       });
     });
@@ -334,7 +334,7 @@ describe('metrics', () => {
       );
       assert.strictEqual(
         metrics[0].dataPoints[0].attributes[ATTR_NET_HOST_PORT],
-        22346
+        serverPort
       );
 
       assert.strictEqual(metrics[1].dataPointType, DataPointType.HISTOGRAM);
@@ -359,7 +359,7 @@ describe('metrics', () => {
       );
       assert.strictEqual(
         metrics[1].dataPoints[0].attributes[ATTR_NET_PEER_PORT],
-        22346
+        serverPort
       );
       assert.strictEqual(
         metrics[1].dataPoints[0].attributes[ATTR_HTTP_STATUS_CODE],
@@ -413,7 +413,7 @@ describe('metrics', () => {
       assert.deepStrictEqual(metrics[3].dataPoints[0].attributes, {
         [ATTR_HTTP_REQUEST_METHOD]: 'GET',
         [ATTR_SERVER_ADDRESS]: 'localhost',
-        [ATTR_SERVER_PORT]: 22346,
+        [ATTR_SERVER_PORT]: serverPort,
         [ATTR_NETWORK_PROTOCOL_VERSION]: '1.1',
         [ATTR_HTTP_RESPONSE_STATUS_CODE]: 200,
       });
@@ -469,7 +469,7 @@ describe('metrics', () => {
       assert.deepStrictEqual(metrics[1].dataPoints[0].attributes, {
         [ATTR_HTTP_REQUEST_METHOD]: 'GET',
         [ATTR_SERVER_ADDRESS]: 'localhost',
-        [ATTR_SERVER_PORT]: 22346,
+        [ATTR_SERVER_PORT]: serverPort,
         [ATTR_ERROR_TYPE]: 'TypeError',
       });
     });

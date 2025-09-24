@@ -242,7 +242,7 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpDcInstrumenta
   private _wrapSyncClientError() {
     const instrumentation = this;
     return (original: Function) =>
-      function patched(this: unknown, ...args: unknown[]) {
+      function patchedRequest(this: unknown, ...args: unknown[]) {
         const start = hrTime();
         try {
           return original.apply(this, args);
