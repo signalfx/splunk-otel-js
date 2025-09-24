@@ -42,7 +42,7 @@ import {
 } from '../../../src/instrumentations/httpdc/semconv';
 import * as assert from 'assert';
 import { HttpDcInstrumentation } from '../../../src/instrumentations/httpdc/httpdc';
-import { httpRequest } from './utils/utils';
+import { httpRequest, isSupported } from './utils/utils';
 import { TestMetricReader } from '../../utils';
 import { context, ContextManager } from '@opentelemetry/api';
 import { SemconvStability } from '@opentelemetry/instrumentation';
@@ -67,7 +67,7 @@ const meterProvider = new MeterProvider({ readers: [metricReader] });
 instrumentation.setTracerProvider(tracerProvider);
 instrumentation.setMeterProvider(meterProvider);
 
-describe('metrics', () => {
+describe('metrics', { skip: !isSupported() }, () => {
   let contextManager: ContextManager;
 
   beforeEach(async () => {
