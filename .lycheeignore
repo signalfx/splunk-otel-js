@@ -6,4 +6,10 @@ http://collector:4317/
 http://localhost:8080/
 https://quickdraw.splunk.com/
 step-*
-https:\/\/github\.com\/signalfx\/splunk-otel-js\/pull\/*
+https:\/\/github\.com\/signalfx\/splunk-otel-js\/pull
+https://www.npmjs.com/package/@splunk/otel
+https://www.npmjs.com/package/@opentelemetry/exporter-trace-otlp-proto
+https://www.npmjs.com/package/@opentelemetry/instrumentation-mongoose
+https://www.npmjs.com/package/@opentelemetry/exporter-jaeger
+https://www.npmjs.com/package/@opentelemetry/instrumentation-fastify
+https://www.npmjs.com/package/@fastify/otel

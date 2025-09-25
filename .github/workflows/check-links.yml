@@ -6,16 +6,23 @@ jobs:
   linkChecker:
     runs-on: ubuntu-latest
     steps:
+      - name: Restore lychee cache
+        uses: actions/cache@v4
+        with:
+          path: .lycheecache
+          key: cache-lychee-${{ github.sha }}
+          restore-keys: cache-lychee-
       - uses: actions/checkout@v3
 
       - name: Link Checker
         uses: lycheeverse/lychee-action@v2.0.2
         with:
           args: >
+            --cache
             --user-agent 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36'
             --max-concurrency 1
-            --max-retries 6
-            --retry-wait-time 3
+            --max-retries 16
+            --retry-wait-time 8
             --verbose
             './**/*.md'
           fail: false
