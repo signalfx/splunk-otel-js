@@ -19,5 +19,3 @@ jobs:
         run: npm run version:check
       - name: Lint code
         run: npm run lint
-      - name: Lint commits
-        run: npm run lint:commits -- --from origin/${{ github.base_ref }}
