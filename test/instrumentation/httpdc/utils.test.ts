@@ -62,11 +62,6 @@ import {
   USER_AGENT_SYNTHETIC_TYPE_VALUE_BOT,
   HTTP_ERROR_NAME,
   HTTP_ERROR_MESSAGE,
-  ATTR_HTTP_METHOD,
-  ATTR_NET_PEER_PORT,
-  ATTR_HTTP_STATUS_CODE,
-  ATTR_HTTP_FLAVOR,
-  ATTR_NET_PEER_NAME,
   HTTP_STATUS_TEXT,
 } from '../../../src/instrumentations/httpdc/semconv';
 import * as utils from '../../../src/instrumentations/httpdc/utils';
@@ -700,21 +695,21 @@ describe('Utility', () => {
 
   describe('Metric helpers', () => {
     const spanAttrs: Attributes = {
-      [ATTR_HTTP_METHOD]: 'GET',
+      [SEMATTRS_HTTP_METHOD]: 'GET',
       [ATTR_HTTP_RESPONSE_STATUS_CODE]: 301,
       [ATTR_NETWORK_PEER_ADDRESS]: '10.0.0.1',
-      [ATTR_NET_PEER_PORT]: 123,
+      [SEMATTRS_NET_PEER_PORT]: 123,
       [ATTR_NETWORK_PROTOCOL_VERSION]: '2',
-      [ATTR_HTTP_STATUS_CODE]: 301,
-      [ATTR_HTTP_FLAVOR]: '1.1',
+      [SEMATTRS_HTTP_STATUS_CODE]: 301,
+      [SEMATTRS_HTTP_FLAVOR]: '1.1',
     };
 
     it('getOutgoingRequestMetricAttributes()', () => {
       assert.deepStrictEqual(
         utils.getOutgoingRequestMetricAttributes(spanAttrs),
         {
-          [ATTR_HTTP_METHOD]: 'GET',
-          [ATTR_NET_PEER_NAME]: undefined,
+          [SEMATTRS_HTTP_METHOD]: 'GET',
+          [SEMATTRS_NET_PEER_NAME]: undefined,
         }
       );
     });
@@ -723,9 +718,9 @@ describe('Utility', () => {
       assert.deepStrictEqual(
         utils.getOutgoingRequestMetricAttributesOnResponse(spanAttrs),
         {
-          [ATTR_NET_PEER_PORT]: 123,
-          [ATTR_HTTP_STATUS_CODE]: 301,
-          [ATTR_HTTP_FLAVOR]: '1.1',
+          [SEMATTRS_NET_PEER_PORT]: 123,
+          [SEMATTRS_HTTP_STATUS_CODE]: 301,
+          [SEMATTRS_HTTP_FLAVOR]: '1.1',
         }
       );
     });

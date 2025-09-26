@@ -30,20 +30,20 @@ export const USER_AGENT_SYNTHETIC_TYPE_VALUE_BOT = 'bot' as const;
  */
 export const USER_AGENT_SYNTHETIC_TYPE_VALUE_TEST = 'test' as const;
 
-export const ATTR_HTTP_FLAVOR = 'http.flavor' as const;
+// export const ATTR_HTTP_FLAVOR = 'http.flavor' as const;
 
-export const ATTR_HTTP_METHOD = 'http.method' as const;
+// export const ATTR_HTTP_METHOD = 'http.method' as const;
 
-export const ATTR_HTTP_SCHEME = 'http.scheme' as const;
+// export const ATTR_HTTP_SCHEME = 'http.scheme' as const;
 
-export const ATTR_HTTP_STATUS_CODE = 'http.status_code' as const;
+// export const ATTR_HTTP_STATUS_CODE = 'http.status_code' as const;
 
-export const ATTR_HTTP_URL = 'http.url' as const;
+// export const ATTR_HTTP_URL = 'http.url' as const;
 
-export const ATTR_NET_HOST_NAME = 'net.host.name' as const;
+// export const ATTR_NET_HOST_NAME = 'net.host.name' as const;
 
-export const ATTR_NET_HOST_PORT = 'net.host.port' as const;
+// export const ATTR_NET_HOST_PORT = 'net.host.port' as const;
 
-export const ATTR_NET_PEER_NAME = 'net.peer.name' as const;
+// export const ATTR_NET_PEER_NAME = 'net.peer.name' as const;
 
-export const ATTR_NET_PEER_PORT = 'net.peer.port' as const;
+// export const ATTR_NET_PEER_PORT = 'net.peer.port' as const;

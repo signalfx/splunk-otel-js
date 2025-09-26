@@ -68,10 +68,7 @@ import {
 } from '@opentelemetry/semantic-conventions';
 import type { ClientRequest, IncomingMessage, ServerResponse } from 'http';
 import { getRPCMetadata, RPCType } from '@opentelemetry/core';
-import {
-  ATTR_HTTP_URL,
-  HTTP_STATUS_TEXT,
-} from '../../../src/instrumentations/httpdc/semconv';
+import { HTTP_STATUS_TEXT } from '../../../src/instrumentations/httpdc/semconv';
 import { HttpDcInstrumentation } from '../../../src/instrumentations/httpdc/httpdc';
 import { isWrapped, SemconvStability } from '@opentelemetry/instrumentation';
 
@@ -1387,13 +1384,13 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
 
       // Server shouldn't see auth in URL
       assert.strictEqual(
-        incomingSpan.attributes[ATTR_HTTP_URL],
+        incomingSpan.attributes[SEMATTRS_HTTP_URL],
         `${protocol}://${hostname}:${serverPort}${pathname}`
       );
 
       // Client should have redacted auth
       assert.strictEqual(
-        outgoingSpan.attributes[ATTR_HTTP_URL],
+        outgoingSpan.attributes[SEMATTRS_HTTP_URL],
         `${protocol}://REDACTED:REDACTED@${hostname}:${serverPort}${pathname}`
       );
     });
@@ -1405,7 +1402,7 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
       const [_, outgoingSpan] = spans;
 
       assert.strictEqual(
-        outgoingSpan.attributes[ATTR_HTTP_URL],
+        outgoingSpan.attributes[SEMATTRS_HTTP_URL],
         `${protocol}://${hostname}:${serverPort}${pathname}?X-Goog-Signature=REDACTED&normal=value`
       );
     });
@@ -1418,7 +1415,7 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
       const [_, outgoingSpan] = spans;
 
       assert.strictEqual(
-        outgoingSpan.attributes[ATTR_HTTP_URL],
+        outgoingSpan.attributes[SEMATTRS_HTTP_URL],
         `${protocol}://REDACTED:REDACTED@${hostname}:${serverPort}${pathname}?AWSAccessKeyId=REDACTED`
       );
     });
@@ -1430,7 +1427,7 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
       const [_, outgoingSpan] = spans;
 
       assert.strictEqual(
-        outgoingSpan.attributes[ATTR_HTTP_URL],
+        outgoingSpan.attributes[SEMATTRS_HTTP_URL],
         `${protocol}://REDACTED:REDACTED@${hostname}:${serverPort}${pathname}?sig=REDACTED`
       );
     });
@@ -1443,7 +1440,7 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
       const [_, outgoingSpan] = spans;
 
       assert.strictEqual(
-        outgoingSpan.attributes[ATTR_HTTP_URL],
+        outgoingSpan.attributes[SEMATTRS_HTTP_URL],
         `${protocol}://${hostname}:${serverPort}${pathname}?X-Goog-Signature=REDACTED&=nokey&malformed=`
       );
     });
@@ -1455,7 +1452,7 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
       const [_, outgoingSpan] = spans;
 
       assert.strictEqual(
-        outgoingSpan.attributes[ATTR_HTTP_URL],
+        outgoingSpan.attributes[SEMATTRS_HTTP_URL],
         `${protocol}://${hostname}:${serverPort}${pathname}?param=value&another=123`
       );
     });
@@ -1468,7 +1465,7 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
       const [_, outgoingSpan] = spans;
 
       assert.strictEqual(
-        outgoingSpan.attributes[ATTR_HTTP_URL],
+        outgoingSpan.attributes[SEMATTRS_HTTP_URL],
         `${protocol}://${hostname}:${serverPort}${pathname}`
       );
     });
@@ -1481,7 +1478,7 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
       const [_, outgoingSpan] = spans;
 
       assert.strictEqual(
-        outgoingSpan.attributes[ATTR_HTTP_URL],
+        outgoingSpan.attributes[SEMATTRS_HTTP_URL],
         `${protocol}://${hostname}:${serverPort}${pathname}?sig=&empty=`
       );
     });
@@ -1494,7 +1491,7 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
       const [_, outgoingSpan] = spans;
 
       assert.strictEqual(
-        outgoingSpan.attributes[ATTR_HTTP_URL],
+        outgoingSpan.attributes[SEMATTRS_HTTP_URL],
         `${protocol}://${hostname}:${serverPort}${pathname}?normal=value&Signature=REDACTED&other=data`
       );
     });
@@ -1511,7 +1508,7 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
       const [_, outgoingSpan] = spans;
 
       assert.strictEqual(
-        outgoingSpan.attributes[ATTR_HTTP_URL],
+        outgoingSpan.attributes[SEMATTRS_HTTP_URL],
         `${protocol}://${hostname}:${serverPort}${pathname}?sig=abc123&authorize=REDACTED&normal=value`
       );
     });
@@ -1528,7 +1525,7 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
       const [_, outgoingSpan] = spans;
 
       assert.strictEqual(
-        outgoingSpan.attributes[ATTR_HTTP_URL],
+        outgoingSpan.attributes[SEMATTRS_HTTP_URL],
         `${protocol}://${hostname}:${serverPort}${pathname}?X-Goog-Signature=secret&api_key=12345&normal=value`
       );
     });
@@ -1545,7 +1542,7 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
 
       // This tests whether parameter name matching is case-sensitive or case-insensitive
       assert.strictEqual(
-        outgoingSpan.attributes[ATTR_HTTP_URL],
+        outgoingSpan.attributes[SEMATTRS_HTTP_URL],
         `${protocol}://${hostname}:${serverPort}${pathname}?token=lowercase&TOKEN=REDACTED&sig=secret`
       );
     });
@@ -1568,7 +1565,10 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
         'sig=abc123&api_key=REDACTED&normal=value&Signature=xyz&' +
         'token=REDACTED&X-Goog-Signature=gcp&AWSAccessKeyId=aws';
 
-      assert.strictEqual(outgoingSpan.attributes[ATTR_HTTP_URL], expectedUrl);
+      assert.strictEqual(
+        outgoingSpan.attributes[SEMATTRS_HTTP_URL],
+        expectedUrl
+      );
     });
   });
 });

@@ -83,17 +83,9 @@ import {
   HTTP_STATUS_TEXT,
   HTTP_ERROR_NAME,
   HTTP_ERROR_MESSAGE,
-  ATTR_HTTP_SCHEME,
-  ATTR_HTTP_METHOD,
-  ATTR_NET_HOST_NAME,
-  ATTR_HTTP_FLAVOR,
-  ATTR_HTTP_STATUS_CODE,
-  ATTR_NET_HOST_PORT,
   ATTR_USER_AGENT_SYNTHETIC_TYPE,
   USER_AGENT_SYNTHETIC_TYPE_VALUE_TEST,
   USER_AGENT_SYNTHETIC_TYPE_VALUE_BOT,
-  ATTR_NET_PEER_NAME,
-  ATTR_NET_PEER_PORT,
 } from './semconv';
 import { SemconvStability } from '@opentelemetry/instrumentation';
 
@@ -844,10 +836,11 @@ export const getIncomingRequestMetricAttributes = (
   spanAttributes: Attributes
 ): Attributes => {
   const metricAttributes: Attributes = {};
-  metricAttributes[ATTR_HTTP_SCHEME] = spanAttributes[ATTR_HTTP_SCHEME];
-  metricAttributes[ATTR_HTTP_METHOD] = spanAttributes[ATTR_HTTP_METHOD];
-  metricAttributes[ATTR_NET_HOST_NAME] = spanAttributes[ATTR_NET_HOST_NAME];
-  metricAttributes[ATTR_HTTP_FLAVOR] = spanAttributes[ATTR_HTTP_FLAVOR];
+  metricAttributes[SEMATTRS_HTTP_SCHEME] = spanAttributes[SEMATTRS_HTTP_SCHEME];
+  metricAttributes[SEMATTRS_HTTP_METHOD] = spanAttributes[SEMATTRS_HTTP_METHOD];
+  metricAttributes[SEMATTRS_NET_HOST_NAME] =
+    spanAttributes[SEMATTRS_NET_HOST_NAME];
+  metricAttributes[SEMATTRS_HTTP_FLAVOR] = spanAttributes[SEMATTRS_HTTP_FLAVOR];
   //TODO: http.target attribute, it should substitute any parameters to avoid high cardinality.
   return metricAttributes;
 };
@@ -860,9 +853,10 @@ export const getIncomingRequestMetricAttributesOnResponse = (
   spanAttributes: Attributes
 ): Attributes => {
   const metricAttributes: Attributes = {};
-  metricAttributes[ATTR_HTTP_STATUS_CODE] =
-    spanAttributes[ATTR_HTTP_STATUS_CODE];
-  metricAttributes[ATTR_NET_HOST_PORT] = spanAttributes[ATTR_NET_HOST_PORT];
+  metricAttributes[SEMATTRS_HTTP_STATUS_CODE] =
+    spanAttributes[SEMATTRS_HTTP_STATUS_CODE];
+  metricAttributes[SEMATTRS_NET_HOST_PORT] =
+    spanAttributes[SEMATTRS_NET_HOST_PORT];
   if (spanAttributes[ATTR_HTTP_ROUTE] !== undefined) {
     metricAttributes[ATTR_HTTP_ROUTE] = spanAttributes[ATTR_HTTP_ROUTE];
   }
@@ -898,8 +892,9 @@ export const getOutgoingRequestMetricAttributes = (
   spanAttributes: Attributes
 ): Attributes => {
   const metricAttributes: Attributes = {};
-  metricAttributes[ATTR_HTTP_METHOD] = spanAttributes[ATTR_HTTP_METHOD];
-  metricAttributes[ATTR_NET_PEER_NAME] = spanAttributes[ATTR_NET_PEER_NAME];
+  metricAttributes[SEMATTRS_HTTP_METHOD] = spanAttributes[SEMATTRS_HTTP_METHOD];
+  metricAttributes[SEMATTRS_NET_PEER_NAME] =
+    spanAttributes[SEMATTRS_NET_PEER_NAME];
   //TODO: http.url attribute, it should substitute any parameters to avoid high cardinality.
   return metricAttributes;
 };
@@ -912,10 +907,11 @@ export const getOutgoingRequestMetricAttributesOnResponse = (
   spanAttributes: Attributes
 ): Attributes => {
   const metricAttributes: Attributes = {};
-  metricAttributes[ATTR_NET_PEER_PORT] = spanAttributes[ATTR_NET_PEER_PORT];
-  metricAttributes[ATTR_HTTP_STATUS_CODE] =
-    spanAttributes[ATTR_HTTP_STATUS_CODE];
-  metricAttributes[ATTR_HTTP_FLAVOR] = spanAttributes[ATTR_HTTP_FLAVOR];
+  metricAttributes[SEMATTRS_NET_PEER_PORT] =
+    spanAttributes[SEMATTRS_NET_PEER_PORT];
+  metricAttributes[SEMATTRS_HTTP_STATUS_CODE] =
+    spanAttributes[SEMATTRS_HTTP_STATUS_CODE];
+  metricAttributes[SEMATTRS_HTTP_FLAVOR] = spanAttributes[SEMATTRS_HTTP_FLAVOR];
 
   return metricAttributes;
 };
