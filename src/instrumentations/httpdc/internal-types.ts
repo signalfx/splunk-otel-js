@@ -16,6 +16,7 @@
 
 import type * as http from 'http';
 import type * as https from 'https';
+import { Span, Attributes, SpanKind, HrTime } from '@opentelemetry/api';
 
 export type Http = typeof http;
 export type Https = typeof https;
@@ -41,4 +42,40 @@ export const enum SemconvStability {
   OLD = 0x2,
   /** Emit both stable and old semantic conventions*/
   DUPLICATE = 0x1 | 0x2,
+}
+
+/**
+ * Names of possible synthetic test sources.
+ */
+export const SYNTHETIC_TEST_NAMES = ['alwayson'];
+
+/**
+ * Names of possible synthetic bot sources.
+ */
+export const SYNTHETIC_BOT_NAMES = ['googlebot', 'bingbot'];
+
+/**
+ * REDACTED string used to replace sensitive information in URLs.
+ */
+export const STR_REDACTED = 'REDACTED';
+
+/**
+ * List of URL query keys that are considered sensitive and whose value should be redacted.
+ */
+export const DEFAULT_QUERY_STRINGS_TO_REDACT = [
+  'sig',
+  'Signature',
+  'AWSAccessKeyId',
+  'X-Goog-Signature',
+] as const;
+
+/**
+ * Holds metadata (span, kind, start time, metric attributes) for an HTTP span used when recording duration
+ */
+export interface SpanDetails {
+  span: Span;
+  spanKind: SpanKind;
+  startTime: HrTime;
+  oldMetricAttributes?: Attributes;
+  stableMetricAttributes?: Attributes;
 }

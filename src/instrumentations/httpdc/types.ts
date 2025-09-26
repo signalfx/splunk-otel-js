@@ -15,7 +15,10 @@
  */
 import { Span, Attributes } from '@opentelemetry/api';
 import { ClientRequest, IncomingMessage, ServerResponse } from 'http';
-import { InstrumentationConfig } from '@opentelemetry/instrumentation';
+import {
+  InstrumentationConfig,
+  SemconvStability,
+} from '@opentelemetry/instrumentation';
 
 export interface HttpCustomAttributeFunction {
   (
@@ -87,4 +90,19 @@ export interface HttpDcInstrumentationConfig extends InstrumentationConfig {
    * @experimental
    **/
   enableSyntheticSourceDetection?: boolean;
+  /**
+   * Controls which semantic-convention attributes are emitted on spans.
+   * Default: 'OLD'.
+   * When this option is set, it takes precedence over any value provided via
+   * the OTEL_SEMCONV_STABILITY_OPT_IN environment variable.
+   */
+  semconvStability?: SemconvStability;
+  /**
+   * [Optional] Additional query parameters to redact.
+   * Use this to specify custom query strings that contain sensitive information.
+   * These will replace/overwrite the default query strings that are to be redacted.
+   * @example default strings ['sig','Signature','AWSAccessKeyId','X-Goog-Signature']
+   * @experimental
+   */
+  redactedQueryParams?: string[];
 }
