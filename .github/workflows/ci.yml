@@ -32,7 +32,7 @@ jobs:
           path: prebuilds
 
   prebuilds-linux-arm64:
-    runs-on: [self-hosted, Linux, ARM64]
+    runs-on: ubuntu-24.04-arm
     strategy:
       fail-fast: false
       matrix:
@@ -138,7 +138,7 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Build workspace packages
         run: npm run compile:workspaces
-      - name: Pack workspace packages 
+      - name: Pack workspace packages
         id: pack
         run: |
           WS_PKGS="$(npm pack --workspaces --if-present)"
@@ -208,7 +208,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ['ARM64']
+        os: ['ubuntu-24.04-arm']
         nodejs: ['18', '20', '21', '22', '23', '24']
     container: node:${{ matrix.nodejs }}
     steps:
@@ -295,7 +295,7 @@ jobs:
             name: 'Basic'
           - target: '-f esbuild-cjs.override.yml'
             name: 'ESBuild CJS'
-          - target: '-f esbuild-esm.override.yml'  
+          - target: '-f esbuild-esm.override.yml'
             name: 'ESBuild ESM'
           - target: '-f express.override.yml'
             name: 'Express'
