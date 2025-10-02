@@ -1,0 +1,32 @@
+# galaxy_info:
+#   author: appdynamics
+#   description: This role installs and configures the AppDynamics Node Agent
+#   company: AppDynamics
+#   license: Apache2
+#   min_ansible_version: "2.9"
+#   platforms:
+#     - name: Ubuntu
+#       versions:
+#         - precise
+#         - quantal
+#         - raring
+#         - saucy
+#         - trusty
+#         - xenial
+#         - artful
+#         - bionic
+#     - name: Debian
+#       versions:
+#         - wheezy
+#         - jessie
+#         - stretch
+#         - buster
+#     - name: Alpine
+#   galaxy_tags:
+#     - apm
+#     - monitoring
+#     - appdynamics
+
+# dependencies:
+#  - { role: common }
+#  - { role: linux_pkg, when: "ansible_os_family == 'RedHat' or  ansible_os_family == 'Debian' or ansible_os_family == 'Alpine'"}
