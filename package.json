@@ -94,7 +94,7 @@
     "winston": "3.10.0"
   },
   "dependencies": {
-    "@fastify/otel": "0.9.4",
+    "@fastify/otel": "0.10.0",
     "@grpc/grpc-js": "^1.13.4",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/api-logs": "^0.205.0",
