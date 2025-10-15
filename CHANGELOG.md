@@ -1,5 +1,9 @@
 # Change Log - @splunk/otel
 
+## 4.0.1
+
+- Add back `telemetry.sdk.*` attributes. [#1066](https://github.com/signalfx/splunk-otel-js/pull/1066).
+
 ## 4.0.0
 
 - Upgrade to OpenTelemetry SDK 2.0. [#1020](https://github.com/signalfx/splunk-otel-js/pull/1020).
