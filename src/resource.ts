@@ -24,6 +24,7 @@ import {
 } from '@opentelemetry/resources';
 import { containerDetector } from '@opentelemetry/resource-detector-container';
 import { distroDetector } from './detectors/DistroDetector';
+import { telemetrySdkDetector } from './detectors/TelemetrySdkDetector';
 
 const detectors = [
   distroDetector,
@@ -32,6 +33,7 @@ const detectors = [
   hostDetector,
   osDetector,
   processDetector,
+  telemetrySdkDetector,
 ];
 
 let detectedResource: DetectedResource | undefined;

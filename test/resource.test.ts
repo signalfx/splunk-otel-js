@@ -17,6 +17,11 @@
 import { strict as assert } from 'assert';
 import { beforeEach, describe, it } from 'node:test';
 import { cleanEnvironment, detectResource } from './utils';
+import {
+  ATTR_TELEMETRY_SDK_LANGUAGE,
+  ATTR_TELEMETRY_SDK_VERSION,
+  ATTR_TELEMETRY_SDK_NAME,
+} from '@opentelemetry/semantic-conventions';
 
 describe('resource detector', () => {
   beforeEach(() => {
@@ -68,6 +73,23 @@ describe('resource detector', () => {
       const resource = detectResource();
       assert.strictEqual(typeof resource.attributes?.['host.name'], 'string');
       assert.strictEqual(typeof resource.attributes?.['host.arch'], 'string');
+    });
+
+    it('adds telemetry.sdk attributes', () => {
+      const resource = detectResource();
+
+      assert.strictEqual(
+        typeof resource.attributes?.[ATTR_TELEMETRY_SDK_LANGUAGE],
+        'string'
+      );
+      assert.strictEqual(
+        typeof resource.attributes?.[ATTR_TELEMETRY_SDK_NAME],
+        'string'
+      );
+      assert.strictEqual(
+        typeof resource.attributes?.[ATTR_TELEMETRY_SDK_VERSION],
+        'string'
+      );
     });
   });
 });
