@@ -11,9 +11,9 @@
     "start:collector": "npm run clear-bundle && npm run esbuild && npm run esbuild-start:collector"
   },
   "dependencies": {
-    "@opentelemetry/api": "^1.8.0",
-    "@opentelemetry/instrumentation-express": "0.47.1",
-    "@splunk/otel": "4.0.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/instrumentation-express": "0.54.3",
+    "@splunk/otel": "4.0.1",
     "@splunk/otel-esbuild-plugin-node": "0.0.1",
     "axios": "^0.28.0",
     "env-cmd": "^10.1.0",
