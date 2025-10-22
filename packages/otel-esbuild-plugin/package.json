@@ -17,7 +17,7 @@
     "lint:fix": "eslint . --ext .ts --fix",
     "lint": "eslint . --ext .ts",
     "test": "cross-env TEST_DIR=../packages/otel-esbuild-plugin node ../../test/runner.js"
-  }, 
+  },
   "publishConfig": {
     "access": "public"
   },
@@ -47,7 +47,7 @@
     "opentelemetry-esbuild-plugin-node": "^4.1.0"
   },
   "peerDependencies": {
-    "@splunk/otel": "4.0.0"
+    "@splunk/otel": "^4.0.0"
   },
   "engines": {
     "node": ">=18"

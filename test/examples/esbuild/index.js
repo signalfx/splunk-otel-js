@@ -7,7 +7,17 @@ const {
   assertSpans,
   assertMetrics
 } = require('../utils.js');
-const snapshot = require('./snapshot.js');
+
+
+function loadSnapshot() {
+  if (process.env.MODULE_SYS === 'cjs') {
+    return require('./snapshot-cjs.js');
+  }
+
+    return require('./snapshot-esm.js');
+}
+
+const snapshot = loadSnapshot();
 
 const metricsSnapshot = require('./metric-snapshot.js');
 
@@ -28,8 +38,8 @@ const METRICS_TIMEOUT = Number(process.env.METRICS_TIMEOUT ?? 30);
 
   const metrics = await waitMetrics(METRICS_TIMEOUT);
   logMetricTable(metrics);
-  
+
   assertMetrics(metrics, metricsSnapshot);
   console.log("metrics validated");
-  
+
 })();
