@@ -27,6 +27,11 @@ import { B3PropagatorProvider } from './configuration/component_providers/propag
 import { B3MultiPropagatorProvider } from './configuration/component_providers/propagators/b3multi';
 import { BaggagePropagatorProvider } from './configuration/component_providers/propagators/baggage';
 import { TraceContextPropagatorProvider } from './configuration/component_providers/propagators/tracecontext';
+import { HostDetectorProvider } from './configuration/component_providers/detectors/host';
+import { ProcessDetectorProvider } from './configuration/component_providers/detectors/process';
+import { ContainerDetectorProvider } from './configuration/component_providers/detectors/container';
+import { ServiceDetectorProvider } from './configuration/component_providers/detectors/service';
+import { DistroDetectorProvider } from './detectors/DistroDetector';
 
 export function createConfiguration() {
   const hooks: OpenTelemetrySdkProviderConfig['hooks'] = {
@@ -53,5 +58,11 @@ export function createConfiguration() {
     new B3MultiPropagatorProvider(),
     new BaggagePropagatorProvider(),
     new TraceContextPropagatorProvider(),
+    // Detectors
+    new ContainerDetectorProvider(),
+    new HostDetectorProvider(),
+    new ProcessDetectorProvider(),
+    new ServiceDetectorProvider(),
+    new DistroDetectorProvider(),
   ]);
 }

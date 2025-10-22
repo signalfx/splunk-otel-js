@@ -41,7 +41,7 @@ describe('ComponentProviderRegistry', () => {
 
     registry.register(provider);
 
-    const component = registry.component('sdk', 'sdk', {});
+    const component = registry.create('sdk', 'sdk', {});
 
     assert.equal(component, true);
     assert.equal(provider.mock.mock.calls.length, 1);
@@ -68,7 +68,7 @@ describe('ComponentProviderRegistry', () => {
     const registry = new ComponentProviderRegistry();
 
     try {
-      const _component = registry.component('sdk', 'sdk', {});
+      const _component = registry.create('sdk', 'sdk', {});
       assert(false, "registry.component didn't throw an error");
     } catch (e) {
       assert.equal(
@@ -84,12 +84,12 @@ describe('ComponentProviderRegistry', () => {
 
     registry.register(provider, 'custom', 'test');
 
-    const component = registry.component('custom', 'test', {});
+    const component = registry.create('custom', 'test', {});
     assert.equal(component, true);
     assert.equal(provider.mock.mock.calls.length, 1);
 
     try {
-      const _component = registry.component('sdk', 'sdk', {});
+      const _component = registry.create('sdk', 'sdk', {});
       assert(false, "registry.component didn't throw an error");
     } catch (e) {
       assert.equal(

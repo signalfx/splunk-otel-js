@@ -14,16 +14,26 @@
  * limitations under the License.
  */
 
-import { B3Propagator } from '@opentelemetry/propagator-b3';
+import { DetectedResource, hostDetector, osDetector, ResourceDetector } from '@opentelemetry/resources';
 import { ComponentProvider } from '../../types';
 
-export class B3PropagatorProvider
-  implements ComponentProvider<'propagator', 'b3'>
+export class HostDetectorProvider
+  implements ComponentProvider<'detector', 'host'>
 {
-  readonly type = 'propagator';
-  readonly name = 'b3';
+  readonly type = 'detector';
+  readonly name = 'host';
 
-  create() {
-    return new B3Propagator();
+  create(): ResourceDetector {
+    // According to the spec host detector populates both host.* and os.* attributes
+    return {
+      detect() {
+        return {
+          attributes: {
+            ...hostDetector.detect().attributes,
+            ...osDetector.detect().attributes,
+          }
+        } as DetectedResource;
+      }
+    };
   }
 }

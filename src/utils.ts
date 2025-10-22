@@ -193,8 +193,8 @@ export function toDiagLogLevel(level: LogLevel): DiagLogLevel {
   return DiagLogLevel.NONE;
 }
 
-export function parseLogLevel(value: string | undefined): DiagLogLevel {
-  if (value === undefined) {
+export function parseLogLevel(value: string | null | undefined): DiagLogLevel {
+  if (value === undefined || value === null) {
     return DiagLogLevel.NONE;
   }
 

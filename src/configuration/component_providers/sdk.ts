@@ -15,13 +15,21 @@
  */
 
 import { CompositePropagator } from '@opentelemetry/core';
+import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
 import { ComponentProviderRegistry } from '../ComponentProviderRegistry';
 import {
+  AttributeLimits,
   HttpsOpentelemetryIoOtelconfigPropagatorJson,
+  HttpsOpentelemetryIoOtelconfigResourceJson,
+  HttpsOpentelemetryIoOtelconfigTracerProviderJson,
   OpenTelemetryConfiguration,
 } from '../schema';
 import { ComponentProvider } from '../types';
-import { TextMapPropagator } from '@opentelemetry/api';
+import { Attributes, diag, DiagConsoleLogger, TextMapPropagator } from '@opentelemetry/api';
+import { SDK } from '../SDK';
+import { parseLogLevel } from '../../utils';
+import { getDetectedResource, setResource } from '../../resource';
+import { parseResourceAttributes } from './utils/resource';
 
 export interface OpenTelemetrySdkProviderConfig {
   hooks?: {
@@ -43,17 +51,42 @@ export class OpenTelemetrySdkProvider
 
   create(
     config: OpenTelemetryConfiguration,
-    providerRegistry: ComponentProviderRegistry
-  ): unknown {
+    providerRegistry: ComponentProviderRegistry,
+    context: Record<string, unknown>
+  ): SDK {
+    const logLevel = parseLogLevel(config.log_level ?? 'info');
+    if (logLevel) {
+      diag.setLogger(new DiagConsoleLogger(), logLevel);
+    }
+
+    const sdk = new SDK();
+
     const propagator = this.createPropagators(
       config.propagator,
-      providerRegistry
+      providerRegistry,
+      context
     );
+    sdk.propagator = propagator;
+    if (config.disabled) {
+      return sdk;
+    }
+
+    const resource = this.createResource(
+      config.resource,
+      providerRegistry,
+      context
+    );
+    sdk.resource = resource;
+
+    const tracerProvider = this.createTracerProvider(config.tracer_provider, providerRegistry, context, resource, config.attribute_limits);
+
+    return sdk;
   }
 
   protected createPropagators(
     config: HttpsOpentelemetryIoOtelconfigPropagatorJson | undefined,
-    providerRegistry: ComponentProviderRegistry
+    providerRegistry: ComponentProviderRegistry,
+    context: Record<string, unknown>
   ) {
     if (!config) {
       return new CompositePropagator();
@@ -72,7 +105,8 @@ export class OpenTelemetrySdkProvider
     let propagator: TextMapPropagator = new CompositePropagator({
       propagators: providerRegistry.componentArrayMap(
         'propagator',
-        configs
+        configs,
+        context
       ) as TextMapPropagator[],
     });
 
@@ -81,5 +115,53 @@ export class OpenTelemetrySdkProvider
     }
 
     return propagator;
+  }
+
+  protected createResource(
+    config: HttpsOpentelemetryIoOtelconfigResourceJson | undefined,
+    providerRegistry: ComponentProviderRegistry,
+    context: Record<string, unknown>
+  ) {
+    /* Not implementing for now
+    const detectors = providerRegistry.componentArrayMap(
+      'detector',
+      config?.['detection/development']?.detectors ?? [],
+      context
+    ) as ResourceDetector[];
+    */
+
+    let resource = getDetectedResource();
+    const attributes: Attributes = {
+      ... (config?.attributes_list ? parseResourceAttributes(config?.attributes_list) : {}),
+    };
+
+    if (config?.attributes) {
+      for (const {name, value} of config.attributes) {
+        if (value !== null) {
+          attributes[name] = value;
+        } else {
+          delete attributes[name];
+        }
+      }
+    }
+
+    resource = resource.merge(resourceFromAttributes(attributes));
+
+    // For profiler
+    setResource(resource);
+
+    return resource;
+  }
+
+  protected createTracerProvider(
+    config: HttpsOpentelemetryIoOtelconfigTracerProviderJson | undefined,
+    providerRegistry: ComponentProviderRegistry,
+    context: Record<string, unknown>,
+    resource: Resource,
+    attribute_limits: AttributeLimits | undefined,
+  ) {
+    const spanProcessors = providerRegistry.componentArrayMap('span_processor', config?.processors ?? [], context);
+
+
   }
 }

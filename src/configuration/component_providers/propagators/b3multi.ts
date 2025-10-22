@@ -15,17 +15,15 @@
  */
 
 import { B3InjectEncoding, B3Propagator } from '@opentelemetry/propagator-b3';
-import { ComponentProviderRegistry } from '../../ComponentProviderRegistry';
-import { B3Propagator as B3PropagatorConfig } from '../../schema';
+import { ComponentProvider } from '../../types';
 
-export class B3MultiPropagatorProvider {
+export class B3MultiPropagatorProvider
+  implements ComponentProvider<'propagator', 'b3multi'>
+{
   readonly type = 'propagator';
   readonly name = 'b3multi';
 
-  create(
-    _config: B3PropagatorConfig,
-    _providerRegistry: ComponentProviderRegistry
-  ) {
+  create() {
     return new B3Propagator({ injectEncoding: B3InjectEncoding.MULTI_HEADER });
   }
 }
