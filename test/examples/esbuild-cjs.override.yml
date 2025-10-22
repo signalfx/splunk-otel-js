@@ -8,6 +8,7 @@ services:
     command: node ./esbuild
     environment:
       REQ_URL: http://app/main
+      MODULE_SYS: cjs
       COLLECTOR_URL: http://collector:8378/spans
       COLLECTOR_METRICS_URL: http://collector:8379/metrics
     depends_on:
