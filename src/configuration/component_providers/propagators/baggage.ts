@@ -15,17 +15,15 @@
  */
 
 import { W3CBaggagePropagator } from '@opentelemetry/core';
-import { ComponentProviderRegistry } from '../../ComponentProviderRegistry';
-import { BaggagePropagator } from '../../schema';
+import { ComponentProvider } from '../../types';
 
-export class BaggagePropagatorProvider {
+export class BaggagePropagatorProvider
+  implements ComponentProvider<'propagator', 'baggage'>
+{
   readonly type = 'propagator';
   readonly name = 'baggage';
 
-  create(
-    _config: BaggagePropagator,
-    _providerRegistry: ComponentProviderRegistry
-  ) {
+  create() {
     return new W3CBaggagePropagator();
   }
 }

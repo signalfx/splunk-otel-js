@@ -16,6 +16,7 @@
 
 import { ComponentProviderRegistry } from './ComponentProviderRegistry';
 import { OpenTelemetryConfiguration } from './schema';
+import { SDK } from './SDK';
 import { ComponentProvider } from './types';
 import { loadFile } from './YamlLoader';
 
@@ -37,8 +38,8 @@ export class Configuration {
     }
   }
 
-  create(configuration: OpenTelemetryConfiguration) {
-    return this.registry.component('sdk', 'sdk', configuration);
+  create(configuration: OpenTelemetryConfiguration): SDK {
+    return this.registry.create('sdk', 'sdk', configuration) as SDK;
   }
 
   registerComponentProvider(provider: ComponentProvider) {

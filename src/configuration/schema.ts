@@ -238,25 +238,9 @@ export type TraceIdRatioBasedSampler = {
 } & ({
   ratio?: number | null;
 } | null);
-/**
- * This interface was referenced by `ExperimentalResourceDetector`'s JSON-Schema definition
- * via the `patternProperty` "container".
- */
 export type ExperimentalContainerResourceDetector = {} | null;
-/**
- * This interface was referenced by `ExperimentalResourceDetector`'s JSON-Schema definition
- * via the `patternProperty` "host".
- */
 export type ExperimentalHostResourceDetector = {} | null;
-/**
- * This interface was referenced by `ExperimentalResourceDetector`'s JSON-Schema definition
- * via the `patternProperty` "process".
- */
 export type ExperimentalProcessResourceDetector = {} | null;
-/**
- * This interface was referenced by `ExperimentalResourceDetector`'s JSON-Schema definition
- * via the `patternProperty` "service".
- */
 export type ExperimentalServiceResourceDetector = {} | null;
 
 export interface OpenTelemetryConfiguration {
@@ -517,6 +501,10 @@ export interface ExperimentalResourceDetection {
   detectors?: ExperimentalResourceDetector[];
 }
 export interface ExperimentalResourceDetector {
+  container?: ExperimentalContainerResourceDetector;
+  host?: ExperimentalHostResourceDetector;
+  process?: ExperimentalProcessResourceDetector;
+  service?: ExperimentalServiceResourceDetector;
   [k: string]: unknown | undefined;
 }
 export interface HttpsOpentelemetryIoOtelconfigInstrumentationJson {

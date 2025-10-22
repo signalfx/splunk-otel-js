@@ -15,17 +15,15 @@
  */
 
 import { W3CTraceContextPropagator } from '@opentelemetry/core';
-import { ComponentProviderRegistry } from '../../ComponentProviderRegistry';
-import { TraceContextPropagator } from '../../schema';
+import { ComponentProvider } from '../../types';
 
-export class TraceContextPropagatorProvider {
+export class TraceContextPropagatorProvider
+  implements ComponentProvider<'propagator', 'tracecontext'>
+{
   readonly type = 'propagator';
   readonly name = 'tracecontext';
 
-  create(
-    _config: TraceContextPropagator,
-    _providerRegistry: ComponentProviderRegistry
-  ) {
+  create() {
     return new W3CTraceContextPropagator();
   }
 }

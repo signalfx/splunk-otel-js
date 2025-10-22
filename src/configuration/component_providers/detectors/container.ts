@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import { B3Propagator } from '@opentelemetry/propagator-b3';
+import { containerDetector } from '@opentelemetry/resource-detector-container';
 import { ComponentProvider } from '../../types';
 
-export class B3PropagatorProvider
-  implements ComponentProvider<'propagator', 'b3'>
+export class ContainerDetectorProvider
+  implements ComponentProvider<'detector', 'container'>
 {
-  readonly type = 'propagator';
-  readonly name = 'b3';
+  readonly type = 'detector';
+  readonly name = 'container';
 
   create() {
-    return new B3Propagator();
+    return containerDetector;
   }
 }

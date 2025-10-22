@@ -14,23 +14,39 @@
  * limitations under the License.
  */
 
+import { TextMapPropagator } from '@opentelemetry/api';
 import { ComponentProviderRegistry } from './ComponentProviderRegistry';
 import {
+  ExperimentalResourceDetector,
   OpenTelemetryConfiguration,
-  SpanProcessor,
-  TextMapPropagator,
+  SpanProcessor as SchemaSpanProcessor,
+  TextMapPropagator as SchemaTextMapPropagator,
+  SpanExporter as SchemaSpanExporter,
 } from './schema';
+import { SDK } from './SDK';
+import { ResourceDetector } from '@opentelemetry/resources';
+import { SpanExporter, SpanProcessor } from '@opentelemetry/sdk-trace-base';
 
 export type TypeComponentConfigMapping = {
   sdk: {
     sdk: OpenTelemetryConfiguration;
   };
-  propagator: TextMapPropagator;
-  span_procssor: SpanProcessor;
+  detector: ExperimentalResourceDetector;
+  propagator: SchemaTextMapPropagator;
+  span_procssor: SchemaSpanProcessor;
+  span_exporter: SchemaSpanExporter;
   [k: string]: {
     [k: string]: unknown;
   };
 };
+export type TypeReturnMapping = {
+  sdk: SDK;
+  detector: ResourceDetector;
+  propagator: TextMapPropagator;
+  span_processor: SpanProcessor;
+  span_exporter: SpanExporter;
+  [k: string]: unknown;
+}
 export type ComponentTypes = keyof TypeComponentConfigMapping;
 
 export interface ComponentProvider<
@@ -42,6 +58,7 @@ export interface ComponentProvider<
 
   create(
     config: TypeComponentConfigMapping[T][N],
-    providerRegistry: ComponentProviderRegistry
-  ): unknown;
+    providerRegistry: ComponentProviderRegistry,
+    context: Record<string, unknown>,
+  ): TypeReturnMapping[T];
 }

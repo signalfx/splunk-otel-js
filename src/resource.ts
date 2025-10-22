@@ -21,6 +21,7 @@ import {
   hostDetector,
   osDetector,
   processDetector,
+  Resource,
 } from '@opentelemetry/resources';
 import { containerDetector } from '@opentelemetry/resource-detector-container';
 import { distroDetector } from './detectors/DistroDetector';
@@ -36,7 +37,7 @@ const detectors = [
   telemetrySdkDetector,
 ];
 
-let detectedResource: DetectedResource | undefined;
+let detectedResource: Resource | undefined;
 
 export function getDetectedResource() {
   if (detectedResource === undefined) {
@@ -46,6 +47,10 @@ export function getDetectedResource() {
   }
 
   return detectedResource;
+}
+
+export function setResource(resource: Resource) {
+  detectedResource = resource;
 }
 
 export function clearResource() {

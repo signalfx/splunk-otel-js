@@ -29,6 +29,12 @@ export class ComponentProviderRegistry {
     }
   }
 
+  /**
+   *
+   * @param provider Component provider
+   * @param type Optional component type override
+   * @param name Optional component name override
+   */
   register(
     provider: ComponentProvider,
     type: ComponentTypes = provider.type,
@@ -47,10 +53,68 @@ export class ComponentProviderRegistry {
     typeMap.set(name, provider);
   }
 
-  public component(
+  public component<T extends ComponentTypes = ComponentTypes>(
+    type: T,
+    config: TypeComponentConfigMapping[T],
+    context: Record<string, unknown> = {}
+  ): unknown {
+    const kind = Object.keys(config);
+    if (kind.length !== 1) {
+      const text = kind.length ? kind.join(', ') : '(none)';
+      throw new Error(`Component ${type} must have exactly one provider, got ${text}`);
+    }
+
+    return this.create(type, kind[0], config[kind[0]], context);
+  }
+
+  public componentMap<T extends ComponentTypes = ComponentTypes>(
+    type: T,
+    config: TypeComponentConfigMapping[T],
+    context: Record<string, unknown> = {}
+  ): Array<unknown> {
+    return Object.keys(config).map((name) =>
+      this.create(
+        type,
+        name,
+        config[name as keyof TypeComponentConfigMapping[T]],
+        context
+      )
+    );
+  }
+
+  public componentArrayMap<T extends ComponentTypes = ComponentTypes>(
+    type: T,
+    configs: TypeComponentConfigMapping[T][],
+    context: Record<string, unknown> = {}
+  ): Array<unknown> {
+    const components = [];
+
+    for (const config of configs as unknown as Array<Record<string, unknown>>) {
+      components.push(this.component(type, config, context));
+    }
+
+    return components;
+  }
+
+  protected oneOfMap<T extends ComponentTypes = ComponentTypes>(
+    type: T,
+    config: TypeComponentConfigMapping[T],
+    context: Record<string, unknown> = {}
+  ): unknown {
+      const kind = Object.keys(config);
+      if (kind.length !== 1) {
+        const text = kind.length ? kind.join(', ') : '(none)';
+        throw new Error(`Component ${type} must have exactly one provider, got ${text}`);
+      }
+
+      return this.create(type, kind[0], config[kind[0]], context);
+  }
+
+  public create(
     type: ComponentTypes,
     name: string,
-    config: unknown
+    config: unknown,
+    context: Record<string, unknown> = {}
   ): unknown {
     const provider = this.providers.get(type)?.get(name);
     if (!provider) {
@@ -59,34 +123,6 @@ export class ComponentProviderRegistry {
       );
     }
 
-    return provider.create(config, this);
-  }
-
-  public componentMap<T extends ComponentTypes = ComponentTypes>(
-    type: T,
-    config: TypeComponentConfigMapping[T]
-  ): Array<unknown> {
-    return Object.keys(config).map((name) =>
-      this.component(
-        type,
-        name,
-        config[name as keyof TypeComponentConfigMapping[T]]
-      )
-    );
-  }
-
-  public componentArrayMap<T extends ComponentTypes = ComponentTypes>(
-    type: T,
-    configs: TypeComponentConfigMapping[T][]
-  ): Array<unknown> {
-    const components = [];
-
-    for (const config of configs as unknown as Array<Record<string, unknown>>) {
-      for (const name of Object.keys(config)) {
-        components.push(this.component(type, name, config[name]));
-      }
-    }
-
-    return components;
+    return provider.create(config, this, context);
   }
 }
