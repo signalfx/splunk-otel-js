@@ -1,6 +1,6 @@
 # Splunk OpenTelemetry Node.js Agent Manager
 
-A Go-based command-line tool that provides equivalent functionality to the Ansible role for managing Splunk OpenTelemetry Node.js agent installation via npm.
+A Go-based command-line tool for managing Splunk OpenTelemetry Node.js agent installation via npm package `@splunk/otel`.
 
 ## Features
 
@@ -9,27 +9,24 @@ A Go-based command-line tool that provides equivalent functionality to the Ansib
 - **Rollback**: Restore the previous version from backup
 - **Upgrade**: Upgrade to a new version with automatic backup
 
-## Installation
-
-### Prerequisites
+## Prerequisites
 
 - Go 1.21 or later
 - Node.js and npm installed on the target system
 - Appropriate permissions for the installation directory (default: `/opt/splunk-nodejs-agent`)
 
-### Build from Source
+## Build
 
 ```bash
-git clone <repository-url>
 cd go-module
-go mod tidy
-go build -o bin/splunk-otel-manager ./cmd/splunk-otel-manager
+make build
 ```
 
-### Install Binary
+Or manually:
 
 ```bash
-go install ./cmd/splunk-otel-manager
+go mod tidy
+go build -o bin/splunk-otel-manager ./cmd/splunk-otel-manager
 ```
 
 ## Usage
@@ -53,9 +50,7 @@ splunk-otel-manager rollback
 splunk-otel-manager upgrade --version "2.0.0"
 ```
 
-### Configuration Options
-
-#### Command Line Flags
+### Command Line Flags
 
 ```bash
 # Global flags (available for all commands)
@@ -69,23 +64,6 @@ splunk-otel-manager upgrade --version "2.0.0"
 --node-name string          Agent node name
 --no-node-name-suffix       Don't add -0 suffix to node name
 --verbose, -v               Verbose output
---config string             Config file (default is $HOME/.splunk-otel-manager.yaml)
-```
-
-#### Configuration File
-
-Create a configuration file at `~/.splunk-otel-manager.yaml`:
-
-```yaml
-dest_folder: "/opt/splunk-nodejs-agent"
-backup_folder: "/opt/splunk-nodejs-agent/backup"
-agent_version: "latest"
-access_token: "YOUR_SPLUNK_ACCESS_TOKEN_HERE"
-otlp_endpoint: "https://ingest.us1.signalfx.com/v2/trace"
-npm_registry: "https://registry.npmjs.org"
-agent_node_name: "my-node"
-no_node_name_suffix: false
-keep_backup: true
 ```
 
 ### Examples
@@ -102,32 +80,12 @@ splunk-otel-manager install \
   --verbose
 ```
 
-#### Equivalent to Ansible Playbook
+#### Using with Ansible
 
-The original Ansible playbook:
-
-```yaml
----
-- name: Install and configure Splunk Node.js Agent on localhost
-  hosts: localhost
-  become: true
-  vars:
-    agent_action: install
-    agent_version: "latest"
-    splunk_access_token: "PeZlDQLdXr3zDMmm9vWW_g"
-    otel_exporter_otlp_endpoint: "https://ingest.us1.signalfx.com/v2/trace"
-  roles:
-    - role: ansible/node
-```
-
-Equivalent Go command:
-
-```bash
-sudo splunk-otel-manager install \
-  --version "latest" \
-  --access-token "PeZlDQLdXr3zDMmm9vWW_g" \
-  --otlp-endpoint "https://ingest.us1.signalfx.com/v2/trace"
-```
+The Go binary can be invoked from Ansible playbooks. See `ansible/playbooks/install.yml` for an example that:
+- Creates a dedicated user (`splunk-agent`) for running the agent
+- Sets up the installation directory with proper permissions
+- Executes the Go binary with the specified operation (install/uninstall/rollback/upgrade)
 
 ## Output Format
 
@@ -155,53 +113,33 @@ pkg/agent/
 └── agent_test.go  # Unit tests
 
 cmd/splunk-otel-manager/
-└── main.go        # CLI interface
-
-config/
-└── example.yaml   # Example configuration file
+└── main.go        # CLI interface with Cobra framework
 ```
 
 ### Key Components
 
 - **Manager**: Core component that handles all agent operations
-- **Config**: Configuration structure for agent settings
-- **Result**: Standardized result format for all operations
+- **Config**: Configuration structure for agent settings via CLI flags
+- **Result**: Standardized JSON result format for all operations
 - **CLI**: Cobra-based command-line interface
 
 ## Development
 
-### Running Tests
-
-```bash
-go test ./pkg/agent/
-```
-
 ### Building
 
 ```bash
+make build
+# or
 go build -o bin/splunk-otel-manager ./cmd/splunk-otel-manager
 ```
 
-### Adding New Features
+### Running Tests
 
-1. Add functionality to `pkg/agent/agent.go`
-2. Add corresponding tests to `pkg/agent/agent_test.go`
-3. Update CLI commands in `cmd/splunk-otel-manager/main.go` if needed
-4. Update documentation
-
-## Comparison with Ansible Role
-
-| Feature | Ansible Role | Go Module |
-|---------|-------------|-----------|
-| Install | ✅ | ✅ |
-| Uninstall | ✅ | ✅ |
-| Rollback | ✅ | ✅ |
-| Upgrade | ✅ | ✅ |
-| Backup/Restore | ✅ | ✅ |
-| Configuration | YAML vars | YAML config file + CLI flags |
-| Output Format | Ansible facts | Structured JSON |
-| Dependencies | Ansible + Python | Go binary (self-contained) |
-| Execution | Playbook | Direct CLI commands |
+```bash
+make test
+# or
+go test ./pkg/agent/ -v
+```
 
 ## Troubleshooting
 
@@ -232,7 +170,3 @@ Use the `--verbose` flag for detailed operation logs:
 ```bash
 splunk-otel-manager install --verbose
 ```
-
-## License
-
-This project follows the same licensing as the original Splunk OpenTelemetry repositories.

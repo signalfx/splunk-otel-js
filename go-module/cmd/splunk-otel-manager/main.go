@@ -6,14 +6,12 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
 	"github.com/splunk/splunk-otel-js-manager/pkg/agent"
 )
 
 var (
-	cfgFile      string
 	destFolder   string
 	backupFolder string
 	version      string
@@ -30,10 +28,7 @@ var rootCmd = &cobra.Command{
 	Use:   "splunk-otel-manager",
 	Short: "Splunk OpenTelemetry Node.js Agent Manager",
 	Long: `A command-line tool to manage Splunk OpenTelemetry Node.js agent installation,
-uninstallation, rollback, and upgrade operations.
-
-This tool provides equivalent functionality to the Ansible role for managing
-the @splunk/otel npm package.`,
+uninstallation, rollback, and upgrade operations via npm package @splunk/otel.`,
 }
 
 var installCmd = &cobra.Command{
@@ -65,10 +60,7 @@ var upgradeCmd = &cobra.Command{
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
-
 	// Global flags
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.splunk-otel-manager.yaml)")
 	rootCmd.PersistentFlags().StringVar(&destFolder, "dest-folder", "/opt/splunk-nodejs-agent", "destination folder for agent installation")
 	rootCmd.PersistentFlags().StringVar(&backupFolder, "backup-folder", "", "backup folder (default: <dest-folder>/backup)")
 	rootCmd.PersistentFlags().StringVar(&version, "version", "latest", "agent version to install/upgrade to")
@@ -80,41 +72,11 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&noSuffix, "no-node-name-suffix", false, "don't add -0 suffix to node name")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
 
-	// Bind flags to viper
-	viper.BindPFlag("dest_folder", rootCmd.PersistentFlags().Lookup("dest-folder"))
-	viper.BindPFlag("backup_folder", rootCmd.PersistentFlags().Lookup("backup-folder"))
-	viper.BindPFlag("agent_version", rootCmd.PersistentFlags().Lookup("version"))
-	viper.BindPFlag("access_token", rootCmd.PersistentFlags().Lookup("access-token"))
-	viper.BindPFlag("otlp_endpoint", rootCmd.PersistentFlags().Lookup("otlp-endpoint"))
-	viper.BindPFlag("keep_backup", rootCmd.PersistentFlags().Lookup("keep-backup"))
-	viper.BindPFlag("npm_registry", rootCmd.PersistentFlags().Lookup("npm-registry"))
-	viper.BindPFlag("agent_node_name", rootCmd.PersistentFlags().Lookup("node-name"))
-	viper.BindPFlag("no_node_name_suffix", rootCmd.PersistentFlags().Lookup("no-node-name-suffix"))
-
 	// Add subcommands
 	rootCmd.AddCommand(installCmd)
 	rootCmd.AddCommand(uninstallCmd)
 	rootCmd.AddCommand(rollbackCmd)
 	rootCmd.AddCommand(upgradeCmd)
-}
-
-func initConfig() {
-	if cfgFile != "" {
-		viper.SetConfigFile(cfgFile)
-	} else {
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-
-		viper.AddConfigPath(home)
-		viper.SetConfigType("yaml")
-		viper.SetConfigName(".splunk-otel-manager")
-	}
-
-	viper.AutomaticEnv()
-
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
-	}
 }
 
 func createLogger() *zap.Logger {
@@ -136,15 +98,15 @@ func createLogger() *zap.Logger {
 
 func createConfig() *agent.Config {
 	return &agent.Config{
-		DestFolder:       viper.GetString("dest_folder"),
-		BackupFolder:     viper.GetString("backup_folder"),
-		AgentVersion:     viper.GetString("agent_version"),
-		AccessToken:      viper.GetString("access_token"),
-		OTLPEndpoint:     viper.GetString("otlp_endpoint"),
-		KeepBackup:       viper.GetBool("keep_backup"),
-		NPMRegistry:      viper.GetString("npm_registry"),
-		AgentNodeName:    viper.GetString("agent_node_name"),
-		NoNodeNameSuffix: viper.GetBool("no_node_name_suffix"),
+		DestFolder:       destFolder,
+		BackupFolder:     backupFolder,
+		AgentVersion:     version,
+		AccessToken:      accessToken,
+		OTLPEndpoint:     otlpEndpoint,
+		KeepBackup:       keepBackup,
+		NPMRegistry:      npmRegistry,
+		AgentNodeName:    nodeName,
+		NoNodeNameSuffix: noSuffix,
 	}
 }
 

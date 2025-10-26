@@ -1,0 +1,42 @@
+---
+- name: Manage Splunk Node.js Agent
+  hosts: localhost
+  become: true
+  vars:
+    # Agent operation: install, uninstall, rollback, upgrade
+    agent_action: install
+    agent_version: "latest"
+    splunk_dest_folder: "/opt/splunk-nodejs-agent"
+    go_binary_path: "{{ playbook_dir }}/../../go-module/bin/splunk-otel-manager"
+
+  tasks:
+    - name: Create agent installation directory
+      ansible.builtin.file:
+        path: "{{ splunk_dest_folder }}"
+        state: directory
+        mode: '0775'
+      when: agent_action in ['install', 'upgrade']
+
+    - name: Execute agent operation
+      ansible.builtin.command:
+        cmd: >
+          {{ go_binary_path }} {{ agent_action }}
+          --dest-folder "{{ splunk_dest_folder }}"
+          --version "{{ agent_version }}"
+          --verbose
+      register: agent_result
+      changed_when: true
+
+    - name: Display operation result
+      ansible.builtin.debug:
+        msg: "{{ agent_result.stdout }}"
+
+    - name: Parse JSON result
+      ansible.builtin.set_fact:
+        agent_output: "{{ agent_result.stdout | from_json }}"
+      when: agent_result.stdout != ""
+
+    - name: Display parsed result
+      ansible.builtin.debug:
+        var: agent_output
+      when: agent_output is defined
