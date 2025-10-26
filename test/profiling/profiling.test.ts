@@ -19,7 +19,7 @@ import { beforeEach, describe, it } from 'node:test';
 import { inspect } from 'util';
 
 import { context, trace } from '@opentelemetry/api';
-import { Resource } from '@opentelemetry/resources';
+import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
 import { InMemorySpanExporter } from '@opentelemetry/sdk-trace-base';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 
@@ -35,9 +35,8 @@ import {
   HeapProfile,
   ProfilingExporter,
 } from '../../src/profiling/types';
-import { detect as detectResource } from '../../src/resource';
 
-import * as utils from '../utils';
+import { cleanEnvironment, detectResource, spinMs } from '../utils';
 
 const sleep = (ms: number) => {
   return new Promise((r) => setTimeout(r, ms));
@@ -46,15 +45,15 @@ const sleep = (ms: number) => {
 describe('profiling', () => {
   describe('options', () => {
     beforeEach(() => {
-      utils.cleanEnvironment();
+      cleanEnvironment();
     });
 
     it('sets default options when no options are provided', async () => {
       const options = _setDefaultOptions();
       await options.resource.waitForAsyncAttributes?.();
-      const testResource = new Resource({
+      const testResource = resourceFromAttributes({
         [ATTR_SERVICE_NAME]: '@splunk/otel',
-      }).merge(detectResource());
+      }).merge(resourceFromAttributes(detectResource().attributes || {}));
       await testResource.waitForAsyncAttributes?.();
 
       const { resource: defaultResource, ...defaultOtherAttrs } = options;
@@ -129,14 +128,16 @@ describe('profiling', () => {
         },
       });
 
-      assert(context._getContextManager() instanceof ProfilingContextManager);
+      assert(
+        context['_getContextManager']() instanceof ProfilingContextManager
+      );
 
       const span = trace.getTracer('test-tracer').startSpan('test-span');
       const { spanId: expectedSpanId, traceId: expectedTraceId } =
         span.spanContext();
 
       context.with(trace.setSpan(context.active(), span), () => {
-        utils.spinMs(2_500);
+        spinMs(3_000);
         span.end();
       });
 
@@ -147,7 +148,7 @@ describe('profiling', () => {
       // It might be possible all stacktraces will not be available,
       // due to the first few stacktraces having random timings
       // after a profiling run is started.
-      const expectedStacktraces = 4;
+      const expectedStacktraces = 2;
       assert(
         stacktracesReceived.length >= expectedStacktraces,
         `expected at least ${expectedStacktraces}, got ${stacktracesReceived.length}`

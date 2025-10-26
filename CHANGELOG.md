@@ -1,5 +1,74 @@
 # Change Log - @splunk/otel
 
+## 4.0.1
+
+- Add back `telemetry.sdk.*` attributes. [#1066](https://github.com/signalfx/splunk-otel-js/pull/1066).
+
+## 4.0.0
+
+- Upgrade to OpenTelemetry SDK 2.0. [#1020](https://github.com/signalfx/splunk-otel-js/pull/1020).
+  * Minimum Node.js version has been bumped to `^18.19.0 || >=20.6.0`.
+  * Refer to https://github.com/open-telemetry/opentelemetry-js/releases/tag/v2.0.0 and the [upgrade guide](https://github.com/open-telemetry/opentelemetry-js/blob/main/doc/upgrade-to-2.x.md) for the complete list of breaking changes in OpenTelemetry JS.
+  * Notable changes relevant to `@splunk/otel`:
+    * Resource can no longer be created with `new Resource({})`, instead use `resourceFromAttributes({})` when passing in a resource:
+      ```ts
+      import { start } from '@splunk/otel';
+      import { resourceFromAttributes } from '@opentelemetry/resources';
+
+      start({
+        resource: (detectedResource) => {
+          return detectedResource.merge(resourceFromAttributes({
+            'my.attribute': 'foo',
+          }));
+        },
+      })
+      ```
+    * `Span` no longer has a `parentSpanId` field, use `parentSpanContext.spanId`:
+      ```ts
+      import { start } from '@splunk/otel';
+      import { Context } from '@opentelemetry/api';
+      import { ReadableSpan, Span } from '@opentelemetry/sdk-trace-base';
+      import { SpanProcessor } from '@opentelemetry/sdk-trace-base';
+
+      class MySpanProcessor implements SpanProcessor {
+        onStart(span: Span, _parentContext: Context): void {
+          console.log(span.parentSpanContext?.spanId);
+        }
+
+        onEnd(span: ReadableSpan): void {
+          console.log(span.parentSpanContext?.spanId);
+        }
+
+        forceFlush(): Promise<void> {
+          return Promise.resolve();
+        }
+
+        shutdown(): Promise<void> {
+          return Promise.resolve();
+        }
+      }
+
+      start({
+        tracing: {
+          spanProcessorFactory: (_opts) => [new MySpanProcessor()],
+        },
+      });
+      ```
+    * Passing in custom views to metrics is now done via `ViewOptions` interface instead of `new View({ ... })`:
+      ```ts
+      import { start } from '@splunk/otel';
+
+      start({
+        metrics: { views: [{ name: 'clicks', instrumentName: 'my-counter', }], },
+      })
+      ```
+- [`@opentelemetry/instrumentation-fastify`](https://www.npmjs.com/package/@opentelemetry/instrumentation-fastify) has been deprecated and is replaced with [`@fastify/otel`](https://www.npmjs.com/package/@fastify/otel).
+- Add an experimental HTTP instrumentation based on diagnostics channel. [#1021](https://github.com/signalfx/splunk-otel-js/pull/1021)
+- Add `oracledb` and `openai` instrumentations. [#1041](https://github.com/signalfx/splunk-otel-js/pull/1041)
+- New `nocode` instrumentation that allows instrumenting of custom code. Refer to the [overview](https://github.com/signalfx/splunk-otel-js/blob/main/src/instrumentations/external/nocode/nocode.md) for usage.
+- `typeorm` instrumentation has migrated to [upstream](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/packages/instrumentation-typeorm) and is now using updated semantic conventions, e.g. `db.namespace`, `db.operation.name`, `db.collection.name`, `db.query.text`, `db.system.name`.
+- `@opentelemetry/instrumentation-redis-4` has been removed as it has been merged to `@opentelemetry/instrumentation-redis` in the upstream.
+
 ## 3.3.0
 
 - Add the option to use AWS Xray propagator. [#1028](https://github.com/signalfx/splunk-otel-js/pull/1028)
@@ -324,7 +393,7 @@ October 28, 2022
   SignalFx metrics SDK has been removed and replaced with OpenTelemetry Metrics SDKs.
   The internal SignalFx client is no longer available to users, if you have been using custom metrics with the SignalFx client provided by Splunk OpenTelemetry JS distribution, see the [Migrate from the SignalFx Tracing Library for NodeJS](https://quickdraw.splunk.com/redirect/?product=Observability&version=current&location=nodejs.application.migrate) in the official documentation.
 
-  Runtime metric names are now using [OpenTelemetry conventions](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/semantic_conventions/runtime-environment-metrics.md), the following is a list of changed metric names:
+  Runtime metric names are now using [OpenTelemetry conventions](https://opentelemetry.io/docs/specs/semconv/runtime/nodejs-metrics), the following is a list of changed metric names:
 
   | SignalFx (no longer available) | OpenTelemetry                               |
   | ------------------------------ | ------------------------------------------- |

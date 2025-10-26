@@ -11,16 +11,17 @@ const KNOWN_TARGET_LIBRARY_VERSIONS = new Map([
   ["splunk-opentelemetry-instrumentation-sequelize", ["*"]],
   ["splunk-opentelemetry-instrumentation-typeorm", [">0.2.28"]],
   ["splunk-opentelemetry-instrumentation-neo4j", [">=4.0.0 <6"]],
+  ["splunk-opentelemetry-instrumentation-nocode", ["*"]],
   ["@opentelemetry/instrumentation-dns", ["*"]],
   ["@opentelemetry/instrumentation-net", ["*"]],
   ["@opentelemetry/instrumentation-http",  ["*"]],
   ["@opentelemetry/instrumentation-grpc", ["1.x"]],
   ["@opentelemetry/instrumentation-aws-sdk",  ["2.x", "3.x"]],
   ["@opentelemetry/instrumentation-redis", ["^2.6.0", "3.x"]],
-  ["@opentelemetry/instrumentation-redis-4", ["4.x"]],
   ["@opentelemetry/instrumentation-lru-memoizer", [">=1.3 <3"]],
   ["@opentelemetry/instrumentation-socket.io", [">=2 <5"]],
   ["@opentelemetry/instrumentation-undici", [">=5.12.0"]],
+  ["@fastify/otel", [">=4.0.0 <6"]],
 ]);
 
 const INSTRUMENTATIONS = [
@@ -33,7 +34,7 @@ const INSTRUMENTATIONS = [
   { name: "@opentelemetry/instrumentation-dataloader", target: "dataloader", },
   { name: "@opentelemetry/instrumentation-dns", target: "dns", },
   { name: "@opentelemetry/instrumentation-express", target: "express", },
-  { name: "@opentelemetry/instrumentation-fastify", target: "fastify", },
+  { name: "@fastify/otel", target: "fastify", },
   { name: "@opentelemetry/instrumentation-generic-pool", target: "generic-pool", },
   { name: "@opentelemetry/instrumentation-graphql",  target: "graphql", },
   { name: "@opentelemetry/instrumentation-grpc", target: "@grpc/grpc-js", },
@@ -54,7 +55,6 @@ const INSTRUMENTATIONS = [
   { name: "@opentelemetry/instrumentation-pg", target: "pg", },
   { name: "@opentelemetry/instrumentation-pino", target: "pino", },
   { name: "@opentelemetry/instrumentation-redis", target: "redis", },
-  { name: "@opentelemetry/instrumentation-redis-4", target: "redis", },
   { name: "@opentelemetry/instrumentation-restify", target: "restify", },
   { name: "@opentelemetry/instrumentation-router", target: "router", },
   { name: "@opentelemetry/instrumentation-socket.io", target: "socket.io", },
@@ -64,7 +64,8 @@ const INSTRUMENTATIONS = [
   { name: "splunk-opentelemetry-instrumentation-elasticsearch", target: "@elastic/elasticsearch", support: "supported", },
   { name: "splunk-opentelemetry-instrumentation-sequelize", target: "sequelize", support: "supported", },
   { name: "splunk-opentelemetry-instrumentation-typeorm", target: "typeorm", support: "supported", },
-  { name: "splunk-opentelemetry-instrumentation-neo4j", target: "neo4j", support: "supported", }
+  { name: "splunk-opentelemetry-instrumentation-neo4j", target: "neo4j", support: "supported", },
+  { name: "splunk-opentelemetry-instrumentation-nocode", target: "nocode", support: "supported", }
 ];
 
 const INSTRUMENTATION_ADDITIONAL_DATA = new Map([
@@ -145,7 +146,7 @@ const INDENT = '  ';
 /**
  * Convert JS object to YAML string
  *
- * @param {*} input 
+ * @param {*} input
  * @param {number} objIndent Indent level for objects
  * @returns {string}
  */

@@ -1,0 +1,16 @@
+services:
+  app:
+    working_dir: /home/node/app/examples/esbuild/esm
+    env_file: ./esbuild/esm/app.env
+    depends_on:
+      - collector
+  test:
+    command: node ./esbuild
+    environment:
+      REQ_URL: http://app/main
+      MODULE_SYS: esm
+      COLLECTOR_URL: http://collector:8378/spans
+      COLLECTOR_METRICS_URL: http://collector:8379/metrics
+    depends_on:
+      - app
+      - collector

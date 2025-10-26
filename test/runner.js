@@ -20,14 +20,30 @@ function findTestFiles(dir, fileList = []) {
   return fileList;
 }
 
-// Find all test files in the ./test directory
-let testFiles = findTestFiles(__dirname);
+let testDir;
+if (process.env.TEST_DIR) {
+  testDir = path.resolve(__dirname, process.env.TEST_DIR)
+} else {
+  testDir = __dirname;
+}
+// Find all test files in the ./test directory (or custom path if TEST_DIR is set)
+let testFiles = findTestFiles(testDir);
+let extraArgs = [];
 
 if (process.argv.length > 2) {
   const patterns = process.argv.slice(2);
+  let filePatterns = [];
+
+  for (const p of patterns) {
+    if (p.startsWith('--')) {
+      extraArgs.push(p);
+    } else {
+      filePatterns.push(p);
+    }
+  }
 
   testFiles = testFiles.filter((path) => {
-    for (const pattern of patterns) {
+    for (const pattern of filePatterns) {
       if (path.includes(pattern)) {
         return true;
       }
@@ -44,6 +60,7 @@ const args = [
   '--test',
   '--test-reporter',
   'spec',
+  ...extraArgs,
   ...testFiles,
 ];
 

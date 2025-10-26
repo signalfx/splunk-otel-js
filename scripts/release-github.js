@@ -2,18 +2,31 @@ const fs = require('fs');
 const path = require('path');
 const { Octokit } = require('octokit');
 
-const { version } = require('../package.json');
 const { getReleaseMessage } = require('./release-message');
 
 async function createRelease() {
-  const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+  const github_token = process.env.GITHUB_TOKEN;
+
+  if (!github_token) {
+    throw new Error('Missing GITHUB_TOKEN. Aborting release.');
+  }
+
+  const octokit = new Octokit({ auth: github_token });
+
+  const packageDirArg = process.argv.find(arg => arg.startsWith('--package_dir='));
+  
+  if (!packageDirArg) {
+    throw new Error('Missing --package_dir=PATH');
+  }
+
+  const packageDir = packageDirArg.split('=')[1]; 
 
   const {
     data: { login },
   } = await octokit.rest.users.getAuthenticated();
   console.log(`Successfully authenticated as ${login}.`);
 
-  const tag = `v${version}`;
+  const tag = process.env.CI_COMMIT_TAG;
   console.log(`Tag: ${tag}`);
 
   const owner = process.env.GITHUB_OWNER ?? 'signalfx';
@@ -39,7 +52,7 @@ async function createRelease() {
     owner,
     repo,
     tag_name: tag,
-    body: getReleaseMessage(),
+    body: getReleaseMessage(packageDir),
   });
   console.log(`Release created ${githubRelease.id}.`);
 

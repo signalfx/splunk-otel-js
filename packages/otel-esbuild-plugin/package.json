@@ -1,0 +1,55 @@
+{
+  "name": "@splunk/otel-esbuild-plugin-node",
+  "version": "0.0.2",
+  "description": "Splunk OpenTelemetry esbuild plugin for Node.js",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "files": [
+    "build/**/*.js",
+    "build/**/*.js.map",
+    "build/**/*.d.ts",
+    "LICENSE"
+  ],
+  "scripts": {
+    "compile": "tsc --build",
+    "clean": "tsc --build --clean",
+    "prepublishOnly": "npm run clean && npm run compile",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "lint": "eslint . --ext .ts",
+    "test": "cross-env TEST_DIR=../packages/otel-esbuild-plugin node ../../test/runner.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/signalfx/splunk-otel-js.git"
+  },
+  "keywords": [
+    "esbuild",
+    "opentelemetry",
+    "tracing",
+    "profiling",
+    "metrics",
+    "splunk"
+  ],
+  "author": "Splunk <splunk-oss@splunk.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/signalfx/splunk-otel-js/issues"
+  },
+  "homepage": "https://github.com/signalfx/splunk-otel-js#readme",
+  "devDependencies": {
+    "@typescript-eslint/typescript-estree": "^8.39.0"
+  },
+  "dependencies": {
+    "esbuild": "^0.25.8",
+    "opentelemetry-esbuild-plugin-node": "^4.1.0"
+  },
+  "peerDependencies": {
+    "@splunk/otel": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

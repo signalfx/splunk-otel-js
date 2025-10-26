@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-export const VERSION = '3.3.0';
+export const VERSION = '4.0.1';

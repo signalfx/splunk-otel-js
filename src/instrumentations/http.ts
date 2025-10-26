@@ -27,6 +27,7 @@ import {
 import { diag, isSpanContextValid, TraceFlags } from '@opentelemetry/api';
 import { Span } from '@opentelemetry/api';
 import * as Url from 'url';
+import { HttpDcInstrumentation } from './httpdc/httpdc';
 
 type IncomingHttpRequestHook = (span: Span, request: IncomingMessage) => void;
 
@@ -119,6 +120,68 @@ function createHttpRequestHook(
 
 export function configureHttpInstrumentation(
   instrumentation: HttpInstrumentation,
+  options: TracingOptions
+) {
+  const config = instrumentation.getConfig();
+
+  if (shouldAddRequestHook(options)) {
+    const requestHook = createHttpRequestHook(options);
+    if (config.requestHook === undefined) {
+      config.requestHook = requestHook;
+    } else {
+      const original = config.requestHook;
+      config.requestHook = function (this: unknown, span, request) {
+        requestHook(span, request);
+        original.call(this, span, request);
+      };
+    }
+  }
+
+  if (!options.serverTimingEnabled) {
+    instrumentation.setConfig(config);
+    return;
+  }
+
+  const responseHook: HttpResponseCustomAttributeFunction = (
+    span,
+    response
+  ) => {
+    if (!(response instanceof ServerResponse)) {
+      return;
+    }
+
+    const spanContext = span.spanContext();
+
+    if (!isSpanContextValid(spanContext)) {
+      return;
+    }
+
+    const { traceFlags, traceId, spanId } = spanContext;
+    const sampled = (traceFlags & TraceFlags.SAMPLED) === TraceFlags.SAMPLED;
+    const flags = sampled ? '01' : '00';
+
+    appendHeader(response, 'Access-Control-Expose-Headers', 'Server-Timing');
+    appendHeader(
+      response,
+      'Server-Timing',
+      `traceparent;desc="00-${traceId}-${spanId}-${flags}"`
+    );
+  };
+
+  if (config.responseHook === undefined) {
+    config.responseHook = responseHook;
+  } else {
+    const original = config.responseHook;
+    config.responseHook = function (this: unknown, span, response) {
+      responseHook(span, response);
+      original.call(this, span, response);
+    };
+  }
+
+  instrumentation.setConfig(config);
+}
+export function configureHttpDcInstrumentation(
+  instrumentation: HttpDcInstrumentation,
   options: TracingOptions
 ) {
   const config = instrumentation.getConfig();

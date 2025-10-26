@@ -23,14 +23,20 @@ import * as assert from 'assert';
 import * as childProcess from 'child_process';
 import * as util from 'util';
 import { Writable } from 'stream';
-import { context, trace } from '@opentelemetry/api';
-import { clearResource } from '../src/resource';
+import {
+  context,
+  ProxyTracerProvider,
+  trace,
+  TracerProvider,
+} from '@opentelemetry/api';
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 import { OTLPTraceExporter as OTLPGrpcTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 // eslint bugs and reports these as extraneous even though instanceof is used
 // eslint-disable-next-line n/no-extraneous-import
 import { OTLPMetricExporterBase } from '@opentelemetry/exporter-metrics-otlp-http';
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
+import { clearResource, getDetectedResource } from '../src/resource';
 
 const isConfigVarEntry = (key: string) => {
   const lowercased = key.toLowerCase();
@@ -220,4 +226,16 @@ export function startContainer(cmd: string) {
 
 export function stopContainer(container: string) {
   run(`docker stop ${container}`);
+}
+
+export function getSpanProcessors(tracerProvider: TracerProvider) {
+  const proxy = tracerProvider as ProxyTracerProvider;
+  const provider = proxy.getDelegate() as NodeTracerProvider;
+
+  return provider['_activeSpanProcessor']['_spanProcessors'];
+}
+
+export function detectResource() {
+  clearResource();
+  return getDetectedResource();
 }

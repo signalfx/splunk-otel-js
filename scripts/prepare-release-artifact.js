@@ -54,7 +54,64 @@ async function waitForWorkflowRun(context) {
   }
 }
 
+async function downloadArtifact(octokit, owner, repo, runId, artifactName) {
+  const { data: artifacts } = await octokit.rest.actions.listWorkflowRunArtifacts({
+    owner,
+    repo,
+    run_id: runId,
+    name: artifactName,
+  });
+
+  console.log('found artifacts for workflow', artifacts);
+
+  const artifact = artifacts.artifacts.find(artifact => artifact.name === artifactName);
+  
+  if (artifact === undefined) {
+    throw new Error(`unable to find artifact named ${artifactName}`);
+  }
+
+  const downloadedArtifact = await octokit.rest.actions.downloadArtifact({
+    owner,
+    repo,
+    artifact_id: artifact.id,
+    archive_format: 'zip',
+  });
+
+  console.log('downloaded', downloadedArtifact);
+
+  return downloadedArtifact.data;
+
+}
+
+function extractArtifact(artifactData, targetFile) {
+  const tempFile = 'artifact-temp.zip';
+
+  console.log(`writing content to ${tempFile} and unzipping`);
+
+  fs.writeFileSync(tempFile, Buffer.from(artifactData));
+  
+  execSync(`unzip -o ${tempFile}`);
+
+  const exists = fs.existsSync(targetFile);
+  console.log(`${targetFile} was extracted: ${exists}`);
+  
+  if (!exists) {
+    throw new Error(`${targetFile} was not found after extraction`);
+  }
+
+  return targetFile;
+}
+
 async function getBuildArtifact() {
+  const packageArg = process.argv.find(arg => arg.startsWith('--package='));
+  
+  if (!packageArg) {
+    throw new Error('Missing --package=artifact.tgz argument');
+  }
+
+  const targetFileName = packageArg.split('=')[1]; 
+  console.log(`Target file: ${targetFileName}`);
+
   const octokit = new Octokit({ auth: process.env.PUBLIC_ARTIFACTS_TOKEN });
   const owner = process.env.GITHUB_OWNER ?? 'signalfx';
   const repo = process.env.GITHUB_REPO ?? 'splunk-otel-js';
@@ -66,46 +123,19 @@ async function getBuildArtifact() {
   console.log('found finished workflow run', run);
 
   const tgzName = `splunk-otel-${version}.tgz`
-  const { data: artifacts } = await octokit.rest.actions.listWorkflowRunArtifacts({
-    owner,
-    repo,
-    run_id: run.id,
-    name: tgzName,
-  });
+  
+  if (targetFileName === tgzName) {
+    // Download and extract main package artifact
+    const splunkOtelArtifactData = await downloadArtifact(octokit, owner, repo, run.id, tgzName);
 
-  console.log('found artifacts for workflow', artifacts);
+    return extractArtifact(splunkOtelArtifactData, targetFileName);
+  } else {
+    // Download and extract workspace packages artifact which contains all workspace packages
+    const workspacePackageName = 'workspace-packages';
+    const workspaceArtifactData = await downloadArtifact(octokit, owner, repo, run.id, workspacePackageName);
 
-  const packageArtifact = artifacts.artifacts.find(artifact => artifact.name === tgzName);
-
-  if (packageArtifact === undefined) {
-    throw new Error(`unable to find artifact named ${tgzName}`);
+    return extractArtifact(workspaceArtifactData, targetFileName);
   }
-
-  const dlArtifact = await octokit.rest.actions.downloadArtifact({
-    owner,
-    repo,
-    artifact_id: packageArtifact.id,
-    archive_format: 'zip',
-  });
-
-  console.log('downloaded', dlArtifact);
-
-  const tempFile = 'artifact-temp.zip';
-
-  console.log(`writing content to ${tempFile} and unzipping`);
-
-  fs.writeFileSync(tempFile, Buffer.from(dlArtifact.data));
-
-  execSync(`unzip -o ${tempFile}`);
-
-  const exists = fs.existsSync(packageArtifact.name);
-  console.log(`${packageArtifact.name} was extracted: ${exists}`);
-
-  if (!exists) {
-    throw new Error(`${packageArtifact.name} was not found after extraction`);
-  }
-
-  return packageArtifact.name;
 }
 
 async function prepareReleaseArtifact() {

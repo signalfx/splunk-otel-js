@@ -17,6 +17,10 @@ jobs:
             name: 'Basic'
           - target: '-f express.override.yml'
             name: 'Express'
+          - target: '-f esbuild-cjs.override.yml'
+            name: 'ESBuild CJS'
+          - target: '-f esbuild-esm.override.yml'
+            name: 'ESBuild ESM'
           - target: '-f mixed.override.yml'
             name: 'Mixed'
           - target: '-f log-injection.override.yml'
@@ -28,9 +32,7 @@ jobs:
     name: e2e published ${{ matrix.name }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          ref: 2.x
+        uses: actions/checkout@v5
       - name: Get versions
         run: |
           docker compose version;
