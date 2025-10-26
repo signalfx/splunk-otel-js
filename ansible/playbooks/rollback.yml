@@ -1,9 +1,0 @@
----
-- name: Rollback Splunk Node.js Agent
-  hosts: localhost
-  become: true
-  vars:
-    agent_action: rollback
-    go_binary_path: "{{ playbook_dir }}/../go-module/bin/splunk-otel-manager"
-  roles:
-    - role: ../node-go
