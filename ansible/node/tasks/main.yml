@@ -1,0 +1,22 @@
+---
+# tasks/main.yml
+
+- name: Set up Node.js and npm
+  include_tasks: setup-npm.yml
+  when: agent_action in ["install", "upgrade"]
+
+- name: Install Splunk Agent
+  include_tasks: agent-install.yml
+  when: agent_action == "install"
+
+- name: Uninstall Splunk Agent
+  include_tasks: agent-uninstall.yml
+  when: agent_action == "uninstall"
+
+- name: Rollback Splunk Agent
+  include_tasks: agent-rollback.yml
+  when: agent_action == "rollback"
+
+- name: Upgrade Splunk Agent
+  include_tasks: agent-install.yml
+  when: agent_action == "upgrade"

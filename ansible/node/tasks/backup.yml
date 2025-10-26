@@ -1,0 +1,62 @@
+---
+- name: Splunk Node.js Agent Backup Block
+  become: true
+  block:
+    - name: Check if package.json exists
+      ansible.builtin.stat:
+        path: "{{ splunk_dest_folder }}/package.json"
+      register: package_json_stat
+
+    - name: Checking if Splunk Node.js agent is already installed
+      ansible.builtin.shell: "grep -i 'splunk' {{ splunk_dest_folder }}/package.json"
+      register: old_agent_found
+      ignore_errors: true
+      when: package_json_stat.stat.exists
+
+    - name: Create Splunk Node.js Agent Backup Folder
+      ansible.builtin.file:
+        path: "{{ splunk_backup_folder }}/"
+        state: directory
+        mode: '0775'
+      when: package_json_stat.stat.exists and old_agent_found is defined and old_agent_found.rc == 0
+
+    - name: Filter the Splunk Node.js agent version to be backed up
+      ansible.builtin.set_fact:
+        version: "{{ old_agent_found.stdout | regex_search('(\\^|~)?\\d+\\.\\d+\\.\\d+') }}"
+      when: package_json_stat.stat.exists and old_agent_found is defined and old_agent_found.rc == 0
+
+    - name: Create a splunk-agent-version.txt file
+      ansible.builtin.copy:
+        dest: "{{ node_agent_backup_folder }}/splunk-agent-version.txt"
+        content: "{{ version }}"
+        mode: '0755'
+      when: package_json_stat.stat.exists and old_agent_found is defined and old_agent_found.rc == 0
+
+    - name: Read the version to be backed up
+      ansible.builtin.slurp:
+        src: "{{ node_agent_backup_folder }}/splunk-agent-version.txt"
+      register: version
+      when: package_json_stat.stat.exists and old_agent_found is defined and old_agent_found.rc == 0
+
+    - name: Print the backed up version of Splunk Node.js agent
+      ansible.builtin.debug:
+        msg: "The value of splunk-agent-version.txt is {{ version['content'] | b64decode }}"
+      when: package_json_stat.stat.exists and old_agent_found is defined and old_agent_found.rc == 0
+
+    - name: Check if splunk-config.js exists
+      ansible.builtin.stat:
+        path: "{{ node_agent_dest_folder }}/splunk-config.js"
+      register: config_exists
+
+    - name: Backing up splunk-config.js file in case it exists
+      ansible.builtin.command: "cp {{ node_agent_dest_folder }}/splunk-config.js {{ node_agent_backup_folder }}/"
+      when: config_exists.stat.exists
+
+    - name: splunk_agent_status Node.js agent backup success log
+      ansible.builtin.debug:
+        msg: '{ "agentBackup": "Splunk Node.js agent backup success" }'
+
+  rescue:
+    - name: splunk_agent_status Backup Task Failed
+      ansible.builtin.debug:
+        msg: '{ "agentBackup": "Error occurred while taking backup." }'
