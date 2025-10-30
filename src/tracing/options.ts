@@ -32,7 +32,6 @@ import {
   defaultServiceName,
   getEnvArray,
   getEnvValueByPrecedence,
-  getNonEmptyEnvVar,
   getEnvBoolean,
   ensureResourcePath,
 } from '../utils';
@@ -52,11 +51,12 @@ import type {
   TracingOptions,
 } from './types';
 import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
+import { getNonEmptyConfigVar } from '../configuration';
 
 function defaultSampler(config: NodeTracerConfig) {
   if (
     config.sampler === undefined &&
-    getNonEmptyEnvVar('OTEL_TRACES_SAMPLER') === undefined
+    getNonEmptyConfigVar('OTEL_TRACES_SAMPLER') === undefined
   ) {
     return new AlwaysOnSampler();
   }
@@ -68,7 +68,7 @@ export function _setDefaultOptions(
   options: StartTracingOptions = {}
 ): TracingOptions {
   process.env.OTEL_SPAN_LINK_COUNT_LIMIT =
-    getNonEmptyEnvVar('OTEL_SPAN_LINK_COUNT_LIMIT') ?? '1000';
+    getNonEmptyConfigVar('OTEL_SPAN_LINK_COUNT_LIMIT') ?? '1000';
   process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT =
     getNonEmptyEnvVar('OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT') ?? '12000';
 

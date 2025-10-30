@@ -15,7 +15,6 @@
  */
 
 import {
-  DetectedResource,
   detectResources,
   envDetector,
   hostDetector,

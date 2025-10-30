@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import { defaultServiceName, getEnvArray, getNonEmptyEnvVar } from './utils';
+import { defaultServiceName, getEnvArray } from './utils';
+import { getNonEmptyConfigVar } from './configuration';
 
 import { start } from './start';
 
 function boot() {
-  if (getNonEmptyEnvVar('SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES') !== undefined) {
+  if (getNonEmptyConfigVar('SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES') !== undefined) {
     const limitToPackages = getEnvArray(
       'SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES',
       []

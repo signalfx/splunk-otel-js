@@ -46,7 +46,7 @@ import {
   isSnapshotProfilingEnabled,
   startSnapshotProfiling,
 } from './tracing/snapshots/Snapshots';
-import { createConfiguration } from './configuration';
+import { createConfiguration, getNonEmptyConfigVar, setGlobalConfiguration } from './configuration';
 
 export interface Options {
   accessToken: string;
@@ -81,7 +81,7 @@ function isSignalEnabled<T>(
   envVar: EnvVarKey,
   def: boolean
 ) {
-  return option ?? parseEnvBooleanString(getNonEmptyEnvVar(envVar)) ?? def;
+  return option ?? parseEnvBooleanString(getNonEmptyConfigVar(envVar)) ?? def;
 }
 
 export const start = (options: Partial<Options> = {}) => {
@@ -98,14 +98,13 @@ export const start = (options: Partial<Options> = {}) => {
   if (configFile) {
     const configuration = createConfiguration();
     const config = configuration.parse(configFile);
-
-    configuration.create(config);
+    setGlobalConfiguration(config);
     return;
   }
 
   const logLevel = options.logLevel
     ? toDiagLogLevel(options.logLevel)
-    : parseLogLevel(getNonEmptyEnvVar('OTEL_LOG_LEVEL'));
+    : parseLogLevel(getNonEmptyConfigVar('OTEL_LOG_LEVEL'));
 
   if (logLevel !== DiagLogLevel.NONE) {
     diag.setLogger(new DiagConsoleLogger(), logLevel);
@@ -115,7 +114,7 @@ export const start = (options: Partial<Options> = {}) => {
 
   const serviceName =
     options.serviceName ||
-    getNonEmptyEnvVar('OTEL_SERVICE_NAME') ||
+    getNonEmptyConfigVar('OTEL_SERVICE_NAME') ||
     envResource.attributes?.[ATTR_SERVICE_NAME];
 
   if (!serviceName) {
