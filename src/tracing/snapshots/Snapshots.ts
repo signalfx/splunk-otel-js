@@ -135,10 +135,10 @@ let profiler: SnapshotProfiler | undefined;
 export function startSnapshotProfiling(options: StartSnapshotProfilingOptions) {
   const samplingIntervalMs =
     options.samplingIntervalMs ??
-    getEnvNumber('SPLUNK_SNAPSHOT_PROFILER_SAMPLING_INTERVAL', 1);
+    getEnvNumber('SPLUNK_SNAPSHOT_SAMPLING_INTERVAL', 1);
   const collectionIntervalMs =
     options.collectionIntervalMs ??
-    getEnvNumber('SPLUNK_CPU_PROFILER_COLLECTION_INTERVAL', 30_000);
+    getEnvNumber('SPLUNK_SNAPSHOT_SELECTION_PROBABILITY', 30_000);
 
   profiler = new SnapshotProfiler({
     serviceName: options.serviceName,
