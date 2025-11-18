@@ -46,7 +46,7 @@ export type TypeReturnMapping = {
   span_processor: SpanProcessor;
   span_exporter: SpanExporter;
   [k: string]: unknown;
-}
+};
 export type ComponentTypes = keyof TypeComponentConfigMapping;
 
 export interface ComponentProvider<
@@ -59,6 +59,6 @@ export interface ComponentProvider<
   create(
     config: TypeComponentConfigMapping[T][N],
     providerRegistry: ComponentProviderRegistry,
-    context: Record<string, unknown>,
+    context: Record<string, unknown>
   ): TypeReturnMapping[T];
 }

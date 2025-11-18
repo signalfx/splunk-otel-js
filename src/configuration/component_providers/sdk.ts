@@ -25,7 +25,12 @@ import {
   OpenTelemetryConfiguration,
 } from '../schema';
 import { ComponentProvider } from '../types';
-import { Attributes, diag, DiagConsoleLogger, TextMapPropagator } from '@opentelemetry/api';
+import {
+  Attributes,
+  diag,
+  DiagConsoleLogger,
+  TextMapPropagator,
+} from '@opentelemetry/api';
 import { SDK } from '../SDK';
 import { parseLogLevel } from '../../utils';
 import { getDetectedResource, setResource } from '../../resource';
@@ -78,7 +83,13 @@ export class OpenTelemetrySdkProvider
     );
     sdk.resource = resource;
 
-    const tracerProvider = this.createTracerProvider(config.tracer_provider, providerRegistry, context, resource, config.attribute_limits);
+    const tracerProvider = this.createTracerProvider(
+      config.tracer_provider,
+      providerRegistry,
+      context,
+      resource,
+      config.attribute_limits
+    );
 
     return sdk;
   }
@@ -132,11 +143,13 @@ export class OpenTelemetrySdkProvider
 
     let resource = getDetectedResource();
     const attributes: Attributes = {
-      ... (config?.attributes_list ? parseResourceAttributes(config?.attributes_list) : {}),
+      ...(config?.attributes_list
+        ? parseResourceAttributes(config?.attributes_list)
+        : {}),
     };
 
     if (config?.attributes) {
-      for (const {name, value} of config.attributes) {
+      for (const { name, value } of config.attributes) {
         if (value !== null) {
           attributes[name] = value;
         } else {
@@ -158,10 +171,12 @@ export class OpenTelemetrySdkProvider
     providerRegistry: ComponentProviderRegistry,
     context: Record<string, unknown>,
     resource: Resource,
-    attribute_limits: AttributeLimits | undefined,
+    attribute_limits: AttributeLimits | undefined
   ) {
-    const spanProcessors = providerRegistry.componentArrayMap('span_processor', config?.processors ?? [], context);
-
-
+    const spanProcessors = providerRegistry.componentArrayMap(
+      'span_processor',
+      config?.processors ?? [],
+      context
+    );
   }
 }

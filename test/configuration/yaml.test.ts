@@ -32,6 +32,8 @@ describe('YAML config file', () => {
   test('valid file', () => {
     const config = loadFile(join(__dirname, 'example-config.yaml'));
 
+    const propagators = config.propagator?.composite || [];
+    console.log(config.propagator);
     assert.ok(config);
     // Some basic sanity checks
     assert.equal(config.file_format, '1.0-rc.1');

@@ -61,7 +61,9 @@ export class ComponentProviderRegistry {
     const kind = Object.keys(config);
     if (kind.length !== 1) {
       const text = kind.length ? kind.join(', ') : '(none)';
-      throw new Error(`Component ${type} must have exactly one provider, got ${text}`);
+      throw new Error(
+        `Component ${type} must have exactly one provider, got ${text}`
+      );
     }
 
     return this.create(type, kind[0], config[kind[0]], context);
@@ -101,13 +103,15 @@ export class ComponentProviderRegistry {
     config: TypeComponentConfigMapping[T],
     context: Record<string, unknown> = {}
   ): unknown {
-      const kind = Object.keys(config);
-      if (kind.length !== 1) {
-        const text = kind.length ? kind.join(', ') : '(none)';
-        throw new Error(`Component ${type} must have exactly one provider, got ${text}`);
-      }
+    const kind = Object.keys(config);
+    if (kind.length !== 1) {
+      const text = kind.length ? kind.join(', ') : '(none)';
+      throw new Error(
+        `Component ${type} must have exactly one provider, got ${text}`
+      );
+    }
 
-      return this.create(type, kind[0], config[kind[0]], context);
+    return this.create(type, kind[0], config[kind[0]], context);
   }
 
   public create(

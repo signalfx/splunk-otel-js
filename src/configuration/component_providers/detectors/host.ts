@@ -14,7 +14,12 @@
  * limitations under the License.
  */
 
-import { DetectedResource, hostDetector, osDetector, ResourceDetector } from '@opentelemetry/resources';
+import {
+  DetectedResource,
+  hostDetector,
+  osDetector,
+  ResourceDetector,
+} from '@opentelemetry/resources';
 import { ComponentProvider } from '../../types';
 
 export class HostDetectorProvider
@@ -31,9 +36,9 @@ export class HostDetectorProvider
           attributes: {
             ...hostDetector.detect().attributes,
             ...osDetector.detect().attributes,
-          }
+          },
         } as DetectedResource;
-      }
+      },
     };
   }
 }

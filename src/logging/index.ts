@@ -17,6 +17,7 @@
 import * as util from 'util';
 import * as logsAPI from '@opentelemetry/api-logs';
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
+import { CompressionAlgorithm } from '@opentelemetry/otlp-exporter-base';
 import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import {
@@ -26,14 +27,15 @@ import {
   ConsoleLogRecordExporter,
 } from '@opentelemetry/sdk-logs';
 
-import {
-  getNonEmptyEnvVar,
-  getEnvArray,
-  defaultServiceName,
-  ensureResourcePath,
-} from '../utils';
+import { _getEnvArray, defaultServiceName, ensureResourcePath } from '../utils';
+import { getConfigLogger, getNonEmptyConfigVar } from '../configuration';
 import { getDetectedResource } from '../resource';
 import type { LoggingOptions, StartLoggingOptions } from './types';
+import type {
+  LogRecordExporter as ConfigLogRecordExporter,
+  NameStringValuePair,
+} from '../configuration/schema';
+import type { LogRecordExporter as SdkLogRecordExporter } from '@opentelemetry/sdk-logs';
 
 export type { LoggingOptions, StartLoggingOptions };
 
@@ -65,7 +67,7 @@ export function _setDefaultOptions(
 
   const serviceName =
     options.serviceName ||
-    getNonEmptyEnvVar('OTEL_SERVICE_NAME') ||
+    getNonEmptyConfigVar('OTEL_SERVICE_NAME') ||
     envResource.attributes?.[ATTR_SERVICE_NAME];
 
   const resourceFactory = options.resourceFactory || ((r: Resource) => r);
@@ -78,7 +80,7 @@ export function _setDefaultOptions(
   );
 
   options.logRecordProcessorFactory =
-    options.logRecordProcessorFactory || defaultlogRecordProcessorFactory;
+    options.logRecordProcessorFactory || defaultLogRecordProcessorFactory;
 
   return {
     serviceName: String(resource.attributes[ATTR_SERVICE_NAME]),
@@ -95,12 +97,12 @@ function areValidExporterTypes(types: string[]): boolean {
 }
 
 function createExporters(options: LoggingOptions) {
-  const logExporters: string[] = getEnvArray('OTEL_LOGS_EXPORTER', ['otlp']);
+  const logExporters: string[] = _getEnvArray('OTEL_LOGS_EXPORTER') || ['otlp'];
 
   if (!areValidExporterTypes(logExporters)) {
     throw new Error(
       `Invalid value for OTEL_LOGS_EXPORTER env variable: ${util.inspect(
-        getNonEmptyEnvVar('OTEL_LOGS_EXPORTER')
+        logExporters
       )}. Choose from ${util.inspect(SUPPORTED_EXPORTER_TYPES, {
         compact: true,
       })} or leave undefined.`
@@ -123,13 +125,81 @@ function createExporters(options: LoggingOptions) {
   });
 }
 
-export function defaultlogRecordProcessorFactory(
+function nameStringValuePairsToRecord(
+  pairs: NameStringValuePair[] | undefined
+): Record<string, string> | undefined {
+  if (pairs === undefined) return undefined;
+
+  const record: Record<string, string> = {};
+
+  for (const pair of pairs) {
+    if (pair.value !== null) {
+      record[pair.name] = pair.value;
+    }
+  }
+
+  return record;
+}
+
+function toExporter(
+  configExporter: ConfigLogRecordExporter
+): SdkLogRecordExporter {
+  if (configExporter.console !== undefined) {
+    return new ConsoleLogRecordExporter();
+  }
+
+  if (configExporter.otlp_http !== undefined) {
+    const cxp = configExporter.otlp_http;
+    const url = cxp.endpoint ?? undefined;
+    return new OTLPLogExporter({
+      url,
+      headers: nameStringValuePairsToRecord(cxp.headers),
+      compression:
+        cxp.compression === 'gzip'
+          ? CompressionAlgorithm.GZIP
+          : CompressionAlgorithm.NONE,
+      timeoutMillis: cxp.timeout ?? undefined,
+    });
+  }
+
+  throw new Error(
+    `Unsupported log exporter requested: ${Object.keys(configExporter)[0]}`
+  );
+}
+
+export function defaultLogRecordProcessorFactory(
   options: LoggingOptions
 ): LogRecordProcessor[] {
-  let exporters = createExporters(options);
+  const loggerFromConfig = getConfigLogger();
 
-  if (!Array.isArray(exporters)) {
-    exporters = [exporters];
+  if (loggerFromConfig === undefined) {
+    let exporters = createExporters(options);
+
+    if (!Array.isArray(exporters)) {
+      exporters = [exporters];
+    }
+    return exporters.map(
+      (exporter) => new BatchLogRecordProcessor(exporter, {})
+    );
   }
-  return exporters.map((exporter) => new BatchLogRecordProcessor(exporter, {}));
+
+  const processors: LogRecordProcessor[] = [];
+
+  for (const configProcessor of loggerFromConfig.processors) {
+    if (configProcessor.batch !== undefined) {
+      const batch = configProcessor.batch;
+      const configExporter = batch.exporter;
+      processors.push(
+        new BatchLogRecordProcessor(toExporter(configExporter), {
+          maxExportBatchSize: batch.max_export_batch_size ?? undefined,
+          scheduledDelayMillis: batch.schedule_delay ?? undefined,
+          exportTimeoutMillis: batch.export_timeout ?? undefined,
+          maxQueueSize: batch.max_queue_size ?? undefined,
+        })
+      );
+    } else if (configProcessor.simple !== undefined) {
+    }
+  }
+
+  return processors;
 }

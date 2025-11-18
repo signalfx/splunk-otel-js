@@ -30,9 +30,8 @@ import type * as grpc from '@grpc/grpc-js';
 import { getDetectedResource } from '../resource';
 import {
   defaultServiceName,
-  getEnvArray,
-  getEnvValueByPrecedence,
-  getEnvBoolean,
+  _getEnvArray,
+  _getNonEmptyEnvVar,
   ensureResourcePath,
 } from '../utils';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
@@ -51,15 +50,29 @@ import type {
   TracingOptions,
 } from './types';
 import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
-import { getNonEmptyConfigVar } from '../configuration';
+import {
+  configGetPropagators,
+  configGetSampler,
+  getConfigBoolean,
+  getNonEmptyConfigVar,
+} from '../configuration';
 
-function defaultSampler(config: NodeTracerConfig) {
-  if (
-    config.sampler === undefined &&
-    getNonEmptyConfigVar('OTEL_TRACES_SAMPLER') === undefined
-  ) {
-    return new AlwaysOnSampler();
+function createSampler(userConfig: NodeTracerConfig) {
+  if (userConfig.sampler !== undefined) {
+    return userConfig.sampler;
   }
+
+  const configSampler = configGetSampler();
+
+  if (configSampler === undefined) {
+    if (
+      _getNonEmptyEnvVar('OTEL_TRACES_SAMPLER') === undefined
+    ) {
+      return new AlwaysOnSampler();
+    }
+  }
+
+
 
   return undefined;
 }
@@ -70,12 +83,12 @@ export function _setDefaultOptions(
   process.env.OTEL_SPAN_LINK_COUNT_LIMIT =
     getNonEmptyConfigVar('OTEL_SPAN_LINK_COUNT_LIMIT') ?? '1000';
   process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT =
-    getNonEmptyEnvVar('OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT') ?? '12000';
+    getNonEmptyConfigVar('OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT') ?? '12000';
 
   const accessToken =
-    options.accessToken || getNonEmptyEnvVar('SPLUNK_ACCESS_TOKEN') || '';
+    options.accessToken || _getNonEmptyEnvVar('SPLUNK_ACCESS_TOKEN') || '';
 
-  const realm = options.realm || getNonEmptyEnvVar('SPLUNK_REALM');
+  const realm = options.realm || _getNonEmptyEnvVar('SPLUNK_REALM');
 
   if (realm) {
     if (!accessToken) {
@@ -94,7 +107,7 @@ export function _setDefaultOptions(
 
   const serviceName =
     options.serviceName ||
-    getNonEmptyEnvVar('OTEL_SERVICE_NAME') ||
+    getNonEmptyConfigVar('OTEL_SERVICE_NAME') ||
     resource.attributes[ATTR_SERVICE_NAME];
 
   resource = resource.merge(
@@ -105,7 +118,7 @@ export function _setDefaultOptions(
 
   const extraTracerConfig = options.tracerConfig || {};
 
-  const sampler = defaultSampler(extraTracerConfig);
+  const sampler = createSampler(extraTracerConfig);
   const tracerConfig = {
     resource,
     sampler,
@@ -127,7 +140,7 @@ export function _setDefaultOptions(
     accessToken,
     serverTimingEnabled:
       options.serverTimingEnabled ||
-      getEnvBoolean('SPLUNK_TRACE_RESPONSE_HEADER_ENABLED', true),
+      getConfigBoolean('SPLUNK_TRACE_RESPONSE_HEADER_ENABLED', true),
     captureHttpRequestUriParams: options.captureHttpRequestUriParams || [],
     instrumentations,
     tracerConfig,
@@ -283,7 +296,7 @@ export function defaultSpanProcessorFactory(
     exporters = spanExporters;
   }
 
-  const nextJsFixEnabled = getEnvBoolean('SPLUNK_NEXTJS_FIX_ENABLED', false);
+  const nextJsFixEnabled = getConfigBoolean('SPLUNK_NEXTJS_FIX_ENABLED', false);
 
   const processors: SpanProcessor[] = [];
 
@@ -302,13 +315,21 @@ export function defaultSpanProcessorFactory(
 export function defaultPropagatorFactory(
   _options: TracingOptions
 ): TextMapPropagator {
-  const envPropagators = getEnvArray('OTEL_PROPAGATORS', [
-    'tracecontext',
-    'baggage',
-  ]);
+  let propagatorKeys: string[] = [];
+
+  const configPropagators = configGetPropagators();
+
+  if (configPropagators === undefined) {
+    propagatorKeys = _getEnvArray('OTEL_PROPAGATORS') || [
+      'tracecontext',
+      'baggage',
+    ];
+  } else {
+    propagatorKeys = configPropagators;
+  }
 
   const propagators = [];
-  for (const propagator of envPropagators) {
+  for (const propagator of propagatorKeys) {
     switch (propagator) {
       case 'baggage':
         propagators.push(new W3CBaggagePropagator());

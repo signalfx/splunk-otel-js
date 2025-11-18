@@ -13,13 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-  getEnvBoolean,
-  getNonEmptyEnvVar,
-  parseEnvBooleanString,
-  parseLogLevel,
-  toDiagLogLevel,
-} from './utils';
+import { parseEnvBooleanString, parseLogLevel, toDiagLogLevel } from './utils';
 import { startMetrics, StartMetricsOptions } from './metrics';
 import { startProfiling, StartProfilingOptions } from './profiling';
 import type { EnvVarKey, LogLevel } from './types';
@@ -46,7 +40,13 @@ import {
   isSnapshotProfilingEnabled,
   startSnapshotProfiling,
 } from './tracing/snapshots/Snapshots';
-import { createConfiguration, getNonEmptyConfigVar, setGlobalConfiguration } from './configuration';
+import { _getNonEmptyEnvVar } from './utils';
+import {
+  createConfiguration,
+  getNonEmptyConfigVar,
+  getConfigBoolean,
+  setGlobalConfiguration,
+} from './configuration';
 
 export interface Options {
   accessToken: string;
@@ -94,7 +94,7 @@ export const start = (options: Partial<Options> = {}) => {
     throw new Error('Splunk APM already started');
   }
 
-  const configFile = getNonEmptyEnvVar('OTEL_EXPERIMENTAL_CONFIG_FILE');
+  const configFile = _getNonEmptyEnvVar('OTEL_EXPERIMENTAL_CONFIG_FILE');
   if (configFile) {
     const configuration = createConfiguration();
     const config = configuration.parse(configFile);
@@ -164,7 +164,7 @@ export const start = (options: Partial<Options> = {}) => {
     running.metrics = startMetrics(metricsOptions);
   }
 
-  const meterProvider = getEnvBoolean(
+  const meterProvider = getConfigBoolean(
     'SPLUNK_INSTRUMENTATION_METRICS_ENABLED',
     false
   )

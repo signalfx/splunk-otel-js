@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-import { defaultServiceName, getEnvArray } from './utils';
-import { getNonEmptyConfigVar } from './configuration';
+import { defaultServiceName } from './utils';
+import { getConfigArray } from './configuration';
 
 import { start } from './start';
 
 function boot() {
-  if (getNonEmptyConfigVar('SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES') !== undefined) {
-    const limitToPackages = getEnvArray(
-      'SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES',
-      []
-    );
+  const instrumentedPkgNames = getConfigArray(
+    'SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES'
+  );
 
-    if (!limitToPackages.includes(defaultServiceName())) {
-      return;
-    }
+  if (instrumentedPkgNames === undefined) {
+    start();
+    return;
   }
 
-  start();
+  if (instrumentedPkgNames.includes(defaultServiceName())) {
+    start();
+  }
 }
 
 boot();

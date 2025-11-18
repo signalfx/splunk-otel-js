@@ -28,9 +28,12 @@ export class SimpleSpanProcessorProvider
   create(
     config: SchemaSimpleSpanProcessor,
     providerRegistry: ComponentProviderRegistry,
-    context: Record<string, unknown>,
+    context: Record<string, unknown>
   ) {
-    const exporter = providerRegistry.componentMap('span_exporter', config.exporter);
+    const exporter = providerRegistry.componentMap(
+      'span_exporter',
+      config.exporter
+    );
 
     return new SplunkSimpleSpanProcessor(exporter);
   }

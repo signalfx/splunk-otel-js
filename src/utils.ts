@@ -54,7 +54,7 @@ export function defaultServiceName(cache: ConfigCache = configCache): string {
   return findServiceName(cache) || 'unnamed-node-service';
 }
 
-export function getNonEmptyEnvVar(key: EnvVarKey): string | undefined {
+export function _getNonEmptyEnvVar(key: EnvVarKey): string | undefined {
   const value = process.env[key];
 
   if (value !== undefined) {
@@ -90,8 +90,8 @@ export function parseEnvBooleanString(value?: string) {
   throw new Error(`Invalid string representing boolean: ${value}`);
 }
 
-export function getEnvBoolean(key: EnvVarKey, defaultValue = true) {
-  const value = getNonEmptyEnvVar(key);
+export function _getEnvBoolean(key: EnvVarKey, defaultValue = true): boolean {
+  const value = _getNonEmptyEnvVar(key);
 
   if (value === undefined) {
     return defaultValue;
@@ -104,8 +104,8 @@ export function getEnvBoolean(key: EnvVarKey, defaultValue = true) {
   return true;
 }
 
-export function getEnvNumber(key: EnvVarKey, defaultValue: number): number {
-  const value = getNonEmptyEnvVar(key);
+export function _getEnvNumber(key: EnvVarKey, defaultValue: number): number {
+  const value = _getNonEmptyEnvVar(key);
 
   if (value === undefined) {
     return defaultValue;
@@ -124,22 +124,22 @@ export function deduplicate(arr: string[]) {
   return [...new Set(arr)];
 }
 
-export function getEnvArray(key: EnvVarKey, defaultValue: string[]): string[] {
-  const value = getNonEmptyEnvVar(key);
+export function _getEnvArray(key: EnvVarKey): string[] | undefined {
+  const value = _getNonEmptyEnvVar(key);
 
   if (value === undefined) {
-    return defaultValue;
+    return undefined;
   }
 
   return deduplicate(value.split(',')).map((v) => v.trim());
 }
 
-export function getEnvValueByPrecedence(
+export function _getEnvValueByPrecedence(
   keys: EnvVarKey[],
   defaultValue?: string
 ): string | undefined {
   for (const key of keys) {
-    const value = getNonEmptyEnvVar(key);
+    const value = _getNonEmptyEnvVar(key);
 
     if (value !== undefined) {
       return value;

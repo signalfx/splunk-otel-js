@@ -14,88 +14,48 @@
  * limitations under the License.
  */
 
-import { CompositePropagator } from '@opentelemetry/core';
-import { Configuration } from './configuration/index';
 import {
-  OpenTelemetrySdkProvider,
-  OpenTelemetrySdkProviderConfig,
-} from './configuration/component_providers/sdk';
-import { isSnapshotProfilingEnabled } from './tracing/snapshots/Snapshots';
-import { SnapshotPropagator } from './tracing/snapshots';
-import { getEnvNumber, getNonEmptyEnvVar } from './utils';
-import { B3PropagatorProvider } from './configuration/component_providers/propagators/b3';
-import { B3MultiPropagatorProvider } from './configuration/component_providers/propagators/b3multi';
-import { BaggagePropagatorProvider } from './configuration/component_providers/propagators/baggage';
-import { TraceContextPropagatorProvider } from './configuration/component_providers/propagators/tracecontext';
-import { HostDetectorProvider } from './configuration/component_providers/detectors/host';
-import { ProcessDetectorProvider } from './configuration/component_providers/detectors/process';
-import { ContainerDetectorProvider } from './configuration/component_providers/detectors/container';
-import { ServiceDetectorProvider } from './configuration/component_providers/detectors/service';
-import { DistroDetectorProvider } from './detectors/DistroDetector';
+  _getEnvArray,
+  _getEnvBoolean,
+  _getEnvNumber,
+  _getNonEmptyEnvVar,
+} from './utils';
 import { EnvVarKey } from './types';
-import { AttributeNameValue, OpenTelemetryConfiguration } from './configuration/schema';
+import {
+  AttributeNameValue,
+  OpenTelemetryConfiguration,
+} from './configuration/schema';
+import { AlwaysOffSampler, AlwaysOnSampler, TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
+import { Sampler } from '@opentelemetry/api';
 
-export function createConfiguration() {
-  const hooks: OpenTelemetrySdkProviderConfig['hooks'] = {
-    propagator(propagator) {
-      if (isSnapshotProfilingEnabled()) {
-        return new CompositePropagator({
-          propagators: [
-            propagator,
-            new SnapshotPropagator(
-              getEnvNumber('SPLUNK_SNAPSHOT_SELECTION_RATE', 0.01)
-            ),
-          ],
-        });
-      }
-
-      return propagator;
-    },
-  };
-
-  return new Configuration([
-    new OpenTelemetrySdkProvider({ hooks }),
-    // Propagators
-    new B3PropagatorProvider(),
-    new B3MultiPropagatorProvider(),
-    new BaggagePropagatorProvider(),
-    new TraceContextPropagatorProvider(),
-    // Detectors
-    new ContainerDetectorProvider(),
-    new HostDetectorProvider(),
-    new ProcessDetectorProvider(),
-    new ServiceDetectorProvider(),
-    new DistroDetectorProvider(),
-  ]);
-}
+export function createConfiguration() {}
 
 export type DistroConfiguration = OpenTelemetryConfiguration & {
-  vendor?: {
-    realm?: string;
+  splunk?: {
     // Limit only to these package/service names.
     // When this is set and the package/service name does not match, tracing will be disabled.
-    autoInstrumentPackageNames?: string[],
-    automaticLogCollection?: boolean;
+    autoInstrumentPackageNames?: string[];
     tracing?: {
       useDefaultInstrumentations?: boolean;
       traceResponseHeaderEnabled?: boolean;
-    },
+      nextJsCardinalityReduction?: boolean;
+    };
     profiling?: {
       enabled?: boolean;
       endpoint?: string;
       callstackInterval?: number;
       collectionInterval?: number;
       memoryProfilingEnabled?: boolean;
-    },
+    };
     metrics?: {
       debug?: boolean;
-    },
+    };
     snapshotProfiling?: {
       enabled?: boolean;
       samplingInterval?: number;
       selectionRate?: number;
-    }
-  },
+    };
+  };
 };
 
 let globalConfiguration: OpenTelemetryConfiguration | undefined;
@@ -123,80 +83,87 @@ function fetchConfigValue(key: EnvVarKey, config: DistroConfiguration) {
     }
     case 'OTEL_EXPORTER_OTLP_CERTIFICATE': {
       // TODO: Signal specific?
-      return undefined
+      return undefined;
     }
     case 'OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE': {
       // TODO: Signal specific?
-      return undefined
+      return undefined;
     }
     case 'OTEL_EXPORTER_OTLP_CLIENT_KEY': {
       // TODO: Signal specific?
-      return undefined
+      return undefined;
     }
     case 'OTEL_LOG_LEVEL': {
       return config.log_level;
     }
     case 'OTEL_TRACES_SAMPLER': {
-      return config.tracer_provider?.sampler;
+      throw new Error('OTEL_TRACES_SAMPLER unsupported for config');
     }
     case 'OTEL_PROPAGATORS': {
       // TODO: Filter out keys
       const propagators = config.propagator?.composite || [];
+      throw new Error('OTEL_PROPAGATORS fix');
     }
     case 'OTEL_SERVICE_NAME': {
-      return findAttributeValue(config.resource?.attributes || [], 'service.name');
+      return findAttributeValue(
+        config.resource?.attributes || [],
+        'service.name'
+      );
     }
     case 'OTEL_SPAN_LINK_COUNT_LIMIT': {
       return config.tracer_provider?.limits?.link_count_limit;
     }
     case 'SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES': {
-      return config.vendor?.autoInstrumentPackageNames;
+      return config.splunk?.autoInstrumentPackageNames;
     }
     case 'SPLUNK_AUTOMATIC_LOG_COLLECTION': {
-      return config.vendor?.automaticLogCollection;
+      return config.logger_provider !== undefined;
     }
     case 'SPLUNK_DEBUG_METRICS_ENABLED': {
-      return config.vendor?.metrics?.debug;
+      return config.splunk?.metrics?.debug;
     }
     case 'SPLUNK_INSTRUMENTATION_METRICS_ENABLED': // TODO: Is this env var actually necessary?
     case 'SPLUNK_METRICS_ENABLED': {
       return config.meter_provider !== undefined;
     }
     case 'OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED': {
-      return config.vendor?.tracing?.useDefaultInstrumentations;
+      return config.splunk?.tracing?.useDefaultInstrumentations;
     }
     case 'SPLUNK_PROFILER_ENABLED': {
-      return config.vendor?.profiling?.enabled;
+      return config.splunk?.profiling?.enabled;
     }
     case 'SPLUNK_PROFILER_LOGS_ENDPOINT': {
-      return config.vendor?.profiling?.endpoint;
+      return config.splunk?.profiling?.endpoint;
     }
     case 'SPLUNK_SNAPSHOT_PROFILER_ENABLED': {
-      return config.vendor?.snapshotProfiling?.enabled;
+      return config.splunk?.snapshotProfiling?.enabled;
     }
     case 'SPLUNK_PROFILER_CALL_STACK_INTERVAL': {
-      return config.vendor?.profiling?.callstackInterval;
+      return config.splunk?.profiling?.callstackInterval;
     }
     case 'SPLUNK_CPU_PROFILER_COLLECTION_INTERVAL': {
-      return config.vendor?.profiling?.collectionInterval;
+      return config.splunk?.profiling?.collectionInterval;
     }
     case 'SPLUNK_PROFILER_MEMORY_ENABLED': {
-      return config.vendor?.profiling?.memoryProfilingEnabled;
+      return config.splunk?.profiling?.memoryProfilingEnabled;
     }
     case 'SPLUNK_SNAPSHOT_PROFILER_SAMPLING_INTERVAL': {
-      return config.vendor?.snapshotProfiling?.samplingInterval;
+      return config.splunk?.snapshotProfiling?.samplingInterval;
     }
     case 'SPLUNK_SNAPSHOT_SELECTION_RATE': {
-      return config.vendor?.snapshotProfiling?.selectionRate;
+      return config.splunk?.snapshotProfiling?.selectionRate;
     }
     case 'SPLUNK_REALM': {
-      return config.vendor?.realm;
+      throw new Error('SPLUNK_REALM not supported');
     }
     case 'SPLUNK_TRACE_RESPONSE_HEADER_ENABLED': {
-      return config.vendor?.tracing?.traceResponseHeaderEnabled;
+      return config.splunk?.tracing?.traceResponseHeaderEnabled;
     }
     case 'SPLUNK_TRACING_ENABLED': {
       return config.tracer_provider !== undefined;
+    }
+    case 'SPLUNK_NEXTJS_FIX_ENABLED': {
+      return config.splunk?.tracing?.nextJsCardinalityReduction;
     }
     /*
   | 'OTEL_EXPORTER_OTLP_ENDPOINT'
@@ -225,9 +192,100 @@ function fetchConfigValue(key: EnvVarKey, config: DistroConfiguration) {
   }
 }
 
+export function getResourceConfig() {
+  if (globalConfiguration === undefined) {
+    return undefined;
+  }
+
+  return globalConfiguration.resource;
+}
+
+export function getConfigResourceDetectors() {
+  if (globalConfiguration === undefined) {
+    return undefined;
+  }
+
+  const detection = globalConfiguration.resource?.['detection/development'];
+
+  if (detection === undefined) {
+    return undefined;
+  }
+
+  return detection.detectors || [];
+}
+
+export function configGetPropagators() {
+  if (globalConfiguration === undefined) {
+    return undefined;
+  }
+
+  const compositePropagators = (
+    globalConfiguration.propagator?.composite || []
+  ).flatMap((v) => Object.keys(v));
+  const compositeListPropagators = (
+    globalConfiguration.propagator?.composite_list || ''
+  )
+    .split(',')
+    .map((v) => v.trim());
+
+  return [...new Set([...compositePropagators, ...compositeListPropagators])];
+}
+
+export function configGetSampler() {
+  if (globalConfiguration === undefined) {
+    return undefined;
+  }
+
+  const sampler = globalConfiguration.tracer_provider?.sampler;
+
+  if (sampler === undefined || sampler.always_on !== undefined) {
+    // We use AlwaysOnSampler by default instead of parent based.
+    return new AlwaysOnSampler();
+  }
+
+  if (sampler.always_off !== undefined) {
+    return new AlwaysOffSampler();
+  }
+
+  if (sampler.parent_based !== undefined) {
+    const parentBased = sampler.parent_based;
+
+    let rootSampler: Sampler | undefined;
+    let remoteParentSampled: Sampler | undefined;
+
+    if (parentBased.root === undefined) {
+      rootSampler = new AlwaysOnSampler();
+    } else {
+      const root = parentBased.root;
+
+      if (root.trace_id_ratio_based !== undefined) {
+        const ratio = root.trace_id_ratio_based.ratio ?? undefined;
+        rootSampler = new TraceIdRatioBasedSampler(ratio);
+      } else if (root.always_on !== undefined) {
+        rootSampler = new AlwaysOnSampler();
+      } else if (root.always_off !== undefined) {
+        rootSampler = new AlwaysOffSampler();
+      } else {
+        rootSampler = new AlwaysOnSampler();
+      }
+    }
+
+    remoteParentSampled = parentBased.remote_parent_sampled
+  }
+  return globalConfiguration?.tracer_provider?.sampler;
+}
+
+export function getConfigLogger() {
+  if (globalConfiguration === undefined) {
+    return undefined;
+  }
+
+  return globalConfiguration.logger_provider;
+}
+
 export function getNonEmptyConfigVar(key: EnvVarKey): string | undefined {
   if (globalConfiguration === undefined) {
-    return getNonEmptyEnvVar(key);
+    return _getNonEmptyEnvVar(key);
   }
 
   const value = fetchConfigValue(key, globalConfiguration);
@@ -237,4 +295,58 @@ export function getNonEmptyConfigVar(key: EnvVarKey): string | undefined {
   }
 
   return String(value);
+}
+
+export function getConfigBoolean(key: EnvVarKey, defaultValue = true): boolean {
+  if (globalConfiguration === undefined) {
+    return _getEnvBoolean(key, defaultValue);
+  }
+
+  const value = fetchConfigValue(key, globalConfiguration);
+
+  if (value === undefined) {
+    return defaultValue;
+  }
+
+  if (typeof value !== 'boolean') {
+    throw new Error(`Expected bool value, got ${typeof value}`);
+  }
+
+  return value;
+}
+
+export function getConfigNumber(key: EnvVarKey, defaultValue: number): number {
+  if (globalConfiguration === undefined) {
+    return _getEnvNumber(key, defaultValue);
+  }
+
+  const value = fetchConfigValue(key, globalConfiguration);
+
+  if (value === undefined) {
+    return defaultValue;
+  }
+
+  if (typeof value !== 'number') {
+    throw new Error(`Expected number value, got ${typeof value}`);
+  }
+
+  return value;
+}
+
+export function getConfigArray(key: EnvVarKey): string[] | undefined {
+  if (globalConfiguration === undefined) {
+    return _getEnvArray(key);
+  }
+
+  const value = fetchConfigValue(key, globalConfiguration);
+
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (!Array.isArray(value)) {
+    throw new Error(`Expected array value, got ${typeof value}`);
+  }
+
+  return value.map((v) => String(v));
 }
