@@ -1,5 +1,10 @@
 # Change Log - @splunk/otel
 
+## 4.1.0
+
+- Upgrade to OpenTelemetry 2.2.0 / 0.207.0. [#1080](https://github.com/signalfx/splunk-otel-js/pull/1080)
+- Add `SPLUNK_SNAPSHOT_SELECTION_PROBABILITY` and `SPLUNK_SNAPSHOT_SAMPLING_INTERVAL` env vars. [#1077](https://github.com/signalfx/splunk-otel-js/pull/1077/)
+
 ## 4.0.1
 
 - Add back `telemetry.sdk.*` attributes. [#1066](https://github.com/signalfx/splunk-otel-js/pull/1066).
