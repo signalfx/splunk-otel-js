@@ -315,12 +315,24 @@ export function getConfigBoolean(key: EnvVarKey, defaultValue = true): boolean {
   return value;
 }
 
-export function getConfigNumber(key: EnvVarKey, defaultValue: number): number {
+export function getConfigNumber(key: EnvVarKey | EnvVarKey[], defaultValue: number): number {
   if (globalConfiguration === undefined) {
     return _getEnvNumber(key, defaultValue);
   }
 
-  const value = fetchConfigValue(key, globalConfiguration);
+  let value;
+
+  if (Array.isArray(key)) {
+    for (const k of key) {
+      value = fetchConfigValue(k, globalConfiguration);
+
+      if (value !== undefined) {
+        break;
+      }
+    }
+  } else {
+    value = fetchConfigValue(key, globalConfiguration);
+  }
 
   if (value === undefined) {
     return defaultValue;

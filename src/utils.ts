@@ -104,8 +104,10 @@ export function _getEnvBoolean(key: EnvVarKey, defaultValue = true): boolean {
   return true;
 }
 
-export function _getEnvNumber(key: EnvVarKey, defaultValue: number): number {
-  const value = _getNonEmptyEnvVar(key);
+export function _getEnvNumber(key: EnvVarKey | EnvVarKey[], defaultValue: number): number {
+  const value = Array.isArray(key)
+    ? _getEnvValueByPrecedence(key)
+    : _getNonEmptyEnvVar(key);
 
   if (value === undefined) {
     return defaultValue;

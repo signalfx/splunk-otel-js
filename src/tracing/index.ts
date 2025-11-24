@@ -98,7 +98,13 @@ export function startTracing(options: TracingOptions): boolean {
       propagators: [
         propagator,
         new SnapshotPropagator(
-          getEnvNumber('SPLUNK_SNAPSHOT_SELECTION_RATE', 0.01)
+          getEnvNumber(
+            [
+              'SPLUNK_SNAPSHOT_SELECTION_PROBABILITY',
+              'SPLUNK_SNAPSHOT_SELECTION_RATE',
+            ],
+            0.01
+          )
         ),
       ],
     });
