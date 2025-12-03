@@ -1,0 +1,46 @@
+---
+# tasks/main.yml for Go-based Splunk Node.js Agent management
+
+- name: Ensure Go binary is available
+  ansible.builtin.stat:
+    path: "{{ go_binary_path | default('/usr/local/bin/splunk-otel-manager') }}"
+  register: go_binary_stat
+  failed_when: not go_binary_stat.stat.exists
+  tags:
+    - splunk-agent
+    - validation
+
+- name: Display Go binary path
+  ansible.builtin.debug:
+    msg: "Using Go binary at: {{ go_binary_path | default('/usr/local/bin/splunk-otel-manager') }}"
+  tags:
+    - splunk-agent
+
+- name: Manage Splunk Node.js Agent using Go module
+  splunk_otel_node:
+    agent_action: "{{ agent_action }}"
+    agent_version: "{{ agent_version | default('latest') }}"
+    splunk_dest_folder: "{{ splunk_dest_folder | default('/opt/splunk-nodejs-agent') }}"
+    splunk_backup_folder: "{{ splunk_backup_folder | default('') }}"
+    splunk_access_token: "{{ splunk_access_token | default('') }}"
+    otel_exporter_otlp_endpoint: "{{ otel_exporter_otlp_endpoint | default('') }}"
+    keep_backup: "{{ keep_backup | default(true) }}"
+    npm_registry: "{{ npm_registry | default('https://registry.npmjs.org') }}"
+    agent_node_name: "{{ agent_node_name | default('') }}"
+    no_node_name_suffix: "{{ no_node_name_suffix | default(false) }}"
+    go_binary_path: "{{ go_binary_path | default('/usr/local/bin/splunk-otel-manager') }}"
+  register: splunk_agent_result
+  tags:
+    - splunk-agent
+
+- name: Display agent operation result
+  ansible.builtin.debug:
+    var: splunk_agent_result.agent_result
+  tags:
+    - splunk-agent
+
+- name: Set fact for agent result (for compatibility)
+  ansible.builtin.set_fact:
+    agent_result: "{{ splunk_agent_result.agent_result }}"
+  tags:
+    - splunk-agent

@@ -1,0 +1,72 @@
+---
+# Example playbooks demonstrating different agent actions using the Go module
+
+# Install example
+- name: Install Splunk Node.js Agent
+  hosts: localhost
+  become: true
+  vars:
+    agent_action: install
+    agent_version: "latest"
+    splunk_access_token: "PeZlDQLdXr3zDMmm9vWW_g"
+    otel_exporter_otlp_endpoint: "https://ingest.us1.signalfx.com/v2/trace"
+    go_binary_path: "{{ playbook_dir }}/../go-module/bin/splunk-otel-manager"
+  roles:
+    - role: ansible/node-go
+
+---
+# Uninstall example
+- name: Uninstall Splunk Node.js Agent
+  hosts: localhost
+  become: true
+  vars:
+    agent_action: uninstall
+    keep_backup: true  # Keep backup files
+    go_binary_path: "{{ playbook_dir }}/../go-module/bin/splunk-otel-manager"
+  roles:
+    - role: ansible/node-go
+
+---
+# Rollback example
+- name: Rollback Splunk Node.js Agent
+  hosts: localhost
+  become: true
+  vars:
+    agent_action: rollback
+    go_binary_path: "{{ playbook_dir }}/../go-module/bin/splunk-otel-manager"
+  roles:
+    - role: ansible/node-go
+
+---
+# Upgrade example
+- name: Upgrade Splunk Node.js Agent
+  hosts: localhost
+  become: true
+  vars:
+    agent_action: upgrade
+    agent_version: "2.0.0"
+    splunk_access_token: "PeZlDQLdXr3zDMmm9vWW_g"
+    otel_exporter_otlp_endpoint: "https://ingest.us1.signalfx.com/v2/trace"
+    go_binary_path: "{{ playbook_dir }}/../go-module/bin/splunk-otel-manager"
+  roles:
+    - role: ansible/node-go
+
+---
+# Custom configuration example
+- name: Install with custom configuration
+  hosts: localhost
+  become: true
+  vars:
+    agent_action: install
+    agent_version: "1.5.0"
+    splunk_dest_folder: "/custom/splunk-agent"
+    splunk_backup_folder: "/custom/splunk-agent/backup"
+    splunk_access_token: "your-token-here"
+    otel_exporter_otlp_endpoint: "https://ingest.us1.signalfx.com/v2/trace"
+    npm_registry: "https://registry.npmjs.org"
+    agent_node_name: "production-server"
+    no_node_name_suffix: false
+    keep_backup: true
+    go_binary_path: "{{ playbook_dir }}/../go-module/bin/splunk-otel-manager"
+  roles:
+    - role: ansible/node-go
