@@ -354,7 +354,6 @@ function enableTraceContextPropagation(
   }
 }
 
-
 type CommonOptions = Omit<
   Partial<StartOptions>,
   'tracing' | 'profiling' | 'metrics' | 'logging' | 'logLevel'
