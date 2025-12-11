@@ -330,6 +330,9 @@ export function configureInstrumentations(options: Options) {
       case '@opentelemetry/instrumentation-redis':
         configureRedisInstrumentation(instr, options.tracing);
         break;
+      case '@opentelemetry/instrumentation-tedious':
+        enableTraceContextPropagation(instr, options.tracing);
+        break;
       case '@opentelemetry/instrumentation-bunyan':
       case '@opentelemetry/instrumentation-pino':
       case '@opentelemetry/instrumentation-winston':
@@ -337,6 +340,17 @@ export function configureInstrumentations(options: Options) {
         configureLogInjection(instr);
         break;
     }
+  }
+}
+
+function enableTraceContextPropagation(
+  instrumentation: TediousInstrumentation,
+  options: TracingOptions
+) {
+  if (options.enableTraceContextPropagation) {
+    const config = instrumentation.getConfig?.() ?? {};
+    config.enableTraceContextPropagation = true;
+    instrumentation.setConfig(config);
   }
 }
 

@@ -51,6 +51,7 @@ export interface TracingOptions {
   spanExporterFactory: SpanExporterFactory;
   spanProcessorFactory: SpanProcessorFactory;
   tracerConfig: NodeTracerConfig;
+  enableTraceContextPropagation: boolean;
 }
 
 export type StartTracingOptions = Partial<TracingOptions> & {
