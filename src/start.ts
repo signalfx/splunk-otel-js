@@ -40,12 +40,12 @@ import {
   isSnapshotProfilingEnabled,
   startSnapshotProfiling,
 } from './tracing/snapshots/Snapshots';
-import { _getNonEmptyEnvVar } from './utils';
+import { getNonEmptyEnvVar } from './utils';
 import {
-  createConfiguration,
   getNonEmptyConfigVar,
   getConfigBoolean,
   setGlobalConfiguration,
+  loadConfiguration,
 } from './configuration';
 
 export interface Options {
@@ -94,12 +94,14 @@ export const start = (options: Partial<Options> = {}) => {
     throw new Error('Splunk APM already started');
   }
 
-  const configFile = _getNonEmptyEnvVar('OTEL_EXPERIMENTAL_CONFIG_FILE');
+  const configFile = getNonEmptyEnvVar('OTEL_EXPERIMENTAL_CONFIG_FILE');
   if (configFile) {
-    const configuration = createConfiguration();
-    const config = configuration.parse(configFile);
-    setGlobalConfiguration(config);
-    return;
+    const configuration = loadConfiguration(configFile);
+    setGlobalConfiguration(configuration);
+
+    if (configuration.disabled === true) {
+      return;
+    }
   }
 
   const logLevel = options.logLevel

@@ -13,36 +13,3 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import { ComponentProviderRegistry } from './ComponentProviderRegistry';
-import { OpenTelemetryConfiguration } from './schema';
-import { SDK } from './SDK';
-import { ComponentProvider } from './types';
-import { loadFile } from './YamlLoader';
-
-export class Configuration {
-  protected registry = new ComponentProviderRegistry();
-
-  constructor(providers: ComponentProvider[]) {
-    for (const provider of providers) {
-      this.registerComponentProvider(provider);
-    }
-  }
-
-  parse(filePath: string, format = 'yaml'): OpenTelemetryConfiguration {
-    switch (format) {
-      case 'yaml':
-        return loadFile(filePath);
-      default:
-        throw new Error('Unknown configuration file format');
-    }
-  }
-
-  create(configuration: OpenTelemetryConfiguration): SDK {
-    return this.registry.create('sdk', 'sdk', configuration) as SDK;
-  }
-
-  registerComponentProvider(provider: ComponentProvider) {
-    this.registry.register(provider);
-  }
-}

@@ -13,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { CompressionAlgorithm } from '@opentelemetry/otlp-exporter-base';
 
-import { serviceInstanceIdDetector } from '@opentelemetry/resources';
-import { ComponentProvider } from '../../types';
-
-export class ServiceDetectorProvider
-  implements ComponentProvider<'detector', 'service'>
-{
-  readonly type = 'detector';
-  readonly name = 'service';
-
-  create() {
-    return serviceInstanceIdDetector;
+export function toCompression(
+  key: string | undefined | null
+): CompressionAlgorithm | undefined {
+  if (key === 'gzip') {
+    return CompressionAlgorithm.GZIP;
   }
+
+  return CompressionAlgorithm.NONE;
 }

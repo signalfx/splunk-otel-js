@@ -15,52 +15,99 @@
  */
 
 import {
-  _getEnvArray,
-  _getEnvBoolean,
-  _getEnvNumber,
-  _getNonEmptyEnvVar,
+  getEnvArray,
+  getEnvBoolean,
+  getEnvNumber,
+  getNonEmptyEnvVar,
 } from './utils';
 import { EnvVarKey } from './types';
 import {
   AttributeNameValue,
+  ParentBasedSampler as ConfigParentBasedSampler,
+  AttributeNameValue as ConfigAttributeNameValue,
+  Resource as ConfigResource,
   OpenTelemetryConfiguration,
 } from './configuration/schema';
-import { AlwaysOffSampler, AlwaysOnSampler, TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
-import { Sampler } from '@opentelemetry/api';
+import {
+  AlwaysOffSampler,
+  AlwaysOnSampler,
+  ParentBasedSampler,
+  TraceIdRatioBasedSampler,
+} from '@opentelemetry/sdk-trace-base';
+import { Sampler } from '@opentelemetry/sdk-trace-base';
+import { existsSync, readFileSync } from 'node:fs';
+import { parseDocument } from 'yaml';
+import { bundledInstrumentations } from './instrumentations';
+import {
+  emptyResource,
+  Resource,
+  resourceFromAttributes,
+} from '@opentelemetry/resources';
+import { AttributeValue } from '@opentelemetry/api';
 
-export function createConfiguration() {}
-
+export type SplunkConfiguration = {
+  profiling?: {
+    exporter?: {
+      otlp_http?: {
+        endpoint?: string | null;
+      };
+    };
+    always_on?: {
+      cpu_profiler?: {
+        sampling_interval?: number;
+        collection_interval?: number;
+      };
+      memory_profiler?: {} | null;
+    };
+    callgraphs?: {
+      sampling_interval?: number;
+      selection_probability?: number;
+    } | null;
+  };
+};
 export type DistroConfiguration = OpenTelemetryConfiguration & {
-  splunk?: {
-    // Limit only to these package/service names.
-    // When this is set and the package/service name does not match, tracing will be disabled.
-    autoInstrumentPackageNames?: string[];
-    tracing?: {
-      useDefaultInstrumentations?: boolean;
-      traceResponseHeaderEnabled?: boolean;
-      nextJsCardinalityReduction?: boolean;
-    };
-    profiling?: {
-      enabled?: boolean;
-      endpoint?: string;
-      callstackInterval?: number;
-      collectionInterval?: number;
-      memoryProfilingEnabled?: boolean;
-    };
-    metrics?: {
-      debug?: boolean;
-    };
-    snapshotProfiling?: {
-      enabled?: boolean;
-      samplingInterval?: number;
-      selectionRate?: number;
-    };
+  distribution?: {
+    splunk?: SplunkConfiguration;
   };
 };
 
-let globalConfiguration: OpenTelemetryConfiguration | undefined;
+export type SplunkRuntimeMetricsConf = {
+  collectionInterval?: number;
+};
 
-export function setGlobalConfiguration(config: OpenTelemetryConfiguration) {
+function getRuntimeMetricsConf(
+  conf: DistroConfiguration
+): SplunkRuntimeMetricsConf | undefined {
+  const runtimeMetricsConf =
+    conf['instrumentation/development']?.js?.[
+      '@splunk/instrumentation-runtime-metrics'
+    ];
+
+  if (typeof runtimeMetricsConf === 'object') {
+    return runtimeMetricsConf;
+  }
+
+  return undefined;
+}
+
+export function loadConfiguration(path: string): DistroConfiguration {
+  if (!existsSync(path)) {
+    throw new Error(`Config file ${path} does not exist`);
+  }
+
+  const file = readFileSync(path, { encoding: 'utf-8' });
+  const doc = parseDocument(file);
+
+  if (doc.errors.length > 0) {
+    throw doc.errors[0];
+  }
+
+  return doc.toJS();
+}
+
+let globalConfiguration: DistroConfiguration | undefined;
+
+export function setGlobalConfiguration(config: DistroConfiguration) {
   globalConfiguration = config;
 }
 
@@ -76,33 +123,35 @@ function findAttributeValue(attributes: AttributeNameValue[], name: string) {
   return undefined;
 }
 
+function getInstrumentationConf(
+  config: DistroConfiguration,
+  instrumentationName: string
+): Record<string, any> | undefined {
+  const conf = config['instrumentation/development']?.js?.[instrumentationName];
+
+  if (conf === null || typeof conf !== 'object') {
+    return undefined;
+  }
+
+  return conf;
+}
+
+function splunkConfig(
+  config: DistroConfiguration
+): SplunkConfiguration | undefined {
+  return config.distribution?.splunk;
+}
+
 function fetchConfigValue(key: EnvVarKey, config: DistroConfiguration) {
   switch (key) {
+    case 'OTEL_ATTRIBUTE_COUNT_LIMIT': {
+      return config.attribute_limits?.attribute_count_limit;
+    }
     case 'OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT': {
       return config.attribute_limits?.attribute_value_length_limit;
     }
-    case 'OTEL_EXPORTER_OTLP_CERTIFICATE': {
-      // TODO: Signal specific?
-      return undefined;
-    }
-    case 'OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE': {
-      // TODO: Signal specific?
-      return undefined;
-    }
-    case 'OTEL_EXPORTER_OTLP_CLIENT_KEY': {
-      // TODO: Signal specific?
-      return undefined;
-    }
     case 'OTEL_LOG_LEVEL': {
       return config.log_level;
-    }
-    case 'OTEL_TRACES_SAMPLER': {
-      throw new Error('OTEL_TRACES_SAMPLER unsupported for config');
-    }
-    case 'OTEL_PROPAGATORS': {
-      // TODO: Filter out keys
-      const propagators = config.propagator?.composite || [];
-      throw new Error('OTEL_PROPAGATORS fix');
     }
     case 'OTEL_SERVICE_NAME': {
       return findAttributeValue(
@@ -114,90 +163,263 @@ function fetchConfigValue(key: EnvVarKey, config: DistroConfiguration) {
       return config.tracer_provider?.limits?.link_count_limit;
     }
     case 'SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES': {
-      return config.splunk?.autoInstrumentPackageNames;
+      const filter = config.splunk?.general?.js?.package_name_filter;
+
+      if (Array.isArray(filter)) {
+        return filter;
+      }
+
+      return undefined;
     }
     case 'SPLUNK_AUTOMATIC_LOG_COLLECTION': {
       return config.logger_provider !== undefined;
     }
     case 'SPLUNK_DEBUG_METRICS_ENABLED': {
-      return config.splunk?.metrics?.debug;
+      return config.splunk?.general?.js?.debug_metrics_enabled === true;
     }
     case 'SPLUNK_INSTRUMENTATION_METRICS_ENABLED': // TODO: Is this env var actually necessary?
     case 'SPLUNK_METRICS_ENABLED': {
       return config.meter_provider !== undefined;
     }
     case 'OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED': {
-      return config.splunk?.tracing?.useDefaultInstrumentations;
+      return config.splunk?.general?.js?.use_bundled_instrumentations;
     }
     case 'SPLUNK_PROFILER_ENABLED': {
-      return config.splunk?.profiling?.enabled;
+      const cpuProfiler =
+        splunkConfig(config)?.profiling?.always_on?.cpu_profiler;
+
+      if (cpuProfiler === null || typeof cpuProfiler === 'object') {
+        return true;
+      }
+
+      return false;
     }
     case 'SPLUNK_PROFILER_LOGS_ENDPOINT': {
-      return config.splunk?.profiling?.endpoint;
+      const endpoint = config.splunk?.profiling?.exporter?.otlp_http?.endpoint;
+
+      if (typeof endpoint === 'string') {
+        return endpoint;
+      }
+
+      return undefined;
     }
     case 'SPLUNK_SNAPSHOT_PROFILER_ENABLED': {
-      return config.splunk?.snapshotProfiling?.enabled;
+      return config.splunk?.profiling?.callgraphs !== undefined;
     }
     case 'SPLUNK_PROFILER_CALL_STACK_INTERVAL': {
-      return config.splunk?.profiling?.callstackInterval;
+      return config.splunk?.profiling?.always_on?.cpu_profiler
+        ?.sampling_interval;
     }
     case 'SPLUNK_CPU_PROFILER_COLLECTION_INTERVAL': {
-      return config.splunk?.profiling?.collectionInterval;
+      return config.splunk?.profiling?.always_on?.cpu_profiler
+        ?.collection_interval;
     }
     case 'SPLUNK_PROFILER_MEMORY_ENABLED': {
-      return config.splunk?.profiling?.memoryProfilingEnabled;
+      return config.splunk?.profiling?.always_on?.memory_profiler !== undefined;
     }
     case 'SPLUNK_SNAPSHOT_PROFILER_SAMPLING_INTERVAL': {
-      return config.splunk?.snapshotProfiling?.samplingInterval;
+      return config.splunk?.profiling?.callgraphs?.sampling_interval;
     }
     case 'SPLUNK_SNAPSHOT_SELECTION_RATE': {
-      return config.splunk?.snapshotProfiling?.selectionRate;
+      return config.splunk?.profiling?.callgraphs?.selection_probability;
     }
     case 'SPLUNK_REALM': {
-      throw new Error('SPLUNK_REALM not supported');
+      return undefined;
     }
     case 'SPLUNK_TRACE_RESPONSE_HEADER_ENABLED': {
-      return config.splunk?.tracing?.traceResponseHeaderEnabled;
+      const httpConf = getInstrumentationConf(
+        config,
+        '@opentelemetry/instrumentation-http'
+      );
+
+      const value = httpConf?.['trace_response_header_enabled'];
+
+      if (typeof value === 'boolean') {
+        return value;
+      }
+
+      return undefined;
     }
     case 'SPLUNK_TRACING_ENABLED': {
       return config.tracer_provider !== undefined;
     }
     case 'SPLUNK_NEXTJS_FIX_ENABLED': {
-      return config.splunk?.tracing?.nextJsCardinalityReduction;
+      return config?.splunk?.general?.js?.nextjs_cardinality_reduction === true;
     }
-    /*
-  | 'OTEL_EXPORTER_OTLP_ENDPOINT'
-  | 'OTEL_EXPORTER_OTLP_METRICS_ENDPOINT'
-  | 'OTEL_EXPORTER_OTLP_METRICS_PROTOCOL'
-  | 'OTEL_EXPORTER_OTLP_PROTOCOL'
-  | 'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'
-  | 'OTEL_EXPORTER_OTLP_TRACES_PROTOCOL'
-  | 'OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED'
-  | 'OTEL_LOGS_EXPORTER'
-  | 'OTEL_METRIC_EXPORT_INTERVAL'
-  | 'OTEL_METRICS_EXPORTER'
-  | 'OTEL_TRACES_EXPORTER'
-  | 'OTEL_TRACES_SAMPLER'
-  | 'SPLUNK_ACCESS_TOKEN'
-  | 'SPLUNK_GRAPHQL_RESOLVE_SPANS_ENABLED'
-  | 'SPLUNK_NEXTJS_FIX_ENABLED'
-  | 'SPLUNK_REDIS_INCLUDE_COMMAND_ARGS'
-  | 'SPLUNK_RUNTIME_METRICS_COLLECTION_INTERVAL'
-  | 'SPLUNK_RUNTIME_METRICS_ENABLED'
+    case 'OTEL_EXPORTER_OTLP_ENDPOINT': {
+      // TODO: Warn?
+      return undefined;
+    }
+    case 'SPLUNK_ACCESS_TOKEN': {
+      return undefined;
+    }
+    case 'OTEL_METRIC_EXPORT_INTERVAL': {
+      return undefined;
+    }
+    case 'SPLUNK_RUNTIME_METRICS_ENABLED': {
+      return getRuntimeMetricsConf(config) !== undefined;
+    }
+    case 'SPLUNK_RUNTIME_METRICS_COLLECTION_INTERVAL': {
+      return getRuntimeMetricsConf(config)?.collectionInterval;
+    }
+    case 'SPLUNK_REDIS_INCLUDE_COMMAND_ARGS': {
+      const redisConf = getInstrumentationConf(
+        config,
+        '@opentelemetry/instrumentation-redis'
+      );
+
+      const value = redisConf?.['include_command_args'];
+
+      if (typeof value === 'boolean') {
+        return value;
+      }
+
+      return undefined;
+    }
+    case 'SPLUNK_GRAPHQL_RESOLVE_SPANS_ENABLED': {
+      return config.splunk?.general?.js?.graphql_resolve_spans_enabled === true;
+    }
     default: {
+      const prefix = 'OTEL_INSTRUMENTATION_';
+      const suffix = '_ENABLED';
+      if (key.startsWith(prefix) && key.endsWith(suffix)) {
+        const shortName = key
+          .substring(prefix.length, key.length - suffix.length)
+          .toLowerCase();
+
+        for (const instr of bundledInstrumentations) {
+          if (instr.shortName === shortName) {
+          }
+        }
+      }
+
       console.log('unhandled config translation for key', key);
-      return '';
+      return undefined;
     }
-    */
   }
 }
 
-export function getResourceConfig() {
-  if (globalConfiguration === undefined) {
-    return undefined;
+function resourceFromString(resourceString: string): Resource {
+  const values = resourceString.split(',');
+
+  const attributes: Record<string, string> = {};
+  for (const s of values) {
+    const assignment = s.trim().split('=');
+
+    if (assignment.length == 2) {
+      const [k, v] = assignment;
+      attributes[k] = v;
+    }
   }
 
-  return globalConfiguration.resource;
+  return resourceFromAttributes(attributes);
+}
+
+function valueFromConfigAttributeNameValue(
+  attr: ConfigAttributeNameValue
+): string | boolean | number | string[] | number[] | boolean[] {
+  switch (attr.type) {
+    case 'string': {
+      if (typeof attr.value === 'string') {
+        return attr.value;
+      }
+      break;
+    }
+    case 'int':
+    case 'double': {
+      if (typeof attr.value === 'number') {
+        return attr.value;
+      }
+      break;
+    }
+    case 'bool': {
+      if (typeof attr.value === 'boolean') {
+        return attr.value;
+      }
+      break;
+    }
+    case 'string_array': {
+      if (Array.isArray(attr.value)) {
+        const values: string[] = [];
+
+        for (const v of attr.value) {
+          values.push(String(v));
+        }
+
+        return values;
+      }
+
+      break;
+    }
+    case 'double_array':
+    case 'int_array': {
+      if (Array.isArray(attr.value)) {
+        const values: number[] = [];
+
+        for (const v of attr.value) {
+          values.push(Number(v));
+        }
+
+        return values;
+      }
+
+      break;
+    }
+    case 'bool_array': {
+      if (Array.isArray(attr.value)) {
+        const values: boolean[] = [];
+
+        for (const v of attr.value) {
+          values.push(Boolean(v));
+        }
+
+        return values;
+      }
+
+      break;
+    }
+    default:
+      return String(attr.value);
+  }
+
+  return String(attr.value);
+}
+
+function resourceFromConfigAttributes(
+  configAttributes: ConfigResource['attributes']
+): Resource {
+  if (configAttributes === undefined || configAttributes === null) {
+    return emptyResource();
+  }
+
+  const attributes: Record<string, AttributeValue> = {};
+
+  for (const attr of configAttributes) {
+    attributes[attr.name] = valueFromConfigAttributeNameValue(attr);
+  }
+
+  return resourceFromAttributes(attributes);
+}
+
+export function configGetResource(): Resource {
+  if (globalConfiguration === undefined) {
+    return emptyResource();
+  }
+
+  const configResource = globalConfiguration.resource;
+
+  if (isNil(configResource)) {
+    return emptyResource();
+  }
+
+  const attributesListResource = resourceFromString(
+    configResource?.attributes_list || ''
+  );
+  const attributesResource = resourceFromConfigAttributes(
+    configResource?.attributes
+  );
+
+  return attributesListResource.merge(attributesResource);
 }
 
 export function getConfigResourceDetectors() {
@@ -231,6 +453,27 @@ export function configGetPropagators() {
   return [...new Set([...compositePropagators, ...compositeListPropagators])];
 }
 
+function makeRootSampler(sampler: ConfigParentBasedSampler['root']): Sampler {
+  if (sampler === undefined) {
+    return new AlwaysOnSampler();
+  }
+
+  if (sampler.always_on !== undefined) {
+    return new AlwaysOnSampler();
+  }
+
+  if (sampler.always_off !== undefined) {
+    return new AlwaysOffSampler();
+  }
+
+  if (sampler.trace_id_ratio_based !== undefined) {
+    const ratioBased = sampler.trace_id_ratio_based;
+    return new TraceIdRatioBasedSampler(ratioBased.ratio ?? undefined);
+  }
+
+  return new AlwaysOnSampler();
+}
+
 export function configGetSampler() {
   if (globalConfiguration === undefined) {
     return undefined;
@@ -250,42 +493,35 @@ export function configGetSampler() {
   if (sampler.parent_based !== undefined) {
     const parentBased = sampler.parent_based;
 
-    let rootSampler: Sampler | undefined;
-    let remoteParentSampled: Sampler | undefined;
-
-    if (parentBased.root === undefined) {
-      rootSampler = new AlwaysOnSampler();
-    } else {
-      const root = parentBased.root;
-
-      if (root.trace_id_ratio_based !== undefined) {
-        const ratio = root.trace_id_ratio_based.ratio ?? undefined;
-        rootSampler = new TraceIdRatioBasedSampler(ratio);
-      } else if (root.always_on !== undefined) {
-        rootSampler = new AlwaysOnSampler();
-      } else if (root.always_off !== undefined) {
-        rootSampler = new AlwaysOffSampler();
-      } else {
-        rootSampler = new AlwaysOnSampler();
-      }
-    }
-
-    remoteParentSampled = parentBased.remote_parent_sampled
+    return new ParentBasedSampler({
+      root: makeRootSampler(parentBased.root),
+    });
   }
-  return globalConfiguration?.tracer_provider?.sampler;
+
+  if (sampler.trace_id_ratio_based !== undefined) {
+    const ratioBased = sampler.trace_id_ratio_based;
+    return new TraceIdRatioBasedSampler(ratioBased.ratio ?? undefined);
+  }
+
+  // TODO: Should composite/development be supported?
+  return undefined;
 }
 
 export function getConfigLogger() {
-  if (globalConfiguration === undefined) {
-    return undefined;
-  }
+  return globalConfiguration?.logger_provider;
+}
 
-  return globalConfiguration.logger_provider;
+export function getConfigTracerProvider() {
+  return globalConfiguration?.tracer_provider;
+}
+
+export function getConfigMeterProvider() {
+  return globalConfiguration?.meter_provider;
 }
 
 export function getNonEmptyConfigVar(key: EnvVarKey): string | undefined {
   if (globalConfiguration === undefined) {
-    return _getNonEmptyEnvVar(key);
+    return getNonEmptyEnvVar(key);
   }
 
   const value = fetchConfigValue(key, globalConfiguration);
@@ -299,7 +535,7 @@ export function getNonEmptyConfigVar(key: EnvVarKey): string | undefined {
 
 export function getConfigBoolean(key: EnvVarKey, defaultValue = true): boolean {
   if (globalConfiguration === undefined) {
-    return _getEnvBoolean(key, defaultValue);
+    return getEnvBoolean(key, defaultValue);
   }
 
   const value = fetchConfigValue(key, globalConfiguration);
@@ -315,9 +551,12 @@ export function getConfigBoolean(key: EnvVarKey, defaultValue = true): boolean {
   return value;
 }
 
-export function getConfigNumber(key: EnvVarKey | EnvVarKey[], defaultValue: number): number {
+export function getConfigNumber(
+  key: EnvVarKey | EnvVarKey[],
+  defaultValue: number
+): number {
   if (globalConfiguration === undefined) {
-    return _getEnvNumber(key, defaultValue);
+    return getEnvNumber(key, defaultValue);
   }
 
   let value;
@@ -347,7 +586,7 @@ export function getConfigNumber(key: EnvVarKey | EnvVarKey[], defaultValue: numb
 
 export function getConfigArray(key: EnvVarKey): string[] | undefined {
   if (globalConfiguration === undefined) {
-    return _getEnvArray(key);
+    return getEnvArray(key);
   }
 
   const value = fetchConfigValue(key, globalConfiguration);
@@ -361,4 +600,8 @@ export function getConfigArray(key: EnvVarKey): string[] | undefined {
   }
 
   return value.map((v) => String(v));
+}
+
+function isNil<T>(v: T | undefined | null): boolean {
+  return v === undefined || v === null;
 }

@@ -16,13 +16,12 @@
 
 import { context, diag } from '@opentelemetry/api';
 import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
+import { defaultServiceName, ensureResourcePath } from '../utils';
 import {
-  defaultServiceName,
-  getEnvBoolean,
-  getEnvNumber,
-  getNonEmptyEnvVar,
-  ensureResourcePath,
-} from '../utils';
+  getConfigBoolean,
+  getConfigNumber,
+  getNonEmptyConfigVar,
+} from '../configuration';
 import {
   recordCpuProfilerMetrics,
   recordHeapProfilerMetrics,
@@ -243,15 +242,15 @@ export function _setDefaultOptions(
 ): ProfilingOptions {
   const endpoint =
     options.endpoint ||
-    getNonEmptyEnvVar('SPLUNK_PROFILER_LOGS_ENDPOINT') ||
-    getNonEmptyEnvVar('OTEL_EXPORTER_OTLP_ENDPOINT') ||
+    getNonEmptyConfigVar('SPLUNK_PROFILER_LOGS_ENDPOINT') ||
+    getNonEmptyConfigVar('OTEL_EXPORTER_OTLP_ENDPOINT') ||
     'http://localhost:4318';
 
   const envResource = getDetectedResource();
 
   const serviceName = String(
     options.serviceName ||
-      getNonEmptyEnvVar('OTEL_SERVICE_NAME') ||
+      getNonEmptyConfigVar('OTEL_SERVICE_NAME') ||
       envResource.attributes?.[ATTR_SERVICE_NAME] ||
       defaultServiceName()
   );
@@ -268,14 +267,14 @@ export function _setDefaultOptions(
 
   const memoryProfilingEnabled =
     options.memoryProfilingEnabled ??
-    getEnvBoolean('SPLUNK_PROFILER_MEMORY_ENABLED', false);
+    getConfigBoolean('SPLUNK_PROFILER_MEMORY_ENABLED', false);
 
   return {
     serviceName: serviceName,
     endpoint,
     callstackInterval:
       options.callstackInterval ||
-      getEnvNumber('SPLUNK_PROFILER_CALL_STACK_INTERVAL', 1000),
+      getConfigNumber('SPLUNK_PROFILER_CALL_STACK_INTERVAL', 1000),
     collectionDuration: options.collectionDuration || 30_000,
     resource,
     exporterFactory: options.exporterFactory ?? defaultExporterFactory,

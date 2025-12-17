@@ -17,6 +17,7 @@ import * as util from 'util';
 import {
   AlwaysOnSampler,
   ConsoleSpanExporter,
+  SimpleSpanProcessor,
   SpanExporter,
   SpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
@@ -30,9 +31,11 @@ import type * as grpc from '@grpc/grpc-js';
 import { getDetectedResource } from '../resource';
 import {
   defaultServiceName,
-  _getEnvArray,
-  _getNonEmptyEnvVar,
+  getEnvArray,
+  getEnvValueByPrecedence,
+  getNonEmptyEnvVar,
   ensureResourcePath,
+  readFileContent,
 } from '../utils';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { diag, TextMapPropagator } from '@opentelemetry/api';
@@ -54,8 +57,11 @@ import {
   configGetPropagators,
   configGetSampler,
   getConfigBoolean,
+  getConfigTracerProvider,
   getNonEmptyConfigVar,
 } from '../configuration';
+import type { SpanExporter as ConfigSpanExporter } from '../configuration/schema';
+import { toCompression } from '../configuration/convert';
 
 function createSampler(userConfig: NodeTracerConfig) {
   if (userConfig.sampler !== undefined) {
@@ -65,14 +71,10 @@ function createSampler(userConfig: NodeTracerConfig) {
   const configSampler = configGetSampler();
 
   if (configSampler === undefined) {
-    if (
-      _getNonEmptyEnvVar('OTEL_TRACES_SAMPLER') === undefined
-    ) {
+    if (getNonEmptyEnvVar('OTEL_TRACES_SAMPLER') === undefined) {
       return new AlwaysOnSampler();
     }
   }
-
-
 
   return undefined;
 }
@@ -86,9 +88,9 @@ export function _setDefaultOptions(
     getNonEmptyConfigVar('OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT') ?? '12000';
 
   const accessToken =
-    options.accessToken || _getNonEmptyEnvVar('SPLUNK_ACCESS_TOKEN') || '';
+    options.accessToken || getNonEmptyConfigVar('SPLUNK_ACCESS_TOKEN') || '';
 
-  const realm = options.realm || _getNonEmptyEnvVar('SPLUNK_REALM');
+  const realm = options.realm || getNonEmptyConfigVar('SPLUNK_REALM');
 
   if (realm) {
     if (!accessToken) {
@@ -177,9 +179,9 @@ function areValidExporterTypes(types: string[]): boolean {
 }
 
 function getExporterTypes(realm: string | undefined): ExporterType[] {
-  const traceExporters: string[] = getEnvArray('OTEL_TRACES_EXPORTER', [
+  const traceExporters: string[] = getEnvArray('OTEL_TRACES_EXPORTER') || [
     'otlp',
-  ]);
+  ];
 
   if (realm) {
     if (!containsSupportedRealmExporter(traceExporters)) {
@@ -205,11 +207,17 @@ function getExporterTypes(realm: string | undefined): ExporterType[] {
 export function defaultSpanExporterFactory(
   realm: string | undefined
 ): SpanExporterFactory {
-  const exporterTypes = getExporterTypes(realm);
-  return (options) => {
-    const factories = exporterTypes.map((t) => SpanExporterMap[t]);
-    return factories.flatMap((factory) => factory(options));
-  };
+  const configTracerProvider = getConfigTracerProvider();
+
+  if (configTracerProvider === undefined) {
+    const exporterTypes = getExporterTypes(realm);
+    return (options) => {
+      const factories = exporterTypes.map((t) => SpanExporterMap[t]);
+      return factories.flatMap((factory) => factory(options));
+    };
+  }
+
+  return () => [];
 }
 
 export function otlpSpanExporterFactory(options: TracingOptions): SpanExporter {
@@ -283,29 +291,129 @@ export function consoleSpanExporterFactory(): SpanExporter {
   return new ConsoleSpanExporter();
 }
 
+function toSpanExporter(
+  configExporter: ConfigSpanExporter
+): SpanExporter | undefined {
+  if (configExporter.otlp_http !== undefined) {
+    const otlpHttp = configExporter.otlp_http;
+    const configHeaders = otlpHttp.headers || [];
+    const headers: Record<string, string> = {};
+
+    for (const header of configHeaders) {
+      if (header.value !== null) {
+        headers[header.name] = header.value;
+      }
+    }
+
+    const url = ensureResourcePath(otlpHttp.endpoint, '/v1/traces');
+    return new OTLPHttpTraceExporter({
+      url,
+      headers,
+      timeoutMillis: otlpHttp.timeout ?? undefined,
+      compression: toCompression(otlpHttp.compression),
+      httpAgentOptions: {
+        ca: readFileContent(otlpHttp.tls?.ca_file),
+        cert: readFileContent(otlpHttp.tls?.cert_file),
+        key: readFileContent(otlpHttp.tls?.key_file),
+      },
+    });
+  } else if (configExporter.otlp_grpc !== undefined) {
+    const cfgGrpc = configExporter.otlp_grpc;
+    const GrpcModule: typeof grpc = require('@grpc/grpc-js');
+    const otlpGrpc: typeof OtlpGrpc = require('@opentelemetry/exporter-trace-otlp-grpc');
+
+    const metadata = new GrpcModule.Metadata();
+
+    for (const header of cfgGrpc.headers || []) {
+      if (header.value !== null) {
+        metadata.set(header.name, header.value);
+      }
+    }
+
+    const credentials =
+      cfgGrpc.tls === undefined
+        ? undefined
+        : GrpcModule.credentials.createSsl(
+            readFileContent(cfgGrpc.tls?.cert_file),
+            readFileContent(cfgGrpc.tls?.key_file),
+            readFileContent(cfgGrpc.tls?.ca_file)
+          );
+
+    return new otlpGrpc.OTLPTraceExporter({
+      url: cfgGrpc.endpoint ?? undefined,
+      metadata,
+      timeoutMillis: cfgGrpc.timeout ?? undefined,
+      compression: toCompression(cfgGrpc.compression),
+      credentials,
+    });
+  } else if (configExporter.console !== undefined) {
+    return new ConsoleSpanExporter();
+  } else if (configExporter['otlp_file/development'] !== undefined) {
+    diag.warn('span exporter "otlp_file/development" is not supported');
+  } else if (configExporter.zipkin !== undefined) {
+    diag.warn('span exporter "zipkin" is not supported');
+  }
+
+  return undefined;
+}
+
 export function defaultSpanProcessorFactory(
   options: TracingOptions
 ): SpanProcessor[] {
-  let exporters: SpanExporter | SpanExporter[] = [];
-
-  const spanExporters = options.spanExporterFactory(options);
-
-  if (!Array.isArray(spanExporters)) {
-    exporters = [spanExporters];
-  } else {
-    exporters = spanExporters;
-  }
+  const configTracerProvider = getConfigTracerProvider();
 
   const nextJsFixEnabled = getConfigBoolean('SPLUNK_NEXTJS_FIX_ENABLED', false);
 
-  const processors: SpanProcessor[] = [];
+  if (configTracerProvider === undefined) {
+    let exporters: SpanExporter | SpanExporter[] = [];
 
-  if (nextJsFixEnabled) {
-    processors.push(new NextJsSpanProcessor());
+    const spanExporters = options.spanExporterFactory(options);
+
+    if (!Array.isArray(spanExporters)) {
+      exporters = [spanExporters];
+    } else {
+      exporters = spanExporters;
+    }
+
+    const processors: SpanProcessor[] = [];
+
+    if (nextJsFixEnabled) {
+      processors.push(new NextJsSpanProcessor());
+    }
+
+    for (const exporter of exporters) {
+      processors.push(new SplunkBatchSpanProcessor(exporter));
+    }
+
+    return processors;
   }
 
-  for (const exporter of exporters) {
-    processors.push(new SplunkBatchSpanProcessor(exporter));
+  const processors: SpanProcessor[] = [];
+
+  for (const processor of configTracerProvider.processors) {
+    if (processor.batch !== undefined) {
+      const batch = processor.batch;
+      const configExporter = batch.exporter;
+
+      const exporter = toSpanExporter(configExporter);
+
+      if (exporter !== undefined) {
+        processors.push(
+          new SplunkBatchSpanProcessor(exporter, {
+            maxExportBatchSize: batch.max_export_batch_size ?? undefined,
+            scheduledDelayMillis: batch.schedule_delay ?? undefined,
+            exportTimeoutMillis: batch.export_timeout ?? undefined,
+            maxQueueSize: batch.max_export_batch_size ?? undefined,
+          })
+        );
+      }
+    } else if (processor.simple !== undefined) {
+      const exporter = toSpanExporter(processor.simple?.exporter);
+
+      if (exporter !== undefined) {
+        processors.push(new SimpleSpanProcessor(exporter));
+      }
+    }
   }
 
   return processors;
@@ -320,7 +428,7 @@ export function defaultPropagatorFactory(
   const configPropagators = configGetPropagators();
 
   if (configPropagators === undefined) {
-    propagatorKeys = _getEnvArray('OTEL_PROPAGATORS') || [
+    propagatorKeys = getEnvArray('OTEL_PROPAGATORS') || [
       'tracecontext',
       'baggage',
     ];

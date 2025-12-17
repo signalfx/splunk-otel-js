@@ -20,7 +20,6 @@ import {
   resourceFromAttributes,
 } from '@opentelemetry/resources';
 import { VERSION } from '../version';
-import { ComponentProvider } from '../configuration/types';
 
 class DistroDetector {
   detect(_config?: ResourceDetectionConfig): DetectedResource {
@@ -32,14 +31,3 @@ class DistroDetector {
 }
 
 export const distroDetector = new DistroDetector();
-
-export class DistroDetectorProvider
-  implements ComponentProvider<'detector', 'distro'>
-{
-  readonly type = 'detector';
-  readonly name = 'distro';
-
-  create() {
-    return distroDetector;
-  }
-}

@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { existsSync, readFileSync } from 'node:fs';
-import { parseDocument } from 'yaml';
-import { OpenTelemetryConfiguration } from './schema';
+import {
+  loadConfiguration,
+  setGlobalConfiguration,
+} from '../../src/configuration';
+import * as path from 'node:path';
 
-export function loadFile(path: string): OpenTelemetryConfiguration {
-  if (!existsSync(path)) {
-    throw new Error(`Config file ${path} does not exist`);
-  }
+export function exampleConfigPath(): string {
+  return path.join(__dirname, 'example-config.yaml');
+}
 
-  const file = readFileSync(path, { encoding: 'utf-8' });
-  const doc = parseDocument(file);
+export function loadAndSetConfig(path: string) {
+  setGlobalConfiguration(loadConfiguration(path));
+}
 
-  if (doc.errors.length > 0) {
-    throw doc.errors[0];
-  }
-
-  return doc.toJS();
+export function loadAndSetExampleConfig() {
+  loadAndSetConfig(exampleConfigPath());
 }

@@ -16,32 +16,69 @@
 import { describe, test } from 'node:test';
 import { strict as assert } from 'assert';
 
-import { loadFile } from '../../src/configuration/YamlLoader';
+import { loadConfiguration } from '../../src/configuration';
 import { join } from 'path';
 
 describe('YAML config file', () => {
   test('missing file', () => {
     try {
-      const _res = loadFile(join(__dirname, 'missing-no.yml'));
+      const _res = loadConfiguration(join(__dirname, 'missing-no.yml'));
       assert(false, "loadFile didn't throw an error");
     } catch (e) {
       assert(e.message.includes('does not exist'));
     }
   });
 
-  test('valid file', () => {
-    const config = loadFile(join(__dirname, 'example-config.yaml'));
-
-    const propagators = config.propagator?.composite || [];
-    console.log(config.propagator);
+  test('config types match the yaml  structure', () => {
+    const config = loadConfiguration(join(__dirname, 'example-config.yaml'));
     assert.ok(config);
-    // Some basic sanity checks
-    assert.equal(config.file_format, '1.0-rc.1');
-    assert.equal(config.attribute_limits?.attribute_value_length_limit, null);
-    assert.deepEqual(
-      config['instrumentation/development']?.general?.http?.client
-        ?.request_captured_headers,
-      ['Content-Type', 'Accept']
-    );
+
+    assert.deepStrictEqual(config.log_level, 'warn');
+    assert.deepStrictEqual(config.attribute_limits, {
+      attribute_value_length_limit: 4096,
+      attribute_count_limit: 128,
+    });
+    assert.deepStrictEqual(config.propagator, {
+      composite: [
+        { tracecontext: null },
+        { baggage: null },
+        { b3: null },
+        { b3multi: null },
+      ],
+      composite_list: 'tracecontext,baggage,b3,b3multi,xray',
+    });
+    assert.deepStrictEqual(config.distribution?.splunk, {
+      use_bundled_instrumentations: true,
+      package_name_filter: ['MyApiGw'],
+      runtime_metrics: {
+        collection_interval: 30000,
+      },
+      instrumentations: {
+        http: {
+          response_header_enabled: true,
+          capture_uri_parameters: ['userId'],
+        },
+        redis: {
+          include_command_args: true,
+        },
+      },
+      profiling: {
+        exporter: {
+          otlp_http: {
+            endpoint: 'collector:4318/v1/logs',
+          },
+        },
+        always_on: {
+          cpu_profiler: {
+            sampling_interval: 10,
+          },
+          memory_profiler: null,
+        },
+        callgraphs: {
+          sampling_interval: 10,
+          selection_probability: 0.01,
+        },
+      },
+    });
   });
 });

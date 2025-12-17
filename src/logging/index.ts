@@ -25,10 +25,16 @@ import {
   BatchLogRecordProcessor,
   LogRecordProcessor,
   ConsoleLogRecordExporter,
+  SimpleLogRecordProcessor,
 } from '@opentelemetry/sdk-logs';
 
-import { _getEnvArray, defaultServiceName, ensureResourcePath } from '../utils';
-import { getConfigLogger, getNonEmptyConfigVar } from '../configuration';
+import { getEnvArray, defaultServiceName, ensureResourcePath } from '../utils';
+import {
+  configGetResource,
+  getConfigLogger,
+  getConfigNumber,
+  getNonEmptyConfigVar,
+} from '../configuration';
 import { getDetectedResource } from '../resource';
 import type { LoggingOptions, StartLoggingOptions } from './types';
 import type {
@@ -49,6 +55,13 @@ export function startLogging(options: LoggingOptions) {
   const loggerProvider = new LoggerProvider({
     resource: options.resource,
     processors,
+    logRecordLimits: {
+      attributeCountLimit: getConfigNumber('OTEL_ATTRIBUTE_COUNT_LIMIT', 128),
+      attributeValueLengthLimit: getConfigNumber(
+        'OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT',
+        12000
+      ),
+    },
   });
 
   logsAPI.logs.setGlobalLoggerProvider(loggerProvider);
@@ -72,7 +85,9 @@ export function _setDefaultOptions(
 
   const resourceFactory = options.resourceFactory || ((r: Resource) => r);
   const resource = resourceFactory(
-    resourceFromAttributes(envResource.attributes || {})
+    resourceFromAttributes(envResource.attributes || {}).merge(
+      configGetResource()
+    )
   ).merge(
     resourceFromAttributes({
       [ATTR_SERVICE_NAME]: serviceName || defaultServiceName(),
@@ -97,7 +112,7 @@ function areValidExporterTypes(types: string[]): boolean {
 }
 
 function createExporters(options: LoggingOptions) {
-  const logExporters: string[] = _getEnvArray('OTEL_LOGS_EXPORTER') || ['otlp'];
+  const logExporters: string[] = getEnvArray('OTEL_LOGS_EXPORTER') || ['otlp'];
 
   if (!areValidExporterTypes(logExporters)) {
     throw new Error(
@@ -188,9 +203,8 @@ export function defaultLogRecordProcessorFactory(
   for (const configProcessor of loggerFromConfig.processors) {
     if (configProcessor.batch !== undefined) {
       const batch = configProcessor.batch;
-      const configExporter = batch.exporter;
       processors.push(
-        new BatchLogRecordProcessor(toExporter(configExporter), {
+        new BatchLogRecordProcessor(toExporter(batch.exporter), {
           maxExportBatchSize: batch.max_export_batch_size ?? undefined,
           scheduledDelayMillis: batch.schedule_delay ?? undefined,
           exportTimeoutMillis: batch.export_timeout ?? undefined,
@@ -198,6 +212,10 @@ export function defaultLogRecordProcessorFactory(
         })
       );
     } else if (configProcessor.simple !== undefined) {
+      const simple = configProcessor.simple;
+      processors.push(
+        new SimpleLogRecordProcessor(toExporter(simple.exporter))
+      );
     }
   }
 

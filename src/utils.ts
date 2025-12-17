@@ -54,7 +54,7 @@ export function defaultServiceName(cache: ConfigCache = configCache): string {
   return findServiceName(cache) || 'unnamed-node-service';
 }
 
-export function _getNonEmptyEnvVar(key: EnvVarKey): string | undefined {
+export function getNonEmptyEnvVar(key: EnvVarKey): string | undefined {
   const value = process.env[key];
 
   if (value !== undefined) {
@@ -90,8 +90,8 @@ export function parseEnvBooleanString(value?: string) {
   throw new Error(`Invalid string representing boolean: ${value}`);
 }
 
-export function _getEnvBoolean(key: EnvVarKey, defaultValue = true): boolean {
-  const value = _getNonEmptyEnvVar(key);
+export function getEnvBoolean(key: EnvVarKey, defaultValue = true): boolean {
+  const value = getNonEmptyEnvVar(key);
 
   if (value === undefined) {
     return defaultValue;
@@ -104,10 +104,13 @@ export function _getEnvBoolean(key: EnvVarKey, defaultValue = true): boolean {
   return true;
 }
 
-export function _getEnvNumber(key: EnvVarKey | EnvVarKey[], defaultValue: number): number {
+export function getEnvNumber(
+  key: EnvVarKey | EnvVarKey[],
+  defaultValue: number
+): number {
   const value = Array.isArray(key)
-    ? _getEnvValueByPrecedence(key)
-    : _getNonEmptyEnvVar(key);
+    ? getEnvValueByPrecedence(key)
+    : getNonEmptyEnvVar(key);
 
   if (value === undefined) {
     return defaultValue;
@@ -126,8 +129,8 @@ export function deduplicate(arr: string[]) {
   return [...new Set(arr)];
 }
 
-export function _getEnvArray(key: EnvVarKey): string[] | undefined {
-  const value = _getNonEmptyEnvVar(key);
+export function getEnvArray(key: EnvVarKey): string[] | undefined {
+  const value = getNonEmptyEnvVar(key);
 
   if (value === undefined) {
     return undefined;
@@ -136,12 +139,12 @@ export function _getEnvArray(key: EnvVarKey): string[] | undefined {
   return deduplicate(value.split(',')).map((v) => v.trim());
 }
 
-export function _getEnvValueByPrecedence(
+export function getEnvValueByPrecedence(
   keys: EnvVarKey[],
   defaultValue?: string
 ): string | undefined {
   for (const key of keys) {
-    const value = _getNonEmptyEnvVar(key);
+    const value = getNonEmptyEnvVar(key);
 
     if (value !== undefined) {
       return value;
@@ -218,10 +221,10 @@ function constructUrl(url: string): URL | undefined {
 }
 
 export function ensureResourcePath(
-  url: string | undefined,
+  url: string | undefined | null,
   resourcePath: string
 ): string | undefined {
-  if (url === undefined) {
+  if (url === undefined || url === null) {
     return undefined;
   }
 
@@ -241,6 +244,22 @@ export function ensureResourcePath(
   }
 
   return url;
+}
+
+export function readFileContent(
+  path: string | undefined | null
+): Buffer | undefined {
+  if (path === undefined || path === null) {
+    return undefined;
+  }
+
+  try {
+    return fs.readFileSync(path);
+  } catch (e) {
+    diag.warn(`failed to load ${path}`, e);
+  }
+
+  return undefined;
 }
 
 export function listEnvVars() {

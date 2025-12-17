@@ -15,14 +15,14 @@
  */
 
 import type { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
-import { getEnvBoolean } from '../utils';
+import { getConfigBoolean } from '../configuration';
 import { StartTracingOptions } from '../tracing';
 
 export function configureRedisInstrumentation(
   instrumentation: RedisInstrumentation,
   _options: StartTracingOptions
 ) {
-  if (getEnvBoolean('SPLUNK_REDIS_INCLUDE_COMMAND_ARGS', false)) {
+  if (getConfigBoolean('SPLUNK_REDIS_INCLUDE_COMMAND_ARGS', false)) {
     const config = instrumentation.getConfig();
     instrumentation.setConfig({
       ...config,
