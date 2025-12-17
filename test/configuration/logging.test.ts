@@ -61,8 +61,8 @@ describe('logger provider from config file', () => {
       assert.deepStrictEqual(attributes['string_key'], 'test_value');
 
       assert.deepStrictEqual(internalState['logRecordLimits'], {
-        attributeCountLimit: 128,
-        attributeValueLengthLimit: 4096,
+        attributeCountLimit: 512,
+        attributeValueLengthLimit: 8192,
       });
 
       const processors = internalState.processors;

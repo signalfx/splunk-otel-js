@@ -240,20 +240,19 @@ function fetchConfigValue(key: EnvVarKey, config: DistroConfiguration) {
 
       return undefined;
     }
+    case 'OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT': {
+      return config?.logger_provider?.limits?.attribute_count_limit;
+    }
+    case 'OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT': {
+      return config?.logger_provider?.limits?.attribute_value_length_limit;
+    }
     case 'SPLUNK_TRACING_ENABLED': {
       return config.tracer_provider !== undefined;
     }
     case 'SPLUNK_NEXTJS_FIX_ENABLED': {
       return config?.splunk?.general?.js?.nextjs_cardinality_reduction === true;
     }
-    case 'OTEL_EXPORTER_OTLP_ENDPOINT': {
-      // TODO: Warn?
-      return undefined;
-    }
     case 'SPLUNK_ACCESS_TOKEN': {
-      return undefined;
-    }
-    case 'OTEL_METRIC_EXPORT_INTERVAL': {
       return undefined;
     }
     case 'SPLUNK_RUNTIME_METRICS_ENABLED': {

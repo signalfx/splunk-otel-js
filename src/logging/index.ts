@@ -56,10 +56,13 @@ export function startLogging(options: LoggingOptions) {
     resource: options.resource,
     processors,
     logRecordLimits: {
-      attributeCountLimit: getConfigNumber('OTEL_ATTRIBUTE_COUNT_LIMIT', 128),
+      attributeCountLimit: getConfigNumber(
+        'OTEL_LOGRECORD_ATTRIBUTE_COUNT_LIMIT',
+        getConfigNumber('OTEL_ATTRIBUTE_COUNT_LIMIT', 128)
+      ),
       attributeValueLengthLimit: getConfigNumber(
-        'OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT',
-        12000
+        'OTEL_LOGRECORD_ATTRIBUTE_VALUE_LENGTH_LIMIT',
+        getConfigNumber('OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT', 12000)
       ),
     },
   });
