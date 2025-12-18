@@ -41,7 +41,7 @@ import {
 } from '@opentelemetry/sdk-trace-base';
 import { Sampler } from '@opentelemetry/sdk-trace-base';
 import { existsSync, readFileSync } from 'node:fs';
-import { parseDocument } from 'yaml';
+import { parseDocument, visit } from 'yaml';
 import { bundledInstrumentations } from './instrumentations';
 import {
   emptyResource,
@@ -49,6 +49,7 @@ import {
   resourceFromAttributes,
 } from '@opentelemetry/resources';
 import { AttributeValue } from '@opentelemetry/api';
+import { convertSubstitution, envSubstitute } from './configuration/substitute';
 
 // Schema generator goes crazy with the types, they should be equivalent.
 type ConfigSampler =
@@ -111,6 +112,27 @@ export function loadConfiguration(path: string): DistroConfiguration {
   if (doc.errors.length > 0) {
     throw doc.errors[0];
   }
+
+  visit(doc, {
+    Scalar: (key, node) => {
+      if (key !== 'value') {
+        return undefined;
+      }
+
+      const value = node.value;
+      if (typeof value === 'string') {
+        const sub = envSubstitute(value, (key) => process.env[key]);
+
+        if (node.type !== 'QUOTE_DOUBLE') {
+          node.value = convertSubstitution(sub);
+        } else {
+          node.value = sub;
+        }
+      }
+
+      return undefined;
+    },
+  });
 
   return doc.toJS();
 }
