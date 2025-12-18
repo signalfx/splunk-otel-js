@@ -13,25 +13,3 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import { defaultServiceName } from './utils';
-import { getConfigArray } from './configuration';
-
-import { start } from './start';
-
-function boot() {
-  const instrumentedPkgNames = getConfigArray(
-    'SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES'
-  );
-
-  if (instrumentedPkgNames === undefined) {
-    start();
-    return;
-  }
-
-  if (instrumentedPkgNames.includes(defaultServiceName())) {
-    start();
-  }
-}
-
-boot();

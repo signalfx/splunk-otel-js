@@ -102,10 +102,12 @@
     "@opentelemetry/core": "2.2.0",
     "@opentelemetry/exporter-logs-otlp-http": "0.207.0",
     "@opentelemetry/exporter-logs-otlp-proto": "0.207.0",
+    "@opentelemetry/exporter-metrics-otlp-http": "0.207.0",
     "@opentelemetry/exporter-metrics-otlp-grpc": "0.207.0",
     "@opentelemetry/exporter-metrics-otlp-proto": "0.207.0",
     "@opentelemetry/exporter-trace-otlp-grpc": "0.207.0",
     "@opentelemetry/exporter-trace-otlp-proto": "0.207.0",
+    "@opentelemetry/otlp-exporter-base": "0.207.0",
     "@opentelemetry/instrumentation": "0.207.0",
     "@opentelemetry/instrumentation-amqplib": "0.54.0",
     "@opentelemetry/instrumentation-aws-sdk": "0.63.0",
@@ -158,7 +160,8 @@
     "nan": "^2.23.1",
     "node-gyp-build": "^4.8.4",
     "protobufjs": "^7.5.4",
-    "semver": "^7.7.3"
+    "semver": "^7.7.3",
+    "yaml": "^2.8.0"
   },
   "peerDependencies": {
     "@opentelemetry/api": "^1.9.0"

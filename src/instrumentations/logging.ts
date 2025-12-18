@@ -22,7 +22,7 @@ import {
   SEMRESATTRS_DEPLOYMENT_ENVIRONMENT,
 } from '@opentelemetry/semantic-conventions';
 import { BunyanInstrumentation } from '@opentelemetry/instrumentation-bunyan';
-import { getEnvBoolean } from '../utils';
+import { getConfigBoolean } from '../configuration';
 import { WinstonInstrumentation } from '@opentelemetry/instrumentation-winston';
 import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
 
@@ -67,7 +67,7 @@ export function configureLogInjection(
 export function disableLogSending(
   instrumentation: WinstonInstrumentation | BunyanInstrumentation
 ) {
-  const enabled = getEnvBoolean('SPLUNK_AUTOMATIC_LOG_COLLECTION', false);
+  const enabled = getConfigBoolean('SPLUNK_AUTOMATIC_LOG_COLLECTION', false);
   instrumentation.setConfig(
     Object.assign({}, instrumentation.getConfig(), {
       disableLogSending: !enabled,

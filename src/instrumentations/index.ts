@@ -26,8 +26,9 @@ import { _setDefaultOptions as setDefaultTracingOptions } from '../tracing/optio
 import { _setDefaultOptions as setDefaultLoggingOptions } from '../logging';
 import { _setDefaultOptions as setDefaultProfilingOptions } from '../profiling';
 import { _setDefaultOptions as setDefaultMetricsOptions } from '../metrics';
-import { getEnvBoolean, assertNoExtraneousProperties } from '../utils';
+import { assertNoExtraneousProperties } from '../utils';
 import { configureGraphQlInstrumentation } from './graphql';
+import { getConfigBoolean } from '../configuration';
 import {
   configureHttpInstrumentation,
   configureHttpDcInstrumentation,
@@ -81,7 +82,7 @@ import { HttpDcInstrumentation } from './httpdc/httpdc';
 type InstrumentationInfo = {
   shortName: string;
   create: () => Instrumentation;
-  enabledByDefault?: boolean;
+  disabledByDefault?: boolean;
 };
 
 interface Options {
@@ -261,7 +262,7 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
   {
     create: () => new HttpDcInstrumentation(),
     shortName: 'httpdc',
-    enabledByDefault: false,
+    disabledByDefault: true,
   },
 ];
 
@@ -270,16 +271,17 @@ function envKey(info: InstrumentationInfo) {
 }
 
 function getInstrumentationsToLoad() {
-  const enabledByDefault = getEnvBoolean(
+  const enabledByDefault = getConfigBoolean(
     'OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED',
     true
   );
 
   const instrumentations = bundledInstrumentations.filter((info) => {
-    return getEnvBoolean(
-      envKey(info),
-      info.enabledByDefault ?? enabledByDefault
-    );
+    const defaultEnabled =
+      info.disabledByDefault === undefined
+        ? enabledByDefault
+        : !info.disabledByDefault;
+    return getConfigBoolean(envKey(info), defaultEnabled);
   });
 
   const httpInstrumentation = instrumentations.find(

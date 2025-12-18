@@ -15,7 +15,7 @@
  */
 
 import { StartTracingOptions } from '../tracing';
-import { getEnvBoolean } from '../utils';
+import { getConfigBoolean } from '../configuration';
 import type { GraphQLInstrumentationConfig } from '@opentelemetry/instrumentation-graphql';
 
 export function configureGraphQlInstrumentation(
@@ -23,7 +23,7 @@ export function configureGraphQlInstrumentation(
   instrumentation: any,
   _options: StartTracingOptions
 ) {
-  if (getEnvBoolean('SPLUNK_GRAPHQL_RESOLVE_SPANS_ENABLED', false)) {
+  if (getConfigBoolean('SPLUNK_GRAPHQL_RESOLVE_SPANS_ENABLED', false)) {
     return;
   }
 
