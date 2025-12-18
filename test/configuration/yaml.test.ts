@@ -35,8 +35,8 @@ describe('YAML config file', () => {
 
     assert.deepStrictEqual(config.log_level, 'warn');
     assert.deepStrictEqual(config.attribute_limits, {
-      attribute_value_length_limit: 4096,
-      attribute_count_limit: 128,
+      attribute_value_length_limit: 4090,
+      attribute_count_limit: 110,
     });
     assert.deepStrictEqual(config.propagator, {
       composite: [
@@ -55,7 +55,7 @@ describe('YAML config file', () => {
       },
       instrumentations: {
         http: {
-          response_header_enabled: true,
+          trace_response_header_enabled: false,
           capture_uri_parameters: ['userId'],
         },
         redis: {
@@ -64,18 +64,18 @@ describe('YAML config file', () => {
       },
       profiling: {
         exporter: {
-          otlp_http: {
+          otlp_log_http: {
             endpoint: 'collector:4318/v1/logs',
           },
         },
         always_on: {
           cpu_profiler: {
-            sampling_interval: 10,
+            sampling_interval: 5,
           },
           memory_profiler: null,
         },
         callgraphs: {
-          sampling_interval: 10,
+          sampling_interval: 2,
           selection_probability: 0.01,
         },
       },

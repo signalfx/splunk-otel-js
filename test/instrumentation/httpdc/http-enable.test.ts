@@ -1366,9 +1366,9 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
       await new Promise<void>((resolve) => server.listen(serverPort, resolve));
     });
 
-    after(() => {
-      server.close();
+    after((_ctx, done) => {
       instrumentation.disable();
+      server.close(done);
     });
 
     it('should redact authentication credentials from URLs', async () => {

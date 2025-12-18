@@ -81,7 +81,6 @@ import { HttpDcInstrumentation } from './httpdc/httpdc';
 
 type InstrumentationInfo = {
   shortName: string;
-  fullName: string;
   create: () => Instrumentation;
   disabledByDefault?: boolean;
 };
@@ -95,217 +94,174 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
   {
     create: () => new AmqplibInstrumentation(),
     shortName: 'amqplib',
-    fullName: '@opentelemetry/instrumentation-amqplib',
   },
   {
     create: () => new AwsInstrumentation(),
     shortName: 'aws_sdk',
-    fullName: '@opentelemetry/instrumentation-aws-sdk',
   },
   {
     create: () => new BunyanInstrumentation(),
     shortName: 'bunyan',
-    fullName: '@opentelemetry/instrumentation-bunyan',
   },
   {
     create: () => new CassandraDriverInstrumentation(),
     shortName: 'cassandra_driver',
-    fullName: '@opentelemetry/instrumentation-cassandra-driver',
   },
   {
     create: () => new ConnectInstrumentation(),
     shortName: 'connect',
-    fullName: '@opentelemetry/instrumentation-connect',
   },
   {
     create: () => new DataloaderInstrumentation(),
     shortName: 'dataloader',
-    fullName: '@opentelemetry/instrumentation-dataloader',
   },
   {
     create: () => new DnsInstrumentation(),
     shortName: 'dns',
-    fullName: '@opentelemetry/instrumentation-dns',
   },
   {
     create: () => new ExpressInstrumentation(),
     shortName: 'express',
-    fullName: '@opentelemetry/instrumentation-express',
   },
   {
     create: () => new FastifyOtelInstrumentation(),
     shortName: 'fastify',
-    fullName: '@fastify/otel',
   },
   {
     create: () => new GenericPoolInstrumentation(),
     shortName: 'generic_pool',
-    fullName: '@opentelemetry/instrumentation-generic-pool',
   },
   {
     create: () => new GraphQLInstrumentation(),
     shortName: 'graphql',
-    fullName: '@opentelemetry/instrumentation-graphql',
   },
   {
     create: () => new GrpcInstrumentation(),
     shortName: 'grpc',
-    fullName: '@opentelemetry/instrumentation-grpc',
   },
   {
     create: () => new HapiInstrumentation(),
     shortName: 'hapi',
-    fullName: '@opentelemetry/instrumentation-hapi',
   },
   {
     create: () => new HttpInstrumentation(),
     shortName: 'http',
-    fullName: '@opentelemetry/instrumentation-http',
   },
   {
     create: () => new IORedisInstrumentation(),
     shortName: 'ioredis',
-    fullName: '@opentelemetry/instrumentation-ioredis',
   },
   {
     create: () => new KafkaJsInstrumentation(),
     shortName: 'kafkajs',
-    fullName: '@opentelemetry/instrumentation-kafkajs',
   },
   {
     create: () => new KnexInstrumentation(),
     shortName: 'knex',
-    fullName: '@opentelemetry/instrumentation-knex',
   },
   {
     create: () => new KoaInstrumentation(),
     shortName: 'koa',
-    fullName: '@opentelemetry/instrumentation-koa',
   },
   {
     create: () => new LruMemoizerInstrumentation(),
     shortName: 'lru_memoizer',
-    fullName: '@opentelemetry/instrumentation-lru-memoizer',
   },
   {
     create: () => new MemcachedInstrumentation(),
     shortName: 'memcached',
-    fullName: '@opentelemetry/instrumentation-memcached',
   },
   {
     create: () => new MongoDBInstrumentation(),
     shortName: 'mongodb',
-    fullName: '@opentelemetry/instrumentation-mongodb',
   },
   {
     create: () => new MongooseInstrumentation(),
     shortName: 'mongoose',
-    fullName: '@opentelemetry/instrumentation-mongoose',
   },
   {
     create: () => new MySQLInstrumentation(),
     shortName: 'mysql',
-    fullName: '@opentelemetry/instrumentation-mysql',
   },
   {
     create: () => new MySQL2Instrumentation(),
     shortName: 'mysql2',
-    fullName: '@opentelemetry/instrumentation-mysql2',
   },
   {
     create: () => new Neo4jInstrumentation(),
     shortName: 'neo4j',
-    fullName: 'splunk-opentelemetry-instrumentation-neo4j',
   },
   {
     create: () => new NestInstrumentation(),
     shortName: 'nestjs_core',
-    fullName: '@opentelemetry/nestjs-core',
   },
   {
     create: () => new NetInstrumentation(),
     shortName: 'net',
-    fullName: '@opentelemetry/instrumentation-net',
   },
   {
     create: () => new NoCodeInstrumentation(),
     shortName: 'nocode',
-    fullName: 'splunk-opentelemetry-instrumentation-nocode',
   },
   {
     create: () => new OpenAIInstrumentation(),
     shortName: 'openai',
-    fullName: '@opentelemetry/instrumentation-openai',
   },
   {
     create: () => new OracleInstrumentation(),
     shortName: 'oracle',
-    fullName: '@opentelemetry/instrumentation-oracle',
   },
   {
     create: () => new PgInstrumentation(),
     shortName: 'pg',
-    fullName: '@opentelemetry/instrumentation-pg',
   },
   {
     create: () => new PinoInstrumentation(),
     shortName: 'pino',
-    fullName: '@opentelemetry/instrumentation-pino',
   },
   {
     create: () => new RedisInstrumentation(),
     shortName: 'redis',
-    fullName: '@opentelemetry/instrumentation-redis',
   },
   {
     create: () => new RestifyInstrumentation(),
     shortName: 'restify',
-    fullName: '@opentelemetry/instrumentation-restify',
   },
   {
     create: () => new RouterInstrumentation(),
     shortName: 'router',
-    fullName: '@opentelemetry/instrumentation-router',
   },
   {
     create: () => new SocketIoInstrumentation(),
     shortName: 'socketio',
-    fullName: '@opentelemetry/instrumentation-socket.io',
   },
   {
     create: () => new TediousInstrumentation(),
     shortName: 'tedious',
-    fullName: '@opentelemetry/instrumentation-tedious',
   },
   {
     create: () => new WinstonInstrumentation(),
     shortName: 'winston',
-    fullName: '@opentelemetry/instrumentation-winston',
   },
   {
     create: () => new ElasticsearchInstrumentation(),
     shortName: 'elasticsearch',
-    fullName: 'splunk-opentelemetry-instrumentation-elasticsearch',
   },
   {
     create: () => new SequelizeInstrumentation(),
     shortName: 'sequelize',
-    fullName: '@opentelemetry/instrumentation-sequelize',
   },
   {
     create: () => new TypeormInstrumentation(),
     shortName: 'typeorm',
-    fullName: '@opentelemetry/instrumentation-typeorm',
   },
   {
     create: () => new UndiciInstrumentation(),
     shortName: 'undici',
-    fullName: '@opentelemetry/instrumentation-undici',
   },
   {
     create: () => new HttpDcInstrumentation(),
     shortName: 'httpdc',
-    fullName: '@opentelemetry/instrumentation-httpdc',
     disabledByDefault: true,
   },
 ];

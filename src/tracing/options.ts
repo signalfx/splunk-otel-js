@@ -55,13 +55,21 @@ import type {
 import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
 import {
   configGetPropagators,
+  configGetResource,
   configGetSampler,
+  configGetUriParameterCapture,
   getConfigBoolean,
+  getConfigNumber,
   getConfigTracerProvider,
   getNonEmptyConfigVar,
 } from '../configuration';
 import type { SpanExporter as ConfigSpanExporter } from '../configuration/schema';
 import { toCompression } from '../configuration/convert';
+import {
+  DEFAULT_ATTRIBUTE_VALUE_LENGTH_LIMIT,
+  DEFAULT_COUNT_LIMIT,
+  DEFAULT_SPAN_LINK_COUNT_LIMIT,
+} from '../defaults';
 
 function createSampler(userConfig: NodeTracerConfig) {
   if (userConfig.sampler !== undefined) {
@@ -76,17 +84,12 @@ function createSampler(userConfig: NodeTracerConfig) {
     }
   }
 
-  return undefined;
+  return configSampler;
 }
 
 export function _setDefaultOptions(
   options: StartTracingOptions = {}
 ): TracingOptions {
-  process.env.OTEL_SPAN_LINK_COUNT_LIMIT =
-    getNonEmptyConfigVar('OTEL_SPAN_LINK_COUNT_LIMIT') ?? '1000';
-  process.env.OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT =
-    getNonEmptyConfigVar('OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT') ?? '12000';
-
   const accessToken =
     options.accessToken || getNonEmptyConfigVar('SPLUNK_ACCESS_TOKEN') || '';
 
@@ -104,7 +107,9 @@ export function _setDefaultOptions(
 
   const resourceFactory = options.resourceFactory || ((r: Resource) => r);
   let resource = resourceFactory(
-    resourceFromAttributes(envResource.attributes || {})
+    resourceFromAttributes(envResource.attributes || {}).merge(
+      configGetResource()
+    )
   );
 
   const serviceName =
@@ -121,9 +126,45 @@ export function _setDefaultOptions(
   const extraTracerConfig = options.tracerConfig || {};
 
   const sampler = createSampler(extraTracerConfig);
-  const tracerConfig = {
+  const tracerConfig: NodeTracerConfig = {
     resource,
     sampler,
+    generalLimits: {
+      attributeCountLimit: getConfigNumber(
+        'OTEL_ATTRIBUTE_COUNT_LIMIT',
+        DEFAULT_COUNT_LIMIT
+      ),
+      attributeValueLengthLimit: getConfigNumber(
+        'OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT',
+        DEFAULT_ATTRIBUTE_VALUE_LENGTH_LIMIT
+      ),
+    },
+    spanLimits: {
+      attributeValueLengthLimit: getConfigNumber(
+        'OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT',
+        DEFAULT_ATTRIBUTE_VALUE_LENGTH_LIMIT
+      ),
+      attributeCountLimit: getConfigNumber(
+        'OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT',
+        DEFAULT_COUNT_LIMIT
+      ),
+      linkCountLimit: getConfigNumber(
+        'OTEL_SPAN_LINK_COUNT_LIMIT',
+        DEFAULT_SPAN_LINK_COUNT_LIMIT
+      ),
+      eventCountLimit: getConfigNumber(
+        'OTEL_SPAN_EVENT_COUNT_LIMIT',
+        DEFAULT_COUNT_LIMIT
+      ),
+      attributePerEventCountLimit: getConfigNumber(
+        'OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT',
+        DEFAULT_COUNT_LIMIT
+      ),
+      attributePerLinkCountLimit: getConfigNumber(
+        'OTEL_LINK_ATTRIBUTE_COUNT_LIMIT',
+        DEFAULT_COUNT_LIMIT
+      ),
+    },
     ...extraTracerConfig,
   };
 
@@ -143,7 +184,8 @@ export function _setDefaultOptions(
     serverTimingEnabled:
       options.serverTimingEnabled ||
       getConfigBoolean('SPLUNK_TRACE_RESPONSE_HEADER_ENABLED', true),
-    captureHttpRequestUriParams: options.captureHttpRequestUriParams || [],
+    captureHttpRequestUriParams:
+      options.captureHttpRequestUriParams || configGetUriParameterCapture(),
     instrumentations,
     tracerConfig,
     spanExporterFactory:
@@ -403,7 +445,7 @@ export function defaultSpanProcessorFactory(
             maxExportBatchSize: batch.max_export_batch_size ?? undefined,
             scheduledDelayMillis: batch.schedule_delay ?? undefined,
             exportTimeoutMillis: batch.export_timeout ?? undefined,
-            maxQueueSize: batch.max_export_batch_size ?? undefined,
+            maxQueueSize: batch.max_queue_size ?? undefined,
           })
         );
       }

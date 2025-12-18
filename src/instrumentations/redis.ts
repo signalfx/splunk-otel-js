@@ -14,9 +14,27 @@
  * limitations under the License.
  */
 
-import type { RedisInstrumentation } from '@opentelemetry/instrumentation-redis';
+import type {
+  DbStatementSerializer,
+  RedisInstrumentation,
+} from '@opentelemetry/instrumentation-redis';
 import { getConfigBoolean } from '../configuration';
 import { StartTracingOptions } from '../tracing';
+
+export const redisCommandIncludedDbStatementSerializer: DbStatementSerializer =
+  (cmd, args) => {
+    if (args.length === 0) return cmd;
+
+    const sanitizedArgs = args.map((arg) => {
+      if (Buffer.isBuffer(arg)) {
+        return `buffer(${arg.length})`;
+      }
+
+      return arg;
+    });
+
+    return `${cmd} ${sanitizedArgs.join(' ')}`;
+  };
 
 export function configureRedisInstrumentation(
   instrumentation: RedisInstrumentation,
@@ -26,19 +44,7 @@ export function configureRedisInstrumentation(
     const config = instrumentation.getConfig();
     instrumentation.setConfig({
       ...config,
-      dbStatementSerializer: (cmd, args) => {
-        if (args.length === 0) return cmd;
-
-        const sanitizedArgs = args.map((arg) => {
-          if (Buffer.isBuffer(arg)) {
-            return `buffer(${arg.length})`;
-          }
-
-          return arg;
-        });
-
-        return `${cmd} ${sanitizedArgs.join(' ')}`;
-      },
+      dbStatementSerializer: redisCommandIncludedDbStatementSerializer,
     });
   }
 }

@@ -23,10 +23,15 @@ import {
 import { EnvVarKey } from './types';
 import {
   AttributeNameValue,
-  ParentBasedSampler as ConfigParentBasedSampler,
   AttributeNameValue as ConfigAttributeNameValue,
   Resource as ConfigResource,
   OpenTelemetryConfiguration,
+  Sampler1,
+  Sampler2,
+  Sampler3,
+  Sampler4,
+  Sampler5,
+  Sampler6,
 } from './configuration/schema';
 import {
   AlwaysOffSampler,
@@ -45,10 +50,28 @@ import {
 } from '@opentelemetry/resources';
 import { AttributeValue } from '@opentelemetry/api';
 
+// Schema generator goes crazy with the types, they should be equivalent.
+type ConfigSampler =
+  | Sampler1
+  | Sampler2
+  | Sampler3
+  | Sampler4
+  | Sampler5
+  | Sampler6;
+
 export type SplunkConfiguration = {
+  use_bundled_instrumentations?: boolean;
+  package_name_filter?: string[];
+  runtime_metrics?: {
+    collection_interval?: number;
+  } | null;
+  debug_metrics_enabled?: boolean;
+  // TODO: Proper types for this one (instrumentation shortnames)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  instrumentations?: any;
   profiling?: {
     exporter?: {
-      otlp_http?: {
+      otlp_log_http?: {
         endpoint?: string | null;
       };
     };
@@ -57,7 +80,9 @@ export type SplunkConfiguration = {
         sampling_interval?: number;
         collection_interval?: number;
       };
-      memory_profiler?: {} | null;
+      memory_profiler?: {
+        max_stack_depth?: number;
+      } | null;
     };
     callgraphs?: {
       sampling_interval?: number;
@@ -74,21 +99,6 @@ export type DistroConfiguration = OpenTelemetryConfiguration & {
 export type SplunkRuntimeMetricsConf = {
   collectionInterval?: number;
 };
-
-function getRuntimeMetricsConf(
-  conf: DistroConfiguration
-): SplunkRuntimeMetricsConf | undefined {
-  const runtimeMetricsConf =
-    conf['instrumentation/development']?.js?.[
-      '@splunk/instrumentation-runtime-metrics'
-    ];
-
-  if (typeof runtimeMetricsConf === 'object') {
-    return runtimeMetricsConf;
-  }
-
-  return undefined;
-}
 
 export function loadConfiguration(path: string): DistroConfiguration {
   if (!existsSync(path)) {
@@ -126,14 +136,14 @@ function findAttributeValue(attributes: AttributeNameValue[], name: string) {
 function getInstrumentationConf(
   config: DistroConfiguration,
   instrumentationName: string
-): Record<string, any> | undefined {
-  const conf = config['instrumentation/development']?.js?.[instrumentationName];
+): Record<string, unknown> | undefined {
+  const conf = splunkConfig(config)?.instrumentations?.[instrumentationName];
 
   if (conf === null || typeof conf !== 'object') {
     return undefined;
   }
 
-  return conf;
+  return conf as Record<string, unknown>;
 }
 
 function splunkConfig(
@@ -150,6 +160,12 @@ function fetchConfigValue(key: EnvVarKey, config: DistroConfiguration) {
     case 'OTEL_ATTRIBUTE_VALUE_LENGTH_LIMIT': {
       return config.attribute_limits?.attribute_value_length_limit;
     }
+    case 'OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT': {
+      return config.tracer_provider?.limits?.event_attribute_count_limit;
+    }
+    case 'OTEL_LINK_ATTRIBUTE_COUNT_LIMIT': {
+      return config.tracer_provider?.limits?.link_attribute_count_limit;
+    }
     case 'OTEL_LOG_LEVEL': {
       return config.log_level;
     }
@@ -159,14 +175,23 @@ function fetchConfigValue(key: EnvVarKey, config: DistroConfiguration) {
         'service.name'
       );
     }
+    case 'OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT': {
+      return config.tracer_provider?.limits?.attribute_count_limit;
+    }
+    case 'OTEL_SPAN_ATTRIBUTE_VALUE_LENGTH_LIMIT': {
+      return config.tracer_provider?.limits?.attribute_value_length_limit;
+    }
+    case 'OTEL_SPAN_EVENT_COUNT_LIMIT': {
+      return config.tracer_provider?.limits?.event_count_limit;
+    }
     case 'OTEL_SPAN_LINK_COUNT_LIMIT': {
       return config.tracer_provider?.limits?.link_count_limit;
     }
     case 'SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES': {
-      const filter = config.splunk?.general?.js?.package_name_filter;
+      const filter = splunkConfig(config)?.package_name_filter;
 
       if (Array.isArray(filter)) {
-        return filter;
+        return filter.map((v) => String(v));
       }
 
       return undefined;
@@ -175,14 +200,14 @@ function fetchConfigValue(key: EnvVarKey, config: DistroConfiguration) {
       return config.logger_provider !== undefined;
     }
     case 'SPLUNK_DEBUG_METRICS_ENABLED': {
-      return config.splunk?.general?.js?.debug_metrics_enabled === true;
+      return splunkConfig(config)?.debug_metrics_enabled;
     }
     case 'SPLUNK_INSTRUMENTATION_METRICS_ENABLED': // TODO: Is this env var actually necessary?
     case 'SPLUNK_METRICS_ENABLED': {
       return config.meter_provider !== undefined;
     }
     case 'OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED': {
-      return config.splunk?.general?.js?.use_bundled_instrumentations;
+      return splunkConfig(config)?.use_bundled_instrumentations;
     }
     case 'SPLUNK_PROFILER_ENABLED': {
       const cpuProfiler =
@@ -195,7 +220,8 @@ function fetchConfigValue(key: EnvVarKey, config: DistroConfiguration) {
       return false;
     }
     case 'SPLUNK_PROFILER_LOGS_ENDPOINT': {
-      const endpoint = config.splunk?.profiling?.exporter?.otlp_http?.endpoint;
+      const endpoint =
+        splunkConfig(config)?.profiling?.exporter?.otlp_log_http?.endpoint;
 
       if (typeof endpoint === 'string') {
         return endpoint;
@@ -204,33 +230,34 @@ function fetchConfigValue(key: EnvVarKey, config: DistroConfiguration) {
       return undefined;
     }
     case 'SPLUNK_SNAPSHOT_PROFILER_ENABLED': {
-      return config.splunk?.profiling?.callgraphs !== undefined;
+      return splunkConfig(config)?.profiling?.callgraphs !== undefined;
     }
     case 'SPLUNK_PROFILER_CALL_STACK_INTERVAL': {
-      return config.splunk?.profiling?.always_on?.cpu_profiler
+      return splunkConfig(config)?.profiling?.always_on?.cpu_profiler
         ?.sampling_interval;
     }
     case 'SPLUNK_CPU_PROFILER_COLLECTION_INTERVAL': {
-      return config.splunk?.profiling?.always_on?.cpu_profiler
+      return splunkConfig(config)?.profiling?.always_on?.cpu_profiler
         ?.collection_interval;
     }
     case 'SPLUNK_PROFILER_MEMORY_ENABLED': {
-      return config.splunk?.profiling?.always_on?.memory_profiler !== undefined;
+      return (
+        splunkConfig(config)?.profiling?.always_on?.memory_profiler !==
+        undefined
+      );
     }
     case 'SPLUNK_SNAPSHOT_PROFILER_SAMPLING_INTERVAL': {
-      return config.splunk?.profiling?.callgraphs?.sampling_interval;
+      return splunkConfig(config)?.profiling?.callgraphs?.sampling_interval;
     }
+    case 'SPLUNK_SNAPSHOT_SELECTION_PROBABILITY':
     case 'SPLUNK_SNAPSHOT_SELECTION_RATE': {
-      return config.splunk?.profiling?.callgraphs?.selection_probability;
+      return splunkConfig(config)?.profiling?.callgraphs?.selection_probability;
     }
     case 'SPLUNK_REALM': {
       return undefined;
     }
     case 'SPLUNK_TRACE_RESPONSE_HEADER_ENABLED': {
-      const httpConf = getInstrumentationConf(
-        config,
-        '@opentelemetry/instrumentation-http'
-      );
+      const httpConf = getInstrumentationConf(config, 'http');
 
       const value = httpConf?.['trace_response_header_enabled'];
 
@@ -256,16 +283,13 @@ function fetchConfigValue(key: EnvVarKey, config: DistroConfiguration) {
       return undefined;
     }
     case 'SPLUNK_RUNTIME_METRICS_ENABLED': {
-      return getRuntimeMetricsConf(config) !== undefined;
+      return splunkConfig(config)?.runtime_metrics !== undefined;
     }
     case 'SPLUNK_RUNTIME_METRICS_COLLECTION_INTERVAL': {
-      return getRuntimeMetricsConf(config)?.collectionInterval;
+      return splunkConfig(config)?.runtime_metrics?.collection_interval;
     }
     case 'SPLUNK_REDIS_INCLUDE_COMMAND_ARGS': {
-      const redisConf = getInstrumentationConf(
-        config,
-        '@opentelemetry/instrumentation-redis'
-      );
+      const redisConf = getInstrumentationConf(config, 'redis');
 
       const value = redisConf?.['include_command_args'];
 
@@ -276,23 +300,48 @@ function fetchConfigValue(key: EnvVarKey, config: DistroConfiguration) {
       return undefined;
     }
     case 'SPLUNK_GRAPHQL_RESOLVE_SPANS_ENABLED': {
-      return config.splunk?.general?.js?.graphql_resolve_spans_enabled === true;
+      const conf = getInstrumentationConf(config, 'graphql');
+
+      const value = conf?.['resolve_spans_enabled'];
+
+      if (typeof value === 'boolean') {
+        return value;
+      }
+
+      return undefined;
     }
     default: {
-      const prefix = 'OTEL_INSTRUMENTATION_';
-      const suffix = '_ENABLED';
-      if (key.startsWith(prefix) && key.endsWith(suffix)) {
+      const instrumentationPrefix = 'OTEL_INSTRUMENTATION_';
+      const instrumentationSuffix = '_ENABLED';
+      if (
+        key.startsWith(instrumentationPrefix) &&
+        key.endsWith(instrumentationSuffix)
+      ) {
         const shortName = key
-          .substring(prefix.length, key.length - suffix.length)
+          .substring(
+            instrumentationPrefix.length,
+            key.length - instrumentationSuffix.length
+          )
           .toLowerCase();
 
         for (const instr of bundledInstrumentations) {
           if (instr.shortName === shortName) {
+            const instrumentation =
+              splunkConfig(config)?.instrumentations?.[shortName];
+
+            if (
+              instrumentation !== null &&
+              typeof instrumentation === 'object' &&
+              instrumentation['disabled'] === true
+            ) {
+              return false;
+            }
+
+            return instr.disabledByDefault !== true;
           }
         }
       }
 
-      console.log('unhandled config translation for key', key);
       return undefined;
     }
   }
@@ -305,7 +354,7 @@ function resourceFromString(resourceString: string): Resource {
   for (const s of values) {
     const assignment = s.trim().split('=');
 
-    if (assignment.length == 2) {
+    if (assignment.length === 2) {
       const [k, v] = assignment;
       attributes[k] = v;
     }
@@ -452,9 +501,25 @@ export function configGetPropagators() {
   return [...new Set([...compositePropagators, ...compositeListPropagators])];
 }
 
-function makeRootSampler(sampler: ConfigParentBasedSampler['root']): Sampler {
-  if (sampler === undefined) {
-    return new AlwaysOnSampler();
+export function configGetUriParameterCapture(): string[] {
+  if (globalConfiguration === undefined) {
+    return [];
+  }
+
+  const capture = getInstrumentationConf(globalConfiguration, 'http')?.[
+    'capture_uri_parameters'
+  ];
+
+  if (Array.isArray(capture)) {
+    return capture.map((v) => String(v));
+  }
+
+  return [];
+}
+
+function makeSampler(sampler: ConfigSampler | undefined): Sampler | undefined {
+  if (sampler === null || sampler === undefined) {
+    return undefined;
   }
 
   if (sampler.always_on !== undefined) {
@@ -470,7 +535,9 @@ function makeRootSampler(sampler: ConfigParentBasedSampler['root']): Sampler {
     return new TraceIdRatioBasedSampler(ratioBased.ratio ?? undefined);
   }
 
-  return new AlwaysOnSampler();
+  // TODO: Support probability based sampler once available in OTel.
+
+  return undefined;
 }
 
 export function configGetSampler() {
@@ -493,7 +560,13 @@ export function configGetSampler() {
     const parentBased = sampler.parent_based;
 
     return new ParentBasedSampler({
-      root: makeRootSampler(parentBased.root),
+      root: makeSampler(parentBased.root) || new AlwaysOnSampler(),
+      remoteParentSampled: makeSampler(parentBased.remote_parent_sampled),
+      remoteParentNotSampled: makeSampler(
+        parentBased.remote_parent_not_sampled
+      ),
+      localParentSampled: makeSampler(parentBased.local_parent_sampled),
+      localParentNotSampled: makeSampler(parentBased.local_parent_not_sampled),
     });
   }
 

@@ -43,9 +43,9 @@ import { describe, it } from 'node:test';
 import { loadAndSetExampleConfig } from './utils';
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
 
-describe('logger provider from config file', () => {
+describe('logger provider via config file', () => {
   describe('startLogging', () => {
-    it('sets logger provider', () => {
+    it('sets up the logger provider', () => {
       loadAndSetExampleConfig();
       const { loggingOptions } = parseOptionsAndConfigureInstrumentations();
 

@@ -22,6 +22,7 @@ import { start, stop } from '../../src';
 import * as logging from '../../src/logging';
 import * as metrics from '../../src/metrics';
 import * as profiling from '../../src/profiling';
+import * as snapshots from '../../src/tracing/snapshots/Snapshots';
 import * as tracing from '../../src/tracing';
 import { cleanEnvironment } from '../utils';
 import { exampleConfigPath } from './utils';
@@ -32,6 +33,7 @@ describe('start with file configuration', () => {
     tracing?: Mock<typeof tracing.startTracing>;
     profiling?: Mock<typeof profiling.startProfiling>;
     metrics?: Mock<typeof metrics.startMetrics>;
+    snapshots?: Mock<typeof snapshots.startSnapshotProfiling>;
   } = {};
 
   beforeEach(() => {
@@ -48,6 +50,7 @@ describe('start with file configuration', () => {
         stop: () => Promise.resolve(),
       })),
       tracing: mock.method(tracing, 'startTracing', () => true),
+      snapshots: mock.method(snapshots, 'startSnapshotProfiling', () => {}),
     };
   });
 
@@ -70,6 +73,7 @@ describe('start with file configuration', () => {
       assert.deepStrictEqual(signals.metrics?.mock.callCount(), 1);
       assert.deepStrictEqual(signals.logging?.mock.callCount(), 1);
       assert.deepStrictEqual(signals.profiling?.mock.callCount(), 1);
+      assert.deepStrictEqual(signals.snapshots?.mock.callCount(), 1);
     });
   });
 

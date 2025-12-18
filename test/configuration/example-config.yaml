@@ -11,8 +11,8 @@ file_format: "1.0-rc.2"
 disabled: false
 log_level: warn
 attribute_limits:
-  attribute_value_length_limit: 4096
-  attribute_count_limit: 128
+  attribute_value_length_limit: 4090
+  attribute_count_limit: 110
 logger_provider:
   processors:
     - batch:
@@ -53,8 +53,6 @@ meter_provider:
             encoding: protobuf
             temporality_preference: delta
             default_histogram_aggregation: base2_exponential_bucket_histogram
-        producers:
-          - opencensus:
         cardinality_limits:
           default: 2000
           counter: 2000
@@ -67,14 +65,13 @@ meter_provider:
     - periodic:
         exporter:
           otlp_grpc:
-            endpoint: http://localhost:4317
+            endpoint: http://localhost:4320
             headers:
-              - name: api-key
-                value: "1234"
-            headers_list: "api-key=1234"
+              - name: api-token
+                value: "abc"
             compression: gzip
-            timeout: 10000
-            temporality_preference: delta
+            timeout: 15000
+            temporality_preference: cumulative
             default_histogram_aggregation: base2_exponential_bucket_histogram
     - periodic:
         exporter:
@@ -121,13 +118,6 @@ meter_provider:
           excluded:
             - key3
   exemplar_filter: trace_based
-  meter_configurator/development:
-    default_config:
-      disabled: true
-    meters:
-      - name: io.opentelemetry.contrib.*
-        config:
-          disabled: false
 propagator:
   composite:
     - tracecontext:
@@ -138,19 +128,18 @@ propagator:
 tracer_provider:
   processors:
     - batch:
-        schedule_delay: 5000
-        export_timeout: 30000
-        max_queue_size: 2048
-        max_export_batch_size: 512
+        schedule_delay: 4000
+        export_timeout: 32000
+        max_queue_size: 3000
+        max_export_batch_size: 215
         exporter:
           otlp_http:
             endpoint: http://localhost:4318/v1/traces
             headers:
               - name: api-key
                 value: "1234"
-            headers_list: "api-key=1234"
             compression: gzip
-            timeout: 10000
+            timeout: 11000
             encoding: protobuf
     - batch:
         exporter:
@@ -159,32 +148,18 @@ tracer_provider:
             headers:
               - name: api-key
                 value: "1234"
-            headers_list: "api-key=1234"
             compression: gzip
-            timeout: 10000
-    - batch:
-        exporter:
-          otlp_file/development:
-            output_stream: file:///var/log/traces.jsonl
-    - batch:
-        exporter:
-          otlp_file/development:
-            output_stream: stdout
-    - batch:
-        exporter:
-          zipkin:
-            endpoint: http://localhost:9411/api/v2/spans
-            timeout: 10000
+            timeout: 12000
     - simple:
         exporter:
           console:
   limits:
-    attribute_value_length_limit: 4096
-    attribute_count_limit: 128
-    event_count_limit: 128
-    link_count_limit: 128
-    event_attribute_count_limit: 128
-    link_attribute_count_limit: 128
+    attribute_value_length_limit: 2500
+    attribute_count_limit: 150
+    event_count_limit: 151
+    link_count_limit: 152
+    event_attribute_count_limit: 153
+    link_attribute_count_limit: 154
   sampler:
     parent_based:
       root:
@@ -193,60 +168,13 @@ tracer_provider:
       remote_parent_sampled:
         always_on:
       remote_parent_not_sampled:
-        probability/development:
-          ratio: 0.01
+        always_on:
       local_parent_sampled:
-        composite/development:
-          # Configure sampler to be rule_based.
-          rule_based:
-            # The rules for the sampler, matched in order. Each rule can have multiple match conditions - the sampler will be applied if all match.
-            # If no conditions are specified, the rule matches all spans that reach it. If no rules match, the span is not sampled.
-            rules:
-              - attribute_values:
-                  key: http.route
-                  values:
-                    - /healthz
-                    - /livez
-                # Configure sampler when matched.
-                sampler:
-                  # Configure sampler to be always_off if matched.
-                  always_off:
-              # Configure a sampling rule matching http.path attribute patterns.
-              - attribute_patterns:
-                  key: http.path
-                  included:
-                    - /internal/*
-                  excluded:
-                    - /internal/special/*
-                # Configure sampler when matched.
-                sampler:
-                  # Configure sampler to be always_on if matched.
-                  always_on:
-              # Configure a sampling rule matching root spans with CLIENT span kind.
-              - parent:
-                  - none
-                span_kinds:
-                  - client
-                sampler:
-                  # Configure sampler to be probability if matched.
-                  probability:
-                    ratio: 0.05
-              - sampler:
-                  probability:
-                    # Configure ratio.
-                    # If omitted or null, 1.0 is used.
-                    ratio: 0.001
+        always_off:
       # Configure local_parent_not_sampled sampler.
       # If omitted or null, always_off is used.
       local_parent_not_sampled:
         always_off:
-  tracer_configurator/development:
-    default_config:
-      disabled: true
-    tracers:
-      - name: io.opentelemetry.contrib.*
-        config:
-          disabled: false
 resource:
   attributes:
     - name: service.name
@@ -314,19 +242,19 @@ distribution:
       collection_interval: 30000
     instrumentations:
       http:
-        response_header_enabled: true        # SPLUNK_TRACE_RESPONSE_HEADER_ENABLED
+        trace_response_header_enabled: false # SPLUNK_TRACE_RESPONSE_HEADER_ENABLED
         capture_uri_parameters:
           - "userId"
       redis:
         include_command_args: true           # SPLUNK_REDIS_INCLUDE_COMMAND_ARGS
     profiling:
       exporter:
-        otlp_http:
+        otlp_log_http:
           endpoint: "collector:4318/v1/logs" # SPLUNK_PROFILER_LOGS_ENDPOINT
       always_on:
         cpu_profiler:                        # SPLUNK_PROFILER_ENABLED
-          sampling_interval: 10              # SPLUNK_PROFILER_CALL_STACK_INTERVAL
+          sampling_interval: 5               # SPLUNK_PROFILER_CALL_STACK_INTERVAL
         memory_profiler:                     # SPLUNK_PROFILER_MEMORY_ENABLED
       callgraphs:                            # SPLUNK_SNAPSHOT_PROFILER_ENABLED
-        sampling_interval: 10                # SPLUNK_SNAPSHOT_SAMPLING_INTERVAL
+        sampling_interval: 2                 # SPLUNK_SNAPSHOT_SAMPLING_INTERVAL
         selection_probability: 0.01          # SPLUNK_SNAPSHOT_SELECTION_PROBABILITY

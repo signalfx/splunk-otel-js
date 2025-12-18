@@ -18,6 +18,7 @@ import { context, diag } from '@opentelemetry/api';
 import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
 import { defaultServiceName, ensureResourcePath } from '../utils';
 import {
+  configGetResource,
   getConfigBoolean,
   getConfigNumber,
   getNonEmptyConfigVar,
@@ -258,7 +259,9 @@ export function _setDefaultOptions(
   const resourceFactory = options.resourceFactory || ((r: Resource) => r);
 
   const resource = resourceFactory(
-    resourceFromAttributes(envResource.attributes || {})
+    resourceFromAttributes(envResource.attributes || {}).merge(
+      configGetResource()
+    )
   ).merge(
     resourceFromAttributes({
       [ATTR_SERVICE_NAME]: serviceName,
@@ -270,7 +273,7 @@ export function _setDefaultOptions(
     getConfigBoolean('SPLUNK_PROFILER_MEMORY_ENABLED', false);
 
   return {
-    serviceName: serviceName,
+    serviceName,
     endpoint,
     callstackInterval:
       options.callstackInterval ||

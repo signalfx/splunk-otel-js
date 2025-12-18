@@ -33,8 +33,8 @@ import {
   PushMetricExporter,
   ViewOptions,
 } from '@opentelemetry/sdk-metrics';
-import { AggregationTemporalityPreference } from '@opentelemetry/exporter-metrics-otlp-http';
 import { OTLPMetricExporter as OTLPHttpProtoMetricExporter } from '@opentelemetry/exporter-metrics-otlp-proto';
+import { AggregationTemporalityPreference } from '@opentelemetry/exporter-metrics-otlp-http';
 import type * as grpc from '@grpc/grpc-js';
 import type * as OtlpGrpc from '@opentelemetry/exporter-metrics-otlp-grpc';
 import type { MetricsOptions, StartMetricsOptions } from './types';
@@ -59,6 +59,7 @@ import {
   getConfigBoolean,
   getConfigNumber,
   getNonEmptyConfigVar,
+  configGetResource,
 } from '../configuration';
 import {
   Aggregation as ConfigAggregation,
@@ -261,7 +262,6 @@ function toMetricExporter(
     }
 
     const url = ensureResourcePath(otlpHttp.endpoint, '/v1/metrics');
-    otlpHttp.temporality_preference;
     return new OTLPHttpProtoMetricExporter({
       url,
       headers,
@@ -457,6 +457,10 @@ export function defaultMetricReaderFactory(
 
   const readers: MetricReader[] = [];
 
+  if (cfgMeterProvider === null) {
+    return readers;
+  }
+
   for (const reader of cfgMeterProvider.readers) {
     if (reader.pull !== undefined) {
       diag.warn('pull metric reader not supported');
@@ -465,6 +469,7 @@ export function defaultMetricReaderFactory(
       const exporter = toMetricExporter(periodicReader.exporter);
 
       if (exporter !== undefined) {
+        // TODO: Cardinality limits when OTel supports them.
         readers.push(
           new PeriodicExportingMetricReader({
             exporter,
@@ -678,6 +683,7 @@ export function _setDefaultOptions(
 
   const serviceName = String(
     options.serviceName ||
+      getNonEmptyConfigVar('OTEL_SERVICE_NAME') ||
       envResource.attributes?.[ATTR_SERVICE_NAME] ||
       defaultServiceName()
   );
@@ -685,7 +691,9 @@ export function _setDefaultOptions(
   const resourceFactory =
     options.resourceFactory || ((resource: Resource) => resource);
   let resource = resourceFactory(
-    resourceFromAttributes(envResource.attributes || {})
+    resourceFromAttributes(envResource.attributes || {}).merge(
+      configGetResource()
+    )
   );
 
   resource = resource.merge(
