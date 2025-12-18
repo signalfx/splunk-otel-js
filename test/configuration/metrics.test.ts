@@ -186,5 +186,45 @@ describe('metrics via config file', () => {
       const exporter = r3['_exporter'];
       assert.ok(exporter instanceof ConsoleMetricExporter);
     }
+
+    const views = state['viewRegistry']['_registeredViews'];
+
+    assert.deepStrictEqual(views.length, 1);
+
+    const [view] = views;
+
+    assert.deepStrictEqual(view['name'], 'new_instrument_name');
+    assert.deepStrictEqual(view['description'], 'new_description');
+    assert.deepStrictEqual(view['aggregationCardinalityLimit'], 2000);
+
+    assert.deepStrictEqual(
+      view['aggregation']['_boundaries'],
+      [
+        0.0, 5.0, 10.0, 25.0, 50.0, 75.0, 100.0, 250.0, 500.0, 750.0, 1000.0,
+        2500.0, 5000.0, 7500.0, 10000.0,
+      ]
+    );
+
+    assert.deepStrictEqual(view['aggregation']['_recordMinMax'], true);
+
+    const instrumentSelector = view['instrumentSelector'];
+    assert.deepStrictEqual(
+      instrumentSelector.getType(),
+      InstrumentType.HISTOGRAM
+    );
+    assert.deepStrictEqual(
+      instrumentSelector.getNameFilter().match('my-instrument'),
+      true
+    );
+    assert.deepStrictEqual(
+      instrumentSelector.getUnitFilter().match('ms'),
+      true
+    );
+
+    const meterSelector = view['meterSelector'];
+    assert.deepStrictEqual(
+      meterSelector.getNameFilter().match('my-meter'),
+      true
+    );
   });
 });
