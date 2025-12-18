@@ -120,6 +120,176 @@ The following config options can be set by passing them as tracing arguments to 
 | `OTEL_SERVICE_NAME`<br>`serviceName`                            | `unnamed-node-service`  | Stable  | Service name of the application.
 | `OTEL_RESOURCE_ATTRIBUTES`                                      |                         | Stable  | Comma-separated list of resource attributes. <details><summary>Example</summary>`deployment.environment=demo,key2=val2`</details>
 
+### File based configuration
+
+**Status**: Experimental
+
+An [OpenTelemetry configuration YAML file](https://github.com/open-telemetry/opentelemetry-configuration/blob/main/schema-docs.md) can be provided via `OTEL_EXPERIMENTAL_CONFIG_FILE` environment variable. When set, all of the configuration options will be loaded from the given path.
+
+Other options provided via environment variables will be ignored. Programmatic options sill take preference over the file based configuration.
+
+See the OpenTelemetry's [getting started](https://github.com/open-telemetry/opentelemetry-configuration/blob/main/examples/getting-started.yaml) example or use the following as a starter configuration:
+
+```yaml
+file_format: "1.0-rc.2"
+disabled: false # When true, the instrumentation does nothing.
+log_level: warn
+distribution:
+  splunk:
+    use_bundled_instrumentations: true
+    runtime_metrics:
+      collection_interval: 30000
+    instrumentations:
+      http:
+        trace_response_header_enabled: true # SPLUNK_TRACE_RESPONSE_HEADER_ENABLED
+      redis:
+        include_command_args: true           # SPLUNK_REDIS_INCLUDE_COMMAND_ARGS
+    profiling:
+      exporter:
+        otlp_log_http:
+          endpoint: "http://localhost:4318/v1/logs" # SPLUNK_PROFILER_LOGS_ENDPOINT
+      always_on:
+        cpu_profiler:                        # SPLUNK_PROFILER_ENABLED
+          sampling_interval: 1000            # SPLUNK_PROFILER_CALL_STACK_INTERVAL
+        memory_profiler:                     # SPLUNK_PROFILER_MEMORY_ENABLED
+      callgraphs:                            # SPLUNK_SNAPSHOT_PROFILER_ENABLED
+        sampling_interval: 1                 # SPLUNK_SNAPSHOT_SAMPLING_INTERVAL
+        selection_probability: 0.01          # SPLUNK_SNAPSHOT_SELECTION_PROBABILITY
+logger_provider:
+  processors:
+    - batch:
+        schedule_delay: 5000
+        export_timeout: 30000
+        max_queue_size: 1024
+        max_export_batch_size: 256
+        exporter:
+          otlp_http:
+            endpoint: "http://:4318/v1/logs"
+            compression: gzip
+            timeout: 10000
+            encoding: protobuf
+  limits:
+    attribute_value_length_limit: 8192
+    attribute_count_limit: 512
+meter_provider:
+  readers:
+    - periodic:
+        interval: 60000
+        timeout: 30000
+        exporter:
+          otlp_http:
+            endpoint: http://localhost:4318/v1/metrics
+            compression: gzip
+            timeout: 10000
+            encoding: protobuf
+            temporality_preference: delta
+            default_histogram_aggregation: base2_exponential_bucket_histogram
+        cardinality_limits:
+          default: 2000
+          counter: 2000
+          gauge: 2000
+          histogram: 2000
+          observable_counter: 2000
+          observable_gauge: 2000
+          observable_up_down_counter: 2000
+          up_down_counter: 2000
+  views:
+    - selector:
+        instrument_name: my-instrument
+        instrument_type: histogram
+        unit: ms
+        meter_name: my-meter
+        meter_version: 1.0.0
+        meter_schema_url: https://opentelemetry.io/schemas/1.16.0
+      stream:
+        name: new_instrument_name
+        description: new_description
+        aggregation:
+          explicit_bucket_histogram:
+            boundaries:
+              [
+                0.0,
+                5.0,
+                10.0,
+                25.0,
+                50.0,
+                75.0,
+                100.0,
+                250.0,
+                500.0,
+                750.0,
+                1000.0,
+                2500.0,
+                5000.0,
+                7500.0,
+                10000.0
+              ]
+            record_min_max: true
+        aggregation_cardinality_limit: 2000
+        attribute_keys:
+          included:
+            - key1
+            - key2
+          excluded:
+            - key3
+propagator:
+  composite:
+    - tracecontext:
+    - baggage:
+    - b3:
+    - b3multi:
+  composite_list: "tracecontext,baggage,b3,b3multi,xray"
+tracer_provider:
+  processors:
+    - batch:
+        schedule_delay: 5000
+        export_timeout: 30000
+        max_queue_size: 2048
+        max_export_batch_size: 256
+        exporter:
+          otlp_http:
+            endpoint: http://localhost:4318/v1/traces
+            headers:
+              - name: api-key
+                value: "1234"
+            compression: gzip
+            timeout: 10000
+            encoding: protobuf
+  sampler:
+    parent_based:
+      root:
+        always_on:
+      remote_parent_sampled:
+        always_on:
+      remote_parent_not_sampled:
+        always_on:
+      local_parent_sampled:
+        always_on:
+      local_parent_not_sampled:
+        always_on:
+resource:
+  attributes:
+    - name: service.name
+      value: test_service
+    - name: service.version
+      value: "1.3.0"
+    - name: string_key
+      value: test_value
+      type: string
+    - name: bool_key
+      value: true
+      type: bool
+    - name: int_key
+      value: 1
+      type: int
+  detection/development:
+    detectors:
+      - container:
+      - host:
+      - process:
+      - service:
+```
+
 ### Migrating from signal-specific `start*` functions
 
 Older versions of `@splunk/otel` shipped with signal-specific start functions: `startMetrics`, `startProfiling`, and `startTracing`. Calling these functions is now deprecated and these functions will be removed in future versions.
@@ -136,9 +306,9 @@ start({
   tracing: {
     // tracing-specific options here.
   },
-  // profiling: true, // enable experimental profiling signal
+  // profiling: true, // enable profiling signal
   /*
-  metrics: { // enable experimental metrics signal with specific configuration
+  metrics: { // enable metrics signal with specific configuration
     // exportInterval,
   },
   */
