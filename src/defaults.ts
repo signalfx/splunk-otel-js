@@ -14,24 +14,6 @@
  * limitations under the License.
  */
 
-import { defaultServiceName } from './utils';
-import { getConfigArray } from './configuration';
-
-import { start } from './start';
-
-function boot() {
-  const instrumentedPkgNames = getConfigArray(
-    'SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES'
-  );
-
-  if (instrumentedPkgNames === undefined) {
-    start();
-    return;
-  }
-
-  if (instrumentedPkgNames.includes(defaultServiceName())) {
-    start();
-  }
-}
-
-boot();
+export const DEFAULT_ATTRIBUTE_VALUE_LENGTH_LIMIT = 12000;
+export const DEFAULT_SPAN_LINK_COUNT_LIMIT = 1000;
+export const DEFAULT_COUNT_LIMIT = 128;

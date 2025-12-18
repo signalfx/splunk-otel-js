@@ -13,13 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-  getEnvBoolean,
-  getNonEmptyEnvVar,
-  parseEnvBooleanString,
-  parseLogLevel,
-  toDiagLogLevel,
-} from './utils';
+import { parseEnvBooleanString, parseLogLevel, toDiagLogLevel } from './utils';
 import { startMetrics, StartMetricsOptions } from './metrics';
 import { startProfiling, StartProfilingOptions } from './profiling';
 import type { EnvVarKey, LogLevel } from './types';
@@ -46,6 +40,13 @@ import {
   isSnapshotProfilingEnabled,
   startSnapshotProfiling,
 } from './tracing/snapshots/Snapshots';
+import { getNonEmptyEnvVar } from './utils';
+import {
+  getNonEmptyConfigVar,
+  getConfigBoolean,
+  setGlobalConfiguration,
+  loadConfiguration,
+} from './configuration';
 
 export interface Options {
   accessToken: string;
@@ -80,7 +81,7 @@ function isSignalEnabled<T>(
   envVar: EnvVarKey,
   def: boolean
 ) {
-  return option ?? parseEnvBooleanString(getNonEmptyEnvVar(envVar)) ?? def;
+  return option ?? parseEnvBooleanString(getNonEmptyConfigVar(envVar)) ?? def;
 }
 
 export const start = (options: Partial<Options> = {}) => {
@@ -92,9 +93,20 @@ export const start = (options: Partial<Options> = {}) => {
   ) {
     throw new Error('Splunk APM already started');
   }
+
+  const configFile = getNonEmptyEnvVar('OTEL_EXPERIMENTAL_CONFIG_FILE');
+  if (configFile) {
+    const configuration = loadConfiguration(configFile);
+    setGlobalConfiguration(configuration);
+
+    if (configuration.disabled === true) {
+      return;
+    }
+  }
+
   const logLevel = options.logLevel
     ? toDiagLogLevel(options.logLevel)
-    : parseLogLevel(getNonEmptyEnvVar('OTEL_LOG_LEVEL'));
+    : parseLogLevel(getNonEmptyConfigVar('OTEL_LOG_LEVEL'));
 
   if (logLevel !== DiagLogLevel.NONE) {
     diag.setLogger(new DiagConsoleLogger(), logLevel);
@@ -104,7 +116,7 @@ export const start = (options: Partial<Options> = {}) => {
 
   const serviceName =
     options.serviceName ||
-    getNonEmptyEnvVar('OTEL_SERVICE_NAME') ||
+    getNonEmptyConfigVar('OTEL_SERVICE_NAME') ||
     envResource.attributes?.[ATTR_SERVICE_NAME];
 
   if (!serviceName) {
@@ -154,7 +166,7 @@ export const start = (options: Partial<Options> = {}) => {
     running.metrics = startMetrics(metricsOptions);
   }
 
-  const meterProvider = getEnvBoolean(
+  const meterProvider = getConfigBoolean(
     'SPLUNK_INSTRUMENTATION_METRICS_ENABLED',
     false
   )

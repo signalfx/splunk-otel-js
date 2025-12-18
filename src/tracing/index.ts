@@ -35,13 +35,13 @@ import {
 import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
 import type { StartTracingOptions, TracingOptions } from './types';
 import { isProfilingContextManagerSet } from '../profiling';
-import { getEnvNumber } from '../utils';
 import {
   isSnapshotProfilingEnabled,
   snapshotSpanProcessor,
 } from './snapshots/Snapshots';
 import { SnapshotPropagator } from './snapshots';
 import { CompositePropagator } from '@opentelemetry/core';
+import { getConfigNumber } from '../configuration';
 
 export type { StartTracingOptions, TracingOptions };
 
@@ -98,7 +98,7 @@ export function startTracing(options: TracingOptions): boolean {
       propagators: [
         propagator,
         new SnapshotPropagator(
-          getEnvNumber(
+          getConfigNumber(
             [
               'SPLUNK_SNAPSHOT_SELECTION_PROBABILITY',
               'SPLUNK_SNAPSHOT_SELECTION_RATE',

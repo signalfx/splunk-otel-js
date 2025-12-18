@@ -90,7 +90,7 @@ export function parseEnvBooleanString(value?: string) {
   throw new Error(`Invalid string representing boolean: ${value}`);
 }
 
-export function getEnvBoolean(key: EnvVarKey, defaultValue = true) {
+export function getEnvBoolean(key: EnvVarKey, defaultValue = true): boolean {
   const value = getNonEmptyEnvVar(key);
 
   if (value === undefined) {
@@ -129,11 +129,11 @@ export function deduplicate(arr: string[]) {
   return [...new Set(arr)];
 }
 
-export function getEnvArray(key: EnvVarKey, defaultValue: string[]): string[] {
+export function getEnvArray(key: EnvVarKey): string[] | undefined {
   const value = getNonEmptyEnvVar(key);
 
   if (value === undefined) {
-    return defaultValue;
+    return undefined;
   }
 
   return deduplicate(value.split(',')).map((v) => v.trim());
@@ -198,8 +198,8 @@ export function toDiagLogLevel(level: LogLevel): DiagLogLevel {
   return DiagLogLevel.NONE;
 }
 
-export function parseLogLevel(value: string | undefined): DiagLogLevel {
-  if (value === undefined) {
+export function parseLogLevel(value: string | null | undefined): DiagLogLevel {
+  if (value === undefined || value === null) {
     return DiagLogLevel.NONE;
   }
 
@@ -221,10 +221,10 @@ function constructUrl(url: string): URL | undefined {
 }
 
 export function ensureResourcePath(
-  url: string | undefined,
+  url: string | undefined | null,
   resourcePath: string
 ): string | undefined {
-  if (url === undefined) {
+  if (url === undefined || url === null) {
     return undefined;
   }
 
@@ -244,6 +244,22 @@ export function ensureResourcePath(
   }
 
   return url;
+}
+
+export function readFileContent(
+  path: string | undefined | null
+): Buffer | undefined {
+  if (path === undefined || path === null) {
+    return undefined;
+  }
+
+  try {
+    return fs.readFileSync(path);
+  } catch (e) {
+    diag.warn(`failed to load ${path}`, e);
+  }
+
+  return undefined;
 }
 
 export function listEnvVars() {

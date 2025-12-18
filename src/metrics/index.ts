@@ -14,15 +14,27 @@
  * limitations under the License.
  */
 
-import { Counter, diag, metrics, ValueType } from '@opentelemetry/api';
+import {
+  Attributes,
+  Counter,
+  diag,
+  metrics,
+  ValueType,
+} from '@opentelemetry/api';
 import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
 import {
+  AggregationOption,
+  AggregationType,
+  IAttributesProcessor,
+  InstrumentType,
   MeterProvider,
   MetricReader,
   PeriodicExportingMetricReader,
+  PushMetricExporter,
   ViewOptions,
 } from '@opentelemetry/sdk-metrics';
 import { OTLPMetricExporter as OTLPHttpProtoMetricExporter } from '@opentelemetry/exporter-metrics-otlp-proto';
+import { AggregationTemporalityPreference } from '@opentelemetry/exporter-metrics-otlp-http';
 import type * as grpc from '@grpc/grpc-js';
 import type * as OtlpGrpc from '@opentelemetry/exporter-metrics-otlp-grpc';
 import type { MetricsOptions, StartMetricsOptions } from './types';
@@ -30,17 +42,32 @@ import type { MetricsOptions, StartMetricsOptions } from './types';
 import {
   defaultServiceName,
   ensureResourcePath,
-  getEnvArray,
-  getEnvBoolean,
-  getEnvNumber,
-  getEnvValueByPrecedence,
-  getNonEmptyEnvVar,
+  readFileContent,
 } from '../utils';
 import { enableDebugMetrics, getDebugMetricsViews } from './debug_metrics';
 import * as util from 'util';
 import { getDetectedResource } from '../resource';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { ConsoleMetricExporter } from './ConsoleMetricExporter';
+import {
+  getEnvArray,
+  getNonEmptyEnvVar,
+  getEnvValueByPrecedence,
+} from '../utils';
+import {
+  getConfigMeterProvider,
+  getConfigBoolean,
+  getConfigNumber,
+  getNonEmptyConfigVar,
+  configGetResource,
+} from '../configuration';
+import {
+  Aggregation as ConfigAggregation,
+  PushMetricExporter as ConfigPushMetricExporter,
+  View as ConfigView,
+  IncludeExclude as ConfigViewAttribIncludeExclude,
+} from '../configuration/schema';
+import { toCompression } from '../configuration/convert';
 
 export type { MetricsOptions, StartMetricsOptions };
 
@@ -182,9 +209,9 @@ export function createOtlpExporter(options: MetricsOptions) {
 }
 
 function createExporters(options: MetricsOptions) {
-  const metricExporters: string[] = getEnvArray('OTEL_METRICS_EXPORTER', [
+  const metricExporters: string[] = getEnvArray('OTEL_METRICS_EXPORTER') || [
     'otlp',
-  ]);
+  ];
 
   if (!areValidExporterTypes(metricExporters)) {
     throw new Error(
@@ -208,14 +235,288 @@ function createExporters(options: MetricsOptions) {
   });
 }
 
+function toAggregationTemporalityPreference(
+  preference: 'cumulative' | 'delta' | 'low_memory' | null | undefined
+): AggregationTemporalityPreference | undefined {
+  if (preference === 'cumulative')
+    return AggregationTemporalityPreference.CUMULATIVE;
+  if (preference === 'delta') return AggregationTemporalityPreference.DELTA;
+  if (preference === 'low_memory')
+    return AggregationTemporalityPreference.LOWMEMORY;
+
+  return undefined;
+}
+
+function toMetricExporter(
+  configExporter: ConfigPushMetricExporter
+): PushMetricExporter | undefined {
+  if (configExporter.otlp_http !== undefined) {
+    const otlpHttp = configExporter.otlp_http;
+    const configHeaders = otlpHttp.headers || [];
+    const headers: Record<string, string> = {};
+
+    for (const header of configHeaders) {
+      if (header.value !== null) {
+        headers[header.name] = header.value;
+      }
+    }
+
+    const url = ensureResourcePath(otlpHttp.endpoint, '/v1/metrics');
+    return new OTLPHttpProtoMetricExporter({
+      url,
+      headers,
+      timeoutMillis: otlpHttp.timeout ?? undefined,
+      compression: toCompression(otlpHttp.compression),
+      httpAgentOptions: {
+        ca: readFileContent(otlpHttp.tls?.ca_file),
+        cert: readFileContent(otlpHttp.tls?.cert_file),
+        key: readFileContent(otlpHttp.tls?.key_file),
+      },
+      temporalityPreference: toAggregationTemporalityPreference(
+        otlpHttp.temporality_preference
+      ),
+    });
+  } else if (configExporter.otlp_grpc !== undefined) {
+    const grpcModule: typeof grpc = require('@grpc/grpc-js');
+    const otlpGrpc: typeof OtlpGrpc = require('@opentelemetry/exporter-metrics-otlp-grpc');
+
+    const cfgGrpc = configExporter.otlp_grpc;
+
+    const metadata = new grpcModule.Metadata();
+
+    for (const header of cfgGrpc.headers || []) {
+      if (header.value !== null) {
+        metadata.set(header.name, header.value);
+      }
+    }
+
+    const credentials =
+      cfgGrpc.tls === undefined
+        ? undefined
+        : grpcModule.credentials.createSsl(
+            readFileContent(cfgGrpc.tls?.cert_file),
+            readFileContent(cfgGrpc.tls?.key_file),
+            readFileContent(cfgGrpc.tls?.ca_file)
+          );
+
+    return new otlpGrpc.OTLPMetricExporter({
+      url: cfgGrpc.endpoint ?? undefined,
+      metadata,
+      timeoutMillis: cfgGrpc.timeout ?? undefined,
+      compression: toCompression(cfgGrpc.compression),
+      credentials,
+      temporalityPreference: toAggregationTemporalityPreference(
+        cfgGrpc.temporality_preference
+      ),
+    });
+  } else if (configExporter.console !== undefined) {
+    return new ConsoleMetricExporter();
+  } else if (configExporter['otlp_file/development'] !== undefined) {
+    diag.warn('metric exporter "otlp_file/development" is not supported');
+  }
+
+  return undefined;
+}
+
+function toViewAggregationOption(
+  aggregation: ConfigAggregation | undefined
+): AggregationOption | undefined {
+  if (aggregation === undefined) {
+    return undefined;
+  }
+
+  if (aggregation.sum !== undefined) {
+    return { type: AggregationType.SUM };
+  } else if (aggregation.drop !== undefined) {
+    return { type: AggregationType.DROP };
+  } else if (aggregation.default !== undefined) {
+    return { type: AggregationType.DEFAULT };
+  } else if (aggregation.last_value !== undefined) {
+    return { type: AggregationType.LAST_VALUE };
+  } else if (aggregation.explicit_bucket_histogram !== undefined) {
+    const hist = aggregation.explicit_bucket_histogram;
+
+    return {
+      type: AggregationType.EXPLICIT_BUCKET_HISTOGRAM,
+      options: {
+        recordMinMax: hist.record_min_max ?? undefined,
+        boundaries: hist.boundaries || [],
+      },
+    };
+  } else if (aggregation.base2_exponential_bucket_histogram !== undefined) {
+    const hist = aggregation.base2_exponential_bucket_histogram;
+
+    return {
+      type: AggregationType.EXPONENTIAL_HISTOGRAM,
+      options: {
+        recordMinMax: hist.record_min_max ?? undefined,
+        maxSize: hist.max_size ?? undefined,
+      },
+    };
+  }
+
+  return undefined;
+}
+
+function toAttributesProcessor(
+  includeExclude: ConfigViewAttribIncludeExclude | undefined
+): IAttributesProcessor | undefined {
+  if (includeExclude === undefined) {
+    return undefined;
+  }
+
+  const included = includeExclude.included || [];
+  const excluded = includeExclude.excluded || [];
+  // TODO: Wildcard support
+  return {
+    process: (incoming: Attributes) => {
+      const newAttributes: Attributes = {};
+
+      for (const include of included) {
+        const value = incoming[include];
+        if (value !== undefined) {
+          newAttributes[include] = value;
+        }
+      }
+
+      for (const exclude of excluded) {
+        const value = incoming[exclude];
+
+        if (value !== undefined) {
+          delete newAttributes[exclude];
+        }
+      }
+
+      return newAttributes;
+    },
+  };
+}
+
+function toInstrumentType(
+  type: ConfigView['selector']['instrument_type']
+): InstrumentType | undefined {
+  if (type === undefined || type === null) {
+    return undefined;
+  }
+
+  switch (type) {
+    case 'counter':
+      return InstrumentType.COUNTER;
+    case 'gauge':
+      return InstrumentType.GAUGE;
+    case 'histogram':
+      return InstrumentType.HISTOGRAM;
+    case 'observable_counter':
+      return InstrumentType.OBSERVABLE_COUNTER;
+    case 'observable_gauge':
+      return InstrumentType.OBSERVABLE_GAUGE;
+    case 'observable_up_down_counter':
+      return InstrumentType.OBSERVABLE_UP_DOWN_COUNTER;
+    case 'up_down_counter':
+      return InstrumentType.UP_DOWN_COUNTER;
+    default: {
+      diag.warn(`unknown instrument type '${type}'`);
+      return undefined;
+    }
+  }
+}
+
+function toViewOptions(configView: ConfigView): ViewOptions {
+  const attributeProcessor = toAttributesProcessor(
+    configView.stream.attribute_keys
+  );
+  return {
+    name: configView.stream.name ?? undefined,
+    description: configView.stream.description ?? undefined,
+    attributesProcessors: attributeProcessor ? [attributeProcessor] : undefined,
+    aggregation: toViewAggregationOption(configView.stream.aggregation),
+    aggregationCardinalityLimit:
+      configView.stream.aggregation_cardinality_limit ?? undefined,
+    instrumentType: toInstrumentType(configView.selector.instrument_type),
+    instrumentName: configView.selector.instrument_name ?? undefined,
+    instrumentUnit: configView.selector.unit ?? undefined,
+    meterName: configView.selector.meter_name ?? undefined,
+    meterVersion: configView.selector.meter_version ?? undefined,
+    meterSchemaUrl: configView.selector.meter_schema_url ?? undefined,
+  };
+}
+
 export function defaultMetricReaderFactory(
   options: MetricsOptions
 ): MetricReader[] {
-  return createExporters(options).map((exporter) => {
-    return new PeriodicExportingMetricReader({
-      exportIntervalMillis: options.exportIntervalMillis,
-      exporter,
+  const cfgMeterProvider = getConfigMeterProvider();
+
+  if (cfgMeterProvider === undefined) {
+    return createExporters(options).map((exporter) => {
+      return new PeriodicExportingMetricReader({
+        exportIntervalMillis: options.exportIntervalMillis,
+        exporter,
+      });
     });
+  }
+
+  const readers: MetricReader[] = [];
+
+  if (cfgMeterProvider === null) {
+    return readers;
+  }
+
+  for (const reader of cfgMeterProvider.readers) {
+    if (reader.pull !== undefined) {
+      diag.warn('pull metric reader not supported');
+    } else if (reader.periodic !== undefined) {
+      const periodicReader = reader.periodic;
+      const exporter = toMetricExporter(periodicReader.exporter);
+
+      if (exporter !== undefined) {
+        // TODO: Cardinality limits when OTel supports them.
+        readers.push(
+          new PeriodicExportingMetricReader({
+            exporter,
+            exportIntervalMillis: periodicReader.interval ?? undefined,
+            exportTimeoutMillis: periodicReader.timeout ?? undefined,
+          })
+        );
+      }
+    }
+  }
+
+  return readers;
+}
+
+function buildMeterProvider(options: MetricsOptions): MeterProvider {
+  const debugMetricsViews: ViewOptions[] = options.debugMetricsEnabled
+    ? getDebugMetricsViews()
+    : [];
+
+  const readers = options.metricReaderFactory(options);
+
+  const configMeterProvider = getConfigMeterProvider();
+
+  if (configMeterProvider === undefined) {
+    return new MeterProvider({
+      resource: options.resource,
+      views: [...(options.views || []), ...debugMetricsViews],
+      readers,
+    });
+  }
+
+  const cfgViews = configMeterProvider.views || [];
+
+  let views: ViewOptions[] = [];
+
+  if (options.views === undefined) {
+    for (const cfgView of cfgViews) {
+      views.push(toViewOptions(cfgView));
+    }
+  } else {
+    views = options.views;
+  }
+
+  return new MeterProvider({
+    resource: options.resource,
+    views: [...views, ...debugMetricsViews],
+    readers,
   });
 }
 
@@ -234,24 +535,15 @@ export const allowedMetricsOptions = [
 ];
 
 export function startMetrics(options: MetricsOptions) {
-  const debugMetricsViews: ViewOptions[] = options.debugMetricsEnabled
-    ? getDebugMetricsViews()
-    : [];
-
-  const metricReaders = options.metricReaderFactory(options);
-
-  const provider = new MeterProvider({
-    resource: options.resource,
-    views: [...(options.views || []), ...debugMetricsViews],
-    readers: metricReaders,
-  });
-
+  const provider = buildMeterProvider(options);
   metrics.setGlobalMeterProvider(provider);
 
   async function stopGlobalMetrics() {
     metrics.disable();
-    await provider.forceFlush();
-    await provider.shutdown();
+    if (provider !== undefined) {
+      await provider.forceFlush();
+      await provider.shutdown();
+    }
   }
 
   if (options.debugMetricsEnabled) {
@@ -369,9 +661,9 @@ export function _setDefaultOptions(
   options: StartMetricsOptions = {}
 ): MetricsOptions {
   const accessToken =
-    options.accessToken || getNonEmptyEnvVar('SPLUNK_ACCESS_TOKEN') || '';
+    options.accessToken || getNonEmptyConfigVar('SPLUNK_ACCESS_TOKEN') || '';
 
-  const realm = options.realm || getNonEmptyEnvVar('SPLUNK_REALM') || '';
+  const realm = options.realm || getNonEmptyConfigVar('SPLUNK_REALM') || '';
 
   if (realm) {
     if (!accessToken) {
@@ -391,6 +683,7 @@ export function _setDefaultOptions(
 
   const serviceName = String(
     options.serviceName ||
+      getNonEmptyConfigVar('OTEL_SERVICE_NAME') ||
       envResource.attributes?.[ATTR_SERVICE_NAME] ||
       defaultServiceName()
   );
@@ -398,7 +691,9 @@ export function _setDefaultOptions(
   const resourceFactory =
     options.resourceFactory || ((resource: Resource) => resource);
   let resource = resourceFactory(
-    resourceFromAttributes(envResource.attributes || {})
+    resourceFromAttributes(envResource.attributes || {}).merge(
+      configGetResource()
+    )
   );
 
   resource = resource.merge(
@@ -418,15 +713,15 @@ export function _setDefaultOptions(
       options.metricReaderFactory ?? defaultMetricReaderFactory,
     exportIntervalMillis:
       options.exportIntervalMillis ||
-      getEnvNumber('OTEL_METRIC_EXPORT_INTERVAL', 30_000),
+      getConfigNumber('OTEL_METRIC_EXPORT_INTERVAL', 30_000),
     debugMetricsEnabled:
       options.debugMetricsEnabled ??
-      getEnvBoolean('SPLUNK_DEBUG_METRICS_ENABLED', false),
+      getConfigBoolean('SPLUNK_DEBUG_METRICS_ENABLED', false),
     runtimeMetricsEnabled:
       options.runtimeMetricsEnabled ??
-      getEnvBoolean('SPLUNK_RUNTIME_METRICS_ENABLED', true),
+      getConfigBoolean('SPLUNK_RUNTIME_METRICS_ENABLED', true),
     runtimeMetricsCollectionIntervalMillis:
       options.runtimeMetricsCollectionIntervalMillis ||
-      getEnvNumber('SPLUNK_RUNTIME_METRICS_COLLECTION_INTERVAL', 5000),
+      getConfigNumber('SPLUNK_RUNTIME_METRICS_COLLECTION_INTERVAL', 5000),
   };
 }

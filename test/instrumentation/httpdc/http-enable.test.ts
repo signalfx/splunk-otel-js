@@ -1354,7 +1354,7 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
     beforeEach(async () => {
       memoryExporter.reset();
       // a small delay to prevent race conditions
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 50));
     });
 
     before(async () => {
@@ -1366,9 +1366,9 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
       await new Promise<void>((resolve) => server.listen(serverPort, resolve));
     });
 
-    after(() => {
-      server.close();
+    after((_ctx, done) => {
       instrumentation.disable();
+      server.close(done);
     });
 
     it('should redact authentication credentials from URLs', async () => {

@@ -13,25 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { CompressionAlgorithm } from '@opentelemetry/otlp-exporter-base';
 
-import { defaultServiceName } from './utils';
-import { getConfigArray } from './configuration';
-
-import { start } from './start';
-
-function boot() {
-  const instrumentedPkgNames = getConfigArray(
-    'SPLUNK_AUTOINSTRUMENT_PACKAGE_NAMES'
-  );
-
-  if (instrumentedPkgNames === undefined) {
-    start();
-    return;
+export function toCompression(
+  key: string | undefined | null
+): CompressionAlgorithm | undefined {
+  if (key === 'gzip') {
+    return CompressionAlgorithm.GZIP;
   }
 
-  if (instrumentedPkgNames.includes(defaultServiceName())) {
-    start();
-  }
+  return CompressionAlgorithm.NONE;
 }
-
-boot();

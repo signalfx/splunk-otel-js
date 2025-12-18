@@ -15,7 +15,7 @@
  */
 import { Resource } from '@opentelemetry/resources';
 import { ensureProfilingContextManager, noopExtension } from '../../profiling';
-import { getEnvBoolean, getEnvNumber } from '../../utils';
+import { getConfigBoolean, getConfigNumber } from '../../configuration';
 import { SnapshotSpanProcessor } from './SnapshotSpanProcessor';
 import type { CpuProfile, ProfilingExtension } from '../../profiling/types';
 import { OtlpHttpProfilingExporter } from '../../profiling/OtlpHttpProfilingExporter';
@@ -135,7 +135,7 @@ let profiler: SnapshotProfiler | undefined;
 export function startSnapshotProfiling(options: StartSnapshotProfilingOptions) {
   const samplingIntervalMs =
     options.samplingIntervalMs ??
-    getEnvNumber(
+    getConfigNumber(
       [
         'SPLUNK_SNAPSHOT_SAMPLING_INTERVAL',
         'SPLUNK_SNAPSHOT_PROFILER_SAMPLING_INTERVAL',
@@ -144,7 +144,7 @@ export function startSnapshotProfiling(options: StartSnapshotProfilingOptions) {
     );
   const collectionIntervalMs =
     options.collectionIntervalMs ??
-    getEnvNumber('SPLUNK_CPU_PROFILER_COLLECTION_INTERVAL', 30_000);
+    getConfigNumber('SPLUNK_CPU_PROFILER_COLLECTION_INTERVAL', 30_000);
 
   profiler = new SnapshotProfiler({
     serviceName: options.serviceName,
@@ -164,7 +164,7 @@ export async function stopSnapshotProfiling() {
 }
 
 export function isSnapshotProfilingEnabled() {
-  return getEnvBoolean('SPLUNK_SNAPSHOT_PROFILER_ENABLED', false);
+  return getConfigBoolean('SPLUNK_SNAPSHOT_PROFILER_ENABLED', false);
 }
 
 export function snapshotSpanProcessor(): SnapshotSpanProcessor | undefined {

@@ -240,6 +240,18 @@ describe('options', () => {
         resource: resourceFromAttributes({ attr1: 'value1' }),
         sampler: new AlwaysOffSampler(),
         idGenerator: idGenerator,
+        generalLimits: {
+          attributeCountLimit: 128,
+          attributeValueLengthLimit: 12000,
+        },
+        spanLimits: {
+          attributeCountLimit: 128,
+          attributeValueLengthLimit: 12000,
+          attributePerEventCountLimit: 128,
+          attributePerLinkCountLimit: 128,
+          eventCountLimit: 128,
+          linkCountLimit: 1000,
+        },
       },
       spanExporterFactory: testSpanExporterFactory,
       spanProcessorFactory: testSpanProcessorFactory,
