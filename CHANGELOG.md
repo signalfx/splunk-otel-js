@@ -1,5 +1,9 @@
 # Change Log - @splunk/otel
 
+## 4.2.0
+
+- Added support for experimental file configuration. Can be enabled via `OTEL_EXPERIMENTAL_CONFIG_FILE`. [#1085](https://github.com/signalfx/splunk-otel-js/pull/1085)
+
 ## 4.1.0
 
 - Upgrade to OpenTelemetry 2.2.0 / 0.207.0. [#1080](https://github.com/signalfx/splunk-otel-js/pull/1080)
