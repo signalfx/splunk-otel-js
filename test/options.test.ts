@@ -234,6 +234,7 @@ describe('options', () => {
       accessToken: 'custom-access-token',
       serverTimingEnabled: true,
       captureHttpRequestUriParams: [],
+      enableTraceContextPropagation: false,
       instrumentations: [testInstrumentation],
       tracerConfig: {
         resource: resourceFromAttributes({ attr1: 'value1' }),

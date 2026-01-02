@@ -141,7 +141,7 @@ describe('metrics options', () => {
       );
     });
 
-    it('chooses the correct endpoint when realm is set', () => {
+    it('chooses the correct endpoint when realm is set', async () => {
       process.env.SPLUNK_REALM = 'eu0';
       process.env.SPLUNK_ACCESS_TOKEN = 'abc';
 
@@ -150,10 +150,8 @@ describe('metrics options', () => {
       const exporter = reader['_exporter'];
       assert(exporter instanceof OTLPHttpProtoMetricExporter);
 
-      assert.deepStrictEqual(
-        utils.exporterHeaders(exporter)['X-SF-TOKEN'],
-        'abc'
-      );
+      const headers = await utils.exporterHeaders(exporter);
+      assert.deepStrictEqual(headers['X-SF-TOKEN'], 'abc');
 
       assert.deepStrictEqual(
         utils.exporterUrl(exporter),

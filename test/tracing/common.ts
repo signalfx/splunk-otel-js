@@ -22,7 +22,7 @@ import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { exporterHeaders, exporterUrl, getSpanProcessors } from '../utils';
 
-export function assertTracingPipeline(
+export async function assertTracingPipeline(
   exportURL: string,
   serviceName: string,
   accessToken?: string
@@ -40,7 +40,8 @@ export function assertTracingPipeline(
   );
   assert.strictEqual(exporterUrl(exporter), exportURL);
 
+  const headers = await exporterHeaders(exporter);
   if (accessToken) {
-    assert.equal(exporterHeaders(exporter)['X-SF-TOKEN'], accessToken);
+    assert.equal(headers['X-SF-TOKEN'], accessToken);
   }
 }
