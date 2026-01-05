@@ -109,7 +109,7 @@ describe('tracing via config file', () => {
     ]);
   });
 
-  it('sets up the tracing pipeline', () => {
+  it('sets up the tracing pipeline', async () => {
     const { tracingOptions } = parseOptionsAndConfigureInstrumentations();
 
     startTracing(tracingOptions);
@@ -152,7 +152,7 @@ describe('tracing via config file', () => {
 
       assert.deepStrictEqual(exporterParams['timeoutMillis'], 11000);
       assert.deepStrictEqual(exporterParams['compression'], 'gzip');
-      assert.deepStrictEqual(exporterParams.headers(), {
+      assert.deepStrictEqual(await exporterParams.headers(), {
         'api-key': '1234',
         'Content-Type': 'application/x-protobuf',
       });

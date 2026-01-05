@@ -121,7 +121,7 @@ describe('metrics via config file', () => {
     );
   });
 
-  it('sets up the metrics provider', () => {
+  it('sets up the metrics provider', async () => {
     const { metricsOptions } = parseOptionsAndConfigureInstrumentations();
     startMetrics(metricsOptions);
 
@@ -158,7 +158,7 @@ describe('metrics via config file', () => {
         transport['url'],
         'http://localhost:4318/v1/metrics'
       );
-      assert.deepStrictEqual(transport.headers(), {
+      assert.deepStrictEqual(await transport.headers(), {
         'Content-Type': 'application/x-protobuf',
         'api-key': '1234',
       });

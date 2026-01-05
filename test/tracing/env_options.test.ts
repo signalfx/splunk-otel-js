@@ -35,7 +35,7 @@ test('Tracing: set up with env options', async () => {
 
   const { tracingOptions } = parseOptionsAndConfigureInstrumentations();
   startTracing(tracingOptions);
-  assertTracingPipeline(`${url}/v1/traces`, serviceName, accessToken);
+  await assertTracingPipeline(`${url}/v1/traces`, serviceName, accessToken);
 
   const provider = trace.getTracerProvider();
   assert(provider.getTracer('test')['_sampler'] instanceof ParentBasedSampler);

@@ -188,6 +188,9 @@ export function _setDefaultOptions(
       options.captureHttpRequestUriParams || configGetUriParameterCapture(),
     instrumentations,
     tracerConfig,
+    databaseTraceContextPropagationEnabled:
+      options.databaseTraceContextPropagationEnabled ||
+      getConfigBoolean('SPLUNK_DB_TRACE_CONTEXT_PROPAGATION_ENABLED', false),
     spanExporterFactory:
       options.spanExporterFactory || defaultSpanExporterFactory(realm),
     spanProcessorFactory:
