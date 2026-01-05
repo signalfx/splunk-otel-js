@@ -133,7 +133,7 @@ export function _setDefaultOptions(
     tracerConfig,
     enableTraceContextPropagation:
       options.enableTraceContextPropagation ||
-      getEnvBoolean('SPLUNK_TRACE_CONTEXT_PROPAGATION_ENABLED', false),
+      getEnvBoolean('SPLUNK_DB_TRACE_CONTEXT_PROPAGATION_ENABLED', false),
     spanExporterFactory:
       options.spanExporterFactory || defaultSpanExporterFactory(realm),
     spanProcessorFactory:
