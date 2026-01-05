@@ -333,7 +333,7 @@ export function configureInstrumentations(options: Options) {
         configureRedisInstrumentation(instr, options.tracing);
         break;
       case '@opentelemetry/instrumentation-tedious':
-        enableTraceContextPropagation(instr, options.tracing);
+        enableDbTraceContextPropagation(instr, options.tracing);
         break;
       case '@opentelemetry/instrumentation-bunyan':
       case '@opentelemetry/instrumentation-pino':
@@ -345,11 +345,11 @@ export function configureInstrumentations(options: Options) {
   }
 }
 
-function enableTraceContextPropagation(
+function enableDbTraceContextPropagation(
   instrumentation: TediousInstrumentation,
   options: TracingOptions
 ) {
-  if (options.enableTraceContextPropagation) {
+  if (options.databaseTraceContextPropagationEnabled) {
     const config = instrumentation.getConfig?.() ?? {};
     config.enableTraceContextPropagation = true;
     instrumentation.setConfig(config);
