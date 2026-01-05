@@ -45,7 +45,7 @@ import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http';
 
 describe('logger provider via config file', () => {
   describe('startLogging', () => {
-    it('sets up the logger provider', () => {
+    it('sets up the logger provider', async () => {
       loadAndSetExampleConfig();
       const { loggingOptions } = parseOptionsAndConfigureInstrumentations();
 
@@ -95,7 +95,7 @@ describe('logger provider via config file', () => {
         transportParams['url'],
         'http://localhost:4318/v1/logs'
       );
-      assert.deepStrictEqual(transportParams.headers(), {
+      assert.deepStrictEqual(await transportParams.headers(), {
         'api-key': '1234',
         'Content-Type': 'application/json',
       });
