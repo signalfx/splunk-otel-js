@@ -1,5 +1,11 @@
 # Change Log - @splunk/otel
 
+## 4.3.0
+
+- Upgrade to OpenTelemetry experimental 0.208.0. [#1083](https://github.com/signalfx/splunk-otel-js/pull/1083)
+- Add support for DB context propagation. Can be enabled via `SPLUNK_DB_TRACE_CONTEXT_PROPAGATION_ENABLED` env var or `databaseTraceContextPropagationEnabled` config option. [#1083](https://github.com/signalfx/splunk-otel-js/pull/1083)
+- Prebuilds for Node.js 24 now have the correct ABI version 137 (previously 134). [#1089](https://github.com/signalfx/splunk-otel-js/pull/1089)
+
 ## 4.2.0
 
 - Added support for experimental file configuration. Can be enabled via `OTEL_EXPERIMENTAL_CONFIG_FILE`. [#1085](https://github.com/signalfx/splunk-otel-js/pull/1085)
