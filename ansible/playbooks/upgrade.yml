@@ -1,0 +1,12 @@
+---
+- name: Upgrade Splunk Node.js Agent
+  hosts: localhost
+  become: true
+  vars:
+    agent_action: upgrade
+    agent_version: "latest"  # Change this to specific version like "2.0.0"
+    splunk_access_token: "PeZlDQLdXr3zDMmm9vWW_g"
+    otel_exporter_otlp_endpoint: "https://ingest.us1.signalfx.com/v2/trace"
+    go_binary_path: "{{ playbook_dir }}/../go-module/bin/splunk-otel-manager"
+  roles:
+    - role: ../node-go

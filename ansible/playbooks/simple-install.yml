@@ -1,0 +1,37 @@
+---
+- name: Install Splunk Node.js Agent using Go binary directly
+  hosts: localhost
+  become: false
+  vars:
+    agent_action: install
+    agent_version: "latest"
+    splunk_access_token: "PeZlDQLdXr3zDMmm9vWW_g"
+    otel_exporter_otlp_endpoint: "https://ingest.us1.signalfx.com/v2/trace"
+    splunk_dest_folder: "/tmp/splunk-nodejs-agent"
+    go_binary_path: "/Users/abhinama/Documents/splunk/splunk-otel-js/go-module/bin/splunk-otel-manager"
+  
+  tasks:
+    - name: Execute Go binary directly with correct parameters
+      ansible.builtin.command:
+        cmd: >
+          {{ go_binary_path }} {{ agent_action }}
+          --dest-folder "{{ splunk_dest_folder }}"
+          --version "{{ agent_version }}"
+          --access-token "{{ splunk_access_token }}"
+          --otlp-endpoint "{{ otel_exporter_otlp_endpoint }}"
+          --verbose
+      register: go_result
+      changed_when: true
+    
+    - name: Display result
+      ansible.builtin.debug:
+        msg: "{{ go_result.stdout }}"
+    
+    - name: Parse JSON result
+      ansible.builtin.set_fact:
+        agent_result: "{{ go_result.stdout | from_json }}"
+      when: go_result.stdout != ""
+    
+    - name: Display parsed result
+      ansible.builtin.debug:
+        var: agent_result
