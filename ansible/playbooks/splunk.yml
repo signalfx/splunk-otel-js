@@ -4,8 +4,8 @@
   become: true
   vars:
     agent_version: "latest"
-    splunk_access_token: "PeZlDQLdXr3zDMmm9vWW_g"
-    otel_exporter_otlp_endpoint: "https://ingest.us1.signalfx.com/v2/trace"
+    splunk_access_token: ""
+    otel_exporter_otlp_endpoint: ""
     splunk_dest_folder: "/opt/splunk-nodejs-agent"
     keep_backup: true
     manager_repo: "signalfx/splunk-otel-js"
@@ -89,6 +89,11 @@
           Go binary: {{ go_binary_path }}
           Destination: {{ splunk_dest_folder }}
           ========================================
+
+    - name: Validate required credentials
+      ansible.builtin.fail:
+        msg: "splunk_access_token and otel_exporter_otlp_endpoint must be set via vars (e.g., -e \"splunk_access_token=... otel_exporter_otlp_endpoint=...\")"
+      when: splunk_access_token == "" or otel_exporter_otlp_endpoint == ""
 
     - name: Verify Go binary exists
       ansible.builtin.stat:
