@@ -23,9 +23,12 @@
         binary_suffix: "{{ 'darwin' if ansible_os_family == 'Darwin' else 'linux' }}-{{ 'arm64' if ansible_architecture == 'arm64' else 'amd64' }}"
         binary_name: "splunk-otel-manager-{{ 'darwin' if ansible_os_family == 'Darwin' else 'linux' }}-{{ 'arm64' if ansible_architecture == 'arm64' else 'amd64' }}"
 
-    - name: Set binary download configuration
+    - name: Set binary release base URL
       ansible.builtin.set_fact:
         manager_release_base_url: "https://github.com/{{ manager_repo }}/releases/{{ 'latest/download' if manager_version == 'latest' else 'download/' + manager_version }}"
+
+    - name: Set binary download configuration
+      ansible.builtin.set_fact:
         manager_download_url: "{{ manager_download_url_override if manager_download_url_override != '' else manager_release_base_url ~ '/' ~ binary_name }}"
         manager_checksum_url: "{{ manager_checksum_url_override if manager_checksum_url_override != '' else manager_release_base_url ~ '/' ~ binary_name ~ '.sha256' }}"
         manager_checksum_path: "/tmp/{{ binary_name }}.sha256"
