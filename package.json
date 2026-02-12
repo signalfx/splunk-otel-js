@@ -65,7 +65,7 @@
     "access": "public"
   },
   "devDependencies": {
-    "@elastic/elasticsearch": "^7.17.11",
+    "@elastic/elasticsearch": "^9.2.0",
     "@types/bunyan": "1.8.11",
     "@types/semver": "^7.5.8",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
