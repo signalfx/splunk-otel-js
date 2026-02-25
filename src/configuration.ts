@@ -40,7 +40,6 @@ import {
   TraceIdRatioBasedSampler,
 } from '@opentelemetry/sdk-trace-base';
 import { Sampler } from '@opentelemetry/sdk-trace-base';
-import { existsSync, readFileSync } from 'node:fs';
 import { parseDocument, visit } from 'yaml';
 import { bundledInstrumentations } from './instrumentations';
 import {
@@ -90,6 +89,9 @@ export type SplunkConfiguration = {
       selection_probability?: number;
     } | null;
   };
+  opamp?: {
+    endpoint?: string | null;
+  };
 };
 export type DistroConfiguration = OpenTelemetryConfiguration & {
   distribution?: {
@@ -101,17 +103,14 @@ export type SplunkRuntimeMetricsConf = {
   collectionInterval?: number;
 };
 
-export function loadConfiguration(path: string): DistroConfiguration {
-  if (!existsSync(path)) {
-    throw new Error(`Config file ${path} does not exist`);
-  }
-
-  const file = readFileSync(path, { encoding: 'utf-8' });
-  const doc = parseDocument(file);
+export function loadConfiguration(content: string): DistroConfiguration {
+  const doc = parseDocument(content);
 
   if (doc.errors.length > 0) {
     throw doc.errors[0];
   }
+
+  rawGlobalConfiguration = content;
 
   visit(doc, {
     Scalar: (key, node) => {
@@ -138,6 +137,7 @@ export function loadConfiguration(path: string): DistroConfiguration {
 }
 
 let globalConfiguration: DistroConfiguration | undefined;
+let rawGlobalConfiguration: string | undefined;
 
 export function setGlobalConfiguration(config: DistroConfiguration) {
   globalConfiguration = config;
@@ -300,6 +300,12 @@ function fetchConfigValue(key: EnvVarKey, config: DistroConfiguration) {
     }
     case 'SPLUNK_NEXTJS_FIX_ENABLED': {
       return config?.splunk?.general?.js?.nextjs_cardinality_reduction === true;
+    }
+    case 'SPLUNK_OPAMP_ENABLED': {
+      return splunkConfig(config)?.opamp !== undefined;
+    }
+    case 'SPLUNK_OPAMP_ENDPOINT': {
+      return splunkConfig(config)?.opamp?.endpoint;
     }
     case 'SPLUNK_ACCESS_TOKEN': {
       return undefined;
@@ -698,4 +704,22 @@ export function getConfigArray(key: EnvVarKey): string[] | undefined {
 
 function isNil<T>(v: T | undefined | null): boolean {
   return v === undefined || v === null;
+}
+
+export function getLoadedConfigurationString(): {
+  type: 'yaml' | 'env';
+  content: string;
+} {
+  if (rawGlobalConfiguration !== undefined) {
+    return { type: 'yaml', content: rawGlobalConfiguration };
+  }
+
+  const envVars: string[] = [];
+  for (const k of Object.keys(process.env)) {
+    if (k.startsWith('SPLUNK_') || k.startsWith('OTEL_')) {
+      envVars.push(`${k}=${process.env[k]}`);
+    }
+  }
+
+  return { type: 'env', content: envVars.join('\n') };
 }

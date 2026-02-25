@@ -13,8 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { getLoadedConfigurationString } from '../configuration';
 import { opamp } from './proto/opamp';
 
+function contentType(type: 'yaml' | 'env'): string {
+  if (type === 'yaml') {
+    return 'application/yaml';
+  }
+
+  return 'text/plain';
+}
+
 export function opampGetEffectiveConfig(): opamp.proto.IEffectiveConfig {
-  return {};
+  const config = getLoadedConfigurationString();
+
+  return {
+    configMap: {
+      configMap: {
+        [config.type]: {
+          contentType: contentType(config.type),
+          body: new TextEncoder().encode(config.content),
+        },
+      },
+    },
+  };
 }

@@ -24,7 +24,7 @@ export interface OpAMPOptions {
   resource: Resource;
   pollingIntervalMs: number;
   accessToken?: string;
-  getEffectiveConfig?: () => opamp.proto.IEffectiveConfig;
+  getEffectiveConfig: () => opamp.proto.IEffectiveConfig;
 }
 
 export type StartOpAMPOptions = Partial<

@@ -48,6 +48,7 @@ import {
   setGlobalConfiguration,
   loadConfiguration,
 } from './configuration';
+import { readFileSync } from 'node:fs';
 
 export interface Options {
   accessToken: string;
@@ -98,9 +99,10 @@ export const start = (options: Partial<Options> = {}) => {
     throw new Error('Splunk APM already started');
   }
 
-  const configFile = getNonEmptyEnvVar('OTEL_EXPERIMENTAL_CONFIG_FILE');
-  if (configFile) {
-    const configuration = loadConfiguration(configFile);
+  const configFilePath = getNonEmptyEnvVar('OTEL_EXPERIMENTAL_CONFIG_FILE');
+  if (configFilePath) {
+    const content = readFileSync(configFilePath, { encoding: 'utf-8' });
+    const configuration = loadConfiguration(content);
     setGlobalConfiguration(configuration);
 
     if (configuration.disabled === true) {

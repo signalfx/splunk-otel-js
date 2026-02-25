@@ -115,7 +115,6 @@ export class OpAMPClient {
   private _stopping: boolean = false;
 
   private _lastSentEffectiveConfig: opamp.proto.IEffectiveConfig | null = null;
-
   private _currentHealth: opamp.proto.IComponentHealth;
   private _agentDescription: opamp.proto.IAgentDescription | null = null;
 
@@ -181,11 +180,9 @@ export class OpAMPClient {
       agentDescription: this._agentDescription,
     };
 
-    if (this._options.getEffectiveConfig) {
-      const effectiveConfig = this._options.getEffectiveConfig();
-      if (!isDeepStrictEqual(effectiveConfig, this._lastSentEffectiveConfig)) {
-        msg.effectiveConfig = effectiveConfig;
-      }
+    const effectiveConfig = this._options.getEffectiveConfig();
+    if (!isDeepStrictEqual(effectiveConfig, this._lastSentEffectiveConfig)) {
+      msg.effectiveConfig = effectiveConfig;
     }
 
     return msg;

@@ -28,39 +28,38 @@ describe('ExponentialBackoff', () => {
     const backoff = new ExponentialBackoff({ baseMs: 1000, maxMs: 60_000 });
     backoff.setMinDelay(5000);
     const delay = backoff.nextDelay(30_000);
-    // Must be at least the override
     assert(delay >= 5000, `delay ${delay} should be >= 5000`);
-    // First failure: max exponential is baseMs * 2^0 = 1000, but override wins
     assert(delay <= 60_000, `delay ${delay} should be <= 60000`);
   });
 
   it('increases delay range exponentially on failures', () => {
-    const backoff = new ExponentialBackoff({ baseMs: 1000, maxMs: 60_000 });
-    backoff.setMinDelay(0); // trigger failure mode
-
-    // Consume first call (failure 0): exp = 1000 * 2^0 = 1000
-    backoff.nextDelay(30_000);
-
-    // Now on failure 1: exp = 1000 * 2^1 = 2000, delay = 2000 + jitter(0..1000)
+    const backoff = new ExponentialBackoff({ baseMs: 1000, maxMs: 128_000 });
     backoff.setMinDelay(0);
-    const delay = backoff.nextDelay(30_000);
-    assert(delay >= 2000, `delay ${delay} should be >= 2000 (failure 1)`);
-    assert(delay <= 3000, `delay ${delay} should be <= 3000 (failure 1)`);
+
+    for (let i = 0; i < 8; i++) {
+      const delay = backoff.nextDelay(30_000);
+      const exp = Math.pow(2, i) * 1000;
+      const maxJitter = 1000;
+      assert(
+        delay >= exp,
+        `delay ${delay} should be >= ${exp} (failure ${i + 1})`
+      );
+      assert(
+        delay <= exp + maxJitter,
+        `delay ${delay} should be <= ${exp + maxJitter} (failure ${i + 1})`
+      );
+    }
   });
 
   it('caps delay at maxMs', () => {
     const backoff = new ExponentialBackoff({ baseMs: 1000, maxMs: 5000 });
     backoff.setMinDelay(0);
 
-    // Burn through many failures to exceed maxMs
     for (let i = 0; i < 20; i++) {
-      backoff.setMinDelay(0);
       backoff.nextDelay(30_000);
     }
 
-    backoff.setMinDelay(0);
     const delay = backoff.nextDelay(30_000);
-    // exp is capped at maxMs (5000), delay = 5000 + jitter(0..1000)
     assert(delay >= 5000, `delay ${delay} should be >= 5000`);
     assert(delay <= 6000, `delay ${delay} should be capped at 6000`);
   });
@@ -68,7 +67,7 @@ describe('ExponentialBackoff', () => {
   it('resets to normal after reset()', () => {
     const backoff = new ExponentialBackoff({ baseMs: 1000, maxMs: 60_000 });
     backoff.setMinDelay(0);
-    backoff.nextDelay(30_000); // trigger a failure
+    assert(backoff.nextDelay(30_000) < 30_000);
 
     backoff.reset();
     assert.strictEqual(backoff.nextDelay(30_000), 30_000);
@@ -80,8 +79,6 @@ describe('ExponentialBackoff', () => {
     const first = backoff.nextDelay(30_000);
     assert(first >= 10_000, `first delay ${first} should honor minDelay`);
 
-    // Second call: in failure mode (failure=1), but no override
-    // exp = 1000 * 2^1 = 2000, delay = 2000 + jitter(0..1000)
     const second = backoff.nextDelay(30_000);
     assert(second >= 2000, `second delay ${second} should be >= 2000`);
     assert(second <= 3000, `second delay ${second} should not have override`);

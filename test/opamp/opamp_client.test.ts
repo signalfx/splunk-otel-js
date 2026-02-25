@@ -59,6 +59,10 @@ const DEFAULT_CAPABILITIES =
   AgentCapabilities.AgentCapabilities_ReportsEffectiveConfig |
   AgentCapabilities.AgentCapabilities_ReportsHeartbeat;
 
+const EMPTY_EFFECTIVE_CONFIG: opamp.proto.IEffectiveConfig = {
+  configMap: { configMap: {} },
+};
+
 function createOptions(overrides: Partial<OpAMPOptions> = {}): OpAMPOptions {
   return {
     endpoint: 'http://localhost:4320/v1/opamp',
@@ -68,6 +72,7 @@ function createOptions(overrides: Partial<OpAMPOptions> = {}): OpAMPOptions {
       'host.name': 'test-host',
     }),
     pollingIntervalMs: 30_000,
+    getEffectiveConfig: () => EMPTY_EFFECTIVE_CONFIG,
     ...overrides,
   };
 }
@@ -188,6 +193,116 @@ describe('OpAMPClient', () => {
         nextMsg.effectiveConfig,
         undefined,
         'should not include unchanged effectiveConfig'
+      );
+    });
+
+    it('re-sends effectiveConfig when config changes', async () => {
+      let currentBody = new Uint8Array([1, 2, 3]);
+      const transport = createMockTransport();
+      const client = new OpAMPClient(
+        createOptions({
+          getEffectiveConfig: () => ({
+            configMap: {
+              configMap: {
+                'app.yaml': {
+                  body: currentBody,
+                  contentType: 'application/yaml',
+                },
+              },
+            },
+          }),
+        }),
+        transport
+      );
+
+      await client.start();
+      await client.stop();
+
+      // First message should include effectiveConfig
+      const firstMsg = transport.sentMessages[0];
+      assert(firstMsg.effectiveConfig, 'first message has effectiveConfig');
+
+      // Same config should be omitted
+      const sameMsg = client.buildAgentToServerMessage();
+      assert.strictEqual(
+        sameMsg.effectiveConfig,
+        undefined,
+        'should not include unchanged effectiveConfig'
+      );
+
+      // Changed config should be included
+      currentBody = new Uint8Array([4, 5, 6]);
+      const changedMsg = client.buildAgentToServerMessage();
+      assert(
+        changedMsg.effectiveConfig,
+        'should include changed effectiveConfig'
+      );
+    });
+
+    it('re-sends effectiveConfig after HTTP 409 response', async () => {
+      const effectiveConfig: opamp.proto.IEffectiveConfig = {
+        configMap: {
+          configMap: {
+            'app.yaml': {
+              body: new Uint8Array([1, 2, 3]),
+              contentType: 'application/yaml',
+            },
+          },
+        },
+      };
+
+      let respondWith409 = false;
+      const sentMessages: opamp.proto.AgentToServer[] = [];
+      const transport: Transport = {
+        async send(data: Uint8Array): Promise<TransportResponse> {
+          const decoded = AgentToServer.decode(data);
+          sentMessages.push(decoded);
+
+          if (respondWith409) {
+            return { statusCode: 409, body: new Uint8Array() };
+          }
+
+          const responseBytes = ServerToAgent.encode(
+            ServerToAgent.create({})
+          ).finish();
+          return { statusCode: 200, body: new Uint8Array(responseBytes) };
+        },
+      };
+
+      const client = new OpAMPClient(
+        createOptions({ getEffectiveConfig: () => effectiveConfig }),
+        transport
+      );
+
+      // First poll sends effectiveConfig, gets 200
+      await client.start();
+      await client.stop();
+      assert(
+        sentMessages[0].effectiveConfig,
+        'first message has effectiveConfig'
+      );
+
+      // Without 409, config is compressed away
+      const compressed = client.buildAgentToServerMessage();
+      assert.strictEqual(
+        compressed.effectiveConfig,
+        undefined,
+        'compressed after 200'
+      );
+
+      respondWith409 = true;
+      const client2 = new OpAMPClient(
+        createOptions({ getEffectiveConfig: () => effectiveConfig }),
+        transport
+      );
+      await client2.start();
+      await client2.stop();
+
+      // After 409, state resets — next message should include effectiveConfig again
+      const afterReset = client2.buildAgentToServerMessage();
+      assert(
+        afterReset.effectiveConfig,
+        'should re-send effectiveConfig after 409 reset'
       );
     });
 
