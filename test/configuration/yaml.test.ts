@@ -18,19 +18,22 @@ import { strict as assert } from 'assert';
 
 import { loadConfiguration } from '../../src/configuration';
 import { join } from 'path';
+import { readFileUtf8 } from './utils';
 
 describe('YAML config file', () => {
   test('missing file', () => {
     try {
-      const _res = loadConfiguration(join(__dirname, 'missing-no.yml'));
+      const content = readFileUtf8(join(__dirname, 'missing-no.yml'));
+      const _res = loadConfiguration(content);
       assert(false, "loadFile didn't throw an error");
     } catch (e) {
-      assert(e.message.includes('does not exist'));
+      assert(e.message.includes('ENOENT'));
     }
   });
 
   test('config types match the yaml  structure', () => {
-    const config = loadConfiguration(join(__dirname, 'example-config.yaml'));
+    const content = readFileUtf8(join(__dirname, 'example-config.yaml'));
+    const config = loadConfiguration(content);
     assert.ok(config);
 
     assert.deepStrictEqual(config.log_level, 'warn');
