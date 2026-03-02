@@ -7,7 +7,7 @@ const tracer = trace.getTracer('splunk-otel-example-mixed');
 // do really hard, but important work
 const work = async (duration = 500) => {
   log.info({ duration }, 'working');
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     setTimeout(() => resolve(42), duration);
   });
 };

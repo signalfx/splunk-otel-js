@@ -1,4 +1,4 @@
-const { trace, SpanStatusCode, context } = require('@opentelemetry/api');
+const { trace, context } = require('@opentelemetry/api');
 
 const log = require('pino')();
 const doWork = () => {

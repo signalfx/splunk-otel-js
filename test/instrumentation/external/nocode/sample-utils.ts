@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-export function muchWork(stringAttribute: string): string {
+export function muchWork(_stringAttribute: string): string {
   return 'Work completed successfully!';
 }
 

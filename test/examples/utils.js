@@ -69,7 +69,7 @@ const getAttributes = (e) => {
 
 const logSpanTable = (spans) => {
   console.table(
-    spans.map((e, idx) => {
+    spans.map((e, _idx) => {
       return {
         start: e.startTime,
         id: e.id,
@@ -89,14 +89,6 @@ const logMetricTable = (metrics) => {
       scope
     })),
   );
-};
-
-const getParentSpan = (arr, span) => {
-  assert.strictEqual(typeof span.parentSpanId, 'string', `Invalid parentSpanId: ${util.inspect(span)}`);
-  const parent = arr.find((s) => s.id === span.parentSpanId);
-  assert(parent, `Parent span with id "${span.parentSpanId}" not found.`);
-
-  return parent;
 };
 
 function groupBy(elems, key) {

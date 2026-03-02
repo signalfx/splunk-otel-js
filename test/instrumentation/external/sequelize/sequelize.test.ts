@@ -405,8 +405,7 @@ describe('instrumentation-sequelize', () => {
         };
         instrumentation.setConfig({
           queryHook: (
-            span: Span,
-            { sql, option }: { sql: any; option: any }
+            span: Span
           ) => {
             span.setAttribute('test-sql', 'any');
             span.setAttribute('test-option', 'any');

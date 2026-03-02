@@ -354,7 +354,7 @@ async function findPackageJson(packageName, maxDepth) {
     try {
       await access(packageJsonPath, constants.F_OK);
       return packageJsonPath;
-    } catch (e) {
+    } catch {
       basepath = join(basepath, "..");
     }
   }
@@ -371,7 +371,7 @@ function isExperimental(dependency, version) {
  * @param {string} version
  * @returns {DependencyInfo}
  */
-async function populateDependencyInfo(dependency, version, writer) {
+async function populateDependencyInfo(dependency, version) {
     const status = isExperimental(dependency, version) ? "experimental" : "stable";
 
     const pkgJsonPath = await findPackageJson(dependency);

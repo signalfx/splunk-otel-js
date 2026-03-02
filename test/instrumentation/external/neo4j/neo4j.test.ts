@@ -76,7 +76,7 @@ describe('neo4j instrumentation', { skip: !shouldTest }, () => {
         await driver.verifyConnectivity();
         clearTimeout(timeoutId);
         return;
-      } catch (err) {
+      } catch {
         await new Promise((res) => setTimeout(res, 1000));
       }
     }

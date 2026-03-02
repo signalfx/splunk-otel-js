@@ -1,5 +1,4 @@
 const { getInstrumentations } = require('@splunk/otel/lib/instrumentations');
-const { defaultLogHook } = require('@splunk/otel/lib/instrumentations/logging');
 const { PinoInstrumentation } = require('@opentelemetry/instrumentation-pino');
 
 // an example logHook to add common resource attributes to every log message
