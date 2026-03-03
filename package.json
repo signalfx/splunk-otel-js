@@ -53,7 +53,7 @@
     "fmt:check": "oxfmt --check",
     "fmt:fix": "oxfmt",
     "lint": "oxlint --deny-warnings && npm run fmt:check",
-    "lint:fix": "oxlint --fix",
+    "lint:fix": "oxlint --fix && npm run fmt:fix",
     "test": "node ./test/runner.js",
     "test:workspaces": "cross-env TEST_DIR=../packages npm run test",
     "test:only": "node ./test/runner.js --test-only",
