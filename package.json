@@ -52,7 +52,7 @@
     "install": "node-gyp-build",
     "fmt:check": "oxfmt --check",
     "fmt:fix": "oxfmt",
-    "lint": "oxlint --deny-warnings",
+    "lint": "oxlint --deny-warnings && npm run fmt:check",
     "lint:fix": "oxlint --fix",
     "test": "node ./test/runner.js",
     "test:workspaces": "cross-env TEST_DIR=../packages npm run test",
