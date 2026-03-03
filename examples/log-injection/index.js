@@ -1,10 +1,10 @@
-const { trace, SpanStatusCode, context } = require('@opentelemetry/api');
+const { trace, context } = require('@opentelemetry/api');
 
 const log = require('pino')();
 const doWork = () => {
-	log.info('before work');
-	while (Date.now() - start < 500) {}
-	log.info('after work work');
+  log.info('before work');
+  while (Date.now() - start < 500) {}
+  log.info('after work work');
 };
 
 // There is no active span right now so no trace id to report.
@@ -25,6 +25,6 @@ log.info('done!');
 span.end();
 
 setTimeout(() => {
-	// wait for the spans to be flushed
-	console.log('Spans flushed');
+  // wait for the spans to be flushed
+  console.log('Spans flushed');
 }, 5000);

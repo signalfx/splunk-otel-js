@@ -11,7 +11,5 @@ const provider = new NodeTracerProvider();
 provider.register();
 
 registerInstrumentations({
-  instrumentations: [
-    new HttpInstrumentation(),
-  ],
+  instrumentations: [new HttpInstrumentation()],
 });

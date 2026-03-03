@@ -51,7 +51,7 @@ export type OtlpHttpExporter = {
    * If omitted or null, protobuf is used.
    *
    */
-  encoding?: ("protobuf" | "json") | null;
+  encoding?: ('protobuf' | 'json') | null;
 } & ({
   /**
    * Configure endpoint, including the signal specific path.
@@ -95,7 +95,7 @@ export type OtlpHttpExporter = {
    * If omitted or null, protobuf is used.
    *
    */
-  encoding?: ("protobuf" | "json") | null;
+  encoding?: ('protobuf' | 'json') | null;
 } | null) & {
     /**
      * Configure endpoint, including the signal specific path.
@@ -139,7 +139,7 @@ export type OtlpHttpExporter = {
      * If omitted or null, protobuf is used.
      *
      */
-    encoding?: ("protobuf" | "json") | null;
+    encoding?: ('protobuf' | 'json') | null;
   } & ({
     /**
      * Configure endpoint, including the signal specific path.
@@ -183,7 +183,7 @@ export type OtlpHttpExporter = {
      * If omitted or null, protobuf is used.
      *
      */
-    encoding?: ("protobuf" | "json") | null;
+    encoding?: ('protobuf' | 'json') | null;
   } | null);
 /**
  * Configure TLS settings for the exporter.
@@ -841,21 +841,23 @@ export type OtlpHttpMetricExporter = {
    * If omitted or null, protobuf is used.
    *
    */
-  encoding?: ("protobuf" | "json") | null;
+  encoding?: ('protobuf' | 'json') | null;
   /**
    * Configure temporality preference.
    * Values include: cumulative, delta, low_memory. For behavior of values, see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/otlp.md.
    * If omitted or null, cumulative is used.
    *
    */
-  temporality_preference?: ("cumulative" | "delta" | "low_memory") | null;
+  temporality_preference?: ('cumulative' | 'delta' | 'low_memory') | null;
   /**
    * Configure default histogram aggregation.
    * Values include: explicit_bucket_histogram, base2_exponential_bucket_histogram. For behavior of values, see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/otlp.md.
    * If omitted or null, explicit_bucket_histogram is used.
    *
    */
-  default_histogram_aggregation?: ("explicit_bucket_histogram" | "base2_exponential_bucket_histogram") | null;
+  default_histogram_aggregation?:
+    | ('explicit_bucket_histogram' | 'base2_exponential_bucket_histogram')
+    | null;
 } & ({
   /**
    * Configure endpoint.
@@ -899,21 +901,23 @@ export type OtlpHttpMetricExporter = {
    * If omitted or null, protobuf is used.
    *
    */
-  encoding?: ("protobuf" | "json") | null;
+  encoding?: ('protobuf' | 'json') | null;
   /**
    * Configure temporality preference.
    * Values include: cumulative, delta, low_memory. For behavior of values, see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/otlp.md.
    * If omitted or null, cumulative is used.
    *
    */
-  temporality_preference?: ("cumulative" | "delta" | "low_memory") | null;
+  temporality_preference?: ('cumulative' | 'delta' | 'low_memory') | null;
   /**
    * Configure default histogram aggregation.
    * Values include: explicit_bucket_histogram, base2_exponential_bucket_histogram. For behavior of values, see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/otlp.md.
    * If omitted or null, explicit_bucket_histogram is used.
    *
    */
-  default_histogram_aggregation?: ("explicit_bucket_histogram" | "base2_exponential_bucket_histogram") | null;
+  default_histogram_aggregation?:
+    | ('explicit_bucket_histogram' | 'base2_exponential_bucket_histogram')
+    | null;
 } | null);
 /**
  * Configure TLS settings for the exporter.
@@ -1054,14 +1058,16 @@ export type OtlpGrpcMetricExporter = {
    * If omitted or null, cumulative is used.
    *
    */
-  temporality_preference?: ("cumulative" | "delta" | "low_memory") | null;
+  temporality_preference?: ('cumulative' | 'delta' | 'low_memory') | null;
   /**
    * Configure default histogram aggregation.
    * Values include: explicit_bucket_histogram, base2_exponential_bucket_histogram. For behavior of values, see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/otlp.md.
    * If omitted or null, explicit_bucket_histogram is used.
    *
    */
-  default_histogram_aggregation?: ("explicit_bucket_histogram" | "base2_exponential_bucket_histogram") | null;
+  default_histogram_aggregation?:
+    | ('explicit_bucket_histogram' | 'base2_exponential_bucket_histogram')
+    | null;
 } & ({
   /**
    * Configure endpoint.
@@ -1105,14 +1111,16 @@ export type OtlpGrpcMetricExporter = {
    * If omitted or null, cumulative is used.
    *
    */
-  temporality_preference?: ("cumulative" | "delta" | "low_memory") | null;
+  temporality_preference?: ('cumulative' | 'delta' | 'low_memory') | null;
   /**
    * Configure default histogram aggregation.
    * Values include: explicit_bucket_histogram, base2_exponential_bucket_histogram. For behavior of values, see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/otlp.md.
    * If omitted or null, explicit_bucket_histogram is used.
    *
    */
-  default_histogram_aggregation?: ("explicit_bucket_histogram" | "base2_exponential_bucket_histogram") | null;
+  default_histogram_aggregation?:
+    | ('explicit_bucket_histogram' | 'base2_exponential_bucket_histogram')
+    | null;
 } | null);
 /**
  * Configure TLS settings for the exporter.
@@ -1252,14 +1260,16 @@ export type ExperimentalOtlpFileMetricExporter = {
    * If omitted or null, cumulative is used.
    *
    */
-  temporality_preference?: ("cumulative" | "delta" | "low_memory") | null;
+  temporality_preference?: ('cumulative' | 'delta' | 'low_memory') | null;
   /**
    * Configure default histogram aggregation.
    * Values include: explicit_bucket_histogram, base2_exponential_bucket_histogram. For behavior of values, see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/otlp.md.
    * If omitted or null, explicit_bucket_histogram is used.
    *
    */
-  default_histogram_aggregation?: ("explicit_bucket_histogram" | "base2_exponential_bucket_histogram") | null;
+  default_histogram_aggregation?:
+    | ('explicit_bucket_histogram' | 'base2_exponential_bucket_histogram')
+    | null;
 } & ({
   /**
    * Configure output stream.
@@ -1274,14 +1284,16 @@ export type ExperimentalOtlpFileMetricExporter = {
    * If omitted or null, cumulative is used.
    *
    */
-  temporality_preference?: ("cumulative" | "delta" | "low_memory") | null;
+  temporality_preference?: ('cumulative' | 'delta' | 'low_memory') | null;
   /**
    * Configure default histogram aggregation.
    * Values include: explicit_bucket_histogram, base2_exponential_bucket_histogram. For behavior of values, see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/otlp.md.
    * If omitted or null, explicit_bucket_histogram is used.
    *
    */
-  default_histogram_aggregation?: ("explicit_bucket_histogram" | "base2_exponential_bucket_histogram") | null;
+  default_histogram_aggregation?:
+    | ('explicit_bucket_histogram' | 'base2_exponential_bucket_histogram')
+    | null;
 } | null);
 /**
  * Configure exporter to be console.
@@ -1294,14 +1306,16 @@ export type ConsoleMetricExporter = {
    * If omitted or null, cumulative is used.
    *
    */
-  temporality_preference?: ("cumulative" | "delta" | "low_memory") | null;
+  temporality_preference?: ('cumulative' | 'delta' | 'low_memory') | null;
   /**
    * Configure default histogram aggregation.
    * Values include: explicit_bucket_histogram, base2_exponential_bucket_histogram. For behavior of values, see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/otlp.md.
    * If omitted or null, explicit_bucket_histogram is used.
    *
    */
-  default_histogram_aggregation?: ("explicit_bucket_histogram" | "base2_exponential_bucket_histogram") | null;
+  default_histogram_aggregation?:
+    | ('explicit_bucket_histogram' | 'base2_exponential_bucket_histogram')
+    | null;
 } & ({
   /**
    * Configure temporality preference.
@@ -1309,14 +1323,16 @@ export type ConsoleMetricExporter = {
    * If omitted or null, cumulative is used.
    *
    */
-  temporality_preference?: ("cumulative" | "delta" | "low_memory") | null;
+  temporality_preference?: ('cumulative' | 'delta' | 'low_memory') | null;
   /**
    * Configure default histogram aggregation.
    * Values include: explicit_bucket_histogram, base2_exponential_bucket_histogram. For behavior of values, see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/otlp.md.
    * If omitted or null, explicit_bucket_histogram is used.
    *
    */
-  default_histogram_aggregation?: ("explicit_bucket_histogram" | "base2_exponential_bucket_histogram") | null;
+  default_histogram_aggregation?:
+    | ('explicit_bucket_histogram' | 'base2_exponential_bucket_histogram')
+    | null;
 } | null);
 /**
  * Configure metric producer to be opencensus.
@@ -1365,10 +1381,10 @@ export type ExperimentalPrometheusMetricExporter = {
    */
   translation_strategy?:
     | (
-        | "UnderscoreEscapingWithSuffixes"
-        | "UnderscoreEscapingWithoutSuffixes"
-        | "NoUTF8EscapingWithSuffixes"
-        | "NoTranslation"
+        | 'UnderscoreEscapingWithSuffixes'
+        | 'UnderscoreEscapingWithoutSuffixes'
+        | 'NoUTF8EscapingWithSuffixes'
+        | 'NoTranslation'
       )
     | null;
 } & ({
@@ -1410,10 +1426,10 @@ export type ExperimentalPrometheusMetricExporter = {
    */
   translation_strategy?:
     | (
-        | "UnderscoreEscapingWithSuffixes"
-        | "UnderscoreEscapingWithoutSuffixes"
-        | "NoUTF8EscapingWithSuffixes"
-        | "NoTranslation"
+        | 'UnderscoreEscapingWithSuffixes'
+        | 'UnderscoreEscapingWithoutSuffixes'
+        | 'NoUTF8EscapingWithSuffixes'
+        | 'NoTranslation'
       )
     | null;
 } | null);
@@ -1567,7 +1583,7 @@ export type OtlpHttpExporter1 = {
    * If omitted or null, protobuf is used.
    *
    */
-  encoding?: ("protobuf" | "json") | null;
+  encoding?: ('protobuf' | 'json') | null;
 } & ({
   /**
    * Configure endpoint, including the signal specific path.
@@ -1611,7 +1627,7 @@ export type OtlpHttpExporter1 = {
    * If omitted or null, protobuf is used.
    *
    */
-  encoding?: ("protobuf" | "json") | null;
+  encoding?: ('protobuf' | 'json') | null;
 } | null) & {
     /**
      * Configure endpoint, including the signal specific path.
@@ -1655,7 +1671,7 @@ export type OtlpHttpExporter1 = {
      * If omitted or null, protobuf is used.
      *
      */
-    encoding?: ("protobuf" | "json") | null;
+    encoding?: ('protobuf' | 'json') | null;
   } & ({
     /**
      * Configure endpoint, including the signal specific path.
@@ -1699,7 +1715,7 @@ export type OtlpHttpExporter1 = {
      * If omitted or null, protobuf is used.
      *
      */
-    encoding?: ("protobuf" | "json") | null;
+    encoding?: ('protobuf' | 'json') | null;
   } | null);
 /**
  * Configure exporter to be OTLP with gRPC transport.
@@ -2127,7 +2143,7 @@ export interface OpenTelemetryConfiguration {
   propagator?: Propagator;
   tracer_provider?: TracerProvider;
   resource?: Resource;
-  "instrumentation/development"?: ExperimentalInstrumentation;
+  'instrumentation/development'?: ExperimentalInstrumentation;
   [k: string]: any | undefined;
 }
 /**
@@ -2163,7 +2179,7 @@ export interface LoggerProvider {
    */
   processors: [LogRecordProcessor, ...LogRecordProcessor[]];
   limits?: LogRecordLimits;
-  "logger_configurator/development"?: ExperimentalLoggerConfigurator;
+  'logger_configurator/development'?: ExperimentalLoggerConfigurator;
 }
 export interface LogRecordProcessor {
   batch?: BatchLogRecordProcessor;
@@ -2212,7 +2228,7 @@ export interface BatchLogRecordProcessor {
 export interface LogRecordExporter {
   otlp_http?: OtlpHttpExporter;
   otlp_grpc?: OtlpGrpcExporter;
-  "otlp_file/development"?: ExperimentalOtlpFileExporter;
+  'otlp_file/development'?: ExperimentalOtlpFileExporter;
   console?: ConsoleExporter;
   [k: string]:
     | ({
@@ -2242,7 +2258,7 @@ export interface SimpleLogRecordProcessor {
 export interface LogRecordExporter1 {
   otlp_http?: OtlpHttpExporter;
   otlp_grpc?: OtlpGrpcExporter;
-  "otlp_file/development"?: ExperimentalOtlpFileExporter;
+  'otlp_file/development'?: ExperimentalOtlpFileExporter;
   console?: ConsoleExporter;
   [k: string]:
     | ({
@@ -2280,7 +2296,10 @@ export interface ExperimentalLoggerConfigurator {
    *
    * @minItems 1
    */
-  loggers?: [ExperimentalLoggerMatcherAndConfig, ...ExperimentalLoggerMatcherAndConfig[]];
+  loggers?: [
+    ExperimentalLoggerMatcherAndConfig,
+    ...ExperimentalLoggerMatcherAndConfig[],
+  ];
 }
 /**
  * Configure the default logger config used there is no matching entry in .logger_configurator/development.loggers.
@@ -2301,30 +2320,30 @@ export interface ExperimentalLoggerConfig {
    */
   minimum_severity?:
     | (
-        | "TRACE"
-        | "TRACE2"
-        | "TRACE3"
-        | "TRACE4"
-        | "DEBUG"
-        | "DEBUG2"
-        | "DEBUG3"
-        | "DEBUG4"
-        | "INFO"
-        | "INFO2"
-        | "INFO3"
-        | "INFO4"
-        | "WARN"
-        | "WARN2"
-        | "WARN3"
-        | "WARN4"
-        | "ERROR"
-        | "ERROR2"
-        | "ERROR3"
-        | "ERROR4"
-        | "FATAL"
-        | "FATAL2"
-        | "FATAL3"
-        | "FATAL4"
+        | 'TRACE'
+        | 'TRACE2'
+        | 'TRACE3'
+        | 'TRACE4'
+        | 'DEBUG'
+        | 'DEBUG2'
+        | 'DEBUG3'
+        | 'DEBUG4'
+        | 'INFO'
+        | 'INFO2'
+        | 'INFO3'
+        | 'INFO4'
+        | 'WARN'
+        | 'WARN2'
+        | 'WARN3'
+        | 'WARN4'
+        | 'ERROR'
+        | 'ERROR2'
+        | 'ERROR3'
+        | 'ERROR4'
+        | 'FATAL'
+        | 'FATAL2'
+        | 'FATAL3'
+        | 'FATAL4'
       )
     | null;
   /**
@@ -2365,30 +2384,30 @@ export interface ExperimentalLoggerConfig1 {
    */
   minimum_severity?:
     | (
-        | "TRACE"
-        | "TRACE2"
-        | "TRACE3"
-        | "TRACE4"
-        | "DEBUG"
-        | "DEBUG2"
-        | "DEBUG3"
-        | "DEBUG4"
-        | "INFO"
-        | "INFO2"
-        | "INFO3"
-        | "INFO4"
-        | "WARN"
-        | "WARN2"
-        | "WARN3"
-        | "WARN4"
-        | "ERROR"
-        | "ERROR2"
-        | "ERROR3"
-        | "ERROR4"
-        | "FATAL"
-        | "FATAL2"
-        | "FATAL3"
-        | "FATAL4"
+        | 'TRACE'
+        | 'TRACE2'
+        | 'TRACE3'
+        | 'TRACE4'
+        | 'DEBUG'
+        | 'DEBUG2'
+        | 'DEBUG3'
+        | 'DEBUG4'
+        | 'INFO'
+        | 'INFO2'
+        | 'INFO3'
+        | 'INFO4'
+        | 'WARN'
+        | 'WARN2'
+        | 'WARN3'
+        | 'WARN4'
+        | 'ERROR'
+        | 'ERROR2'
+        | 'ERROR3'
+        | 'ERROR4'
+        | 'FATAL'
+        | 'FATAL2'
+        | 'FATAL3'
+        | 'FATAL4'
       )
     | null;
   /**
@@ -2425,8 +2444,8 @@ export interface MeterProvider {
    * If omitted or null, trace_based is used.
    *
    */
-  exemplar_filter?: ("always_on" | "always_off" | "trace_based") | null;
-  "meter_configurator/development"?: ExperimentalMeterConfigurator;
+  exemplar_filter?: ('always_on' | 'always_off' | 'trace_based') | null;
+  'meter_configurator/development'?: ExperimentalMeterConfigurator;
 }
 export interface MetricReader {
   periodic?: PeriodicMetricReader;
@@ -2465,7 +2484,7 @@ export interface PeriodicMetricReader {
 export interface PushMetricExporter {
   otlp_http?: OtlpHttpMetricExporter;
   otlp_grpc?: OtlpGrpcMetricExporter;
-  "otlp_file/development"?: ExperimentalOtlpFileMetricExporter;
+  'otlp_file/development'?: ExperimentalOtlpFileMetricExporter;
   console?: ConsoleMetricExporter;
   [k: string]:
     | ({
@@ -2552,7 +2571,7 @@ export interface PullMetricReader {
  * Configure exporter.
  */
 export interface PullMetricExporter {
-  "prometheus/development"?: ExperimentalPrometheusMetricExporter;
+  'prometheus/development'?: ExperimentalPrometheusMetricExporter;
   [k: string]:
     | ({
         [k: string]: any | undefined;
@@ -2664,13 +2683,13 @@ export interface ViewSelector {
    */
   instrument_type?:
     | (
-        | "counter"
-        | "gauge"
-        | "histogram"
-        | "observable_counter"
-        | "observable_gauge"
-        | "observable_up_down_counter"
-        | "up_down_counter"
+        | 'counter'
+        | 'gauge'
+        | 'histogram'
+        | 'observable_counter'
+        | 'observable_gauge'
+        | 'observable_up_down_counter'
+        | 'up_down_counter'
       )
     | null;
   /**
@@ -2776,7 +2795,10 @@ export interface ExperimentalMeterConfigurator {
    *
    * @minItems 1
    */
-  meters?: [ExperimentalMeterMatcherAndConfig, ...ExperimentalMeterMatcherAndConfig[]];
+  meters?: [
+    ExperimentalMeterMatcherAndConfig,
+    ...ExperimentalMeterMatcherAndConfig[],
+  ];
 }
 /**
  * Configure the default meter config used there is no matching entry in .meter_configurator/development.meters.
@@ -2858,7 +2880,7 @@ export interface TracerProvider {
   processors: [SpanProcessor, ...SpanProcessor[]];
   limits?: SpanLimits;
   sampler?: Sampler;
-  "tracer_configurator/development"?: ExperimentalTracerConfigurator;
+  'tracer_configurator/development'?: ExperimentalTracerConfigurator;
 }
 export interface SpanProcessor {
   batch?: BatchSpanProcessor;
@@ -2907,7 +2929,7 @@ export interface BatchSpanProcessor {
 export interface SpanExporter {
   otlp_http?: OtlpHttpExporter1;
   otlp_grpc?: OtlpGrpcExporter1;
-  "otlp_file/development"?: ExperimentalOtlpFileExporter1;
+  'otlp_file/development'?: ExperimentalOtlpFileExporter1;
   console?: ConsoleExporter1;
   zipkin?: ZipkinSpanExporter;
   [k: string]:
@@ -2928,7 +2950,7 @@ export interface SimpleSpanProcessor {
 export interface SpanExporter1 {
   otlp_http?: OtlpHttpExporter1;
   otlp_grpc?: OtlpGrpcExporter1;
-  "otlp_file/development"?: ExperimentalOtlpFileExporter1;
+  'otlp_file/development'?: ExperimentalOtlpFileExporter1;
   console?: ConsoleExporter1;
   zipkin?: ZipkinSpanExporter;
   [k: string]:
@@ -2992,10 +3014,10 @@ export interface SpanLimits {
 export interface Sampler {
   always_off?: AlwaysOffSampler;
   always_on?: AlwaysOnSampler;
-  "composite/development"?: ExperimentalComposableSampler;
-  "jaeger_remote/development"?: ExperimentalJaegerRemoteSampler;
+  'composite/development'?: ExperimentalComposableSampler;
+  'jaeger_remote/development'?: ExperimentalJaegerRemoteSampler;
   parent_based?: ParentBasedSampler;
-  "probability/development"?: ExperimentalProbabilitySampler;
+  'probability/development'?: ExperimentalProbabilitySampler;
   trace_id_ratio_based?: TraceIdRatioBasedSampler;
   [k: string]:
     | ({
@@ -3093,10 +3115,10 @@ export interface ExperimentalComposableSampler5 {
 export interface Sampler1 {
   always_off?: AlwaysOffSampler;
   always_on?: AlwaysOnSampler;
-  "composite/development"?: ExperimentalComposableSampler;
-  "jaeger_remote/development"?: ExperimentalJaegerRemoteSampler;
+  'composite/development'?: ExperimentalComposableSampler;
+  'jaeger_remote/development'?: ExperimentalJaegerRemoteSampler;
   parent_based?: ParentBasedSampler;
-  "probability/development"?: ExperimentalProbabilitySampler;
+  'probability/development'?: ExperimentalProbabilitySampler;
   trace_id_ratio_based?: TraceIdRatioBasedSampler;
   [k: string]:
     | ({
@@ -3112,10 +3134,10 @@ export interface Sampler1 {
 export interface Sampler2 {
   always_off?: AlwaysOffSampler;
   always_on?: AlwaysOnSampler;
-  "composite/development"?: ExperimentalComposableSampler;
-  "jaeger_remote/development"?: ExperimentalJaegerRemoteSampler;
+  'composite/development'?: ExperimentalComposableSampler;
+  'jaeger_remote/development'?: ExperimentalJaegerRemoteSampler;
   parent_based?: ParentBasedSampler;
-  "probability/development"?: ExperimentalProbabilitySampler;
+  'probability/development'?: ExperimentalProbabilitySampler;
   trace_id_ratio_based?: TraceIdRatioBasedSampler;
   [k: string]:
     | ({
@@ -3131,10 +3153,10 @@ export interface Sampler2 {
 export interface Sampler3 {
   always_off?: AlwaysOffSampler;
   always_on?: AlwaysOnSampler;
-  "composite/development"?: ExperimentalComposableSampler;
-  "jaeger_remote/development"?: ExperimentalJaegerRemoteSampler;
+  'composite/development'?: ExperimentalComposableSampler;
+  'jaeger_remote/development'?: ExperimentalJaegerRemoteSampler;
   parent_based?: ParentBasedSampler;
-  "probability/development"?: ExperimentalProbabilitySampler;
+  'probability/development'?: ExperimentalProbabilitySampler;
   trace_id_ratio_based?: TraceIdRatioBasedSampler;
   [k: string]:
     | ({
@@ -3150,10 +3172,10 @@ export interface Sampler3 {
 export interface Sampler4 {
   always_off?: AlwaysOffSampler;
   always_on?: AlwaysOnSampler;
-  "composite/development"?: ExperimentalComposableSampler;
-  "jaeger_remote/development"?: ExperimentalJaegerRemoteSampler;
+  'composite/development'?: ExperimentalComposableSampler;
+  'jaeger_remote/development'?: ExperimentalJaegerRemoteSampler;
   parent_based?: ParentBasedSampler;
-  "probability/development"?: ExperimentalProbabilitySampler;
+  'probability/development'?: ExperimentalProbabilitySampler;
   trace_id_ratio_based?: TraceIdRatioBasedSampler;
   [k: string]:
     | ({
@@ -3169,10 +3191,10 @@ export interface Sampler4 {
 export interface Sampler5 {
   always_off?: AlwaysOffSampler;
   always_on?: AlwaysOnSampler;
-  "composite/development"?: ExperimentalComposableSampler;
-  "jaeger_remote/development"?: ExperimentalJaegerRemoteSampler;
+  'composite/development'?: ExperimentalComposableSampler;
+  'jaeger_remote/development'?: ExperimentalJaegerRemoteSampler;
   parent_based?: ParentBasedSampler;
-  "probability/development"?: ExperimentalProbabilitySampler;
+  'probability/development'?: ExperimentalProbabilitySampler;
   trace_id_ratio_based?: TraceIdRatioBasedSampler;
   [k: string]:
     | ({
@@ -3188,10 +3210,10 @@ export interface Sampler5 {
 export interface Sampler6 {
   always_off?: AlwaysOffSampler;
   always_on?: AlwaysOnSampler;
-  "composite/development"?: ExperimentalComposableSampler;
-  "jaeger_remote/development"?: ExperimentalJaegerRemoteSampler;
+  'composite/development'?: ExperimentalComposableSampler;
+  'jaeger_remote/development'?: ExperimentalJaegerRemoteSampler;
   parent_based?: ParentBasedSampler;
-  "probability/development"?: ExperimentalProbabilitySampler;
+  'probability/development'?: ExperimentalProbabilitySampler;
   trace_id_ratio_based?: TraceIdRatioBasedSampler;
   [k: string]:
     | ({
@@ -3210,7 +3232,10 @@ export interface ExperimentalTracerConfigurator {
    *
    * @minItems 1
    */
-  tracers?: [ExperimentalTracerMatcherAndConfig, ...ExperimentalTracerMatcherAndConfig[]];
+  tracers?: [
+    ExperimentalTracerMatcherAndConfig,
+    ...ExperimentalTracerMatcherAndConfig[],
+  ];
 }
 /**
  * Configure the default tracer config used there is no matching entry in .tracer_configurator/development.tracers.
@@ -3254,7 +3279,7 @@ export interface Resource {
    * @minItems 1
    */
   attributes?: [AttributeNameValue, ...AttributeNameValue[]];
-  "detection/development"?: ExperimentalResourceDetection;
+  'detection/development'?: ExperimentalResourceDetection;
   /**
    * Configure resource schema URL.
    * If omitted or null, no schema URL is used.
@@ -3280,14 +3305,32 @@ export interface AttributeNameValue {
    * The type of value must match .type.
    *
    */
-  value: string | number | boolean | null | [string, ...string[]] | [boolean, ...boolean[]] | [number, ...number[]];
+  value:
+    | string
+    | number
+    | boolean
+    | null
+    | [string, ...string[]]
+    | [boolean, ...boolean[]]
+    | [number, ...number[]];
   /**
    * The attribute type.
    * Values include: string, bool, int, double, string_array, bool_array, int_array, double_array.
    * If omitted or null, string is used.
    *
    */
-  type?: ("string" | "bool" | "int" | "double" | "string_array" | "bool_array" | "int_array" | "double_array") | null;
+  type?:
+    | (
+        | 'string'
+        | 'bool'
+        | 'int'
+        | 'double'
+        | 'string_array'
+        | 'bool_array'
+        | 'int_array'
+        | 'double_array'
+      )
+    | null;
 }
 /**
  * Configure resource detection.
@@ -3384,7 +3427,10 @@ export interface ExperimentalPeerInstrumentation {
    *
    * @minItems 1
    */
-  service_mapping?: [ExperimentalPeerServiceMapping, ...ExperimentalPeerServiceMapping[]];
+  service_mapping?: [
+    ExperimentalPeerServiceMapping,
+    ...ExperimentalPeerServiceMapping[],
+  ];
 }
 export interface ExperimentalPeerServiceMapping {
   /**

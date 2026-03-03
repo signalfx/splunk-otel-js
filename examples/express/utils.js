@@ -1,4 +1,4 @@
-const isConfigVarEntry = ([key, value]) => {
+const isConfigVarEntry = ([key, _value]) => {
   const lowercased = key.toLowerCase();
   return lowercased.includes('splunk') || lowercased.includes('otel');
 };
@@ -10,7 +10,6 @@ const redactSecretEntry = ([key, value]) => {
   return [key, value];
 };
 
-const realmRegexp = /ingest\.(?<realm>[a-z0-9]*)\./;
 const parseRealmFromEndpoint = (endpoint) => {
   if (!endpoint || typeof endpoint !== 'string') {
     return undefined;

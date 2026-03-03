@@ -22,10 +22,10 @@ import { calledWithExactly } from '../../../utils';
 
 describe('elasticsearch utils', () => {
   const spanMock = {
-    recordException: (err) => {},
-    setStatus: (obj) => {},
+    recordException: (_err) => {},
+    setStatus: (_obj) => {},
     end: () => {},
-    setAttributes: (obj) => {},
+    setAttributes: (_obj) => {},
   };
 
   describe('defaultDbStatementSerializer', () => {
@@ -208,7 +208,7 @@ describe('elasticsearch utils', () => {
 
   describe('startSpan', () => {
     const tracerMock = {
-      startSpan: (name, options?, context?): any => {},
+      startSpan: (_name, _options?, _context?): any => {},
       startActiveSpan: () => {},
     };
     it('should start span with client kind', () => {
