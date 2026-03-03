@@ -38,5 +38,14 @@
     "builtin": true
   },
   "globals": {},
-  "ignorePatterns": []
+  "ignorePatterns": [],
+  "overrides": [
+    {
+      "files": ["src/**.ts", "src/**.js", "test/**.ts"],
+      "jsPlugins": ["./scripts/lint-check-header.js"],
+      "rules": {
+        "file-header/copyright": "error"
+      }
+    }
+  ]
 }

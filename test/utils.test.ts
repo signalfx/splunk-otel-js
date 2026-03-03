@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import * as api from '@opentelemetry/api';
 import { strict as assert } from 'assert';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
