@@ -30,14 +30,13 @@ const server = http.createServer(async (req, res) => {
     },
   });
   // Do the work and collect the result
-  const result = await work(expectedDuration)
-    .catch((err) => {
-      // If the work fails, you can reflect that in the span's status
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: err.message,
-      });
+  const result = await work(expectedDuration).catch((err) => {
+    // If the work fails, you can reflect that in the span's status
+    span.setStatus({
+      code: SpanStatusCode.ERROR,
+      message: err.message,
     });
+  });
 
   // Attributes can also be added after span creation
   span.setAttribute('work.result', result);
@@ -48,4 +47,6 @@ const server = http.createServer(async (req, res) => {
   res.end('All done!\n');
 });
 
-server.listen(PORT, () => console.log(`Example app listening on port ${PORT}!`));
+server.listen(PORT, () =>
+  console.log(`Example app listening on port ${PORT}!`)
+);

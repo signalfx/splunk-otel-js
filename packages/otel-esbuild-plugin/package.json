@@ -2,45 +2,43 @@
   "name": "@splunk/otel-esbuild-plugin-node",
   "version": "0.0.2",
   "description": "Splunk OpenTelemetry esbuild plugin for Node.js",
-  "main": "build/index.js",
-  "types": "build/index.d.ts",
+  "keywords": [
+    "esbuild",
+    "metrics",
+    "opentelemetry",
+    "profiling",
+    "splunk",
+    "tracing"
+  ],
+  "homepage": "https://github.com/signalfx/splunk-otel-js#readme",
+  "bugs": {
+    "url": "https://github.com/signalfx/splunk-otel-js/issues"
+  },
+  "license": "Apache-2.0",
+  "author": "Splunk <splunk-oss@splunk.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/signalfx/splunk-otel-js.git"
+  },
   "files": [
     "build/**/*.js",
     "build/**/*.js.map",
     "build/**/*.d.ts",
     "LICENSE"
   ],
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "compile": "tsc --build",
     "clean": "tsc --build --clean",
     "prepublishOnly": "npm run clean && npm run compile",
-    "lint:fix": "eslint . --ext .ts --fix",
-    "lint": "eslint . --ext .ts",
+    "fmt:check": "oxfmt --check",
+    "fmt:fix": "oxfmt",
+    "lint": "oxlint --deny-warnings",
     "test": "cross-env TEST_DIR=../packages/otel-esbuild-plugin node ../../test/runner.js"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/signalfx/splunk-otel-js.git"
-  },
-  "keywords": [
-    "esbuild",
-    "opentelemetry",
-    "tracing",
-    "profiling",
-    "metrics",
-    "splunk"
-  ],
-  "author": "Splunk <splunk-oss@splunk.com>",
-  "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://github.com/signalfx/splunk-otel-js/issues"
-  },
-  "homepage": "https://github.com/signalfx/splunk-otel-js#readme",
-  "devDependencies": {
-    "@typescript-eslint/typescript-estree": "^8.39.0"
   },
   "dependencies": {
     "esbuild": "^0.25.8",

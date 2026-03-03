@@ -14,8 +14,8 @@ module.exports = [
       'otel.scope.version': '0.54.3',
       'express.name': 'query',
       'express.type': 'middleware',
-      'span.kind': 'internal'
-    }
+      'span.kind': 'internal',
+    },
   },
   {
     traceId: 'uGzmFl5I0OQTAefqpIuh0w==',
@@ -32,8 +32,8 @@ module.exports = [
       'otel.scope.version': '0.54.3',
       'express.name': 'expressInit',
       'express.type': 'middleware',
-      'span.kind': 'internal'
-    }
+      'span.kind': 'internal',
+    },
   },
   {
     traceId: 'uGzmFl5I0OQTAefqpIuh0w==',
@@ -51,8 +51,8 @@ module.exports = [
       'http.route': '/main',
       'express.name': '/main',
       'express.type': 'request_handler',
-      'span.kind': 'internal'
-    }
+      'span.kind': 'internal',
+    },
   },
   {
     traceId: 'uGzmFl5I0OQTAefqpIuh0w==',
@@ -66,8 +66,8 @@ module.exports = [
     status: { code: undefined },
     attributes: {
       'otel.scope.name': 'splunk-otel-example-esbuild-esm',
-      'span.kind': 'internal'
-    }
+      'span.kind': 'internal',
+    },
   },
   {
     traceId: 'uGzmFl5I0OQTAefqpIuh0w==',
@@ -98,7 +98,7 @@ module.exports = [
       'http.status_code': undefined,
       'http.status_text': 'CREATED',
       'http.route': '/main',
-      'span.kind': 'server'
-    }
-  }
+      'span.kind': 'server',
+    },
+  },
 ];

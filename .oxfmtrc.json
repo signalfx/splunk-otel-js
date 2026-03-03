@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": [
+    ".github/**",
+    "**.md",
+    "src/profiling/proto/**",
+    "**.yml",
+    "**.yaml"
+  ],
+  "arrowParens": "always",
+  "singleQuote": true,
+  "trailingComma": "es5"
+}

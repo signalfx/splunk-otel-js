@@ -36,9 +36,10 @@ entry:
 */
 
 function hrTimestamp(ts) {
-	const unixTimeNanos = BigInt(new Date(ts.slice(0, 19)).getTime()) * 1_000_000n;
-	const fractionSeconds = parseFloat(ts.slice(19).replace('Z', ''));
-	const fractionNanos = BigInt((fractionSeconds * 1e9) | 0);
+  const unixTimeNanos =
+    BigInt(new Date(ts.slice(0, 19)).getTime()) * 1_000_000n;
+  const fractionSeconds = parseFloat(ts.slice(19).replace('Z', ''));
+  const fractionNanos = BigInt((fractionSeconds * 1e9) | 0);
   return unixTimeNanos + fractionNanos;
 }
 
@@ -54,10 +55,12 @@ const entryToSpan = (entry) => {
     name: entry.operationName,
     kind: tags['span.kind'],
     parentSpanId: parent?.spanId,
-    parent: parent && {
-      id: parent?.spanId,
-      traceId: parent?.traceId
-    } || undefined,
+    parent:
+      (parent && {
+        id: parent?.spanId,
+        traceId: parent?.traceId,
+      }) ||
+      undefined,
     status: { code: tags['status.code'] },
     attributes: tags,
   };
@@ -86,8 +89,8 @@ const logMetricTable = (metrics) => {
     metrics.map(({ name, unit, scope }) => ({
       name,
       unit,
-      scope
-    })),
+      scope,
+    }))
   );
 };
 
@@ -113,7 +116,9 @@ function sortByName(spans) {
 const waitSpans = (count, timeout = 60) => {
   console.error(`Waiting for ${count} spans for ${timeout}s`);
   console.time('waitSpans');
-  const collectorUrl = new URL(process.env.COLLECTOR_URL ?? 'http://localhost:8378/spans');
+  const collectorUrl = new URL(
+    process.env.COLLECTOR_URL ?? 'http://localhost:8378/spans'
+  );
   collectorUrl.searchParams.set('count', count);
   collectorUrl.searchParams.set('timeout', timeout);
 
@@ -157,7 +162,6 @@ const waitMetrics = (timeout = 60) => {
     });
 };
 
-
 const request = async (url) => {
   for (let i = 0; i < 30; i++) {
     try {
@@ -180,14 +184,28 @@ function compareSpans(actual, expected) {
 
     assert.strictEqual(actual.name, expected.name);
 
-    assert.strictEqual(actual.attributes['http.method'], expected.attributes['http.method']);
-    assert.strictEqual(actual.attributes['http.url'], expected.attributes['http.url']);
-    assert.strictEqual(actual.attributes['http.route'], expected.attributes['http.route']);
-    assert.strictEqual(actual.attributes['http.target'], expected.attributes['http.target']);
-    assert.strictEqual(actual.attributes['otel.library.name'], expected.attributes['otel.library.name']);
+    assert.strictEqual(
+      actual.attributes['http.method'],
+      expected.attributes['http.method']
+    );
+    assert.strictEqual(
+      actual.attributes['http.url'],
+      expected.attributes['http.url']
+    );
+    assert.strictEqual(
+      actual.attributes['http.route'],
+      expected.attributes['http.route']
+    );
+    assert.strictEqual(
+      actual.attributes['http.target'],
+      expected.attributes['http.target']
+    );
+    assert.strictEqual(
+      actual.attributes['otel.library.name'],
+      expected.attributes['otel.library.name']
+    );
 
     // TODO: Check for status. HTTP Sink endpoint on the collector doesn't return status correctly.
-
   } catch (e) {
     e.actualSpan = util.inspect(actual);
     e.expectedSpan = expected;
@@ -198,7 +216,12 @@ function compareSpans(actual, expected) {
 
 // TODO: Timestamp comparisons can be re-enabled
 // once https://github.com/open-telemetry/opentelemetry-js/issues/2643 is fixed
-function compareTraces(actualRoot, expectedRoot, actualSpansByParentId, expectedSpansByParentId) {
+function compareTraces(
+  actualRoot,
+  expectedRoot,
+  actualSpansByParentId,
+  expectedSpansByParentId
+) {
   let queue = [[actualRoot, expectedRoot]];
 
   while (queue.length > 0) {
@@ -206,7 +229,9 @@ function compareTraces(actualRoot, expectedRoot, actualSpansByParentId, expected
     compareSpans(actual, expected);
 
     let actualChildren = sortByName(actualSpansByParentId.get(actual.id) || []);
-    let expectedChildren = sortByName(expectedSpansByParentId.get(expected.id) || []);
+    let expectedChildren = sortByName(
+      expectedSpansByParentId.get(expected.id) || []
+    );
 
     assert.strictEqual(
       actualChildren.length,
@@ -252,7 +277,12 @@ const assertSpans = (actualSpans, expectedSpans) => {
   );
 
   for (let i = 0; i < actualRoots.length; i++) {
-    compareTraces(actualRoots[i], expectedRoots[i], actualSpansByParentId, expectedSpansByParentId);
+    compareTraces(
+      actualRoots[i],
+      expectedRoots[i],
+      actualSpansByParentId,
+      expectedSpansByParentId
+    );
   }
 
   return expectedSpans.length;
@@ -264,7 +294,7 @@ function entryToMetric(entry) {
       scope: scope.scope?.name,
       name: m.name,
       unit: m.unit,
-    })),
+    }))
   );
 }
 
@@ -274,19 +304,30 @@ function assertMetrics(actualMetrics, expectedMetrics) {
     console.error('skipping checking asserting metrics');
     return 0;
   }
-  assert.ok(Array.isArray(actualMetrics), 'Expected actual metrics to be an array');
+  assert.ok(
+    Array.isArray(actualMetrics),
+    'Expected actual metrics to be an array'
+  );
 
   const actualMetricsMap = new Map();
-  actualMetrics.forEach(metric => {
+  actualMetrics.forEach((metric) => {
     actualMetricsMap.set(metric.name, metric);
   });
 
   Object.entries(expectedMetrics).forEach(([expectedName, expectedProps]) => {
     const actualMetric = actualMetricsMap.get(expectedName);
-    
+
     assert.ok(actualMetric, `metric "${expectedName}" not found`);
-    assert.strictEqual(actualMetric.unit, expectedProps.unit, `metric "${expectedName}" unit mismatch`);
-    assert.strictEqual(actualMetric.scope, expectedProps.scope, `metric "${expectedName}" scope mismatch`);
+    assert.strictEqual(
+      actualMetric.unit,
+      expectedProps.unit,
+      `metric "${expectedName}" unit mismatch`
+    );
+    assert.strictEqual(
+      actualMetric.scope,
+      expectedProps.scope,
+      `metric "${expectedName}" scope mismatch`
+    );
   });
 
   return true;
@@ -299,5 +340,5 @@ module.exports = {
   request,
   waitSpans,
   waitMetrics,
-  assertMetrics
+  assertMetrics,
 };

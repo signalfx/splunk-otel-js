@@ -8,19 +8,24 @@ const { version } = require('../package.json');
 const WORKFLOW_TIMEOUT_MS = 15 * 60 * 1000;
 
 function sleep(ms) {
-  return new Promise(r => setTimeout(r, ms));
+  return new Promise((r) => setTimeout(r, ms));
 }
 
 async function fetchWorkflowRun(context) {
-  const { data: workflows } = await context.octokit.rest.actions.listWorkflowRunsForRepo({
-    owner: context.owner,
-    repo: context.repo,
-  });
+  const { data: workflows } =
+    await context.octokit.rest.actions.listWorkflowRunsForRepo({
+      owner: context.owner,
+      repo: context.repo,
+    });
 
   const runs = workflows.workflow_runs;
 
   const commitSha = process.env.CI_COMMIT_SHA;
-  const run = runs.find(wf => wf.head_sha === commitSha && wf.name.toLowerCase() === 'continuous integration');
+  const run = runs.find(
+    (wf) =>
+      wf.head_sha === commitSha &&
+      wf.name.toLowerCase() === 'continuous integration'
+  );
 
   if (run === undefined) {
     throw new Error(`Workflow not found for commit ${commitSha}`);
@@ -55,17 +60,20 @@ async function waitForWorkflowRun(context) {
 }
 
 async function downloadArtifact(octokit, owner, repo, runId, artifactName) {
-  const { data: artifacts } = await octokit.rest.actions.listWorkflowRunArtifacts({
-    owner,
-    repo,
-    run_id: runId,
-    name: artifactName,
-  });
+  const { data: artifacts } =
+    await octokit.rest.actions.listWorkflowRunArtifacts({
+      owner,
+      repo,
+      run_id: runId,
+      name: artifactName,
+    });
 
   console.log('found artifacts for workflow', artifacts);
 
-  const artifact = artifacts.artifacts.find(artifact => artifact.name === artifactName);
-  
+  const artifact = artifacts.artifacts.find(
+    (artifact) => artifact.name === artifactName
+  );
+
   if (artifact === undefined) {
     throw new Error(`unable to find artifact named ${artifactName}`);
   }
@@ -80,7 +88,6 @@ async function downloadArtifact(octokit, owner, repo, runId, artifactName) {
   console.log('downloaded', downloadedArtifact);
 
   return downloadedArtifact.data;
-
 }
 
 function extractArtifact(artifactData, targetFile) {
@@ -89,12 +96,12 @@ function extractArtifact(artifactData, targetFile) {
   console.log(`writing content to ${tempFile} and unzipping`);
 
   fs.writeFileSync(tempFile, Buffer.from(artifactData));
-  
+
   execSync(`unzip -o ${tempFile}`);
 
   const exists = fs.existsSync(targetFile);
   console.log(`${targetFile} was extracted: ${exists}`);
-  
+
   if (!exists) {
     throw new Error(`${targetFile} was not found after extraction`);
   }
@@ -103,13 +110,13 @@ function extractArtifact(artifactData, targetFile) {
 }
 
 async function getBuildArtifact() {
-  const packageArg = process.argv.find(arg => arg.startsWith('--package='));
-  
+  const packageArg = process.argv.find((arg) => arg.startsWith('--package='));
+
   if (!packageArg) {
     throw new Error('Missing --package=artifact.tgz argument');
   }
 
-  const targetFileName = packageArg.split('=')[1]; 
+  const targetFileName = packageArg.split('=')[1];
   console.log(`Target file: ${targetFileName}`);
 
   const octokit = new Octokit({ auth: process.env.PUBLIC_ARTIFACTS_TOKEN });
@@ -122,17 +129,29 @@ async function getBuildArtifact() {
 
   console.log('found finished workflow run', run);
 
-  const tgzName = `splunk-otel-${version}.tgz`
-  
+  const tgzName = `splunk-otel-${version}.tgz`;
+
   if (targetFileName === tgzName) {
     // Download and extract main package artifact
-    const splunkOtelArtifactData = await downloadArtifact(octokit, owner, repo, run.id, tgzName);
+    const splunkOtelArtifactData = await downloadArtifact(
+      octokit,
+      owner,
+      repo,
+      run.id,
+      tgzName
+    );
 
     return extractArtifact(splunkOtelArtifactData, targetFileName);
   } else {
     // Download and extract workspace packages artifact which contains all workspace packages
     const workspacePackageName = 'workspace-packages';
-    const workspaceArtifactData = await downloadArtifact(octokit, owner, repo, run.id, workspacePackageName);
+    const workspaceArtifactData = await downloadArtifact(
+      octokit,
+      owner,
+      repo,
+      run.id,
+      workspacePackageName
+    );
 
     return extractArtifact(workspaceArtifactData, targetFileName);
   }
@@ -147,7 +166,7 @@ async function prepareReleaseArtifact() {
   console.log('successfully prepared artifacts');
 }
 
-prepareReleaseArtifact().catch(e => {
+prepareReleaseArtifact().catch((e) => {
   console.error(e);
   process.exit(1);
 });

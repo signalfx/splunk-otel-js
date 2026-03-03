@@ -8,8 +8,10 @@ build({
   target: 'node18',
   format: 'esm',
   outfile: 'dist_bundle/bundle.mjs',
-  plugins: [splunkOtelEsbuild({
-    instrumentations: [new ExpressInstrumentation()]
-  })],
+  plugins: [
+    splunkOtelEsbuild({
+      instrumentations: [new ExpressInstrumentation()],
+    }),
+  ],
   keepNames: true,
 }).catch(() => process.exit(1));
