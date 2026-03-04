@@ -15,7 +15,10 @@ jobs:
       fail-fast: false
       matrix:
         container: ['node:18.0.0']
-        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0', '25.2.0']
+        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0']
+        include:
+          - container: 'node:20.0.0'
+            node_api_target: '25.2.0'
     container: ${{ matrix.container }}
     steps:
       - name: Checkout
@@ -37,7 +40,10 @@ jobs:
       fail-fast: false
       matrix:
         container: ['node:18.0.0']
-        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0', '25.2.0']
+        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0']
+        include:
+          - container: 'node:20.0.0'
+            node_api_target: '25.2.0'
     container: ${{ matrix.container }}
     steps:
       - name: Checkout
@@ -58,12 +64,15 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-2022, macos-14, macos-15]
-        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0', '25.2.0']
+        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0']
         include:
           - os: macos-14
             python_version: '3.11'
           - os: macos-15
             python_version: '3.11'
+          - os: 'macos-15'
+            python_version: '3.11'
+            node_api_target: '25.2.0'
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
