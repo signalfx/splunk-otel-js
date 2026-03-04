@@ -13,13 +13,15 @@ async function createRelease() {
 
   const octokit = new Octokit({ auth: github_token });
 
-  const packageDirArg = process.argv.find(arg => arg.startsWith('--package_dir='));
-  
+  const packageDirArg = process.argv.find((arg) =>
+    arg.startsWith('--package_dir=')
+  );
+
   if (!packageDirArg) {
     throw new Error('Missing --package_dir=PATH');
   }
 
-  const packageDir = packageDirArg.split('=')[1]; 
+  const packageDir = packageDirArg.split('=')[1];
 
   const {
     data: { login },
@@ -76,7 +78,7 @@ async function createRelease() {
   console.log('Uploaded assets.');
 }
 
-createRelease().catch(e => {
+createRelease().catch((e) => {
   console.error(e);
   process.exit(1);
 });

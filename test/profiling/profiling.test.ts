@@ -19,7 +19,7 @@ import { beforeEach, describe, it } from 'node:test';
 import { inspect } from 'util';
 
 import { context, trace } from '@opentelemetry/api';
-import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
+import { resourceFromAttributes } from '@opentelemetry/resources';
 import { InMemorySpanExporter } from '@opentelemetry/sdk-trace-base';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 

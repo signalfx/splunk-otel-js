@@ -12,7 +12,7 @@ module.exports = [
     status: { code: undefined },
     attributes: {
       'otel.scope.name': 'splunk-otel-example-profiling',
-      'span.kind': 'internal'
-    }
-  }
+      'span.kind': 'internal',
+    },
+  },
 ];

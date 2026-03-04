@@ -126,7 +126,7 @@ export function calledWithExactly(mocked: any, expected: any) {
     try {
       assert.deepStrictEqual(call.arguments[0], expected);
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   });

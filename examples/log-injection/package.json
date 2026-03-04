@@ -1,7 +1,7 @@
 {
   "name": "splunk-otel-example-log-injection",
-  "private": true,
   "version": "1.0.0",
+  "private": true,
   "main": "index.js",
   "scripts": {
     "start": "node -r ./log-injection.tracer.js index.js",

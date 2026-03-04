@@ -14,8 +14,8 @@ module.exports = [
       'otel.scope.version': '0.48.1',
       'express.name': 'query',
       'express.type': 'middleware',
-      'span.kind': 'internal'
-    }
+      'span.kind': 'internal',
+    },
   },
   {
     traceId: 'H5yEgwBZEIhWo6aSFVNMhw==',
@@ -32,8 +32,8 @@ module.exports = [
       'otel.scope.version': '0.48.1',
       'express.name': 'expressInit',
       'express.type': 'middleware',
-      'span.kind': 'internal'
-    }
+      'span.kind': 'internal',
+    },
   },
   {
     traceId: 'H5yEgwBZEIhWo6aSFVNMhw==',
@@ -51,8 +51,8 @@ module.exports = [
       'http.route': '/',
       'express.name': '/',
       'express.type': 'request_handler',
-      'span.kind': 'internal'
-    }
+      'span.kind': 'internal',
+    },
   },
   {
     traceId: 'H5yEgwBZEIhWo6aSFVNMhw==',
@@ -68,8 +68,8 @@ module.exports = [
       'otel.scope.name': 'rng-app',
       'random-result': undefined,
       'random-method': 'diceroll',
-      'span.kind': 'internal'
-    }
+      'span.kind': 'internal',
+    },
   },
   {
     traceId: 'H5yEgwBZEIhWo6aSFVNMhw==',
@@ -100,7 +100,7 @@ module.exports = [
       'http.status_code': undefined,
       'http.status_text': 'OK',
       'http.route': '/',
-      'span.kind': 'server'
-    }
-  }
+      'span.kind': 'server',
+    },
+  },
 ];

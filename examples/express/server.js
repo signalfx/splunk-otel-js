@@ -28,7 +28,7 @@ function authMiddleware(req, res, next) {
 }
 
 app.get('/name', authMiddleware, function getName(req, res) {
-  res.json({ name: 'Spot' }); 
+  res.json({ name: 'Spot' });
 });
 
 app.listen(PORT, () => {
