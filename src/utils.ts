@@ -374,7 +374,8 @@ export function listEnvVars() {
       property: 'metrics.endpoint',
       description:
         'The metrics endpoint. Takes precedence over the value set in OTEL_EXPORTER_OTLP_ENDPOINT.',
-      default: 'https://ingest.<realm>.signalfx.com/v2/datapoint/otlp',
+      default:
+        'https://ingest.<realm>.observability.splunk.com/v2/datapoint/otlp',
       type: 'number',
       category: 'metrics',
     },

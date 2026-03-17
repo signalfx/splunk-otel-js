@@ -380,7 +380,7 @@ describe('options', () => {
       assert(exporter instanceof OTLPTraceExporter);
       assert.deepStrictEqual(
         utils.exporterUrl(exporter),
-        `https://ingest.us0.signalfx.com/v2/trace/otlp`
+        `https://ingest.us0.observability.splunk.com/v2/trace/otlp`
       );
     });
 
@@ -408,7 +408,7 @@ describe('options', () => {
       assert(exporter instanceof OTLPTraceExporter);
       assert.deepStrictEqual(
         utils.exporterUrl(exporter),
-        'https://ingest.us0.signalfx.com/v2/trace/otlp'
+        'https://ingest.us0.observability.splunk.com/v2/trace/otlp'
       );
       const oneLogMatches = logger.warn.mock.calls.some((call) =>
         call.arguments[0].includes(

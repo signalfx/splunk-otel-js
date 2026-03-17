@@ -127,7 +127,7 @@ describe('metrics options', () => {
       assert(exporter instanceof OTLPHttpProtoMetricExporter);
       assert.deepStrictEqual(
         utils.exporterUrl(exporter),
-        'https://ingest.us0.signalfx.com/v2/datapoint/otlp'
+        'https://ingest.us0.observability.splunk.com/v2/datapoint/otlp'
       );
       const msg = `OTLP metric exporter: defaulting protocol to 'http/protobuf' instead of 'grpc' due to realm being defined.`;
       assert.equal(logger.warn.mock.calls[0].arguments[0], msg);
@@ -155,7 +155,7 @@ describe('metrics options', () => {
 
       assert.deepStrictEqual(
         utils.exporterUrl(exporter),
-        'https://ingest.eu0.signalfx.com/v2/datapoint/otlp'
+        'https://ingest.eu0.observability.splunk.com/v2/datapoint/otlp'
       );
     });
 
