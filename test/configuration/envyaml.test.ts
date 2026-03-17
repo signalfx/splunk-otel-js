@@ -40,7 +40,7 @@ describe('YAML environment variable substitution', () => {
 
     assert.deepStrictEqual(
       config.tracer_provider?.processors[0].batch?.exporter.otlp_http?.endpoint,
-      'https://ingest.eu0.observability.splunk.com/v2/trace/otlp'
+      'https://ingest.eu0.observability.splunkcloud.com/v2/trace/otlp'
     );
     assert.deepStrictEqual(
       config.tracer_provider?.processors[0].batch?.exporter.otlp_http?.headers,

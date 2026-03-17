@@ -165,7 +165,7 @@ export function createOtlpExporter(options: MetricsOptions) {
     ]);
 
     if (endpoint === undefined && envEndpoint === undefined) {
-      endpoint = `https://ingest.${options.realm}.observability.splunk.com/v2/datapoint/otlp`;
+      endpoint = `https://ingest.${options.realm}.observability.splunkcloud.com/v2/datapoint/otlp`;
       protocol = 'http/protobuf';
     } else {
       diag.warn(

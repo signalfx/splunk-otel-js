@@ -125,7 +125,7 @@ tracer_provider:
         max_export_batch_size: 215
         exporter:
           otlp_http:
-            endpoint: https://ingest.${SPLUNK_REALM}.observability.splunk.com/v2/trace/otlp
+            endpoint: https://ingest.${SPLUNK_REALM}.observability.splunkcloud.com/v2/trace/otlp
             headers:
               - name: X-SF-TOKEN
                 value: ${SPLUNK_ACCESS_TOKEN}
