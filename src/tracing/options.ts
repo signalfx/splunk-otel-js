@@ -85,7 +85,9 @@ function createSampler(userConfig: NodeTracerConfig) {
       return new AlwaysOnSampler();
     }
     if (envSampler === 'rules') {
-      return createRuleBasedSampler(getNonEmptyEnvVar('OTEL_TRACES_SAMPLER_ARG'));
+      return createRuleBasedSampler(
+        getNonEmptyEnvVar('OTEL_TRACES_SAMPLER_ARG')
+      );
     }
   }
 

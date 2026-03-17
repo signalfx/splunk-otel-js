@@ -33,11 +33,20 @@ const TRACE_ID = '00000000000000000000000000000001';
 
 function sample(sampler: Sampler, kind: SpanKind, urlPath?: string) {
   const attributes = urlPath ? { 'url.path': urlPath } : {};
-  return sampler.shouldSample(ROOT_CONTEXT, TRACE_ID, 'test-span', kind, attributes, []);
+  return sampler.shouldSample(
+    ROOT_CONTEXT,
+    TRACE_ID,
+    'test-span',
+    kind,
+    attributes,
+    []
+  );
 }
 
 test('RuleBasedSampler: drops SERVER span when url.path matches drop rule', () => {
-  const sampler = createRuleBasedSampler('drop=/healthcheck;fallback=always_on');
+  const sampler = createRuleBasedSampler(
+    'drop=/healthcheck;fallback=always_on'
+  );
 
   const result = sample(sampler, SpanKind.SERVER, '/healthcheck');
   assert.equal(result.decision, SamplingDecision.NOT_RECORD);
@@ -54,9 +63,16 @@ test('RuleBasedSampler: drops SERVER span when url.path contains drop substring'
 });
 
 test('RuleBasedSampler: does not drop non-SERVER spans even if url.path matches', () => {
-  const sampler = createRuleBasedSampler('drop=/healthcheck;fallback=always_on');
+  const sampler = createRuleBasedSampler(
+    'drop=/healthcheck;fallback=always_on'
+  );
 
-  for (const kind of [SpanKind.CLIENT, SpanKind.INTERNAL, SpanKind.PRODUCER, SpanKind.CONSUMER]) {
+  for (const kind of [
+    SpanKind.CLIENT,
+    SpanKind.INTERNAL,
+    SpanKind.PRODUCER,
+    SpanKind.CONSUMER,
+  ]) {
     const result = sample(sampler, kind, '/healthcheck');
     assert.equal(
       result.decision,
@@ -67,25 +83,44 @@ test('RuleBasedSampler: does not drop non-SERVER spans even if url.path matches'
 });
 
 test('RuleBasedSampler: delegates to fallback when no url.path attribute present', () => {
-  const sampler = createRuleBasedSampler('drop=/healthcheck;fallback=always_on');
+  const sampler = createRuleBasedSampler(
+    'drop=/healthcheck;fallback=always_on'
+  );
 
   const result = sample(sampler, SpanKind.SERVER);
   assert.equal(result.decision, SamplingDecision.RECORD_AND_SAMPLED);
 });
 
 test('RuleBasedSampler: supports multiple drop rules', () => {
-  const sampler = createRuleBasedSampler('drop=/healthcheck;drop=/metrics;drop=/ready;fallback=always_on');
+  const sampler = createRuleBasedSampler(
+    'drop=/healthcheck;drop=/metrics;drop=/ready;fallback=always_on'
+  );
 
-  assert.equal(sample(sampler, SpanKind.SERVER, '/healthcheck').decision, SamplingDecision.NOT_RECORD);
-  assert.equal(sample(sampler, SpanKind.SERVER, '/metrics').decision, SamplingDecision.NOT_RECORD);
-  assert.equal(sample(sampler, SpanKind.SERVER, '/ready').decision, SamplingDecision.NOT_RECORD);
-  assert.equal(sample(sampler, SpanKind.SERVER, '/foo').decision, SamplingDecision.RECORD_AND_SAMPLED);
+  assert.equal(
+    sample(sampler, SpanKind.SERVER, '/healthcheck').decision,
+    SamplingDecision.NOT_RECORD
+  );
+  assert.equal(
+    sample(sampler, SpanKind.SERVER, '/metrics').decision,
+    SamplingDecision.NOT_RECORD
+  );
+  assert.equal(
+    sample(sampler, SpanKind.SERVER, '/ready').decision,
+    SamplingDecision.NOT_RECORD
+  );
+  assert.equal(
+    sample(sampler, SpanKind.SERVER, '/foo').decision,
+    SamplingDecision.RECORD_AND_SAMPLED
+  );
 });
 
 test('RuleBasedSampler: defaults to always_on when arg is undefined', () => {
   const sampler = createRuleBasedSampler(undefined);
 
-  assert.equal(sample(sampler, SpanKind.SERVER, '/foo').decision, SamplingDecision.RECORD_AND_SAMPLED);
+  assert.equal(
+    sample(sampler, SpanKind.SERVER, '/foo').decision,
+    SamplingDecision.RECORD_AND_SAMPLED
+  );
 });
 
 test('Tracing: OTEL_TRACES_SAMPLER=rules uses composite sampler', async () => {

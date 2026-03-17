@@ -64,9 +64,7 @@ function selectComposableSampler(type: string): ComposableSampler {
  *
  * If arg is not set, defaults to no drop rules and parentbased_always_on fallback.
  */
-export function createRuleBasedSampler(
-  arg: string | undefined
-): Sampler {
+export function createRuleBasedSampler(arg: string | undefined): Sampler {
   const dropValues: string[] = [];
   let fallback: ComposableSampler | undefined = undefined;
 
@@ -87,7 +85,13 @@ export function createRuleBasedSampler(
     }
   }
 
-  const matchesDrops: SamplingPredicate = (_ctx, _traceId, _name, spanKind, attributes) => {
+  const matchesDrops: SamplingPredicate = (
+    _ctx,
+    _traceId,
+    _name,
+    spanKind,
+    attributes
+  ) => {
     if (spanKind !== SpanKind.SERVER) {
       return false;
     }
@@ -99,7 +103,7 @@ export function createRuleBasedSampler(
       return false;
     }
     return dropValues.some((v) => target.includes(v));
-  }
+  };
 
   return createCompositeSampler(
     createComposableRuleBasedSampler([
