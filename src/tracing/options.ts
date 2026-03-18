@@ -21,6 +21,7 @@ import {
   SpanExporter,
   SpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
+import { createRuleBasedSampler } from './RuleBasedSampler';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 import { AWSXRayPropagator } from '@opentelemetry/propagator-aws-xray';
 
@@ -79,8 +80,14 @@ function createSampler(userConfig: NodeTracerConfig) {
   const configSampler = configGetSampler();
 
   if (configSampler === undefined) {
-    if (getNonEmptyEnvVar('OTEL_TRACES_SAMPLER') === undefined) {
+    const envSampler = getNonEmptyEnvVar('OTEL_TRACES_SAMPLER');
+    if (envSampler === undefined) {
       return new AlwaysOnSampler();
+    }
+    if (envSampler === 'rules') {
+      return createRuleBasedSampler(
+        getNonEmptyEnvVar('OTEL_TRACES_SAMPLER_ARG')
+      );
     }
   }
 
