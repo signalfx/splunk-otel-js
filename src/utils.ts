@@ -15,10 +15,11 @@
  */
 
 import { strict as assert } from 'assert';
-import { diag, DiagLogLevel } from '@opentelemetry/api';
+import { AttributeValue, diag, DiagLogLevel } from '@opentelemetry/api';
 import type { EnvVarKey, LogLevel } from './types';
 import { resolve } from 'path';
 import * as fs from 'fs';
+import { MaybePromise, Resource } from '@opentelemetry/resources';
 
 export type ConfigCache = Map<string, string>;
 
@@ -257,6 +258,21 @@ export function readFileContent(
     return fs.readFileSync(path);
   } catch (e) {
     diag.warn(`failed to load ${path}`, e);
+  }
+
+  return undefined;
+}
+
+export function findAttribute(
+  resource: Resource,
+  key: string
+): MaybePromise<AttributeValue | undefined> {
+  const rawAttrs = resource.getRawAttributes();
+
+  for (let i = 0; i < rawAttrs.length; i++) {
+    if (rawAttrs[i][0] === key) {
+      return rawAttrs[i][1];
+    }
   }
 
   return undefined;

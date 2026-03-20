@@ -16,7 +16,11 @@
 
 import { context, diag } from '@opentelemetry/api';
 import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
-import { defaultServiceName, ensureResourcePath } from '../utils';
+import {
+  defaultServiceName,
+  ensureResourcePath,
+  findAttribute,
+} from '../utils';
 import {
   configGetResource,
   getConfigBoolean,
@@ -252,16 +256,14 @@ export function _setDefaultOptions(
   const serviceName = String(
     options.serviceName ||
       getNonEmptyConfigVar('OTEL_SERVICE_NAME') ||
-      envResource.attributes?.[ATTR_SERVICE_NAME] ||
+      findAttribute(envResource, ATTR_SERVICE_NAME) ||
       defaultServiceName()
   );
 
   const resourceFactory = options.resourceFactory || ((r: Resource) => r);
 
   const resource = resourceFactory(
-    resourceFromAttributes(envResource.attributes || {}).merge(
-      configGetResource()
-    )
+    envResource.merge(configGetResource())
   ).merge(
     resourceFromAttributes({
       [ATTR_SERVICE_NAME]: serviceName,

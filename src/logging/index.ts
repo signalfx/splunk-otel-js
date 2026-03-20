@@ -28,7 +28,12 @@ import {
   SimpleLogRecordProcessor,
 } from '@opentelemetry/sdk-logs';
 
-import { getEnvArray, defaultServiceName, ensureResourcePath } from '../utils';
+import {
+  getEnvArray,
+  defaultServiceName,
+  ensureResourcePath,
+  findAttribute,
+} from '../utils';
 import {
   configGetResource,
   getConfigLogger,
@@ -81,19 +86,19 @@ export function _setDefaultOptions(
 ): LoggingOptions {
   const envResource = getDetectedResource();
 
-  const serviceName =
+  const serviceName = String(
     options.serviceName ||
-    getNonEmptyConfigVar('OTEL_SERVICE_NAME') ||
-    envResource.attributes?.[ATTR_SERVICE_NAME];
+      getNonEmptyConfigVar('OTEL_SERVICE_NAME') ||
+      findAttribute(envResource, ATTR_SERVICE_NAME) ||
+      defaultServiceName()
+  );
 
   const resourceFactory = options.resourceFactory || ((r: Resource) => r);
   const resource = resourceFactory(
-    resourceFromAttributes(envResource.attributes || {}).merge(
-      configGetResource()
-    )
+    envResource.merge(configGetResource())
   ).merge(
     resourceFromAttributes({
-      [ATTR_SERVICE_NAME]: serviceName || defaultServiceName(),
+      [ATTR_SERVICE_NAME]: serviceName,
     })
   );
 
@@ -101,7 +106,7 @@ export function _setDefaultOptions(
     options.logRecordProcessorFactory || defaultLogRecordProcessorFactory;
 
   return {
-    serviceName: String(resource.attributes[ATTR_SERVICE_NAME]),
+    serviceName,
     endpoint: options.endpoint, // will use default collector url if not set
     logRecordProcessorFactory: options.logRecordProcessorFactory,
     resource,

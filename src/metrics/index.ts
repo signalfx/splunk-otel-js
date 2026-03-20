@@ -42,6 +42,7 @@ import type { MetricsOptions, StartMetricsOptions } from './types';
 import {
   defaultServiceName,
   ensureResourcePath,
+  findAttribute,
   readFileContent,
 } from '../utils';
 import { enableDebugMetrics, getDebugMetricsViews } from './debug_metrics';
@@ -684,17 +685,13 @@ export function _setDefaultOptions(
   const serviceName = String(
     options.serviceName ||
       getNonEmptyConfigVar('OTEL_SERVICE_NAME') ||
-      envResource.attributes?.[ATTR_SERVICE_NAME] ||
+      findAttribute(envResource, ATTR_SERVICE_NAME) ||
       defaultServiceName()
   );
 
   const resourceFactory =
     options.resourceFactory || ((resource: Resource) => resource);
-  let resource = resourceFactory(
-    resourceFromAttributes(envResource.attributes || {}).merge(
-      configGetResource()
-    )
-  );
+  let resource = resourceFactory(envResource.merge(configGetResource()));
 
   resource = resource.merge(
     resourceFromAttributes({

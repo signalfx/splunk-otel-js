@@ -32,6 +32,7 @@ import type * as grpc from '@grpc/grpc-js';
 import { getDetectedResource } from '../resource';
 import {
   defaultServiceName,
+  findAttribute,
   getEnvArray,
   getEnvValueByPrecedence,
   getNonEmptyEnvVar,
@@ -113,20 +114,18 @@ export function _setDefaultOptions(
   const envResource = getDetectedResource();
 
   const resourceFactory = options.resourceFactory || ((r: Resource) => r);
-  let resource = resourceFactory(
-    resourceFromAttributes(envResource.attributes || {}).merge(
-      configGetResource()
-    )
-  );
+  let resource = resourceFactory(envResource.merge(configGetResource()));
 
-  const serviceName =
+  const serviceName = String(
     options.serviceName ||
-    getNonEmptyConfigVar('OTEL_SERVICE_NAME') ||
-    resource.attributes[ATTR_SERVICE_NAME];
+      getNonEmptyConfigVar('OTEL_SERVICE_NAME') ||
+      findAttribute(resource, ATTR_SERVICE_NAME) ||
+      defaultServiceName()
+  );
 
   resource = resource.merge(
     resourceFromAttributes({
-      [ATTR_SERVICE_NAME]: serviceName || defaultServiceName(),
+      [ATTR_SERVICE_NAME]: serviceName,
     })
   );
 
@@ -186,7 +185,7 @@ export function _setDefaultOptions(
   return {
     realm,
     endpoint: options.endpoint,
-    serviceName: String(resource.attributes[ATTR_SERVICE_NAME]),
+    serviceName,
     accessToken,
     serverTimingEnabled:
       options.serverTimingEnabled ||
