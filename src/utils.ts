@@ -263,6 +263,7 @@ export function readFileContent(
   return undefined;
 }
 
+// Used to read attributes from the resource without triggering a diagnostic error when reading resources with pending attributes.
 export function findAttribute(
   resource: Resource,
   key: string
