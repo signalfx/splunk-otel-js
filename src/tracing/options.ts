@@ -295,7 +295,7 @@ export function otlpSpanExporterFactory(options: TracingOptions): SpanExporter {
     ]);
 
     if (endpoint === undefined && envEndpoint === undefined) {
-      endpoint = `https://ingest.${options.realm}.signalfx.com/v2/trace/otlp`;
+      endpoint = `https://ingest.${options.realm}.observability.splunkcloud.com/v2/trace/otlp`;
       protocol = 'http/protobuf';
     } else {
       diag.warn(

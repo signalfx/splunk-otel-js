@@ -8,12 +8,12 @@ receivers:
 
 exporters:
   otlphttp:
-    traces_endpoint: "https://ingest.${SPLUNK_REALM}.signalfx.com/v2/trace/otlp"
+    traces_endpoint: "https://ingest.${SPLUNK_REALM}.observability.splunkcloud.com/v2/trace/otlp"
     headers:
       X-SF-TOKEN: "${SPLUNK_ACCESS_TOKEN}"
   splunk_hec:
     token: "${SPLUNK_ACCESS_TOKEN}"
-    endpoint: "https://ingest.${SPLUNK_REALM}.signalfx.com/v1/log"
+    endpoint: "https://ingest.${SPLUNK_REALM}.observability.splunkcloud.com/v1/log"
   debug:
     verbosity: detailed
 
