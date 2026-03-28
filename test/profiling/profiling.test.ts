@@ -53,7 +53,7 @@ describe('profiling', () => {
       await options.resource.waitForAsyncAttributes?.();
       const testResource = resourceFromAttributes({
         [ATTR_SERVICE_NAME]: '@splunk/otel',
-      }).merge(resourceFromAttributes(detectResource().attributes || {}));
+      }).merge(detectResource());
       await testResource.waitForAsyncAttributes?.();
 
       const { resource: defaultResource, ...defaultOtherAttrs } = options;
