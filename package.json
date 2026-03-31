@@ -135,7 +135,7 @@
     "node-gyp-build": "^4.8.4",
     "protobufjs": "^8.0.0",
     "semver": "^7.7.4",
-    "yaml": "^2.8.2"
+    "yaml": "^2.8.3"
   },
   "devDependencies": {
     "@elastic/elasticsearch": "^7.17.11",
@@ -157,7 +157,7 @@
     "semver": "^7.7.2",
     "sequelize": "^6.32.1",
     "ts-node": "^10.9.2",
-    "typescript": "5.9.3",
+    "typescript": "6.0.2",
     "winston": "3.10.0"
   },
   "peerDependencies": {
