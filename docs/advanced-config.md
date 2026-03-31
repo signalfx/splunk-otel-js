@@ -162,7 +162,7 @@ An [OpenTelemetry configuration YAML file](https://github.com/open-telemetry/ope
 
 Other options provided via environment variables will be ignored. Programmatic options sill take preference over the file based configuration.
 
-See the OpenTelemetry's [getting started](https://github.com/open-telemetry/opentelemetry-configuration/blob/main/examples/getting-started.yaml) example or use the following as a starter configuration:
+See the OpenTelemetry [examples](https://github.com/open-telemetry/opentelemetry-configuration/tree/main/examples) or use the following as a starter configuration:
 
 ```yaml
 file_format: "1.0-rc.2"
