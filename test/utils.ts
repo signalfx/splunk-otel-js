@@ -131,7 +131,7 @@ export function calledWithExactly(mocked: any, expected: any) {
     }
   });
 
-  assert(match, `Expected call with: ${JSON.stringify(expected)} not found`);
+  assert.ok(match, `Expected call with: ${JSON.stringify(expected)} not found`);
 }
 
 export function calledOnceWithMatch(mocked: any, match: object) {
