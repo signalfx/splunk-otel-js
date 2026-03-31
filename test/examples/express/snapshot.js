@@ -14,8 +14,8 @@ module.exports = [
       'otel.scope.version': '0.60.0',
       'express.name': 'query',
       'express.type': 'middleware',
-      'span.kind': 'internal'
-    }
+      'span.kind': 'internal',
+    },
   },
   {
     traceId: 'uZ6F+bY32eBVmrK0pvfWig==',
@@ -32,8 +32,8 @@ module.exports = [
       'otel.scope.version': '0.60.0',
       'express.name': 'expressInit',
       'express.type': 'middleware',
-      'span.kind': 'internal'
-    }
+      'span.kind': 'internal',
+    },
   },
   {
     traceId: 'uZ6F+bY32eBVmrK0pvfWig==',
@@ -50,8 +50,8 @@ module.exports = [
       'otel.scope.version': '0.60.0',
       'express.name': 'query',
       'express.type': 'middleware',
-      'span.kind': 'internal'
-    }
+      'span.kind': 'internal',
+    },
   },
   {
     traceId: 'uZ6F+bY32eBVmrK0pvfWig==',
@@ -68,8 +68,8 @@ module.exports = [
       'otel.scope.version': '0.60.0',
       'express.name': 'expressInit',
       'express.type': 'middleware',
-      'span.kind': 'internal'
-    }
+      'span.kind': 'internal',
+    },
   },
   {
     traceId: 'uZ6F+bY32eBVmrK0pvfWig==',
@@ -87,8 +87,8 @@ module.exports = [
       'http.route': '/name',
       'express.name': '/name',
       'express.type': 'request_handler',
-      'span.kind': 'internal'
-    }
+      'span.kind': 'internal',
+    },
   },
   {
     traceId: 'uZ6F+bY32eBVmrK0pvfWig==',
@@ -106,8 +106,8 @@ module.exports = [
       'http.route': '/animal',
       'express.name': '/animal',
       'express.type': 'request_handler',
-      'span.kind': 'internal'
-    }
+      'span.kind': 'internal',
+    },
   },
   {
     traceId: 'uZ6F+bY32eBVmrK0pvfWig==',
@@ -128,8 +128,8 @@ module.exports = [
       'net.peer.ip': '::1',
       'net.host.ip': '::1',
       'net.host.port': undefined,
-      'span.kind': 'internal'
-    }
+      'span.kind': 'internal',
+    },
   },
   {
     traceId: 'uZ6F+bY32eBVmrK0pvfWig==',
@@ -160,8 +160,8 @@ module.exports = [
       'http.status_code': undefined,
       'http.status_text': 'OK',
       'http.route': '/name',
-      'span.kind': 'server'
-    }
+      'span.kind': 'server',
+    },
   },
   {
     traceId: 'uZ6F+bY32eBVmrK0pvfWig==',
@@ -192,8 +192,8 @@ module.exports = [
       'http.status_code': undefined,
       'http.status_text': 'OK',
       'http.route': '/animal',
-      'span.kind': 'server'
-    }
+      'span.kind': 'server',
+    },
   },
   {
     traceId: 'uZ6F+bY32eBVmrK0pvfWig==',
@@ -220,7 +220,7 @@ module.exports = [
       'network.peer.address': '::1',
       'network.peer.port': undefined,
       'http.response.status_code': undefined,
-      'span.kind': 'client'
-    }
-  }
+      'span.kind': 'client',
+    },
+  },
 ];
