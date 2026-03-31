@@ -17,14 +17,14 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Link Checker
-        uses: lycheeverse/lychee-action@v2.0.2
+        uses: lycheeverse/lychee-action@v2.8.0
         with:
           args: >
             --cache
             --user-agent 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36'
             --max-concurrency 1
             --max-retries 16
-            --retry-wait-time 8
+            --retry-wait-time 30
             --verbose
             './**/*.md'
           fail: false
