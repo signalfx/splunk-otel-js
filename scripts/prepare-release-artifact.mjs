@@ -1,9 +1,11 @@
-const fs = require('fs');
-const { execSync } = require('child_process');
-const path = require('path');
-const { Octokit } = require('octokit');
+import fs from 'fs';
+import { execSync } from 'child_process';
+import path from 'path';
+import { Octokit } from 'octokit';
 
-const { version } = require('../package.json');
+const { version } = JSON.parse(
+  fs.readFileSync(new URL('../package.json', import.meta.url), 'utf-8')
+);
 
 const WORKFLOW_TIMEOUT_MS = 15 * 60 * 1000;
 
