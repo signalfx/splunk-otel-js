@@ -1,11 +1,21 @@
-const { dependencies } = require('../package-lock.json');
-const { readFileSync } = require('fs');
-const path = require('path');
+import { readFileSync } from 'fs';
+import path from 'path';
 
-exports.getReleaseMessage = (packageDir) => {
-  const changelogPath = path.resolve(__dirname, packageDir, 'CHANGELOG.md');
-  const { version } = require(
-    path.resolve(__dirname, packageDir, 'package.json')
+const { dependencies } = JSON.parse(
+  readFileSync(new URL('../package-lock.json', import.meta.url), 'utf-8')
+);
+
+export const getReleaseMessage = (packageDir) => {
+  const changelogPath = path.resolve(
+    import.meta.dirname,
+    packageDir,
+    'CHANGELOG.md'
+  );
+  const { version } = JSON.parse(
+    readFileSync(
+      path.resolve(import.meta.dirname, packageDir, 'package.json'),
+      'utf-8'
+    )
   );
 
   const changelog = readFileSync(changelogPath, { encoding: 'utf-8' });

@@ -48,7 +48,7 @@
     "compile:workspaces": "npm run --ws compile --",
     "compile:all": "npm run compile && npm run compile:workspaces",
     "gen-metadata": "node scripts/generate-metadata-yaml.js",
-    "prepare-release-artifact": "node scripts/prepare-release-artifact.js",
+    "prepare-release-artifact": "node scripts/prepare-release-artifact.mjs",
     "install": "node-gyp-build",
     "fmt:check": "oxfmt --check",
     "fmt:fix": "oxfmt",
@@ -61,7 +61,7 @@
     "prebuild:os": "node scripts/prebuild-os.js",
     "profile:proto": "pbjs -t static-module -w commonjs -o src/profiling/proto/profile.js protos/pprof/profile.proto",
     "profile:proto-types": "pbts -o src/profiling/proto/profile.d.js src/profiling/proto/profile.js",
-    "release:github": "node scripts/release-github.js",
+    "release:github": "node scripts/release-github.mjs",
     "version:check": "node scripts/version-check.js",
     "version:generate": "node scripts/version-generate.js",
     "watch": "tsc --build --watch"
@@ -130,12 +130,11 @@
     "@opentelemetry/sdk-trace-node": "2.5.1",
     "@opentelemetry/semantic-conventions": "1.40.0",
     "@opentelemetry/winston-transport": "0.22.0",
-    "is-promise": "^4.0.0",
     "nan": "^2.25.0",
     "node-gyp-build": "^4.8.4",
     "protobufjs": "^8.0.0",
     "semver": "^7.7.4",
-    "yaml": "^2.8.2"
+    "yaml": "^2.8.3"
   },
   "devDependencies": {
     "@elastic/elasticsearch": "^7.17.11",
@@ -145,8 +144,8 @@
     "cross-env": "^10.1.0",
     "mysql2": "^3.14.1",
     "neo4j-driver": "5.28.3",
-    "nock": "^13.5.6",
-    "octokit": "^3.1.2",
+    "nock": "^14.0.11",
+    "octokit": "5.0.5",
     "oxfmt": "0.36.0",
     "oxlint": "1.51.0",
     "pg": "^8.16.2",
@@ -155,9 +154,9 @@
     "redis": "^3.1.2",
     "rxjs": "^7.8.2",
     "semver": "^7.7.2",
-    "sequelize": "^6.32.1",
+    "sequelize": "^6.37.8",
     "ts-node": "^10.9.2",
-    "typescript": "5.9.3",
+    "typescript": "6.0.2",
     "winston": "3.10.0"
   },
   "peerDependencies": {

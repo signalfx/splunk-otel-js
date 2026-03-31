@@ -490,7 +490,7 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
           await httpRequest.get(arg as any);
         } catch (error) {
           // request has not been made
-          assert(error instanceof Error);
+          assert.ok(error instanceof Error);
         }
         const spans = memoryExporter.getFinishedSpans();
         // for this arg with don't provide trace. We pass arg to original method (http.get)

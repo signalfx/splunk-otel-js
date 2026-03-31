@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { strict as assert } from 'assert';
-import * as nock from 'nock';
+import nock = require('nock');
 import { after, before, beforeEach, describe, it } from 'node:test';
 import * as os from 'os';
 import { ElasticsearchInstrumentation } from '../../../../src/instrumentations/external/elasticsearch';
