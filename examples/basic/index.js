@@ -1,6 +1,5 @@
 const { trace } = require('@opentelemetry/api');
 const express = require('express');
-const axios = require('axios');
 
 const PORT = process.env.PORT || 8080;
 const app = express();
@@ -14,8 +13,7 @@ app.get('/hello', (_req, res) => {
 });
 
 app.get('/', (req, res) => {
-  axios
-    .get(`http://localhost:${PORT}/hello`)
+  fetch(`http://localhost:${PORT}/hello`)
     .then((response) => {
       console.log(200, '/');
       res.status(200).send(`Hello from node: ${response.status}\n`);

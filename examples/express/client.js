@@ -1,5 +1,4 @@
 'use strict';
-const axios = require('axios').default;
 
 const SERVER_BASE = process.env.SERVER_BASE ?? 'http://localhost:8080';
 const { href } = new URL('/animal', SERVER_BASE);
@@ -8,8 +7,7 @@ const jitter = () => {
   return (Math.random() * 300) >> 0;
 };
 const makeRequest = async () => {
-  return axios
-    .get(href)
+  return fetch(href)
     .then((res) => log('success:', res.statusText))
     .catch((e) => log('failed:', e.message));
 };

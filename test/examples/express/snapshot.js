@@ -150,7 +150,7 @@ module.exports = [
       'http.method': 'GET',
       'http.scheme': 'http',
       'http.target': '/name',
-      'http.user_agent': 'axios/0.28.1',
+      'http.user_agent': 'node',
       'http.flavor': '1.1',
       'net.transport': 'ip_tcp',
       'net.host.ip': '::1',
