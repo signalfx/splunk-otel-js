@@ -130,7 +130,6 @@
     "@opentelemetry/sdk-trace-node": "2.5.1",
     "@opentelemetry/semantic-conventions": "1.40.0",
     "@opentelemetry/winston-transport": "0.22.0",
-    "is-promise": "^4.0.0",
     "nan": "^2.25.0",
     "node-gyp-build": "^4.8.4",
     "protobufjs": "^8.0.0",
