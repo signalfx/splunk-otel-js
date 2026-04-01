@@ -333,7 +333,18 @@ export function configureInstrumentations(options: Options) {
         configureRedisInstrumentation(instr, options.tracing);
         break;
       case '@opentelemetry/instrumentation-tedious':
-        enableDbTraceContextPropagation(instr, options.tracing);
+        enableDbTraceContextPropagation(
+          instr,
+          'enableTraceContextPropagation',
+          options.tracing
+        );
+        break;
+      case '@opentelemetry/instrumentation-oracledb':
+        enableDbTraceContextPropagation(
+          instr,
+          'propagateTraceContextToSessionAction',
+          options.tracing
+        );
         break;
       case '@opentelemetry/instrumentation-bunyan':
       case '@opentelemetry/instrumentation-pino':
@@ -346,12 +357,13 @@ export function configureInstrumentations(options: Options) {
 }
 
 function enableDbTraceContextPropagation(
-  instrumentation: TediousInstrumentation,
+  instrumentation: TediousInstrumentation | OracleInstrumentation,
+  otelPropName: string,
   options: TracingOptions
 ) {
   if (options.databaseTraceContextPropagationEnabled) {
     const config = instrumentation.getConfig?.() ?? {};
-    config.enableTraceContextPropagation = true;
+    (config as Record<string, unknown>)[otelPropName] = true;
     instrumentation.setConfig(config);
   }
 }

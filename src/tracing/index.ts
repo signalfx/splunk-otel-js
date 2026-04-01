@@ -23,7 +23,7 @@ import {
   ProxyTracerProvider,
   trace,
   TracerProvider,
-} from '@opentelemetry/api';
+} from '@opentelemetryw/api';
 import {
   NodeTracerConfig,
   NodeTracerProvider,
