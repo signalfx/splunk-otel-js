@@ -26,12 +26,7 @@ import {
   AttributeNameValue as ConfigAttributeNameValue,
   Resource as ConfigResource,
   OpenTelemetryConfiguration,
-  Sampler1,
-  Sampler2,
-  Sampler3,
-  Sampler4,
-  Sampler5,
-  Sampler6,
+  Sampler as ConfigSchemaSampler,
 } from './configuration/schema';
 import {
   AlwaysOffSampler,
@@ -51,18 +46,16 @@ import {
 import { AttributeValue } from '@opentelemetry/api';
 import { convertSubstitution, envSubstitute } from './configuration/substitute';
 
-// Schema generator goes crazy with the types, they should be equivalent.
-type ConfigSampler =
-  | Sampler1
-  | Sampler2
-  | Sampler3
-  | Sampler4
-  | Sampler5
-  | Sampler6;
+type ConfigSampler = ConfigSchemaSampler;
 
 export type SplunkConfiguration = {
   use_bundled_instrumentations?: boolean;
   package_name_filter?: string[];
+  general?: {
+    js?: {
+      nextjs_cardinality_reduction?: boolean;
+    } | null;
+  } | null;
   runtime_metrics?: {
     collection_interval?: number;
   } | null;
@@ -299,7 +292,9 @@ function fetchConfigValue(key: EnvVarKey, config: DistroConfiguration) {
       return config.tracer_provider !== undefined;
     }
     case 'SPLUNK_NEXTJS_FIX_ENABLED': {
-      return config?.splunk?.general?.js?.nextjs_cardinality_reduction === true;
+      return (
+        splunkConfig(config)?.general?.js?.nextjs_cardinality_reduction === true
+      );
     }
     case 'SPLUNK_ACCESS_TOKEN': {
       return undefined;

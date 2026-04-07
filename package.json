@@ -59,6 +59,7 @@
     "test:only": "node ./test/runner.js --test-only",
     "prebuild:current": "node scripts/prebuild-current.js",
     "prebuild:os": "node scripts/prebuild-os.js",
+    "gen:config-types": "node scripts/generate-config-types.mjs",
     "profile:proto": "pbjs -t static-module -w commonjs -o src/profiling/proto/profile.js protos/pprof/profile.proto",
     "profile:proto-types": "pbts -o src/profiling/proto/profile.d.js src/profiling/proto/profile.js",
     "release:github": "node scripts/release-github.mjs",
