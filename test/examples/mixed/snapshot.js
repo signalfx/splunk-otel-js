@@ -15,8 +15,8 @@ module.exports = [
       'work.expected_duration': undefined,
       'work.my_parameter': undefined,
       'work.result': undefined,
-      'span.kind': 'internal'
-    }
+      'span.kind': 'internal',
+    },
   },
   {
     traceId: 'VlRfCOMPRqQs5pkzwwgEGQ==',
@@ -46,7 +46,7 @@ module.exports = [
       'net.peer.port': undefined,
       'http.status_code': undefined,
       'http.status_text': 'OK',
-      'span.kind': 'server'
-    }
-  }
+      'span.kind': 'server',
+    },
+  },
 ];

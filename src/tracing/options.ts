@@ -21,6 +21,7 @@ import {
   SpanExporter,
   SpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
+import { createRuleBasedSampler } from './RuleBasedSampler';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 import { AWSXRayPropagator } from '@opentelemetry/propagator-aws-xray';
 
@@ -31,6 +32,7 @@ import type * as grpc from '@grpc/grpc-js';
 import { getDetectedResource } from '../resource';
 import {
   defaultServiceName,
+  findAttribute,
   getEnvArray,
   getEnvValueByPrecedence,
   getNonEmptyEnvVar,
@@ -79,8 +81,14 @@ function createSampler(userConfig: NodeTracerConfig) {
   const configSampler = configGetSampler();
 
   if (configSampler === undefined) {
-    if (getNonEmptyEnvVar('OTEL_TRACES_SAMPLER') === undefined) {
+    const envSampler = getNonEmptyEnvVar('OTEL_TRACES_SAMPLER');
+    if (envSampler === undefined) {
       return new AlwaysOnSampler();
+    }
+    if (envSampler === 'rules') {
+      return createRuleBasedSampler(
+        getNonEmptyEnvVar('OTEL_TRACES_SAMPLER_ARG')
+      );
     }
   }
 
@@ -106,20 +114,18 @@ export function _setDefaultOptions(
   const envResource = getDetectedResource();
 
   const resourceFactory = options.resourceFactory || ((r: Resource) => r);
-  let resource = resourceFactory(
-    resourceFromAttributes(envResource.attributes || {}).merge(
-      configGetResource()
-    )
-  );
+  let resource = resourceFactory(envResource.merge(configGetResource()));
 
-  const serviceName =
+  const serviceName = String(
     options.serviceName ||
-    getNonEmptyConfigVar('OTEL_SERVICE_NAME') ||
-    resource.attributes[ATTR_SERVICE_NAME];
+      getNonEmptyConfigVar('OTEL_SERVICE_NAME') ||
+      findAttribute(resource, ATTR_SERVICE_NAME) ||
+      defaultServiceName()
+  );
 
   resource = resource.merge(
     resourceFromAttributes({
-      [ATTR_SERVICE_NAME]: serviceName || defaultServiceName(),
+      [ATTR_SERVICE_NAME]: serviceName,
     })
   );
 
@@ -179,7 +185,7 @@ export function _setDefaultOptions(
   return {
     realm,
     endpoint: options.endpoint,
-    serviceName: String(resource.attributes[ATTR_SERVICE_NAME]),
+    serviceName,
     accessToken,
     serverTimingEnabled:
       options.serverTimingEnabled ||
@@ -288,7 +294,7 @@ export function otlpSpanExporterFactory(options: TracingOptions): SpanExporter {
     ]);
 
     if (endpoint === undefined && envEndpoint === undefined) {
-      endpoint = `https://ingest.${options.realm}.signalfx.com/v2/trace/otlp`;
+      endpoint = `https://ingest.${options.realm}.observability.splunkcloud.com/v2/trace/otlp`;
       protocol = 'http/protobuf';
     } else {
       diag.warn(

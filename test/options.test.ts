@@ -46,7 +46,6 @@ import {
 
 import { strict as assert } from 'assert';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
-import * as os from 'os';
 import * as instrumentations from '../src/instrumentations';
 import type { TracingOptions } from '../src/tracing';
 import {
@@ -61,14 +60,14 @@ import { NextJsSpanProcessor } from '../src/tracing/NextJsSpanProcessor';
 
 const assertVersion = (versionAttr) => {
   assert.equal(typeof versionAttr, 'string');
-  assert(
+  assert.ok(
     /[0-9]+\.[0-9]+\.[0-9]+/.test(versionAttr),
     `${versionAttr} is not a valid version`
   );
 };
 const assertContainerId = (containerIdAttr) => {
   assert.equal(typeof containerIdAttr, 'string');
-  assert(
+  assert.ok(
     /^[abcdef0-9]+$/i.test(containerIdAttr),
     `${containerIdAttr} is not an hex string`
   );
@@ -131,7 +130,7 @@ describe('options', () => {
       ]);
 
       expectedAttributes.forEach((processAttribute) => {
-        assert(resAttrs[processAttribute], `${processAttribute} missing`);
+        assert.ok(resAttrs[processAttribute], `${processAttribute} missing`);
       });
 
       assert.deepStrictEqual(resAttrs[ATTR_SERVICE_NAME], '@splunk/otel');
@@ -175,18 +174,16 @@ describe('options', () => {
 
       const exporters = options.spanExporterFactory(options);
 
-      assert(Array.isArray(exporters));
+      assert.ok(Array.isArray(exporters));
       assert.deepStrictEqual(exporters.length, 1);
 
       const [exporter] = exporters;
 
-      assert(exporter instanceof OTLPTraceExporter);
+      assert.ok(exporter instanceof OTLPTraceExporter);
     });
 
-    it('reads the container when setting default options', async () => {
-      mock.method(os, 'platform', () => 'linux');
-
-      mock.method(containerDetector, 'detect', () => {
+    it('reads the container when setting default options', async (t) => {
+      t.mock.method(containerDetector, 'detect', () => {
         return {
           attributes: {
             [ATTR_CONTAINER_ID]:
@@ -258,7 +255,7 @@ describe('options', () => {
       propagatorFactory: testPropagatorFactory,
     });
 
-    assert(logger.warn.mock.calls.length === 0);
+    assert.ok(logger.warn.mock.calls.length === 0);
   });
 
   it('is possible to provide additional resource attributes', () => {
@@ -285,9 +282,9 @@ describe('options', () => {
       const options = _setDefaultOptions();
       const exporters = options.spanExporterFactory(options);
 
-      assert(Array.isArray(exporters));
+      assert.ok(Array.isArray(exporters));
       assert.deepStrictEqual(exporters.length, 1);
-      assert(exporters[0] instanceof ConsoleSpanExporter);
+      assert.ok(exporters[0] instanceof ConsoleSpanExporter);
     });
 
     it('can be set to none', () => {
@@ -295,7 +292,7 @@ describe('options', () => {
       const options = _setDefaultOptions();
       const exporters = options.spanExporterFactory(options);
 
-      assert(Array.isArray(exporters));
+      assert.ok(Array.isArray(exporters));
       assert.deepStrictEqual(exporters.length, 0);
     });
 
@@ -304,11 +301,11 @@ describe('options', () => {
       const options = _setDefaultOptions();
       const exporters = options.spanExporterFactory(options);
 
-      assert(Array.isArray(exporters));
+      assert.ok(Array.isArray(exporters));
       assert.deepStrictEqual(exporters.length, 2);
 
-      assert(exporters[0] instanceof OTLPTraceExporter);
-      assert(exporters[1] instanceof ConsoleSpanExporter);
+      assert.ok(exporters[0] instanceof OTLPTraceExporter);
+      assert.ok(exporters[1] instanceof ConsoleSpanExporter);
     });
 
     it('throws on invalid key', () => {
@@ -323,10 +320,10 @@ describe('options', () => {
     it('does not add a nextjs span processor by default', () => {
       const options = _setDefaultOptions();
       const processors = options.spanProcessorFactory(options);
-      assert(Array.isArray(processors));
+      assert.ok(Array.isArray(processors));
 
       assert.deepStrictEqual(processors.length, 1);
-      assert(processors[0] instanceof SplunkBatchSpanProcessor);
+      assert.ok(processors[0] instanceof SplunkBatchSpanProcessor);
     });
 
     it('enables nextjs span processor', () => {
@@ -334,11 +331,11 @@ describe('options', () => {
 
       const options = _setDefaultOptions();
       const processors = options.spanProcessorFactory(options);
-      assert(Array.isArray(processors));
+      assert.ok(Array.isArray(processors));
 
       assert.deepStrictEqual(processors.length, 2);
-      assert(processors[0] instanceof NextJsSpanProcessor);
-      assert(processors[1] instanceof SplunkBatchSpanProcessor);
+      assert.ok(processors[0] instanceof NextJsSpanProcessor);
+      assert.ok(processors[1] instanceof SplunkBatchSpanProcessor);
     });
   });
 
@@ -373,14 +370,14 @@ describe('options', () => {
       assert.deepStrictEqual(options.endpoint, undefined);
 
       const exporters = options.spanExporterFactory(options);
-      assert(Array.isArray(exporters));
+      assert.ok(Array.isArray(exporters));
       assert.deepStrictEqual(exporters.length, 1);
 
       const [exporter] = exporters;
-      assert(exporter instanceof OTLPTraceExporter);
+      assert.ok(exporter instanceof OTLPTraceExporter);
       assert.deepStrictEqual(
         utils.exporterUrl(exporter),
-        `https://ingest.us0.signalfx.com/v2/trace/otlp`
+        `https://ingest.us0.observability.splunkcloud.com/v2/trace/otlp`
       );
     });
 
@@ -403,19 +400,19 @@ describe('options', () => {
       const options = _setDefaultOptions();
       const exporters = options.spanExporterFactory(options);
 
-      assert(Array.isArray(exporters));
+      assert.ok(Array.isArray(exporters));
       const [exporter] = exporters;
-      assert(exporter instanceof OTLPTraceExporter);
+      assert.ok(exporter instanceof OTLPTraceExporter);
       assert.deepStrictEqual(
         utils.exporterUrl(exporter),
-        'https://ingest.us0.signalfx.com/v2/trace/otlp'
+        'https://ingest.us0.observability.splunkcloud.com/v2/trace/otlp'
       );
       const oneLogMatches = logger.warn.mock.calls.some((call) =>
         call.arguments[0].includes(
           `OTLP span exporter factory: defaulting protocol to 'http/protobuf' instead of grpc due to realm being defined.`
         )
       );
-      assert(oneLogMatches);
+      assert.ok(oneLogMatches);
     });
 
     it('warns when realm and endpoint are both set', () => {
@@ -426,7 +423,7 @@ describe('options', () => {
 
       const options = _setDefaultOptions();
       const exporters = options.spanExporterFactory(options);
-      assert(Array.isArray(exporters));
+      assert.ok(Array.isArray(exporters));
       const [exporter] = exporters;
 
       const oneLogMatches = logger.warn.mock.calls.some((call) =>
@@ -434,9 +431,9 @@ describe('options', () => {
           `OTLP span exporter factory: Realm value ignored (full endpoint URL has been specified).`
         )
       );
-      assert(oneLogMatches);
+      assert.ok(oneLogMatches);
 
-      assert(
+      assert.ok(
         exporter instanceof OTLPTraceExporter,
         'Expected exporter to be instance of OTLPTraceExporter'
       );
@@ -462,9 +459,9 @@ describe('options', () => {
       process.env.OTEL_EXPORTER_OTLP_PROTOCOL = 'grpc';
       const options = _setDefaultOptions();
       const exporters = options.spanExporterFactory(options);
-      assert(Array.isArray(exporters));
+      assert.ok(Array.isArray(exporters));
       const [exporter] = exporters;
-      assert(exporter instanceof OTLPGrpcTraceExporter);
+      assert.ok(exporter instanceof OTLPGrpcTraceExporter);
     });
 
     it('prefers OTEL_EXPORTER_OTLP_TRACES_PROTOCOL over OTEL_EXPORTER_OTLP_PROTOCOL', () => {
@@ -472,18 +469,18 @@ describe('options', () => {
       process.env.OTEL_EXPORTER_OTLP_PROTOCOL = 'http/protobuf';
       const options = _setDefaultOptions();
       const exporters = options.spanExporterFactory(options);
-      assert(Array.isArray(exporters));
+      assert.ok(Array.isArray(exporters));
       const [exporter] = exporters;
-      assert(exporter instanceof OTLPGrpcTraceExporter);
+      assert.ok(exporter instanceof OTLPGrpcTraceExporter);
     });
 
     it('is possible to use OTEL_EXPORTER_OTLP_ENDPOINT', () => {
       process.env.OTEL_EXPORTER_OTLP_ENDPOINT = 'foobar:4200';
       const options = _setDefaultOptions();
       const exporters = options.spanExporterFactory(options);
-      assert(Array.isArray(exporters));
+      assert.ok(Array.isArray(exporters));
       const [exporter] = exporters;
-      assert(exporter instanceof OTLPTraceExporter);
+      assert.ok(exporter instanceof OTLPTraceExporter);
       assert.deepStrictEqual(
         utils.exporterUrl(exporter),
         'foobar:4200/v1/traces'
@@ -495,9 +492,9 @@ describe('options', () => {
       process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT = 'barfoo:2400';
       const options = _setDefaultOptions();
       const exporters = options.spanExporterFactory(options);
-      assert(Array.isArray(exporters));
+      assert.ok(Array.isArray(exporters));
       const [exporter] = exporters;
-      assert(exporter instanceof OTLPTraceExporter);
+      assert.ok(exporter instanceof OTLPTraceExporter);
       assert.deepStrictEqual(utils.exporterUrl(exporter), 'barfoo:2400');
     });
   });

@@ -25,8 +25,7 @@ export type DbStatementSerializer = (
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ResponseHook = (span: Span, response: any) => void;
 
-export interface ElasticsearchInstrumentationConfig
-  extends InstrumentationConfig {
+export interface ElasticsearchInstrumentationConfig extends InstrumentationConfig {
   /**
    * Elasticsearch operation use http/https under the hood.
    * If Elasticsearch instrumentation is enabled, an http/https operation will also create.

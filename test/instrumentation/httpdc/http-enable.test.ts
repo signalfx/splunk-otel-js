@@ -445,13 +445,11 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
     it('should not trace ignored requests when ignore hook returns true', async () => {
       const testValue = 'ignored-string';
 
-      await Promise.all([
-        httpRequest.get(`${protocol}://${hostname}:${serverPort}`, {
-          headers: {
-            'user-agent': testValue,
-          },
-        }),
-      ]);
+      await httpRequest.get(`${protocol}://${hostname}:${serverPort}`, {
+        headers: {
+          'user-agent': testValue,
+        },
+      });
       const spans = memoryExporter.getFinishedSpans();
       assert.strictEqual(spans.length, 0);
     });
@@ -492,7 +490,7 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
           await httpRequest.get(arg as any);
         } catch (error) {
           // request has not been made
-          assert(error instanceof Error);
+          assert.ok(error instanceof Error);
         }
         const spans = memoryExporter.getFinishedSpans();
         // for this arg with don't provide trace. We pass arg to original method (http.get)
@@ -536,7 +534,7 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
       try {
         await promiseRequest;
         assert.fail();
-      } catch (error) {
+      } catch {
         const spans = memoryExporter.getFinishedSpans();
         assert.strictEqual(spans.length, 2);
         const clientSpan = spanByKind(SpanKind.CLIENT, spans);

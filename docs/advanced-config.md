@@ -66,7 +66,6 @@ This distribution supports all the configuration options supported by the compon
 | `OTEL_SPAN_LINK_COUNT_LIMIT`                                    | `1000`\*                | Stable  |
 | `OTEL_TRACES_EXPORTER`<br>`tracing.spanExporterFactory`         | `otlp`                  | Stable  | Chooses the trace exporters. Shortcut for setting `spanExporterFactory`. Comma-delimited list of exporters. Currently supported values: `otlp`, `console`, `none`.
 | `OTEL_EXPORTER_OTLP_TRACES_PROTOCOL`                            | `http/protobuf`         | Stable  | Metric exporter protocol. Supported values: `http/protobuf`, `grpc`.
-| `OTEL_TRACES_SAMPLER`                                           | `parentbased_always_on` | Stable  | Sampler to be used for traces. See [Sampling](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling)
 | `OTEL_TRACES_SAMPLER_ARG`                                       |                         | Stable  | String value to be used as the sampler argument. Only be used if OTEL_TRACES_SAMPLER is set.
 | `SPLUNK_ACCESS_TOKEN`<br>`accessToken`                          |                         | Stable  | The optional access token for exporting signal data directly to SignalFx API.
 | `SPLUNK_REALM`<br>`realm`                                       |                         | Stable  | The name of your organization's realm, for example, ``us0``. When you set the realm, telemetry is sent directly to the ingest endpoint of Splunk Observability Cloud, bypassing the Splunk OpenTelemetry Collector. Overridden by settings that define a complete endpoint URL, like `OTEL_EXPORTER_OTLP_ENDPOINT`.
@@ -74,6 +73,41 @@ This distribution supports all the configuration options supported by the compon
 | `SPLUNK_REDIS_INCLUDE_COMMAND_ARGS`                             | `false`                 | Stable  | Will include the full redis query in `db.statement` span attribute when using `redis` instrumentation.
 
 \*: Overwritten default value
+
+#### Sampling configuration
+
+| Environment variable     | Default value           | Support | Notes
+| ------------------------ | ------------------------ | -------------- | ------- | ----------- |
+| `OTEL_TRACES_SAMPLER`    | `always_on` | Stable  | Sampler to be used for traces. See [Sampling](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling)
+
+Splunk Distribution of OpenTelemetry JS supports all standard samplers as provided by
+[OpenTelemetry JS SDK](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-sdk-trace-base#built-in-samplers).
+In addition, the distribution adds the following samplers:
+
+### `rules`
+This sampler allows to ignore individual endpoints and drop all traces that originate from them.
+It applies only to spans with `SERVER` kind.
+
+For example, the following configuration results in all requests to `/healthcheck` to be excluded from monitoring:
+
+```shell
+export OTEL_TRACES_SAMPLER=rules
+export OTEL_TRACES_SAMPLER_ARG=drop=/healthcheck;fallback=parentbased_always_on
+```
+All requests to downstream services that happen as a consequence of calling an excluded endpoint are also excluded.
+
+The value of `OTEL_TRACES_SAMPLER_ARG` is interpreted as a semicolon-separated list of rules.
+The following types of rules are supported:
+
+- `drop=<value>`: The sampler drops a span if its `url.path` (or `http.target` for instrumentations using older semantic conventions) attribute has a substring equal to the provided value.
+  You can provide as many `drop` rules as you want.
+- `fallback=sampler`: Fallback sampler used if no `drop` rule matched a given span.
+  Supported fallback samplers are `always_on` and `parentbased_always_on`.
+  Probability samplers such as `traceidratio` are not supported.
+
+> If several `fallback` rules are provided, only the last one will be in effect.
+
+If `OTEL_TRACES_SAMPLER_ARG` is not provided or has en empty value, no `drop` rules are configured and `always_on` sampler is as default.
 
 #### Additional `tracing` config options in `start()`
 
@@ -128,7 +162,7 @@ An [OpenTelemetry configuration YAML file](https://github.com/open-telemetry/ope
 
 Other options provided via environment variables will be ignored. Programmatic options sill take preference over the file based configuration.
 
-See the OpenTelemetry's [getting started](https://github.com/open-telemetry/opentelemetry-configuration/blob/main/examples/getting-started.yaml) example or use the following as a starter configuration:
+See the OpenTelemetry [examples](https://github.com/open-telemetry/opentelemetry-configuration/tree/main/examples) or use the following as a starter configuration:
 
 ```yaml
 file_format: "1.0-rc.2"

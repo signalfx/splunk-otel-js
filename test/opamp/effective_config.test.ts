@@ -15,7 +15,7 @@
  */
 
 import { strict as assert } from 'assert';
-import { describe, it, beforeEach, afterEach, mock } from 'node:test';
+import { describe, it, beforeEach } from 'node:test';
 import { opampGetEffectiveConfig } from '../../src/opamp/EffectiveConfig';
 import { loadConfiguration } from '../../src/configuration';
 import { cleanEnvironment } from '../utils';

@@ -13,7 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { parseEnvBooleanString, parseLogLevel, toDiagLogLevel } from './utils';
+
+import {
+  findAttribute,
+  parseEnvBooleanString,
+  parseLogLevel,
+  toDiagLogLevel,
+} from './utils';
 import { startMetrics, StartMetricsOptions } from './metrics';
 import { startProfiling, StartProfilingOptions } from './profiling';
 import type { EnvVarKey, LogLevel } from './types';
@@ -123,7 +129,7 @@ export const start = (options: Partial<Options> = {}) => {
   const serviceName =
     options.serviceName ||
     getNonEmptyConfigVar('OTEL_SERVICE_NAME') ||
-    envResource.attributes?.[ATTR_SERVICE_NAME];
+    findAttribute(envResource, ATTR_SERVICE_NAME);
 
   if (!serviceName) {
     diag.warn(

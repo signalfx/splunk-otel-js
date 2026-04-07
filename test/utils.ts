@@ -126,12 +126,12 @@ export function calledWithExactly(mocked: any, expected: any) {
     try {
       assert.deepStrictEqual(call.arguments[0], expected);
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   });
 
-  assert(match, `Expected call with: ${JSON.stringify(expected)} not found`);
+  assert.ok(match, `Expected call with: ${JSON.stringify(expected)} not found`);
 }
 
 export function calledOnceWithMatch(mocked: any, match: object) {

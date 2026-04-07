@@ -19,7 +19,7 @@ import { beforeEach, describe, it } from 'node:test';
 import { inspect } from 'util';
 
 import { context, trace } from '@opentelemetry/api';
-import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
+import { resourceFromAttributes } from '@opentelemetry/resources';
 import { InMemorySpanExporter } from '@opentelemetry/sdk-trace-base';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 
@@ -53,7 +53,7 @@ describe('profiling', () => {
       await options.resource.waitForAsyncAttributes?.();
       const testResource = resourceFromAttributes({
         [ATTR_SERVICE_NAME]: '@splunk/otel',
-      }).merge(resourceFromAttributes(detectResource().attributes || {}));
+      }).merge(detectResource());
       await testResource.waitForAsyncAttributes?.();
 
       const { resource: defaultResource, ...defaultOtherAttrs } = options;

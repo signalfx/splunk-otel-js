@@ -48,7 +48,6 @@ import {
 } from '@opentelemetry/semantic-conventions';
 import { IncomingMessage, ServerResponse } from 'http';
 import { Socket } from 'net';
-import * as url from 'url';
 import {
   SEMATTRS_HTTP_REQUEST_CONTENT_LENGTH,
   SEMATTRS_HTTP_REQUEST_CONTENT_LENGTH_UNCOMPRESSED,
@@ -234,7 +233,7 @@ describe('Utility', () => {
       const request = {
         socket: {},
       } as IncomingMessage;
-      const result = await new Promise<void>((resolve) => {
+      await new Promise<void>((resolve) => {
         context.with(
           setRPCMetadata(context.active(), {
             type: RPCType.HTTP,
@@ -440,7 +439,7 @@ describe('Utility', () => {
       setAttributeSpy = (t as TestContext).mock.method(span, 'setAttribute');
     });
 
-    it('should set attributes for request and response keys', (t) => {
+    it('should set attributes for request and response keys', () => {
       utils.headerCapture('request', ['Origin'])(span, () => 'localhost');
       utils.headerCapture('response', ['Cookie'])(span, () => 'token=123');
       assert.deepStrictEqual(

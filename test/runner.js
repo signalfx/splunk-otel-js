@@ -22,7 +22,7 @@ function findTestFiles(dir, fileList = []) {
 
 let testDir;
 if (process.env.TEST_DIR) {
-  testDir = path.resolve(__dirname, process.env.TEST_DIR)
+  testDir = path.resolve(__dirname, process.env.TEST_DIR);
 } else {
   testDir = __dirname;
 }
@@ -52,7 +52,6 @@ if (process.argv.length > 2) {
     return false;
   });
 }
-
 
 const args = [
   '--require',

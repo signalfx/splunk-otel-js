@@ -63,9 +63,9 @@ export class HttpTransport implements Transport {
               timeout: 30_000,
             },
             (res) => {
-              const chunks: Buffer[] = [];
+              const chunks: Uint8Array[] = [];
 
-              res.on('data', (chunk: Buffer) => {
+              res.on('data', (chunk: Uint8Array) => {
                 chunks.push(chunk);
               });
 

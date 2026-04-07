@@ -35,7 +35,9 @@ exports.generate = () => {
 
 exports.check = () => {
   if (fs.readFileSync(getVersionFilePath()).toString() != generateCode()) {
-    console.error('Version file is incorrect. Please run $ npm run version:generate');
+    console.error(
+      'Version file is incorrect. Please run $ npm run version:generate'
+    );
     process.exit(1);
   }
 };

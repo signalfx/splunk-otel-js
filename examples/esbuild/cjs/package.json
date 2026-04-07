@@ -15,9 +15,8 @@
     "@opentelemetry/instrumentation-express": "0.47.1",
     "@splunk/otel": "4.0.0",
     "@splunk/otel-esbuild-plugin-node": "0.0.1",
-    "axios": "^0.28.0",
     "env-cmd": "^10.1.0",
-    "express": "^4.17.1",
-    "esbuild": "^0.25.9"
+    "esbuild": "^0.25.9",
+    "express": "^4.17.1"
   }
 }

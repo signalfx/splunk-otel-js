@@ -5,16 +5,15 @@ const {
   logSpanTable,
   logMetricTable,
   assertSpans,
-  assertMetrics
+  assertMetrics,
 } = require('../utils.js');
-
 
 function loadSnapshot() {
   if (process.env.MODULE_SYS === 'cjs') {
     return require('./snapshot-cjs.js');
   }
 
-    return require('./snapshot-esm.js');
+  return require('./snapshot-esm.js');
 }
 
 const snapshot = loadSnapshot();
@@ -40,6 +39,5 @@ const METRICS_TIMEOUT = Number(process.env.METRICS_TIMEOUT ?? 30);
   logMetricTable(metrics);
 
   assertMetrics(metrics, metricsSnapshot);
-  console.log("metrics validated");
-
+  console.log('metrics validated');
 })();

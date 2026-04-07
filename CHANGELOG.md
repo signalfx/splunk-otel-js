@@ -1,5 +1,14 @@
 # Change Log - @splunk/otel
 
+## Unreleased
+
+- Add Oracle DB support for DB context propagation. Can be enabled via `SPLUNK_DB_TRACE_CONTEXT_PROPAGATION_ENABLED` env var or `databaseTraceContextPropagationEnabled` config option.
+
+## 4.4.0
+
+- Upgrade to OpenTelemetry 2.5.1 / 0.212.0. [#1092](https://github.com/signalfx/splunk-otel-js/pull/1092)
+- Add support for Node.js 25. [#1093](https://github.com/signalfx/splunk-otel-js/pull/1093)
+
 ## 4.3.0
 
 - Upgrade to OpenTelemetry experimental 0.208.0. [#1083](https://github.com/signalfx/splunk-otel-js/pull/1083)

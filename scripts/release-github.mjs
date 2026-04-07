@@ -1,8 +1,8 @@
-const fs = require('fs');
-const path = require('path');
-const { Octokit } = require('octokit');
+import fs from 'fs';
+import path from 'path';
+import { Octokit } from 'octokit';
 
-const { getReleaseMessage } = require('./release-message');
+import { getReleaseMessage } from './release-message.mjs';
 
 async function createRelease() {
   const github_token = process.env.GITHUB_TOKEN;
@@ -13,13 +13,15 @@ async function createRelease() {
 
   const octokit = new Octokit({ auth: github_token });
 
-  const packageDirArg = process.argv.find(arg => arg.startsWith('--package_dir='));
-  
+  const packageDirArg = process.argv.find((arg) =>
+    arg.startsWith('--package_dir=')
+  );
+
   if (!packageDirArg) {
     throw new Error('Missing --package_dir=PATH');
   }
 
-  const packageDir = packageDirArg.split('=')[1]; 
+  const packageDir = packageDirArg.split('=')[1];
 
   const {
     data: { login },
@@ -56,7 +58,7 @@ async function createRelease() {
   });
   console.log(`Release created ${githubRelease.id}.`);
 
-  const distDirectory = path.join(__dirname, '..', 'dist');
+  const distDirectory = path.join(import.meta.dirname, '..', 'dist');
   console.log(`Uploading assets from ${distDirectory}.`);
   for (const fileName of fs.readdirSync(distDirectory)) {
     const filePath = path.join(distDirectory, fileName);
@@ -76,7 +78,7 @@ async function createRelease() {
   console.log('Uploaded assets.');
 }
 
-createRelease().catch(e => {
+createRelease().catch((e) => {
   console.error(e);
   process.exit(1);
 });
