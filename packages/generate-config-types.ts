@@ -21,28 +21,52 @@
  * Input:  schema/opentelemetry_configuration.json
  * Output: src/configuration/schema.ts
  *
- * Usage:  node scripts/generate-config-types.mjs
+ * Usage:  node -r ts-node/register/transpile-only packages/generate-config-types.ts
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 
 const SCHEMA_PATH = join(ROOT, 'schema', 'opentelemetry_configuration.json');
 const OUTPUT_PATH = join(ROOT, 'src', 'configuration', 'schema.ts');
 
-export function generateTypes(schema) {
-  const defs = schema.$defs || {};
-  const lines = [];
+type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
+type JsonArray = JsonValue[];
+type JsonObject = { [key: string]: JsonValue };
+
+type Schema = {
+  $defs?: Record<string, Schema>;
+  type?: string | string[];
+  enum?: string[];
+  properties?: Record<string, Schema>;
+  required?: string[];
+  description?: string;
+  title?: string;
+  additionalProperties?: boolean | Schema;
+  minProperties?: number;
+  maxProperties?: number;
+  minItems?: number;
+  items?: Schema;
+  $ref?: string;
+};
+
+type GeneratorStats = {
+  output: string;
+  defCount: number;
+  lineCount: number;
+};
+
+export function generateTypes(schema: Schema): GeneratorStats {
+  const defs = schema.$defs ?? {};
+  const lines: string[] = [];
 
   function emit(line = '') {
     lines.push(line);
   }
 
-  function emitJSDoc(description, indentLevel = 0) {
+  function emitJSDoc(description: string | undefined, indentLevel = 0) {
     if (!description) return;
 
     const cleaned = description.replace(/\n+$/, '');
@@ -60,7 +84,7 @@ export function generateTypes(schema) {
     emit(`${prefix} */`);
   }
 
-  function resolveType(propSchema) {
+  function resolveType(propSchema: Schema): string {
     if (propSchema.$ref) {
       const refName = propSchema.$ref.replace('#/$defs/', '');
       return refName;
@@ -99,9 +123,7 @@ export function generateTypes(schema) {
     }
 
     if (type === 'array') {
-      const itemType = propSchema.items
-        ? resolveType(propSchema.items)
-        : 'unknown';
+      const itemType = propSchema.items ? resolveType(propSchema.items) : 'unknown';
       if (propSchema.minItems && propSchema.minItems > 0) {
         return `[${itemType}, ...${itemType}[]]`;
       }
@@ -123,7 +145,7 @@ export function generateTypes(schema) {
     return mapPrimitive(type);
   }
 
-  function mapPrimitive(type) {
+  function mapPrimitive(type: string | undefined): string {
     switch (type) {
       case 'string':
         return 'string';
@@ -141,21 +163,24 @@ export function generateTypes(schema) {
     }
   }
 
-  function wrapNullable(typeStr, schemaType) {
+  function wrapNullable(typeStr: string, schemaType: string | string[] | undefined) {
     if (Array.isArray(schemaType) && schemaType.includes('null')) {
       return `(${typeStr}) | null`;
     }
     return typeStr;
   }
 
-  function quotePropName(name) {
+  function quotePropName(name: string) {
     if (/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(name)) {
       return name;
     }
     return `'${name}'`;
   }
 
-  function indexSignatureType(additionalProperties, hasNamedProps) {
+  function indexSignatureType(
+    additionalProperties: boolean | Schema | undefined,
+    hasNamedProps: boolean
+  ) {
     if (additionalProperties === true) {
       return 'unknown';
     }
@@ -168,7 +193,7 @@ export function generateTypes(schema) {
     return undefined;
   }
 
-  function isDiscriminatedUnion(def) {
+  function isDiscriminatedUnion(def: Schema) {
     return (
       def.minProperties === 1 &&
       def.maxProperties === 1 &&
@@ -177,7 +202,7 @@ export function generateTypes(schema) {
     );
   }
 
-  function isMarkerType(def) {
+  function isMarkerType(def: Schema) {
     const type = def.type;
     const isNullableObject =
       Array.isArray(type) && type.includes('object') && type.includes('null');
@@ -189,7 +214,7 @@ export function generateTypes(schema) {
     );
   }
 
-  function isNullableObjectWithProps(def) {
+  function isNullableObjectWithProps(def: Schema) {
     const type = def.type;
     return (
       Array.isArray(type) &&
@@ -199,9 +224,9 @@ export function generateTypes(schema) {
     );
   }
 
-  function emitObjectInterface(name, def) {
-    const required = new Set(def.required || []);
-    const props = def.properties || {};
+  function emitObjectInterface(name: string, def: Schema) {
+    const required = new Set(def.required ?? []);
+    const props = def.properties ?? {};
     const hasNamedProps = Object.keys(props).length > 0;
     const idxType = indexSignatureType(def.additionalProperties, hasNamedProps);
 
@@ -221,9 +246,9 @@ export function generateTypes(schema) {
     emit('}');
   }
 
-  function emitNullableObjectType(name, def) {
-    const required = new Set(def.required || []);
-    const props = def.properties || {};
+  function emitNullableObjectType(name: string, def: Schema) {
+    const required = new Set(def.required ?? []);
+    const props = def.properties ?? {};
     const hasNamedProps = Object.keys(props).length > 0;
     const idxType = indexSignatureType(def.additionalProperties, hasNamedProps);
 
@@ -243,8 +268,8 @@ export function generateTypes(schema) {
     emit('}');
   }
 
-  function emitDiscriminatedUnion(name, def) {
-    const props = def.properties || {};
+  function emitDiscriminatedUnion(name: string, def: Schema) {
+    const props = def.properties ?? {};
     const idxType = indexSignatureType(def.additionalProperties, true);
 
     emit(`export interface ${name} {`);
@@ -262,8 +287,8 @@ export function generateTypes(schema) {
     emit('}');
   }
 
-  function emitEnumType(name, def) {
-    const members = def.enum.map((v) => `'${v}'`).join(' | ');
+  function emitEnumType(name: string, def: Schema) {
+    const members = (def.enum ?? []).map((v) => `'${v}'`).join(' | ');
     const isNullable = Array.isArray(def.type) && def.type.includes('null');
 
     if (isNullable) {
@@ -273,11 +298,11 @@ export function generateTypes(schema) {
     }
   }
 
-  function emitMarkerType(name) {
+  function emitMarkerType(name: string) {
     emit(`export type ${name} = Record<string, never> | null;`);
   }
 
-  function emitOpenMap(name, def) {
+  function emitOpenMap(name: string, def: Schema) {
     const valueType =
       def.additionalProperties === true
         ? 'unknown'
@@ -287,7 +312,7 @@ export function generateTypes(schema) {
     emit(`export type ${name} = Record<string, ${valueType}>;`);
   }
 
-  function classifyDef(def) {
+  function classifyDef(def: Schema) {
     if (def.enum) return 'enum';
     if (isMarkerType(def)) return 'marker';
     if (isDiscriminatedUnion(def)) return 'discriminated-union';
@@ -321,21 +346,21 @@ export function generateTypes(schema) {
     return 'unknown';
   }
 
-  function topologicalSort(defs) {
-    const sorted = [];
-    const visited = new Set();
-    const visiting = new Set();
+  function topologicalSort(definitions: Record<string, Schema>) {
+    const sorted: string[] = [];
+    const visited = new Set<string>();
+    const visiting = new Set<string>();
 
-    function visit(name) {
+    function visit(name: string) {
       if (visited.has(name)) return;
       if (visiting.has(name)) return;
       visiting.add(name);
 
-      const def = defs[name];
+      const def = definitions[name];
       if (def) {
         const refs = collectRefs(def);
         for (const ref of refs) {
-          if (defs[ref]) visit(ref);
+          if (definitions[ref]) visit(ref);
         }
       }
 
@@ -344,26 +369,26 @@ export function generateTypes(schema) {
       sorted.push(name);
     }
 
-    for (const name of Object.keys(defs)) {
+    for (const name of Object.keys(definitions)) {
       visit(name);
     }
 
     return sorted;
   }
 
-  function collectRefs(obj, refs = new Set()) {
+  function collectRefs(obj: JsonValue | Schema | undefined, refs = new Set<string>()) {
     if (!obj || typeof obj !== 'object') return refs;
-    if (obj.$ref) {
+    if ('$ref' in obj && typeof obj.$ref === 'string') {
       refs.add(obj.$ref.replace('#/$defs/', ''));
     }
     for (const value of Object.values(obj)) {
-      collectRefs(value, refs);
+      collectRefs(value as JsonValue | Schema | undefined, refs);
     }
     return refs;
   }
 
   emit(
-    '/* This file is auto-generated by scripts/generate-config-types.mjs. Do not edit. */'
+    '/* This file is auto-generated by packages/generate-config-types.ts. Do not edit. */'
   );
   emit('');
 
@@ -408,7 +433,7 @@ export function generateTypes(schema) {
     emit('');
   }
 
-  emitJSDoc(schema.description || schema.title);
+  emitJSDoc(schema.description ?? schema.title);
   emitObjectInterface('OpenTelemetryConfiguration', schema);
   emit('');
 
@@ -420,13 +445,13 @@ export function generateTypes(schema) {
 }
 
 export function writeTypes(schemaPath = SCHEMA_PATH, outputPath = OUTPUT_PATH) {
-  const schema = JSON.parse(readFileSync(schemaPath, 'utf-8'));
+  const schema = JSON.parse(readFileSync(schemaPath, 'utf-8')) as Schema;
   const { output, defCount, lineCount } = generateTypes(schema);
   writeFileSync(outputPath, output);
   return { defCount, lineCount, outputPath };
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (require.main === module) {
   const { defCount, lineCount, outputPath } = writeTypes();
   console.log(
     `Generated ${outputPath} (${defCount} types, ${lineCount} lines)`

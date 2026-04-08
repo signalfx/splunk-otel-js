@@ -4,7 +4,6 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 
 type GeneratorResult = {
   output: string;
@@ -18,7 +17,7 @@ type GeneratorModule = {
 
 const SCRIPT_PATH = path.resolve(
   __dirname,
-  '../../scripts/generate-config-types.mjs'
+  '../../packages/generate-config-types.ts'
 );
 const REAL_SCHEMA_PATH = path.resolve(
   __dirname,
@@ -28,10 +27,6 @@ const TSC_PATH = path.resolve(
   __dirname,
   '../../node_modules/typescript/bin/tsc'
 );
-const importModule = new Function('specifier', 'return import(specifier);') as (
-  specifier: string
-) => Promise<GeneratorModule>;
-
 let generateTypes: GeneratorModule['generateTypes'];
 
 function createTempDir() {
@@ -53,8 +48,8 @@ function assertInOrder(haystack: string, needles: string[]) {
 }
 
 describe('generate-config-types', () => {
-  before(async () => {
-    const mod = await importModule(pathToFileURL(SCRIPT_PATH).href);
+  before(() => {
+    const mod = require(SCRIPT_PATH) as GeneratorModule;
     generateTypes = mod.generateTypes;
   });
 
