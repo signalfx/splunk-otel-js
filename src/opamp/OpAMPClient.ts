@@ -16,7 +16,6 @@
 
 import { isDeepStrictEqual } from 'node:util';
 import Long from 'long';
-import { v7 as uuidv7 } from 'uuid';
 import { diag } from '@opentelemetry/api';
 import { opamp } from './proto/opamp';
 import type { OpAMPOptions } from './types';
@@ -24,16 +23,13 @@ import type { Transport } from './HttpTransport';
 import { HttpTransport } from './HttpTransport';
 import { ExponentialBackoff } from './backoff';
 import { Resource } from '@opentelemetry/resources';
+import { uuid7 } from './uuid';
 
 const { AgentToServer, ServerToAgent } = opamp.proto;
 const ServerToAgentFlags = opamp.proto.ServerToAgentFlags;
 
 function nowNano(): Long {
   return Long.fromNumber(Date.now()).multiply(1_000_000);
-}
-
-function newInstanceUid(): Uint8Array {
-  return uuidv7(undefined, new Uint8Array(16));
 }
 
 const { AgentCapabilities } = opamp.proto;
@@ -95,7 +91,7 @@ export class OpAMPClient {
 
   constructor(options: OpAMPOptions, transport?: Transport) {
     this._options = options;
-    this._instanceUid = newInstanceUid();
+    this._instanceUid = uuid7();
     this._transport =
       transport ?? new HttpTransport(options.endpoint, options.accessToken);
     this._backoff = new ExponentialBackoff({ baseMs: 1000, maxMs: 60_000 });

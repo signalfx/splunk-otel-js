@@ -136,7 +136,6 @@
     "node-gyp-build": "^4.8.4",
     "protobufjs": "^8.0.0",
     "semver": "^7.7.4",
-    "uuid": "13.0.0",
     "yaml": "^2.8.3"
   },
   "devDependencies": {
