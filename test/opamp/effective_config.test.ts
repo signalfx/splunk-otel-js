@@ -16,65 +16,45 @@
 
 import { strict as assert } from 'assert';
 import { describe, it, beforeEach } from 'node:test';
-import { opampGetEffectiveConfig } from '../../src/opamp/EffectiveConfig';
-import { loadConfiguration } from '../../src/configuration';
+import {
+  getLoadedConfigurationString,
+  loadConfiguration,
+} from '../../src/configuration';
 import { cleanEnvironment } from '../utils';
 
 describe('EffectiveConfig', () => {
-  describe('opampGetEffectiveConfig', () => {
+  describe('getLoadedConfigurationString', () => {
     beforeEach(() => {
       cleanEnvironment();
     });
 
-    it('returns env type config with SPLUNK_ and OTEL_ vars when no yaml config loaded', () => {
+    it('returns env type with SPLUNK_ and OTEL_ vars when no yaml config loaded', () => {
       process.env.SPLUNK_ACCESS_TOKEN = 'test-token';
       process.env.OTEL_SERVICE_NAME = 'my-service';
       process.env.UNRELATED_VAR = 'should-not-appear';
 
-      const config = opampGetEffectiveConfig();
+      const config = getLoadedConfigurationString();
 
-      assert(config.configMap, 'should have configMap');
-      assert(config.configMap.configMap, 'should have inner configMap');
-
-      const envEntry = config.configMap.configMap['env'];
-      assert(envEntry, 'should have env entry');
-      assert.strictEqual(envEntry.contentType, 'text/plain');
-
-      const body = new TextDecoder().decode(envEntry.body as Uint8Array);
+      assert.strictEqual(config.type, 'env');
       assert(
-        body.includes('SPLUNK_ACCESS_TOKEN=test-token'),
+        config.content.includes('SPLUNK_ACCESS_TOKEN=test-token'),
         'should include SPLUNK_ vars'
       );
       assert(
-        body.includes('OTEL_SERVICE_NAME=my-service'),
+        config.content.includes('OTEL_SERVICE_NAME=my-service'),
         'should include OTEL_ vars'
       );
       assert(
-        !body.includes('UNRELATED_VAR'),
+        !config.content.includes('UNRELATED_VAR'),
         'should not include unrelated vars'
       );
     });
 
-    it('encodes body as Uint8Array', () => {
-      process.env.OTEL_TRACES_EXPORTER = 'otlp';
-
-      const config = opampGetEffectiveConfig();
-      const envEntry = config.configMap!.configMap!['env'];
-
-      assert(envEntry!.body instanceof Uint8Array, 'body should be Uint8Array');
-    });
-
     it('returns empty content when no SPLUNK_ or OTEL_ vars are set', () => {
-      const config = opampGetEffectiveConfig();
-      const envEntry = config.configMap!.configMap!['env'];
-      assert(envEntry, 'should still have env entry');
+      const config = getLoadedConfigurationString();
 
-      const body = new TextDecoder().decode(envEntry.body as Uint8Array);
-      assert.strictEqual(
-        body,
-        '',
-        'body should be empty when no matching env vars'
-      );
+      assert.strictEqual(config.type, 'env');
+      assert.strictEqual(config.content, '');
     });
 
     it('includes multiple env vars separated by newlines', () => {
@@ -82,11 +62,10 @@ describe('EffectiveConfig', () => {
       process.env.OTEL_LOG_LEVEL = 'debug';
       process.env.SPLUNK_TRACE_RESPONSE_HEADER_ENABLED = 'true';
 
-      const config = opampGetEffectiveConfig();
-      const envEntry = config.configMap!.configMap!['env'];
-      const body = new TextDecoder().decode(envEntry!.body as Uint8Array);
+      const config = getLoadedConfigurationString();
 
-      const lines = body.split('\n');
+      assert.strictEqual(config.type, 'env');
+      const lines = config.content.split('\n');
       assert.strictEqual(lines.length, 3, 'should have 3 env var lines');
       assert(lines.some((l) => l === 'SPLUNK_REALM=us0'));
       assert(lines.some((l) => l === 'OTEL_LOG_LEVEL=debug'));
@@ -95,27 +74,14 @@ describe('EffectiveConfig', () => {
       );
     });
 
-    it('returns yaml type config when yaml configuration is loaded', () => {
+    it('returns yaml type when yaml configuration is loaded', () => {
       const yamlContent = 'file_format: "1.0-rc.2"\nlog_level: warn\n';
       loadConfiguration(yamlContent);
 
-      const config = opampGetEffectiveConfig();
-      const yamlEntry = config.configMap!.configMap!['yaml'];
-      assert(yamlEntry, 'should have yaml entry');
-      assert.strictEqual(yamlEntry.contentType, 'application/yaml');
+      const config = getLoadedConfigurationString();
 
-      const body = new TextDecoder().decode(yamlEntry.body as Uint8Array);
-      assert.strictEqual(
-        body,
-        yamlContent,
-        'body should match the raw yaml content'
-      );
-
-      assert.strictEqual(
-        config.configMap!.configMap!['env'],
-        undefined,
-        'should not have env entry when yaml config is loaded'
-      );
+      assert.strictEqual(config.type, 'yaml');
+      assert.strictEqual(config.content, yamlContent);
     });
   });
 });
