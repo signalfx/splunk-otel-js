@@ -15,7 +15,7 @@
  */
 
 import { isDeepStrictEqual } from 'node:util';
-import Long = require('long');
+import Long from 'long';
 import { v7 as uuidv7 } from 'uuid';
 import { diag } from '@opentelemetry/api';
 import { opamp } from './proto/opamp';
