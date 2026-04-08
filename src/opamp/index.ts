@@ -18,10 +18,13 @@ import { diag } from '@opentelemetry/api';
 import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { defaultServiceName } from '../utils';
-import { getNonEmptyConfigVar, getConfigNumber } from '../configuration';
+import {
+  getNonEmptyConfigVar,
+  getConfigNumber,
+  getLoadedConfigurationString,
+} from '../configuration';
 import { getDetectedResource } from '../resource';
 import { OpAMPClient } from './OpAMPClient';
-import { opampGetEffectiveConfig } from './EffectiveConfig';
 import type { OpAMPOptions, StartOpAMPOptions, OpAMPHandle } from './types';
 
 export type { OpAMPOptions, StartOpAMPOptions, OpAMPHandle };
@@ -63,7 +66,7 @@ export function _setDefaultOptions(
     serviceName,
     resource,
     pollingIntervalMs,
-    getEffectiveConfig: opampGetEffectiveConfig,
+    getEffectiveConfig: getLoadedConfigurationString,
     accessToken:
       options.accessToken || getNonEmptyConfigVar('SPLUNK_ACCESS_TOKEN'),
   };

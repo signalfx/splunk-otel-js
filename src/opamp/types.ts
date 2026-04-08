@@ -16,7 +16,11 @@
 
 import type { Resource } from '@opentelemetry/resources';
 import type { ResourceFactory } from '../types';
-import type { opamp } from './proto/opamp';
+
+export interface EffectiveConfig {
+  type: 'yaml' | 'env';
+  content: string;
+}
 
 export interface OpAMPOptions {
   endpoint: string;
@@ -24,7 +28,7 @@ export interface OpAMPOptions {
   resource: Resource;
   pollingIntervalMs: number;
   accessToken?: string;
-  getEffectiveConfig: () => opamp.proto.IEffectiveConfig;
+  getEffectiveConfig: () => EffectiveConfig;
 }
 
 export type StartOpAMPOptions = Partial<

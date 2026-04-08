@@ -20,7 +20,7 @@ import { resourceFromAttributes } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { OpAMPClient } from '../../src/opamp/OpAMPClient';
 import { opamp } from '../../src/opamp/proto/opamp';
-import type { OpAMPOptions } from '../../src/opamp/types';
+import type { EffectiveConfig, OpAMPOptions } from '../../src/opamp/types';
 import type {
   Transport,
   TransportResponse,
@@ -59,8 +59,9 @@ const DEFAULT_CAPABILITIES =
   AgentCapabilities.AgentCapabilities_ReportsEffectiveConfig |
   AgentCapabilities.AgentCapabilities_ReportsHeartbeat;
 
-const EMPTY_EFFECTIVE_CONFIG: opamp.proto.IEffectiveConfig = {
-  configMap: { configMap: {} },
+const EMPTY_EFFECTIVE_CONFIG: EffectiveConfig = {
+  type: 'yaml',
+  content: '',
 };
 
 function createOptions(overrides: Partial<OpAMPOptions> = {}): OpAMPOptions {
@@ -140,15 +141,9 @@ describe('OpAMPClient', () => {
 
     it('includes effectiveConfig when callback is provided', () => {
       const transport = createMockTransport();
-      const effectiveConfig: opamp.proto.IEffectiveConfig = {
-        configMap: {
-          configMap: {
-            'app.yaml': {
-              body: new Uint8Array([1, 2, 3]),
-              contentType: 'application/yaml',
-            },
-          },
-        },
+      const effectiveConfig: EffectiveConfig = {
+        type: 'yaml',
+        content: 'key: value',
       };
       const client = new OpAMPClient(
         createOptions({ getEffectiveConfig: () => effectiveConfig }),
@@ -158,7 +153,7 @@ describe('OpAMPClient', () => {
       const msg = client.buildAgentToServerMessage();
       assert(msg.effectiveConfig, 'should include effectiveConfig');
       assert(
-        msg.effectiveConfig.configMap?.configMap?.['app.yaml'],
+        msg.effectiveConfig.configMap?.configMap?.['yaml'],
         'should have config file'
       );
     });
@@ -166,15 +161,9 @@ describe('OpAMPClient', () => {
 
   describe('status compression', () => {
     it('omits unchanged effectiveConfig after first successful send', async () => {
-      const effectiveConfig: opamp.proto.IEffectiveConfig = {
-        configMap: {
-          configMap: {
-            'app.yaml': {
-              body: new Uint8Array([1, 2, 3]),
-              contentType: 'application/yaml',
-            },
-          },
-        },
+      const effectiveConfig: EffectiveConfig = {
+        type: 'yaml',
+        content: 'key: value',
       };
       const transport = createMockTransport();
       const client = new OpAMPClient(
@@ -199,19 +188,13 @@ describe('OpAMPClient', () => {
     });
 
     it('re-sends effectiveConfig when config changes', async () => {
-      let currentBody = new Uint8Array([1, 2, 3]);
+      let currentContent = 'key: value';
       const transport = createMockTransport();
       const client = new OpAMPClient(
         createOptions({
           getEffectiveConfig: () => ({
-            configMap: {
-              configMap: {
-                'app.yaml': {
-                  body: currentBody,
-                  contentType: 'application/yaml',
-                },
-              },
-            },
+            type: 'yaml' as const,
+            content: currentContent,
           }),
         }),
         transport
@@ -233,7 +216,7 @@ describe('OpAMPClient', () => {
       );
 
       // Changed config should be included
-      currentBody = new Uint8Array([4, 5, 6]);
+      currentContent = 'key: changed';
       const changedMsg = client.buildAgentToServerMessage();
       assert(
         changedMsg.effectiveConfig,
@@ -242,15 +225,9 @@ describe('OpAMPClient', () => {
     });
 
     it('re-sends effectiveConfig after HTTP 409 response', async () => {
-      const effectiveConfig: opamp.proto.IEffectiveConfig = {
-        configMap: {
-          configMap: {
-            'app.yaml': {
-              body: new Uint8Array([1, 2, 3]),
-              contentType: 'application/yaml',
-            },
-          },
-        },
+      const effectiveConfig: EffectiveConfig = {
+        type: 'yaml',
+        content: 'key: value',
       };
 
       let respondWith409 = false;
@@ -309,15 +286,9 @@ describe('OpAMPClient', () => {
     });
 
     it('re-sends effectiveConfig when server requests ReportFullState', async () => {
-      const effectiveConfig: opamp.proto.IEffectiveConfig = {
-        configMap: {
-          configMap: {
-            'app.yaml': {
-              body: new Uint8Array([1, 2, 3]),
-              contentType: 'application/yaml',
-            },
-          },
-        },
+      const effectiveConfig: EffectiveConfig = {
+        type: 'yaml',
+        content: 'key: value',
       };
       const transport = createMockTransport(() => ({
         flags: ServerToAgentFlags.ServerToAgentFlags_ReportFullState,

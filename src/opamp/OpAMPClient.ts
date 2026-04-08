@@ -18,7 +18,7 @@ import { isDeepStrictEqual } from 'node:util';
 import Long from 'long';
 import { diag } from '@opentelemetry/api';
 import { opamp } from './proto/opamp';
-import type { OpAMPOptions } from './types';
+import type { EffectiveConfig, OpAMPOptions } from './types';
 import type { Transport } from './HttpTransport';
 import { HttpTransport } from './HttpTransport';
 import { ExponentialBackoff } from './backoff';
@@ -60,6 +60,14 @@ function toAnyValue(value: unknown): opamp.proto.IAnyValue {
   return { stringValue: String(value) };
 }
 
+function contentType(type: 'yaml' | 'env'): string {
+  if (type === 'yaml') {
+    return 'application/yaml';
+  }
+
+  return 'text/plain';
+}
+
 async function getResourceAttributes(
   resource: Resource
 ): Promise<opamp.proto.IKeyValue[]> {
@@ -85,7 +93,8 @@ export class OpAMPClient {
   private _pollingTimer: NodeJS.Timeout | null = null;
   private _stopping: boolean = false;
 
-  private _lastSentEffectiveConfig: opamp.proto.IEffectiveConfig | null = null;
+  private _lastSentEffectiveConfig: EffectiveConfig | null = null;
+  private _pendingEffectiveConfig: EffectiveConfig | null = null;
   private _currentHealth: opamp.proto.IComponentHealth;
   private _agentDescription: opamp.proto.IAgentDescription | null = null;
 
@@ -149,7 +158,17 @@ export class OpAMPClient {
 
     const effectiveConfig = this._options.getEffectiveConfig();
     if (!isDeepStrictEqual(effectiveConfig, this._lastSentEffectiveConfig)) {
-      msg.effectiveConfig = effectiveConfig;
+      this._pendingEffectiveConfig = effectiveConfig;
+      msg.effectiveConfig = {
+        configMap: {
+          configMap: {
+            [effectiveConfig.type]: {
+              contentType: contentType(effectiveConfig.type),
+              body: new TextEncoder().encode(effectiveConfig.content),
+            },
+          },
+        },
+      };
     }
 
     return msg;
@@ -200,8 +219,9 @@ export class OpAMPClient {
       const transportResponse = await this._transport.send(encoded);
 
       if (transportResponse.statusCode === 200) {
-        if (msg.effectiveConfig) {
-          this._lastSentEffectiveConfig = msg.effectiveConfig;
+        if (this._pendingEffectiveConfig) {
+          this._lastSentEffectiveConfig = this._pendingEffectiveConfig;
+          this._pendingEffectiveConfig = null;
         }
 
         const serverMsg = ServerToAgent.decode(transportResponse.body);
@@ -245,5 +265,6 @@ export class OpAMPClient {
 
   private _resetStates(): void {
     this._lastSentEffectiveConfig = null;
+    this._pendingEffectiveConfig = null;
   }
 }
