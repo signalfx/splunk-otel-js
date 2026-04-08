@@ -22,14 +22,14 @@ jobs:
     container: ${{ matrix.container }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
       - name: Install npm dependencies
         run: npm ci --ignore-scripts --no-optional
       - name: Prebuild
         run: npm run prebuild:os ${{ matrix.node_api_target }}
       - name: upload prebuilds
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: prebuilds-linux-${{ matrix.node_api_target }}
           path: prebuilds
@@ -47,14 +47,14 @@ jobs:
     container: ${{ matrix.container }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
       - name: Install npm dependencies
         run: npm ci --ignore-scripts --no-optional
       - name: Prebuild
         run: npm run prebuild:os ${{ matrix.node_api_target }}
       - name: upload prebuilds
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: prebuilds-linux-arm64-${{ matrix.node_api_target }}
           path: prebuilds
@@ -76,11 +76,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4
         with:
           python-version: ${{ matrix.python_version }}
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
         with:
           node-version: '18'
       - name: Install npm dependencies
@@ -88,7 +88,7 @@ jobs:
       - name: Prebuild
         run: npm run prebuild:os ${{ matrix.node_api_target }}
       - name: upload prebuilds
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: prebuilds-${{ matrix.os }}-${{ matrix.node_api_target }}
           path: prebuilds
@@ -98,15 +98,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4
         with:
           python-version: '3.11'
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
         with:
           node-version: '18'
       - name: Download all prebuilds
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           pattern: prebuilds-*
           path: allprebuilds
@@ -127,7 +127,7 @@ jobs:
         run: |
           echo "::set-output name=package_file::$(npm pack)"
       - name: Upload package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ${{ steps.pack.outputs.package_file }}
           path: ${{ steps.pack.outputs.package_file }}
@@ -136,11 +136,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4
         with:
           python-version: '3.11'
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
         with:
           node-version: '18'
       - name: Install npm dependencies
@@ -157,7 +157,7 @@ jobs:
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
       - name: Upload workspace packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: workspace-packages
           path: ${{ steps.pack.outputs.files }}
@@ -195,11 +195,11 @@ jobs:
           NEO4J_AUTH: neo4j/test_pw
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4
         with:
           python-version: ${{ matrix.python_version }}
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
         with:
           node-version: ${{ matrix.nodejs }}
       - name: Install npm dependencies
@@ -210,7 +210,7 @@ jobs:
           NEO4J_TEST_WITH_LOCAL: ${{ (matrix.os == 'ubuntu-latest') && 'true' || 'false' }}
       - name: Report Coverage
         if: ${{matrix.nodejs == '22' && matrix.os == 'ubuntu-latest'}}
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457 # v3
         with:
           verbose: true
 
@@ -224,8 +224,8 @@ jobs:
     container: node:${{ matrix.nodejs }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4
         with:
           python-version: ${{ matrix.python_version }}
       - name: Install npm dependencies
@@ -259,11 +259,11 @@ jobs:
             nodejs: '25.2.0'
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4
         with:
           python-version: ${{ matrix.python_version }}
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
         with:
           node-version: ${{ matrix.nodejs }}
       - name: Install npm dependencies
@@ -272,7 +272,7 @@ jobs:
         run: npm run test:workspaces
       - name: Report Coverage
         if: ${{matrix.nodejs == '22' && matrix.os == 'ubuntu-latest'}}
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457 # v3
         with:
           verbose: true
 
@@ -280,10 +280,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
         with:
           fetch-depth: 1
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
         with:
           node-version: 18
       - name: Install npm dependencies
@@ -293,7 +293,7 @@ jobs:
       - name: Generate metadata YAML
         run: node scripts/generate-metadata-yaml.js > splunk-otel-js-metadata.yaml
       - name: Upload metadata yaml
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: splunk-otel-js-metadata.yaml
           path: splunk-otel-js-metadata.yaml
@@ -323,7 +323,7 @@ jobs:
     name: e2e local ${{ matrix.name }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
       - name: Test ${{ matrix.name }} example
         working-directory: test/examples
         run: docker compose -f e2e.docker-compose.yml ${{ matrix.target }} up --exit-code-from test
