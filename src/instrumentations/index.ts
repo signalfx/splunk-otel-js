@@ -19,6 +19,7 @@ import type { TracingOptions, StartTracingOptions } from '../tracing';
 import type { LoggingOptions, StartLoggingOptions } from '../logging';
 import type { MetricsOptions, StartMetricsOptions } from '../metrics';
 import type { ProfilingOptions, StartProfilingOptions } from '../profiling';
+import type { OpAMPOptions, StartOpAMPOptions } from '../opamp';
 import type { Options as StartOptions } from '../start';
 import type { Instrumentation } from '@opentelemetry/instrumentation';
 
@@ -26,6 +27,7 @@ import { _setDefaultOptions as setDefaultTracingOptions } from '../tracing/optio
 import { _setDefaultOptions as setDefaultLoggingOptions } from '../logging';
 import { _setDefaultOptions as setDefaultProfilingOptions } from '../profiling';
 import { _setDefaultOptions as setDefaultMetricsOptions } from '../metrics';
+import { _setDefaultOptions as setDefaultOpAMPOptions } from '../opamp';
 import { assertNoExtraneousProperties } from '../utils';
 import { configureGraphQlInstrumentation } from './graphql';
 import { getConfigBoolean } from '../configuration';
@@ -370,7 +372,7 @@ function enableDbTraceContextPropagation(
 
 type CommonOptions = Omit<
   Partial<StartOptions>,
-  'tracing' | 'profiling' | 'metrics' | 'logging' | 'logLevel'
+  'tracing' | 'profiling' | 'metrics' | 'logging' | 'opamp' | 'logLevel'
 >;
 
 function coalesceOptions<
@@ -422,7 +424,17 @@ function setupLoggingOptions(
   return setDefaultLoggingOptions(opts);
 }
 
-function signalStartOpt<T extends object>(options: T | boolean | undefined): T {
+function setupOpAMPOptions(
+  common: CommonOptions,
+  opamp: StartOpAMPOptions
+): OpAMPOptions {
+  const opts = coalesceOptions(opamp, common);
+  return setDefaultOpAMPOptions(opts);
+}
+
+function normalizeOptions<T extends object>(
+  options: T | boolean | undefined
+): T {
   if (typeof options === 'object') {
     return options;
   }
@@ -433,7 +445,8 @@ function signalStartOpt<T extends object>(options: T | boolean | undefined): T {
 export function parseOptionsAndConfigureInstrumentations(
   options: Partial<StartOptions> = {}
 ) {
-  const { metrics, profiling, tracing, logging, ...commonOptions } = options;
+  const { metrics, profiling, tracing, logging, opamp, ...commonOptions } =
+    options;
 
   assertNoExtraneousProperties(commonOptions, [
     'accessToken',
@@ -446,19 +459,23 @@ export function parseOptionsAndConfigureInstrumentations(
 
   const tracingOptions = setupTracingOptions(
     commonOptions,
-    signalStartOpt(tracing)
+    normalizeOptions(tracing)
   );
   const metricsOptions = setupMetricsOptions(
     commonOptions,
-    signalStartOpt(metrics)
+    normalizeOptions(metrics)
   );
   const profilingOptions = setupProfilingOptions(
     commonOptions,
-    signalStartOpt(profiling)
+    normalizeOptions(profiling)
   );
   const loggingOptions = setupLoggingOptions(
     commonOptions,
-    signalStartOpt(logging)
+    normalizeOptions(logging)
+  );
+  const opampOptions = setupOpAMPOptions(
+    commonOptions,
+    normalizeOptions(opamp)
   );
 
   configureInstrumentations({
@@ -466,5 +483,11 @@ export function parseOptionsAndConfigureInstrumentations(
     logging: loggingOptions,
   });
 
-  return { tracingOptions, loggingOptions, profilingOptions, metricsOptions };
+  return {
+    tracingOptions,
+    loggingOptions,
+    profilingOptions,
+    metricsOptions,
+    opampOptions,
+  };
 }

@@ -18,13 +18,19 @@ import {
   setGlobalConfiguration,
 } from '../../src/configuration';
 import * as path from 'node:path';
+import { readFileSync } from 'node:fs';
+
+export function readFileUtf8(path: string): string {
+  return readFileSync(path, { encoding: 'utf-8' });
+}
 
 export function exampleConfigPath(): string {
   return path.join(__dirname, 'example-config.yaml');
 }
 
 export function loadAndSetConfig(path: string) {
-  setGlobalConfiguration(loadConfiguration(path));
+  const content = readFileUtf8(path);
+  setGlobalConfiguration(loadConfiguration(content));
 }
 
 export function loadAndSetExampleConfig() {
