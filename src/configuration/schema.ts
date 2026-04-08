@@ -78,20 +78,31 @@ export type AlwaysOnSampler = Record<string, never> | null;
 
 export interface AttributeLimits {
   /**
-   * Configure max attribute value size. 
+   * Configure max attribute value size.
    * Value must be non-negative.
    * If omitted or null, there is no limit.
    */
   attribute_value_length_limit?: number | null;
   /**
-   * Configure max attribute count. 
+   * Configure max attribute count.
    * Value must be non-negative.
    * If omitted or null, 128 is used.
    */
   attribute_count_limit?: number | null;
 }
 
-export type AttributeType = ('string' | 'bool' | 'int' | 'double' | 'string_array' | 'bool_array' | 'int_array' | 'double_array') | null;
+export type AttributeType =
+  | (
+      | 'string'
+      | 'bool'
+      | 'int'
+      | 'double'
+      | 'string_array'
+      | 'bool_array'
+      | 'int_array'
+      | 'double_array'
+    )
+  | null;
 
 export interface AttributeNameValue {
   /**
@@ -129,19 +140,19 @@ export type BaggagePropagator = Record<string, never> | null;
 
 export interface HttpTls {
   /**
-   * Configure certificate used to verify a server's TLS credentials. 
+   * Configure certificate used to verify a server's TLS credentials.
    * Absolute path to certificate file in PEM format.
    * If omitted or null, system default certificate verification is used for secure connections.
    */
   ca_file?: string | null;
   /**
-   * Configure mTLS private client key. 
+   * Configure mTLS private client key.
    * Absolute path to client key file in PEM format. If set, .client_certificate must also be set.
    * If omitted or null, mTLS is not used.
    */
   key_file?: string | null;
   /**
-   * Configure mTLS client certificate. 
+   * Configure mTLS client certificate.
    * Absolute path to client certificate file in PEM format. If set, .client_key must also be set.
    * If omitted or null, mTLS is not used.
    */
@@ -199,7 +210,7 @@ export interface OtlpHttpExporter {
    */
   timeout?: number | null;
   /**
-   * Configure the encoding used for messages. 
+   * Configure the encoding used for messages.
    * Implementations may not support json.
    * Values include:
    * * json: Protobuf JSON encoding.
@@ -211,25 +222,25 @@ export interface OtlpHttpExporter {
 
 export interface GrpcTls {
   /**
-   * Configure certificate used to verify a server's TLS credentials. 
+   * Configure certificate used to verify a server's TLS credentials.
    * Absolute path to certificate file in PEM format.
    * If omitted or null, system default certificate verification is used for secure connections.
    */
   ca_file?: string | null;
   /**
-   * Configure mTLS private client key. 
+   * Configure mTLS private client key.
    * Absolute path to client key file in PEM format. If set, .client_certificate must also be set.
    * If omitted or null, mTLS is not used.
    */
   key_file?: string | null;
   /**
-   * Configure mTLS client certificate. 
+   * Configure mTLS client certificate.
    * Absolute path to client certificate file in PEM format. If set, .client_key must also be set.
    * If omitted or null, mTLS is not used.
    */
   cert_file?: string | null;
   /**
-   * Configure client transport security for the exporter's connection. 
+   * Configure client transport security for the exporter's connection.
    * Only applicable when .endpoint is provided without http or https scheme. Implementations may choose to ignore .insecure.
    * If omitted or null, false is used.
    */
@@ -275,7 +286,7 @@ export interface OtlpGrpcExporter {
 
 export interface ExperimentalOtlpFileExporter {
   /**
-   * Configure output stream. 
+   * Configure output stream.
    * Values include stdout, or scheme+destination. For example: file:///path/to/file.jsonl.
    * If omitted or null, stdout is used.
    */
@@ -310,13 +321,13 @@ export interface LogRecordExporter {
 
 export interface BatchLogRecordProcessor {
   /**
-   * Configure delay interval (in milliseconds) between two consecutive exports. 
+   * Configure delay interval (in milliseconds) between two consecutive exports.
    * Value must be non-negative.
    * If omitted or null, 1000 is used.
    */
   schedule_delay?: number | null;
   /**
-   * Configure maximum allowed time (in milliseconds) to export data. 
+   * Configure maximum allowed time (in milliseconds) to export data.
    * Value must be non-negative. A value of 0 indicates no limit (infinity).
    * If omitted or null, 30000 is used.
    */
@@ -364,13 +375,13 @@ export interface SpanExporter {
 
 export interface BatchSpanProcessor {
   /**
-   * Configure delay interval (in milliseconds) between two consecutive exports. 
+   * Configure delay interval (in milliseconds) between two consecutive exports.
    * Value must be non-negative.
    * If omitted or null, 5000 is used.
    */
   schedule_delay?: number | null;
   /**
-   * Configure maximum allowed time (in milliseconds) to export data. 
+   * Configure maximum allowed time (in milliseconds) to export data.
    * Value must be non-negative. A value of 0 indicates no limit (infinity).
    * If omitted or null, 30000 is used.
    */
@@ -436,9 +447,13 @@ export interface CardinalityLimits {
   up_down_counter?: number | null;
 }
 
-export type ExporterTemporalityPreference = ('cumulative' | 'delta' | 'low_memory') | null;
+export type ExporterTemporalityPreference =
+  | ('cumulative' | 'delta' | 'low_memory')
+  | null;
 
-export type ExporterDefaultHistogramAggregation = ('explicit_bucket_histogram' | 'base2_exponential_bucket_histogram') | null;
+export type ExporterDefaultHistogramAggregation =
+  | ('explicit_bucket_histogram' | 'base2_exponential_bucket_histogram')
+  | null;
 
 export interface ConsoleMetricExporter {
   /**
@@ -462,7 +477,9 @@ export interface ConsoleMetricExporter {
 
 export type Distribution = Record<string, object>;
 
-export type ExemplarFilter = ('always_on' | 'always_off' | 'trace_based') | null;
+export type ExemplarFilter =
+  | ('always_on' | 'always_off' | 'trace_based')
+  | null;
 
 export interface ExperimentalSemconvConfig {
   /**
@@ -497,9 +514,15 @@ export interface ExperimentalCodeInstrumentation {
   semconv?: ExperimentalSemconvConfig;
 }
 
-export type ExperimentalComposableAlwaysOffSampler = Record<string, never> | null;
+export type ExperimentalComposableAlwaysOffSampler = Record<
+  string,
+  never
+> | null;
 
-export type ExperimentalComposableAlwaysOnSampler = Record<string, never> | null;
+export type ExperimentalComposableAlwaysOnSampler = Record<
+  string,
+  never
+> | null;
 
 export interface ExperimentalComposableProbabilitySampler {
   /**
@@ -546,12 +569,14 @@ export interface ExperimentalComposableRuleBasedSamplerRuleAttributePatterns {
   excluded?: [string, ...string[]];
 }
 
-export type SpanKind = ('internal' | 'server' | 'client' | 'producer' | 'consumer') | null;
+export type SpanKind =
+  | ('internal' | 'server' | 'client' | 'producer' | 'consumer')
+  | null;
 
 export type ExperimentalSpanParent = ('none' | 'remote' | 'local') | null;
 
 /**
- * A rule for ExperimentalComposableRuleBasedSampler. A rule can have multiple match conditions - the sampler will be applied if all match. 
+ * A rule for ExperimentalComposableRuleBasedSampler. A rule can have multiple match conditions - the sampler will be applied if all match.
  * If no conditions are specified, the rule matches all spans that reach it.
  */
 export interface ExperimentalComposableRuleBasedSamplerRule {
@@ -604,7 +629,10 @@ export interface ExperimentalComposableRuleBasedSampler {
    * If no rules match, the span is not sampled.
    * If omitted, no span is sampled.
    */
-  rules?: [ExperimentalComposableRuleBasedSamplerRule, ...ExperimentalComposableRuleBasedSamplerRule[]];
+  rules?: [
+    ExperimentalComposableRuleBasedSamplerRule,
+    ...ExperimentalComposableRuleBasedSamplerRule[],
+  ];
 }
 
 export interface ExperimentalComposableSampler {
@@ -644,7 +672,10 @@ export interface ExperimentalComposableParentThresholdSampler {
   root: ExperimentalComposableSampler;
 }
 
-export type ExperimentalContainerResourceDetector = Record<string, never> | null;
+export type ExperimentalContainerResourceDetector = Record<
+  string,
+  never
+> | null;
 
 export interface ExperimentalDbInstrumentation {
   /**
@@ -852,7 +883,10 @@ export interface ExperimentalGeneralInstrumentation {
 
 export type ExperimentalHostResourceDetector = Record<string, never> | null;
 
-export type ExperimentalLanguageSpecificInstrumentation = Record<string, object>;
+export type ExperimentalLanguageSpecificInstrumentation = Record<
+  string,
+  object
+>;
 
 export interface ExperimentalInstrumentation {
   /**
@@ -1029,7 +1063,34 @@ export interface ExperimentalJaegerRemoteSampler {
   initial_sampler: Sampler;
 }
 
-export type SeverityNumber = ('trace' | 'trace2' | 'trace3' | 'trace4' | 'debug' | 'debug2' | 'debug3' | 'debug4' | 'info' | 'info2' | 'info3' | 'info4' | 'warn' | 'warn2' | 'warn3' | 'warn4' | 'error' | 'error2' | 'error3' | 'error4' | 'fatal' | 'fatal2' | 'fatal3' | 'fatal4') | null;
+export type SeverityNumber =
+  | (
+      | 'trace'
+      | 'trace2'
+      | 'trace3'
+      | 'trace4'
+      | 'debug'
+      | 'debug2'
+      | 'debug3'
+      | 'debug4'
+      | 'info'
+      | 'info2'
+      | 'info3'
+      | 'info4'
+      | 'warn'
+      | 'warn2'
+      | 'warn3'
+      | 'warn4'
+      | 'error'
+      | 'error2'
+      | 'error3'
+      | 'error4'
+      | 'fatal'
+      | 'fatal2'
+      | 'fatal3'
+      | 'fatal4'
+    )
+  | null;
 
 export interface ExperimentalLoggerConfig {
   /**
@@ -1102,7 +1163,10 @@ export interface ExperimentalLoggerConfigurator {
    * Configure loggers.
    * If omitted, all loggers use .default_config.
    */
-  loggers?: [ExperimentalLoggerMatcherAndConfig, ...ExperimentalLoggerMatcherAndConfig[]];
+  loggers?: [
+    ExperimentalLoggerMatcherAndConfig,
+    ...ExperimentalLoggerMatcherAndConfig[],
+  ];
 }
 
 export interface ExperimentalMeterConfig {
@@ -1139,12 +1203,15 @@ export interface ExperimentalMeterConfigurator {
    * Configure meters.
    * If omitted, all meters used .default_config.
    */
-  meters?: [ExperimentalMeterMatcherAndConfig, ...ExperimentalMeterMatcherAndConfig[]];
+  meters?: [
+    ExperimentalMeterMatcherAndConfig,
+    ...ExperimentalMeterMatcherAndConfig[],
+  ];
 }
 
 export interface ExperimentalOtlpFileMetricExporter {
   /**
-   * Configure output stream. 
+   * Configure output stream.
    * Values include stdout, or scheme+destination. For example: file:///path/to/file.jsonl.
    * If omitted or null, stdout is used.
    */
@@ -1189,7 +1256,14 @@ export interface IncludeExclude {
   excluded?: [string, ...string[]];
 }
 
-export type ExperimentalPrometheusTranslationStrategy = ('underscore_escaping_with_suffixes' | 'underscore_escaping_without_suffixes/development' | 'no_utf8_escaping_with_suffixes/development' | 'no_translation/development') | null;
+export type ExperimentalPrometheusTranslationStrategy =
+  | (
+      | 'underscore_escaping_with_suffixes'
+      | 'underscore_escaping_without_suffixes/development'
+      | 'no_utf8_escaping_with_suffixes/development'
+      | 'no_translation/development'
+    )
+  | null;
 
 export interface ExperimentalPrometheusMetricExporter {
   /**
@@ -1263,7 +1337,7 @@ export interface ExperimentalResourceDetection {
   attributes?: IncludeExclude;
   /**
    * Configure resource detectors.
-   * Resource detector names are dependent on the SDK language ecosystem. Please consult documentation for each respective language. 
+   * Resource detector names are dependent on the SDK language ecosystem. Please consult documentation for each respective language.
    * If omitted, no resource detectors are enabled.
    */
   detectors?: [ExperimentalResourceDetector, ...ExperimentalResourceDetector[]];
@@ -1303,10 +1377,23 @@ export interface ExperimentalTracerConfigurator {
    * Configure tracers.
    * If omitted, all tracers use .default_config.
    */
-  tracers?: [ExperimentalTracerMatcherAndConfig, ...ExperimentalTracerMatcherAndConfig[]];
+  tracers?: [
+    ExperimentalTracerMatcherAndConfig,
+    ...ExperimentalTracerMatcherAndConfig[],
+  ];
 }
 
-export type InstrumentType = ('counter' | 'gauge' | 'histogram' | 'observable_counter' | 'observable_gauge' | 'observable_up_down_counter' | 'up_down_counter') | null;
+export type InstrumentType =
+  | (
+      | 'counter'
+      | 'gauge'
+      | 'histogram'
+      | 'observable_counter'
+      | 'observable_gauge'
+      | 'observable_up_down_counter'
+      | 'up_down_counter'
+    )
+  | null;
 
 export interface SimpleLogRecordProcessor {
   /**
@@ -1332,13 +1419,13 @@ export interface LogRecordProcessor {
 
 export interface LogRecordLimits {
   /**
-   * Configure max attribute value size. Overrides .attribute_limits.attribute_value_length_limit. 
+   * Configure max attribute value size. Overrides .attribute_limits.attribute_value_length_limit.
    * Value must be non-negative.
    * If omitted or null, there is no limit.
    */
   attribute_value_length_limit?: number | null;
   /**
-   * Configure max attribute count. Overrides .attribute_limits.attribute_count_limit. 
+   * Configure max attribute count. Overrides .attribute_limits.attribute_count_limit.
    * Value must be non-negative.
    * If omitted or null, 128 is used.
    */
@@ -1399,7 +1486,7 @@ export interface OtlpHttpMetricExporter {
    */
   timeout?: number | null;
   /**
-   * Configure the encoding used for messages. 
+   * Configure the encoding used for messages.
    * Implementations may not support json.
    * Values include:
    * * json: Protobuf JSON encoding.
@@ -1517,13 +1604,13 @@ export interface MetricProducer {
 
 export interface PeriodicMetricReader {
   /**
-   * Configure delay interval (in milliseconds) between start of two consecutive exports. 
+   * Configure delay interval (in milliseconds) between start of two consecutive exports.
    * Value must be non-negative.
    * If omitted or null, 60000 is used.
    */
   interval?: number | null;
   /**
-   * Configure maximum allowed time (in milliseconds) to export data. 
+   * Configure maximum allowed time (in milliseconds) to export data.
    * Value must be non-negative. A value of 0 indicates no limit (infinity).
    * If omitted or null, 30000 is used.
    */
@@ -1656,7 +1743,7 @@ export interface ViewStream {
 
 export interface View {
   /**
-   * Configure view selector. 
+   * Configure view selector.
    * Selection criteria is additive as described in https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk.md#instrument-selection-criteria.
    * Property is required and must be non-null.
    */
@@ -1675,7 +1762,7 @@ export interface MeterProvider {
    */
   readers: [MetricReader, ...MetricReader[]];
   /**
-   * Configure views. 
+   * Configure views.
    * Each view has a selector which determines the instrument(s) it applies to, and a configuration for the resulting stream(s).
    * If omitted, no views are registered.
    */
@@ -1772,37 +1859,37 @@ export interface SimpleSpanProcessor {
 
 export interface SpanLimits {
   /**
-   * Configure max attribute value size. Overrides .attribute_limits.attribute_value_length_limit. 
+   * Configure max attribute value size. Overrides .attribute_limits.attribute_value_length_limit.
    * Value must be non-negative.
    * If omitted or null, there is no limit.
    */
   attribute_value_length_limit?: number | null;
   /**
-   * Configure max attribute count. Overrides .attribute_limits.attribute_count_limit. 
+   * Configure max attribute count. Overrides .attribute_limits.attribute_count_limit.
    * Value must be non-negative.
    * If omitted or null, 128 is used.
    */
   attribute_count_limit?: number | null;
   /**
-   * Configure max span event count. 
+   * Configure max span event count.
    * Value must be non-negative.
    * If omitted or null, 128 is used.
    */
   event_count_limit?: number | null;
   /**
-   * Configure max span link count. 
+   * Configure max span link count.
    * Value must be non-negative.
    * If omitted or null, 128 is used.
    */
   link_count_limit?: number | null;
   /**
-   * Configure max attributes per span event. 
+   * Configure max attributes per span event.
    * Value must be non-negative.
    * If omitted or null, 128 is used.
    */
   event_attribute_count_limit?: number | null;
   /**
-   * Configure max attributes per span link. 
+   * Configure max attributes per span link.
    * Value must be non-negative.
    * If omitted or null, 128 is used.
    */

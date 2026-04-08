@@ -123,7 +123,9 @@ export function generateTypes(schema: Schema): GeneratorStats {
     }
 
     if (type === 'array') {
-      const itemType = propSchema.items ? resolveType(propSchema.items) : 'unknown';
+      const itemType = propSchema.items
+        ? resolveType(propSchema.items)
+        : 'unknown';
       if (propSchema.minItems && propSchema.minItems > 0) {
         return `[${itemType}, ...${itemType}[]]`;
       }
@@ -163,7 +165,10 @@ export function generateTypes(schema: Schema): GeneratorStats {
     }
   }
 
-  function wrapNullable(typeStr: string, schemaType: string | string[] | undefined) {
+  function wrapNullable(
+    typeStr: string,
+    schemaType: string | string[] | undefined
+  ) {
     if (Array.isArray(schemaType) && schemaType.includes('null')) {
       return `(${typeStr}) | null`;
     }
@@ -376,7 +381,10 @@ export function generateTypes(schema: Schema): GeneratorStats {
     return sorted;
   }
 
-  function collectRefs(obj: JsonValue | Schema | undefined, refs = new Set<string>()) {
+  function collectRefs(
+    obj: JsonValue | Schema | undefined,
+    refs = new Set<string>()
+  ) {
     if (!obj || typeof obj !== 'object') return refs;
     if ('$ref' in obj && typeof obj.$ref === 'string') {
       refs.add(obj.$ref.replace('#/$defs/', ''));
