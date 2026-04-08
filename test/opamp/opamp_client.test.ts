@@ -99,7 +99,7 @@ describe('OpAMPClient', () => {
       assert(msg.health, 'first message should include health');
     });
 
-    it('includes identifying and non-identifying attributes in agentDescription', async () => {
+    it('includes all resource attributes as identifying attributes in agentDescription', async () => {
       const transport = createMockTransport();
       const client = new OpAMPClient(createOptions(), transport);
 
@@ -109,17 +109,19 @@ describe('OpAMPClient', () => {
       const msg = transport.sentMessages[0];
       const desc = msg.agentDescription!;
       const identifyingKeys = desc.identifyingAttributes!.map((kv) => kv.key);
-      const nonIdentifyingKeys = desc.nonIdentifyingAttributes!.map(
-        (kv) => kv.key
-      );
 
       assert(
         identifyingKeys.includes(ATTR_SERVICE_NAME),
         'should have service.name as identifying'
       );
       assert(
-        nonIdentifyingKeys.includes('host.name'),
-        'should have host.name as non-identifying'
+        identifyingKeys.includes('host.name'),
+        'should have host.name as identifying'
+      );
+      assert.strictEqual(
+        desc.nonIdentifyingAttributes?.length ?? 0,
+        0,
+        'should have no non-identifying attributes'
       );
     });
 

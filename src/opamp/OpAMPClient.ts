@@ -18,13 +18,6 @@ import { isDeepStrictEqual } from 'node:util';
 import Long = require('long');
 import { v7 as uuidv7 } from 'uuid';
 import { diag } from '@opentelemetry/api';
-import {
-  ATTR_SERVICE_NAME,
-  ATTR_SERVICE_VERSION,
-  ATTR_TELEMETRY_SDK_LANGUAGE,
-  ATTR_TELEMETRY_SDK_NAME,
-  ATTR_TELEMETRY_SDK_VERSION,
-} from '@opentelemetry/semantic-conventions';
 import { opamp } from './proto/opamp';
 import type { OpAMPOptions } from './types';
 import type { Transport } from './HttpTransport';
@@ -51,18 +44,6 @@ const DEFAULT_CAPABILITIES =
   AgentCapabilities.AgentCapabilities_ReportsEffectiveConfig |
   AgentCapabilities.AgentCapabilities_ReportsHeartbeat;
 
-const kIdentifyingKeys: Set<string> = new Set([
-  ATTR_SERVICE_NAME,
-  ATTR_SERVICE_VERSION,
-  ATTR_TELEMETRY_SDK_LANGUAGE,
-  ATTR_TELEMETRY_SDK_NAME,
-  ATTR_TELEMETRY_SDK_VERSION,
-  'deployment.environment',
-  'deployment.environment.name',
-  'telemetry.distro.name',
-  'telemetry.distro.version',
-]);
-
 const logger = diag.createComponentLogger({ namespace: 'splunk.opamp' });
 
 function toAnyValue(value: unknown): opamp.proto.IAnyValue {
@@ -83,25 +64,19 @@ function toAnyValue(value: unknown): opamp.proto.IAnyValue {
   return { stringValue: String(value) };
 }
 
-async function partitionResourceAttributes(
-  resource: Resource,
-  identifyingKeys: Set<string>
-): Promise<[opamp.proto.IKeyValue[], opamp.proto.IKeyValue[]]> {
+async function getResourceAttributes(
+  resource: Resource
+): Promise<opamp.proto.IKeyValue[]> {
   await resource.waitForAsyncAttributes?.();
 
-  const identifying: opamp.proto.IKeyValue[] = [];
-  const nonIdentifying: opamp.proto.IKeyValue[] = [];
+  const attributes: opamp.proto.IKeyValue[] = [];
 
   for (const key in resource.attributes) {
     const kv = { key, value: toAnyValue(resource.attributes[key]) };
-    if (identifyingKeys.has(key)) {
-      identifying.push(kv);
-    } else {
-      nonIdentifying.push(kv);
-    }
+    attributes.push(kv);
   }
 
-  return [identifying, nonIdentifying];
+  return attributes;
 }
 
 export class OpAMPClient {
@@ -136,11 +111,6 @@ export class OpAMPClient {
 
   async start(): Promise<void> {
     logger.debug('starting OpAMP client');
-    const [identifyingAttributes, nonIdentifyingAttributes] =
-      await partitionResourceAttributes(
-        this._options.resource,
-        kIdentifyingKeys
-      );
     this._stopping = false;
     this._sequenceNum = 0;
 
@@ -152,8 +122,9 @@ export class OpAMPClient {
     };
 
     this._agentDescription = {
-      identifyingAttributes,
-      nonIdentifyingAttributes,
+      identifyingAttributes: await getResourceAttributes(
+        this._options.resource
+      ),
     };
 
     await this._poll();
