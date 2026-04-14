@@ -6,16 +6,13 @@ on:
         description: 'CI workflow run ID to download the package artifact from'
         required: true
 
-permissions:
-  id-token: write  # Required for OIDC
-  contents: read
-
 jobs:
   publish:
     runs-on: ubuntu-latest
     if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
     permissions:
       contents: write
+      id-token: write  # Required for OIDC
     steps:
       - name: Validate version tag
         run: |
