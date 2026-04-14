@@ -75,7 +75,7 @@ import { SocketIoInstrumentation } from '@opentelemetry/instrumentation-socket.i
 import { TediousInstrumentation } from '@opentelemetry/instrumentation-tedious';
 import { WinstonInstrumentation } from '@opentelemetry/instrumentation-winston';
 import { ElasticsearchInstrumentation } from './external/elasticsearch';
-import { SequelizeInstrumentation } from './external/sequelize';
+import { SequelizeInstrumentation } from '@opentelemetry/instrumentation-sequelize';
 import { TypeormInstrumentation } from '@opentelemetry/instrumentation-typeorm';
 import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici';
 import { NoCodeInstrumentation } from './external/nocode';
