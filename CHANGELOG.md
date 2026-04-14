@@ -1,8 +1,14 @@
 # Change Log - @splunk/otel
 
-## Unreleased
+## 4.5.0
 
-- Add Oracle DB support for DB context propagation. Can be enabled via `SPLUNK_DB_TRACE_CONTEXT_PROPAGATION_ENABLED` env var or `databaseTraceContextPropagationEnabled` config option.
+- Use `sequelize` instrumentation from upstream. [#1113](https://github.com/signalfx/splunk-otel-js/pull/1113)
+- Upgrade to OpenTelemetry 2.6.1 / 0.214.0. [#1107](https://github.com/signalfx/splunk-otel-js/pull/1107)
+- Initial OpAMP support with status and effective configuration reporting. [#1090](https://github.com/signalfx/splunk-otel-js/pull/1090)
+- Add Oracle DB support for DB context propagation. Can be enabled via `SPLUNK_DB_TRACE_CONTEXT_PROPAGATION_ENABLED` env var or `databaseTraceContextPropagationEnabled` config option. [#1101](https://github.com/signalfx/splunk-otel-js/pull/1101)
+- Fix `Accessing resource attributes before async attributes settled` warning on startup. [#1097](https://github.com/signalfx/splunk-otel-js/pull/1097)
+- Migrate default URLs from signalfx.com to observability.splunkcloud.com. [#1095](https://github.com/signalfx/splunk-otel-js/pull/1095)
+- Add rule based sampling. [#1096](https://github.com/signalfx/splunk-otel-js/pull/1096)
 
 ## 4.4.0
 
