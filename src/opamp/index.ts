@@ -17,7 +17,7 @@
 import { diag } from '@opentelemetry/api';
 import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
-import { defaultServiceName } from '../utils';
+import { defaultServiceName, findAttribute } from '../utils';
 import {
   getNonEmptyConfigVar,
   getConfigNumber,
@@ -37,16 +37,14 @@ export function _setDefaultOptions(
   const serviceName = String(
     options.serviceName ||
       getNonEmptyConfigVar('OTEL_SERVICE_NAME') ||
-      envResource.attributes?.[ATTR_SERVICE_NAME] ||
+      findAttribute(envResource, ATTR_SERVICE_NAME) ||
       defaultServiceName()
   );
 
   const resourceFactory =
     options.resourceFactory || ((resource: Resource) => resource);
 
-  const resource = resourceFactory(
-    resourceFromAttributes(envResource.attributes || {})
-  ).merge(
+  const resource = resourceFactory(envResource).merge(
     resourceFromAttributes({
       [ATTR_SERVICE_NAME]: serviceName,
     })
