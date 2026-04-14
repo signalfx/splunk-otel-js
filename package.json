@@ -15,7 +15,7 @@
   ],
   "license": "Apache-2.0",
   "author": "Splunk <splunk-oss@splunk.com>",
-  "repository": "git@github.com:signalfx/splunk-otel-js.git",
+  "repository": "git+https@github.com:signalfx/splunk-otel-js.git",
   "workspaces": [
     "packages/*"
   ],

@@ -41,7 +41,6 @@ jobs:
       - name: Generate release notes
         id: release-notes
         run: |
-          npm ci
           node -e "
             import { getReleaseMessage } from './scripts/release-message.mjs';
             const body = getReleaseMessage('../');
@@ -55,4 +54,4 @@ jobs:
           body_path: release-body.md
           files: dist/*
       - name: Publish (dry run)
-        run: npm publish --dry-run dist/*.tgz
+        run: npm publish --provenance --dry-run "dist/splunk-otel-${GITHUB_REF_NAME#v}.tgz"
