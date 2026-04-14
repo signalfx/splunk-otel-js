@@ -54,4 +54,4 @@ jobs:
           body_path: release-body.md
           files: dist/*
       - name: Publish (dry run)
-        run: npm publish --provenance --dry-run "dist/splunk-otel-${GITHUB_REF_NAME#v}.tgz"
+        run: npm publish --dry-run "dist/splunk-otel-${GITHUB_REF_NAME#v}.tgz"
