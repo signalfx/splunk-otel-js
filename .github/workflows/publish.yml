@@ -23,6 +23,9 @@ jobs:
             echo "Error: tag '${{ github.ref_name }}' does not match vX.Y.Z format"
             exit 1
           fi
+      - name: Set version
+        id: version
+        run: echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
       - name: Checkout
         uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
       - uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610 # v3
@@ -31,11 +34,12 @@ jobs:
       - name: Download package artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          pattern: '*.tgz'
+          name: splunk-otel-${{ steps.version.outputs.value }}.tgz
           run-id: ${{ inputs.run_id }}
           github-token: ${{ github.token }}
-          merge-multiple: true
           path: dist
+      - name: List dist contents
+        run: ls -la dist/
       - name: Generate checksums
         run: shasum -a 256 dist/* > dist/checksums.txt
       - name: Generate release notes
@@ -54,4 +58,4 @@ jobs:
           body_path: release-body.md
           files: dist/*
       - name: Publish (dry run)
-        run: npm publish --dry-run "dist/splunk-otel-${GITHUB_REF_NAME#v}.tgz"
+        run: npm publish --dry-run ./dist/splunk-otel-${{ steps.version.outputs.value }}.tgz
