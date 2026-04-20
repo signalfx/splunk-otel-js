@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "esbuild": "^0.25.8",
-    "opentelemetry-esbuild-plugin-node": "^4.1.0"
+    "opentelemetry-esbuild-plugin-node": "^4.4.0"
   },
   "peerDependencies": {
     "@splunk/otel": "^4.5.0"
