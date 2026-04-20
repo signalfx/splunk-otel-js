@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "@opentelemetry/api": "^1.9.0",
-    "@opentelemetry/instrumentation-express": "0.54.3",
-    "@splunk/otel": "4.0.0",
+    "@opentelemetry/instrumentation-express": "0.62.0",
+    "@splunk/otel": "4.5.0",
     "@splunk/otel-esbuild-plugin-node": "0.0.1",
     "env-cmd": "^10.1.0",
     "esbuild": "^0.25.9",
