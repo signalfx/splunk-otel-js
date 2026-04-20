@@ -75,13 +75,18 @@ describe('EffectiveConfig', () => {
     });
 
     it('returns yaml type when yaml configuration is loaded', () => {
-      const yamlContent = 'file_format: "1.0-rc.2"\nlog_level: warn\n';
+      process.env.MY_LOG_LEVEL = 'warn';
+      const yamlContent =
+        'file_format: "1.0-rc.2"\nlog_level: ${MY_LOG_LEVEL}\n';
       loadConfiguration(yamlContent);
 
       const config = getLoadedConfigurationString();
 
       assert.strictEqual(config.type, 'yaml');
-      assert.strictEqual(config.content, yamlContent);
+      assert.strictEqual(
+        config.content,
+        'file_format: "1.0-rc.2"\nlog_level: warn\n'
+      );
     });
   });
 });

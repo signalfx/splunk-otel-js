@@ -110,8 +110,6 @@ export function loadConfiguration(content: string): DistroConfiguration {
     throw doc.errors[0];
   }
 
-  rawGlobalConfiguration = content;
-
   visit(doc, {
     Scalar: (key, node) => {
       if (key !== 'value') {
@@ -132,6 +130,8 @@ export function loadConfiguration(content: string): DistroConfiguration {
       return undefined;
     },
   });
+
+  rawGlobalConfiguration = doc.toString();
 
   return doc.toJS();
 }
