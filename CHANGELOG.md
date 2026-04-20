@@ -1,5 +1,10 @@
 # Change Log - @splunk/otel
 
+## 4.5.1
+
+- Fix YAML substitution when reporting effective config via OpAMP. [#1125](https://github.com/signalfx/splunk-otel-js/pull/1125)
+- Update protobufjs used by @grpc/proto-loader to 7.5.5 for a [vulnerability fix](https://github.com/advisories/GHSA-xq3m-2v4x-88gg). [#1126](https://github.com/signalfx/splunk-otel-js/pull/1126)
+
 ## 4.5.0
 
 - Use `sequelize` instrumentation from upstream. [#1113](https://github.com/signalfx/splunk-otel-js/pull/1113)
