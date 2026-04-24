@@ -41,6 +41,8 @@ import {
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { StartLoggingOptions, startLogging } from './logging';
 import { startOpAMP, type StartOpAMPOptions, type OpAMPHandle } from './opamp';
+import { startSecureapp } from './secureapp';
+import type { StartSecureappOptions } from './secureapp/types';
 import { Resource } from '@opentelemetry/resources';
 import { getDetectedResource } from './resource';
 import {
@@ -69,6 +71,7 @@ export interface Options {
   tracing: boolean | StartTracingOptions;
   logging: boolean | StartLoggingOptions;
   opamp: boolean | StartOpAMPOptions;
+  secureapp: boolean | StartSecureappOptions;
 }
 
 interface RunningState {
@@ -145,6 +148,7 @@ export const start = (options: Partial<Options> = {}) => {
     profilingOptions,
     metricsOptions,
     opampOptions,
+    secureappOptions,
   } = parseOptionsAndConfigureInstrumentations(options);
 
   if (isFeatureEnabled(options.opamp, 'SPLUNK_OPAMP_ENABLED', false)) {
@@ -171,10 +175,25 @@ export const start = (options: Partial<Options> = {}) => {
     running.tracing = startTracing(tracingOptions);
   }
 
+  const secureappEnabled = isFeatureEnabled(
+    options.secureapp,
+    'SPLUNK_SECUREAPP_ENABLED',
+    false
+  );
+
   if (
-    isFeatureEnabled(options.logging, 'SPLUNK_AUTOMATIC_LOG_COLLECTION', false)
+    isFeatureEnabled(
+      options.logging,
+      'SPLUNK_AUTOMATIC_LOG_COLLECTION',
+      false
+    ) ||
+    secureappEnabled
   ) {
     running.logging = startLogging(loggingOptions);
+  }
+
+  if (secureappEnabled) {
+    startSecureapp(secureappOptions);
   }
 
   if (
