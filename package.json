@@ -1,6 +1,6 @@
 {
   "name": "@splunk/otel",
-  "version": "4.5.1",
+  "version": "4.6.0",
   "description": "The Splunk distribution of OpenTelemetry Node Instrumentation provides a Node agent that automatically instruments your Node application to capture and report distributed traces to Splunk APM.",
   "keywords": [
     "apm",
