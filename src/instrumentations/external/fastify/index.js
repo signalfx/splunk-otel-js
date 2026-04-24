@@ -48,13 +48,11 @@ const kIgnorePaths = Symbol('fastify otel ignore path')
 const kRecordExceptions = Symbol('fastify otel record exceptions')
 
 class FastifyOtelInstrumentation extends InstrumentationBase {
-  logger = null
   _requestHook = null
   _lifecycleHook = null
 
   constructor (config) {
     super(PACKAGE_NAME, PACKAGE_VERSION, config)
-    this.logger = diag.createComponentLogger({ namespace: PACKAGE_NAME })
     this[kIgnorePaths] = null
     this[kRecordExceptions] = true
 
@@ -172,14 +170,14 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
 
       instance.addHook('onRoute', function otelWireRoute (routeOptions) {
         if (instrumentation[kIgnorePaths]?.(routeOptions) === true) {
-          instrumentation.logger.debug(
+          instrumentation._diag.debug(
             `Ignoring route instrumentation ${routeOptions.method} ${routeOptions.url} because it matches the ignore path`
           )
           return
         }
 
         if (routeOptions.config?.otel === false) {
-          instrumentation.logger.debug(
+          instrumentation._diag.debug(
             `Ignoring route instrumentation ${routeOptions.method} ${routeOptions.url} because it is disabled`
           )
 
@@ -263,7 +261,7 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
           url: request.url,
           method: request.method,
         }) === true) {
-          this[kInstrumentation].logger.debug(
+          this[kInstrumentation]._diag.debug(
             `Ignoring request ${request.method} ${request.url} because it matches the ignore path`
           )
           return hookDone()
@@ -302,7 +300,7 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
         try {
           this[kInstrumentation]._requestHook?.(span, request)
         } catch (err) {
-          this[kInstrumentation].logger.error({ err }, 'requestHook threw')
+          this[kInstrumentation]._diag.error({ err }, 'requestHook threw')
         }
 
         request[kRequestContext] = trace.setSpan(ctx, span)
@@ -456,14 +454,14 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
 
           const request = getRequestFromArgs(args)
           if (request === null) {
-            instrumentation.logger.debug(
+            instrumentation._diag.debug(
               `Ignoring route instrumentation because ${hookName} was called without a Fastify request argument`
             )
             return handler.call(this, ...args)
           }
 
           if (instrumentation.isEnabled() === false || request.routeOptions.config?.otel === false) {
-            instrumentation.logger.debug(
+            instrumentation._diag.debug(
               `Ignoring route instrumentation ${request.routeOptions.method} ${request.routeOptions.url} because it is disabled`
             )
             return handler.call(this, ...args)
@@ -473,7 +471,7 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
             url: request.url,
             method: request.method,
           }) === true) {
-            instrumentation.logger.debug(
+            instrumentation._diag.debug(
               `Ignoring route instrumentation ${request.routeOptions.method} ${request.routeOptions.url} because it matches the ignore path`
             )
             return handler.call(this, ...args)
@@ -501,7 +499,7 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
                 handler: handlerName
               })
             } catch (err) {
-              instrumentation.logger.error({ err }, 'Execution of lifecycleHook failed')
+              instrumentation._diag.error({ err }, 'Execution of lifecycleHook failed')
             }
           }
 
