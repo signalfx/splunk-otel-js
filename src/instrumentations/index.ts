@@ -45,7 +45,7 @@ import { ConnectInstrumentation } from '@opentelemetry/instrumentation-connect';
 import { DataloaderInstrumentation } from '@opentelemetry/instrumentation-dataloader';
 import { DnsInstrumentation } from '@opentelemetry/instrumentation-dns';
 import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
-import { FastifyOtelInstrumentation } from '@fastify/otel';
+import { FastifyOtelInstrumentation } from './external/fastify';
 import { GenericPoolInstrumentation } from '@opentelemetry/instrumentation-generic-pool';
 import { GraphQLInstrumentation } from '@opentelemetry/instrumentation-graphql';
 import { GrpcInstrumentation } from '@opentelemetry/instrumentation-grpc';

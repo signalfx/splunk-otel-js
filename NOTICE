@@ -4,3 +4,8 @@ Copyright 2025 Splunk Inc.
 Parts of the library, such as elasticsearch and neo4j instrumentations,
 are copied and derived from instrumentations (https://github.com/aspecto-io/opentelemetry-ext-js) created by Aspecto
 (https://www.aspecto.io/).
+
+The fastify instrumentation (src/instrumentations/external/fastify) is copied
+and derived from @fastify/otel (https://github.com/fastify/otel), licensed
+under the MIT License, Copyright (c) 2024-present The Fastify team. See
+src/instrumentations/external/fastify/LICENSE for the full license text.
