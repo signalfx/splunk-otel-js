@@ -72,7 +72,6 @@
     "watch": "tsc --build --watch"
   },
   "dependencies": {
-    "@fastify/otel": "0.18.1",
     "@grpc/grpc-js": "^1.14.3",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/api-logs": "^0.214",
@@ -136,6 +135,7 @@
     "@opentelemetry/sdk-trace-node": "2.6.1",
     "@opentelemetry/semantic-conventions": "1.40.0",
     "@opentelemetry/winston-transport": "0.24.0",
+    "minimatch": "^10.2.5",
     "nan": "^2.26.2",
     "node-gyp-build": "^4.8.4",
     "protobufjs": "^8.0.1",
