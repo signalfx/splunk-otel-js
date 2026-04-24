@@ -372,7 +372,13 @@ function enableDbTraceContextPropagation(
 
 type CommonOptions = Omit<
   Partial<StartOptions>,
-  'tracing' | 'profiling' | 'metrics' | 'logging' | 'opamp' | 'logLevel'
+  | 'tracing'
+  | 'profiling'
+  | 'metrics'
+  | 'logging'
+  | 'opamp'
+  | 'secureapp'
+  | 'logLevel'
 >;
 
 function coalesceOptions<
@@ -445,8 +451,15 @@ function normalizeOptions<T extends object>(
 export function parseOptionsAndConfigureInstrumentations(
   options: Partial<StartOptions> = {}
 ) {
-  const { metrics, profiling, tracing, logging, opamp, ...commonOptions } =
-    options;
+  const {
+    metrics,
+    profiling,
+    tracing,
+    logging,
+    opamp,
+    secureapp,
+    ...commonOptions
+  } = options;
 
   assertNoExtraneousProperties(commonOptions, [
     'accessToken',
@@ -477,6 +490,7 @@ export function parseOptionsAndConfigureInstrumentations(
     commonOptions,
     normalizeOptions(opamp)
   );
+  const secureappOptions = normalizeOptions(secureapp);
 
   configureInstrumentations({
     tracing: tracingOptions,
@@ -489,5 +503,6 @@ export function parseOptionsAndConfigureInstrumentations(
     profilingOptions,
     metricsOptions,
     opampOptions,
+    secureappOptions,
   };
 }

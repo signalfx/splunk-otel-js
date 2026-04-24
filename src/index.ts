@@ -28,6 +28,10 @@ export {
 import { startProfiling as _startProfiling } from './profiling';
 export { start, stop } from './start';
 export { listEnvVars } from './utils';
+export type {
+  StartSecureappOptions,
+  SecureAppInstrumentationConfig,
+} from './secureapp/types';
 
 /**
  * @deprecated Use generic start() function instead
