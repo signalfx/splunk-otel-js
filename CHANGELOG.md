@@ -1,5 +1,10 @@
 # Change Log - @splunk/otel
 
+## 4.6.0
+
+- Upgrade to OpenTelemetry 2.7.0 / 0.215.0. [#1132](https://github.com/signalfx/splunk-otel-js/pull/1132)
+- Vendor in Fastify instrumentation. [#1130](https://github.com/signalfx/splunk-otel-js/pull/1130)
+
 ## 4.5.1
 
 - Fix YAML substitution when reporting effective config via OpAMP. [#1125](https://github.com/signalfx/splunk-otel-js/pull/1125)
