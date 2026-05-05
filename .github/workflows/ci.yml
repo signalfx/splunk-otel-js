@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         container: ['node:18.0.0']
-        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0']
+        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0', '26.0.0']
         include:
           - container: 'node:22.0.0'
             node_api_target: '25.2.0'
@@ -40,7 +40,7 @@ jobs:
       fail-fast: false
       matrix:
         container: ['node:18.0.0']
-        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0']
+        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0', '26.0.0']
         include:
           - container: 'node:22.0.0'
             node_api_target: '25.2.0'
@@ -64,7 +64,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-2022, macos-14, macos-15]
-        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0']
+        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0', '26.0.0']
         include:
           - os: macos-14
             python_version: '3.11'
@@ -168,7 +168,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ['ubuntu-latest', 'macos-latest']
-        nodejs: ['18', '20', '21', '22', '23', '24', '25']
+        nodejs: ['18', '20', '21', '22', '23', '24', '25', '26']
         include:
           - os: 'macos-latest'
             python_version: '3.11'
@@ -186,6 +186,8 @@ jobs:
             nodejs: '24.0.0'
           - os: 'windows-2022'
             nodejs: '25.2.0'
+          - os: 'windows-2022'
+            nodejs: '26.0.0'
     services:
       neo4j:
         image: ${{ (matrix.os == 'ubuntu-latest') && 'neo4j:4.4.42' || '' }}
@@ -220,7 +222,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ['ubuntu-24.04-arm']
-        nodejs: ['18', '20', '21', '22', '23', '24', '25']
+        nodejs: ['18', '20', '21', '22', '23', '24', '25', '26']
     container: node:${{ matrix.nodejs }}
     steps:
       - name: Checkout
@@ -239,7 +241,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ['ubuntu-latest', 'macos-latest']
-        nodejs: ['18', '20', '21', '22', '23', '24', '25']
+        nodejs: ['18', '20', '21', '22', '23', '24', '25', '26']
         include:
           - os: 'macos-latest'
             python_version: '3.11'
@@ -257,6 +259,8 @@ jobs:
             nodejs: '24.0.0'
           - os: 'windows-2022'
             nodejs: '25.2.0'
+          - os: 'windows-2022'
+            nodejs: '26.0.0'
     steps:
       - name: Checkout
         uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
