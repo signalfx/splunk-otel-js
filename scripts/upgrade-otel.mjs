@@ -16,7 +16,10 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
-const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const REPO_ROOT = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '..'
+);
 const PACKAGE_JSON = path.join(REPO_ROOT, 'package.json');
 const PACKAGE_LOCK = path.join(REPO_ROOT, 'package-lock.json');
 const OTEL_PREFIX = '@opentelemetry/';
@@ -28,7 +31,11 @@ const checkOnly = args.has('--check');
 
 function run(cmd, cmdArgs, opts = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(cmd, cmdArgs, { cwd: REPO_ROOT, stdio: 'inherit', ...opts });
+    const child = spawn(cmd, cmdArgs, {
+      cwd: REPO_ROOT,
+      stdio: 'inherit',
+      ...opts,
+    });
     child.on('error', reject);
     child.on('exit', (code) => {
       if (code === 0) resolve();
@@ -47,7 +54,10 @@ function capture(cmd, cmdArgs) {
     child.on('error', reject);
     child.on('exit', (code) => {
       if (code === 0) resolve(stdout.trim());
-      else reject(new Error(`${cmd} ${cmdArgs.join(' ')} failed: ${stderr.trim()}`));
+      else
+        reject(
+          new Error(`${cmd} ${cmdArgs.join(' ')} failed: ${stderr.trim()}`)
+        );
     });
   });
 }
@@ -57,15 +67,18 @@ async function fetchLatest(pkg) {
 }
 
 async function mapLimit(items, limit, fn) {
-  const out = new Array(items.length);
+  const out = Array.from({ length: items.length });
   let i = 0;
-  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
-    while (true) {
-      const idx = i++;
-      if (idx >= items.length) return;
-      out[idx] = await fn(items[idx], idx);
+  const workers = Array.from(
+    { length: Math.min(limit, items.length) },
+    async () => {
+      while (true) {
+        const idx = i++;
+        if (idx >= items.length) return;
+        out[idx] = await fn(items[idx], idx);
+      }
     }
-  });
+  );
   await Promise.all(workers);
   return out;
 }
@@ -79,7 +92,12 @@ function parseRange(spec) {
 }
 
 function collectOtelDeps(pkgJson) {
-  const sections = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'];
+  const sections = [
+    'dependencies',
+    'devDependencies',
+    'peerDependencies',
+    'optionalDependencies',
+  ];
   const found = [];
   for (const section of sections) {
     const deps = pkgJson[section];
@@ -97,7 +115,9 @@ async function upgrade() {
   const pkg = JSON.parse(raw);
   const deps = collectOtelDeps(pkg);
 
-  console.log(`Found ${deps.length} @opentelemetry/* packages. Fetching latest versions...`);
+  console.log(
+    `Found ${deps.length} @opentelemetry/* packages. Fetching latest versions...`
+  );
   const latest = await mapLimit(deps, FETCH_CONCURRENCY, async (d) => {
     const version = await fetchLatest(d.name);
     return { ...d, latest: version };
@@ -120,19 +140,25 @@ async function upgrade() {
   }
 
   if (changed === 0) {
-    console.log('All @opentelemetry/* packages are already at the latest version.');
+    console.log(
+      'All @opentelemetry/* packages are already at the latest version.'
+    );
     return false;
   }
 
   if (dryRun) {
-    console.log(`\n[dry-run] ${changed} package(s) would be updated, ${skipped} skipped.`);
+    console.log(
+      `\n[dry-run] ${changed} package(s) would be updated, ${skipped} skipped.`
+    );
     return false;
   }
 
   // Preserve trailing newline if the original file had one.
   const trailing = raw.endsWith('\n') ? '\n' : '';
   await writeFile(PACKAGE_JSON, JSON.stringify(pkg, null, 2) + trailing);
-  console.log(`\nUpdated ${changed} package(s) in package.json (${skipped} skipped).`);
+  console.log(
+    `\nUpdated ${changed} package(s) in package.json (${skipped} skipped).`
+  );
   return true;
 }
 
@@ -192,7 +218,9 @@ function walkInstallFromRoot(lock) {
 async function verifyLockfile() {
   const lock = JSON.parse(await readFile(PACKAGE_LOCK, 'utf8'));
   if (!lock.packages) {
-    throw new Error('package-lock.json has no "packages" section (lockfile v1?). Re-run npm install.');
+    throw new Error(
+      'package-lock.json has no "packages" section (lockfile v1?). Re-run npm install.'
+    );
   }
 
   const reachable = walkInstallFromRoot(lock);
@@ -220,16 +248,22 @@ async function verifyLockfile() {
   }
 
   if (duplicates.length === 0) {
-    console.log(`\nLockfile check OK: ${byName.size} @opentelemetry/* package(s), no duplicates.`);
+    console.log(
+      `\nLockfile check OK: ${byName.size} @opentelemetry/* package(s), no duplicates.`
+    );
     return;
   }
 
-  console.error(`\nLockfile check FAILED: ${duplicates.length} @opentelemetry/* package(s) installed at multiple versions:`);
+  console.error(
+    `\nLockfile check FAILED: ${duplicates.length} @opentelemetry/* package(s) installed at multiple versions:`
+  );
   for (const dup of duplicates) {
     console.error(`  ${dup.name}:`);
     for (const i of dup.installs) console.error(`    ${i.version}  (${i.key})`);
   }
-  console.error('\nRun `npm ls <package>` to see who pulls in each version, then bump or override as needed.');
+  console.error(
+    '\nRun `npm ls <package>` to see who pulls in each version, then bump or override as needed.'
+  );
   process.exit(1);
 }
 
@@ -246,7 +280,9 @@ async function main() {
     console.log('\nRunning npm install...');
     await run('npm', ['install']);
   } else {
-    console.log('\nSkipping npm install (no changes). Verifying existing lockfile.');
+    console.log(
+      '\nSkipping npm install (no changes). Verifying existing lockfile.'
+    );
   }
 
   await verifyLockfile();
