@@ -1,27 +1,32 @@
 #!/usr/bin/env node
 /*
  * Upgrades all @opentelemetry/* packages in package.json to their latest
- * published versions, runs `npm install`, and verifies that no @opentelemetry/*
- * package ends up installed at more than one version in package-lock.json
- * (multiple copies of e.g. @opentelemetry/instrumentation cause real bugs).
+ * published versions, then verifies that the declared versions plus every
+ * transitive @opentelemetry/* requirement (peer/regular/optional, fetched
+ * from the npm registry) can be satisfied by a single installed version.
+ * If they can't, an end user `npm install`-ing @splunk/otel would end up
+ * with multiple copies of e.g. @opentelemetry/instrumentation, which causes
+ * real bugs (separate singleton state per copy).
+ *
+ * Only package.json is consulted — the lockfile is irrelevant to consumers.
  *
  * Usage:
- *   node scripts/upgrade-otel.mjs            # upgrade + install + verify
+ *   node scripts/upgrade-otel.mjs            # upgrade + verify + npm install
  *   node scripts/upgrade-otel.mjs --dry-run  # show what would change
- *   node scripts/upgrade-otel.mjs --check    # only run the lockfile check
+ *   node scripts/upgrade-otel.mjs --check    # only run the package.json check
  */
 
 import { spawn } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import semver from 'semver';
 
 const REPO_ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   '..'
 );
 const PACKAGE_JSON = path.join(REPO_ROOT, 'package.json');
-const PACKAGE_LOCK = path.join(REPO_ROOT, 'package-lock.json');
 const OTEL_PREFIX = '@opentelemetry/';
 const FETCH_CONCURRENCY = 8;
 
@@ -162,130 +167,146 @@ async function upgrade() {
   return true;
 }
 
-// Resolves `depName` from the importer at `importerPath` using npm's nearest-ancestor
-// node_modules lookup, returning the matching key in lock.packages (or null).
-function resolveDep(importerPath, depName, lock) {
-  let p = importerPath;
-  while (true) {
-    const base = p === '' ? '' : p + '/';
-    const candidate = base + 'node_modules/' + depName;
-    if (lock.packages[candidate]) return candidate;
-    if (p === '') return null;
-    const idx = p.lastIndexOf('/node_modules/');
-    p = idx < 0 ? '' : p.slice(0, idx);
+// Fetches version + dependency manifests for the highest published version of
+// <name> matching <range>. `npm view <name>@<range>` returns one object when
+// the range pins a single version and an array when multiple match — we take
+// the highest by semver order.
+async function fetchManifest(name, range) {
+  const spec = `${name}@${range}`;
+  const raw = await capture('npm', [
+    'view',
+    spec,
+    '--json',
+    'version',
+    'dependencies',
+    'peerDependencies',
+    'optionalDependencies',
+  ]);
+  if (!raw) throw new Error(`npm view returned nothing for ${spec}`);
+  const data = JSON.parse(raw);
+  if (Array.isArray(data)) {
+    data.sort((a, b) => semver.compare(a.version, b.version));
+    return data[data.length - 1];
   }
+  return data;
 }
 
-// BFS the install tree starting at the root importer (""), following declared
-// dependencies/devDependencies/optionalDependencies/peerDependencies. This visits
-// every package that the main @splunk/otel install actually pulls in, and skips
-// subtrees only reachable through workspace packages (e.g. packages/otel-esbuild-plugin).
-function walkInstallFromRoot(lock) {
-  const visited = new Set(['']);
-  const queue = [''];
-  while (queue.length > 0) {
-    const importer = queue.shift();
-    let entry = lock.packages[importer];
-    if (!entry) continue;
-    if (entry.link && entry.resolved) {
-      const target = entry.resolved;
-      if (!visited.has(target)) {
-        visited.add(target);
-        queue.push(target);
-      }
-      continue;
+async function fetchAllVersions(name) {
+  const raw = await capture('npm', ['view', name, 'versions', '--json']);
+  return JSON.parse(raw);
+}
+
+async function verifyPackageJson() {
+  const pkg = JSON.parse(await readFile(PACKAGE_JSON, 'utf8'));
+
+  // devDependencies aren't installed by end users, so they can't cause
+  // duplicates in a consumer's tree — only consider what we ship.
+  const consumerSections = [
+    'dependencies',
+    'optionalDependencies',
+    'peerDependencies',
+  ];
+  const declared = new Map(); // name -> { name, range }
+  for (const section of consumerSections) {
+    const deps = pkg[section];
+    if (!deps) continue;
+    for (const [name, range] of Object.entries(deps)) {
+      if (!name.startsWith(OTEL_PREFIX)) continue;
+      if (!declared.has(name)) declared.set(name, { name, range });
     }
-    const depSets = [
-      entry.dependencies,
-      entry.devDependencies,
-      entry.optionalDependencies,
-      entry.peerDependencies,
+  }
+
+  console.log(
+    `Analyzing ${declared.size} declared @opentelemetry/* package(s) for transitive version conflicts...`
+  );
+
+  // requirements: name -> [{ source, range }]
+  const requirements = new Map();
+  const addReq = (name, source, range) => {
+    if (!requirements.has(name)) requirements.set(name, []);
+    requirements.get(name).push({ source, range });
+  };
+
+  for (const { name, range } of declared.values()) {
+    addReq(name, 'package.json', range);
+  }
+
+  const declaredList = [...declared.values()];
+  const manifests = await mapLimit(declaredList, FETCH_CONCURRENCY, (d) =>
+    fetchManifest(d.name, d.range)
+  );
+
+  for (const [i, d] of declaredList.entries()) {
+    const m = manifests[i];
+    const sourceLabel = `${d.name}@${m.version}`;
+    const groups = [
+      ['deps', m.dependencies],
+      ['peer', m.peerDependencies],
+      ['optional', m.optionalDependencies],
     ];
-    for (const deps of depSets) {
+    for (const [kind, deps] of groups) {
       if (!deps) continue;
-      for (const depName of Object.keys(deps)) {
-        const resolved = resolveDep(importer, depName, lock);
-        if (resolved && !visited.has(resolved)) {
-          visited.add(resolved);
-          queue.push(resolved);
-        }
+      for (const [depName, depRange] of Object.entries(deps)) {
+        if (!depName.startsWith(OTEL_PREFIX)) continue;
+        addReq(depName, `${sourceLabel} (${kind})`, depRange);
       }
     }
   }
-  return visited;
-}
 
-async function verifyLockfile() {
-  const lock = JSON.parse(await readFile(PACKAGE_LOCK, 'utf8'));
-  if (!lock.packages) {
-    throw new Error(
-      'package-lock.json has no "packages" section (lockfile v1?). Re-run npm install.'
+  // For each name with requirements, check that some published version
+  // satisfies every range. If none does, npm will install duplicates.
+  const names = [...requirements.keys()];
+  const versionLists = await mapLimit(names, FETCH_CONCURRENCY, (n) =>
+    fetchAllVersions(n)
+  );
+
+  const conflicts = [];
+  for (const [i, name] of names.entries()) {
+    const reqs = requirements.get(name);
+    const versions = versionLists[i];
+    const ok = versions.some((v) =>
+      reqs.every((r) => semver.satisfies(v, r.range))
     );
+    if (!ok) conflicts.push({ name, reqs });
   }
 
-  const reachable = walkInstallFromRoot(lock);
-
-  // Group every reachable node_modules entry whose final path segment is
-  // @opentelemetry/<name> by package name. Anything not reachable from the root
-  // (e.g. nested under packages/otel-esbuild-plugin's own deps) is ignored.
-  const byName = new Map();
-  for (const key of reachable) {
-    if (!key.includes(`node_modules/${OTEL_PREFIX}`)) continue;
-    const idx = key.lastIndexOf('node_modules/');
-    const name = key.slice(idx + 'node_modules/'.length);
-    if (!name.startsWith(OTEL_PREFIX)) continue;
-    const value = lock.packages[key];
-    if (!value || value.link) continue;
-    const list = byName.get(name) ?? [];
-    list.push({ key, version: value.version });
-    byName.set(name, list);
-  }
-
-  const duplicates = [];
-  for (const [name, installs] of byName) {
-    const versions = new Set(installs.map((i) => i.version));
-    if (versions.size > 1) duplicates.push({ name, installs });
-  }
-
-  if (duplicates.length === 0) {
+  if (conflicts.length === 0) {
     console.log(
-      `\nLockfile check OK: ${byName.size} @opentelemetry/* package(s), no duplicates.`
+      `\nCheck OK: ${requirements.size} @opentelemetry/* package(s), all version requirements are mutually satisfiable.`
     );
     return;
   }
 
   console.error(
-    `\nLockfile check FAILED: ${duplicates.length} @opentelemetry/* package(s) installed at multiple versions:`
+    `\nCheck FAILED: ${conflicts.length} @opentelemetry/* package(s) have incompatible version requirements (consumers would install duplicates):`
   );
-  for (const dup of duplicates) {
-    console.error(`  ${dup.name}:`);
-    for (const i of dup.installs) console.error(`    ${i.version}  (${i.key})`);
+  for (const c of conflicts) {
+    console.error(`  ${c.name}:`);
+    for (const r of c.reqs) console.error(`    ${r.range}  (${r.source})`);
   }
   console.error(
-    '\nRun `npm ls <package>` to see who pulls in each version, then bump or override as needed.'
+    '\nFix by aligning versions in package.json, or wait for upstream packages to release a compatible release.'
   );
   process.exit(1);
 }
 
 async function main() {
   if (checkOnly) {
-    await verifyLockfile();
+    await verifyPackageJson();
     return;
   }
 
   const didChange = await upgrade();
   if (dryRun) return;
 
+  await verifyPackageJson();
+
   if (didChange) {
     console.log('\nRunning npm install...');
     await run('npm', ['install']);
   } else {
-    console.log(
-      '\nSkipping npm install (no changes). Verifying existing lockfile.'
-    );
+    console.log('\nNo changes — skipping npm install.');
   }
-
-  await verifyLockfile();
 }
 
 main().catch((err) => {
