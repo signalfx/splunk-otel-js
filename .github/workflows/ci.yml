@@ -15,10 +15,12 @@ jobs:
       fail-fast: false
       matrix:
         container: ['node:18.0.0']
-        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0', '26.0.0']
+        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0']
         include:
           - container: 'node:22.0.0'
             node_api_target: '25.2.0'
+          - container: 'node:22.0.0'
+            node_api_target: '26.0.0'
     container: ${{ matrix.container }}
     steps:
       - name: Checkout
@@ -40,10 +42,12 @@ jobs:
       fail-fast: false
       matrix:
         container: ['node:18.0.0']
-        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0', '26.0.0']
+        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0']
         include:
           - container: 'node:22.0.0'
             node_api_target: '25.2.0'
+          - container: 'node:22.0.0'
+            node_api_target: '26.0.0'
     container: ${{ matrix.container }}
     steps:
       - name: Checkout
