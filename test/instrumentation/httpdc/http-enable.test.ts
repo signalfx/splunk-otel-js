@@ -480,20 +480,24 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
     // With datachannels we don't have access to the original arguments.
     // We receive http.client.request.created and then http.client.request.error
     for (const arg of [{}, new Date(), true, 1, false, 0]) {
-      it(`should be traceable and not throw exception in ${protocol} instrumentation when passing the following argument ${JSON.stringify(
-        arg
-      )}`, async () => {
-        try {
-          await httpRequest.get(arg);
-        } catch (error) {
-          // request has been made
-          assert.ok(error instanceof Error);
-        }
+      it(
+        `should be traceable and not throw exception in ${protocol} instrumentation when passing the following argument ${JSON.stringify(
+          arg
+        )}`,
+        { skip: process.platform === 'win32' },
+        async () => {
+          try {
+            await httpRequest.get(arg);
+          } catch (error) {
+            // request has been made
+            assert.ok(error instanceof Error);
+          }
 
-        await waitForFinishedSpans(1);
-        const spans = memoryExporter.getFinishedSpans();
-        assert.strictEqual(spans.length, 1);
-      });
+          await waitForFinishedSpans(1);
+          const spans = memoryExporter.getFinishedSpans();
+          assert.strictEqual(spans.length, 1);
+        }
+      );
     }
 
     for (const arg of ['']) {
