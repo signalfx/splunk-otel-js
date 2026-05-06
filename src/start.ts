@@ -80,6 +80,7 @@ interface RunningState {
   tracing: ReturnType<typeof startTracing> | null;
   logging: ReturnType<typeof startLogging> | null;
   opamp: OpAMPHandle | null;
+  secureapp: ReturnType<typeof startSecureapp> | null;
 }
 
 const running: RunningState = {
@@ -88,6 +89,7 @@ const running: RunningState = {
   tracing: null,
   logging: null,
   opamp: null,
+  secureapp: null,
 };
 
 function isFeatureEnabled<T>(
@@ -177,7 +179,7 @@ export const start = (options: Partial<Options> = {}) => {
 
   const secureappEnabled = isFeatureEnabled(
     options.secureapp,
-    'SPLUNK_SECUREAPP_ENABLED',
+    'SPLUNK_SECUREAPP_AGENT_ENABLED',
     false
   );
 
@@ -193,7 +195,7 @@ export const start = (options: Partial<Options> = {}) => {
   }
 
   if (secureappEnabled) {
-    startSecureapp(secureappOptions);
+    running.secureapp = startSecureapp(secureappOptions) ?? null;
   }
 
   if (
@@ -257,6 +259,11 @@ export const stop = async () => {
   if (running.profiling) {
     promises.push(promises.push(running.profiling!.stop()));
     running.profiling = null;
+  }
+
+  if (running.secureapp) {
+    running.secureapp.stop();
+    running.secureapp = null;
   }
 
   return Promise.all(promises);
