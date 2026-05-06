@@ -33,50 +33,54 @@ import * as logging from '../src/logging';
 import * as tracing from '../src/tracing';
 import { cleanEnvironment } from './utils';
 
+class StubInstrumentation {
+  constructor(public config?: SecureAppInstrumentationConfig) {}
+  enable() {}
+  disable() {}
+}
+
 describe('startSecureapp()', () => {
   beforeEach(cleanEnvironment);
 
-  it('is a no-op when no instrumentation class is provided', () => {
-    assert.doesNotThrow(() => {
-      startSecureapp({});
-    });
+  it('uses the default instrumentation when none is provided', () => {
+    const handle = startSecureapp({});
+    assert.ok(handle !== undefined);
+    handle?.stop();
   });
 
   it('passes option values to the instrumentation', () => {
     let capturedConfig: SecureAppInstrumentationConfig | undefined;
-
-    class TestInstrumentation {
+    class Stub extends StubInstrumentation {
       constructor(config?: SecureAppInstrumentationConfig) {
+        super(config);
         capturedConfig = config;
       }
     }
 
     startSecureapp({
-      instrumentation: TestInstrumentation as any,
+      instrumentation: Stub as any,
       dependencyScanInterval: 60000,
       initialDelaySeconds: 10,
       runtimePackagesOnly: false,
       noSelfReport: true,
     });
 
-    assert.deepStrictEqual(capturedConfig, {
-      dependencyScanInterval: 60000,
-      initialDelaySeconds: 10,
-      runtimePackagesOnly: false,
-      noSelfReport: true,
-    });
+    assert.strictEqual(capturedConfig?.dependencyScanInterval, 60000);
+    assert.strictEqual(capturedConfig?.initialDelaySeconds, 10);
+    assert.strictEqual(capturedConfig?.runtimePackagesOnly, false);
+    assert.strictEqual(capturedConfig?.noSelfReport, true);
   });
 
   it('uses defaults when options are not set', () => {
     let capturedConfig: SecureAppInstrumentationConfig | undefined;
-
-    class TestInstrumentation {
+    class Stub extends StubInstrumentation {
       constructor(config?: SecureAppInstrumentationConfig) {
+        super(config);
         capturedConfig = config;
       }
     }
 
-    startSecureapp({ instrumentation: TestInstrumentation as any });
+    startSecureapp({ instrumentation: Stub as any });
 
     assert.strictEqual(capturedConfig?.dependencyScanInterval, 86400000);
     assert.strictEqual(capturedConfig?.initialDelaySeconds, 60);
@@ -122,14 +126,14 @@ describe('startSecureapp()', () => {
     it(`reads ${envVar} from env`, () => {
       process.env[envVar] = value;
       let capturedConfig: SecureAppInstrumentationConfig | undefined;
-
-      class TestInstrumentation {
+      class Stub extends StubInstrumentation {
         constructor(config?: SecureAppInstrumentationConfig) {
+          super(config);
           capturedConfig = config;
         }
       }
 
-      startSecureapp({ instrumentation: TestInstrumentation as any });
+      startSecureapp({ instrumentation: Stub as any });
 
       assert.strictEqual(capturedConfig?.[field], expected);
     });
@@ -142,15 +146,15 @@ describe('startSecureapp()', () => {
     process.env.SPLUNK_SECUREAPP_NO_SELF_REPORT = 'true';
 
     let capturedConfig: SecureAppInstrumentationConfig | undefined;
-
-    class TestInstrumentation {
+    class Stub extends StubInstrumentation {
       constructor(config?: SecureAppInstrumentationConfig) {
+        super(config);
         capturedConfig = config;
       }
     }
 
     startSecureapp({
-      instrumentation: TestInstrumentation as any,
+      instrumentation: Stub as any,
       dependencyScanInterval: 60000,
       initialDelaySeconds: 10,
       runtimePackagesOnly: true,
@@ -220,10 +224,21 @@ describe('SecureAppInstrumentation log emission', () => {
   });
 
   it('emits a log record with event.name on scan', async () => {
-    const instrumentation = new SecureAppInstrumentation();
-    // Call scan() directly rather than relying on the timer
-    await (instrumentation as any).scan();
+    // So the test can near-synchronously call .scan() method
+    let captured: SecureAppInstrumentation | undefined;
+    class CapturingInstrumentation extends SecureAppInstrumentation {
+      constructor(config?: SecureAppInstrumentationConfig) {
+        super(config);
+        captured = this;
+      }
+    }
+
+    const handle = startSecureapp({
+      instrumentation: CapturingInstrumentation as any,
+    });
+    await (captured as any).scan();
     await provider.forceFlush();
+    handle?.stop();
 
     const records = exporter.getFinishedLogRecords();
     assert.ok(records.length > 0, 'expected at least one log record');

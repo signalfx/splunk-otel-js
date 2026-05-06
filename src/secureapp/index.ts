@@ -22,10 +22,14 @@ import type { SecureappOptions } from './types';
 
 export type { SecureappOptions } from './types';
 
-export function startSecureapp(options: SecureappOptions): void {
+export type SecureappHandle = { stop: () => void };
+
+export function startSecureapp(
+  options: SecureappOptions
+): SecureappHandle | undefined {
   const Instrumentation = options.instrumentation || SecureAppInstrumentation;
   if (!Instrumentation) {
-    return;
+    return undefined;
   }
 
   const config: SecureAppInstrumentationConfig = {
@@ -43,6 +47,7 @@ export function startSecureapp(options: SecureappOptions): void {
       getConfigBoolean('SPLUNK_SECUREAPP_NO_SELF_REPORT', false),
   };
 
-  new Instrumentation(config);
   // The instrumentation picks up the global LoggerProvider from logsAPI.logs automatically
+  const instrumentation = new Instrumentation(config);
+  return { stop: () => instrumentation.disable() };
 }
