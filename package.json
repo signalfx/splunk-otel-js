@@ -144,7 +144,7 @@
     "yaml": "^2.8.3"
   },
   "devDependencies": {
-    "@elastic/elasticsearch": "^7.17.11",
+    "@elastic/elasticsearch": "^9.4.0",
     "@types/bunyan": "1.8.11",
     "@types/semver": "^7.5.8",
     "bunyan": "1.8.15",
