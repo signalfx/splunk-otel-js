@@ -67,6 +67,10 @@ export const spinMs = (ms: number) => {
   while (Date.now() - start < ms) {}
 };
 
+export const sleep = (ms: number) => {
+  return new Promise((r) => setTimeout(r, ms));
+};
+
 export class TestMetricReader extends MetricReader {
   constructor(public temporality: AggregationTemporality) {
     super();

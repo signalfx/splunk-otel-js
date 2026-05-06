@@ -85,6 +85,7 @@ import {
   spanByKind,
   spanByName,
 } from './utils/utils';
+import { sleep } from '../../utils';
 import { getRemoteClientAddress } from '../../../src/instrumentations/httpdc/utils';
 
 let server: http.Server;
@@ -136,6 +137,17 @@ export const startOutgoingSpanHookFunction = (
 ): Attributes => {
   return { guid: request.getHeader('guid') };
 };
+
+async function waitForFinishedSpans(count: number): Promise<void> {
+  const deadline = Date.now() + 1000;
+
+  while (
+    memoryExporter.getFinishedSpans().length < count &&
+    Date.now() < deadline
+  ) {
+    await sleep(100);
+  }
+}
 
 describe('HttpInstrumentation', { skip: !isSupported() }, () => {
   let contextManager: ContextManager;
@@ -477,6 +489,8 @@ describe('HttpInstrumentation', { skip: !isSupported() }, () => {
           // request has been made
           assert.ok(error instanceof Error);
         }
+
+        await waitForFinishedSpans(1);
         const spans = memoryExporter.getFinishedSpans();
         assert.strictEqual(spans.length, 1);
       });
