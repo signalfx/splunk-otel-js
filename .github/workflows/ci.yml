@@ -111,14 +111,19 @@ jobs:
       matrix:
         os: [windows-2022, macos-14]
         node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0', '25.2.0', '26.0.0']
-        # Node 25.x requires Xcode 16.4 (macOS >= 15.3) to build native addons.
+        # Node 25.x and 26.x require Xcode 16.4 (macOS >= 15.3) to build native addons.
         # See https://github.com/nodejs/node/blob/v25.x/BUILDING.md#macos-prerequisites
+        # See https://github.com/nodejs/node/blob/v26.x/BUILDING.md#macos-prerequisites
         exclude:
           - os: macos-14
             node_api_target: '25.2.0'
+          - os: macos-14
+            node_api_target: '26.0.0'
         include:
           - os: macos-15
             node_api_target: '25.2.0'
+          - os: macos-15
+            node_api_target: '26.0.0'
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
