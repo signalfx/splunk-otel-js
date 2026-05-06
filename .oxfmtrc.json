@@ -4,6 +4,7 @@
     ".github/**",
     "**.md",
     "src/profiling/proto/**",
+    "src/instrumentations/external/fastify/*",
     "**.yml",
     "**.yaml"
   ],

@@ -1,9 +1,19 @@
 const prebuildify = require('prebuildify');
 
-let targets = process.argv.slice(2);
+const args = process.argv.slice(2);
+let libc;
+const targets = [];
 
-if (targets.length == 0) {
-  targets = [
+for (const arg of args) {
+  if (arg.startsWith('--libc=')) {
+    libc = arg.slice('--libc='.length);
+  } else {
+    targets.push(arg);
+  }
+}
+
+if (targets.length === 0) {
+  targets.push(
     '18.0.0',
     '19.0.0',
     '20.0.0',
@@ -12,13 +22,16 @@ if (targets.length == 0) {
     '23.0.0',
     '24.0.0',
     '25.2.0',
-  ];
+    '26.0.0'
+  );
 }
 
 prebuildify(
   {
     strip: true,
-    targets: targets,
+    targets,
+    libc,
+    tagLibc: libc || undefined,
   },
   (err) => {
     if (err) {

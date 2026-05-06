@@ -1,5 +1,16 @@
 # Change Log - @splunk/otel
 
+## 4.7.0
+
+- Add SecureApp. Can be enabled with `SPLUNK_SECUREAPP_AGENT_ENABLED`. [#1141](https://github.com/signalfx/splunk-otel-js/pull/1141)
+- Add support for Node.js 26. [#1140](https://github.com/signalfx/splunk-otel-js/pull/1140)
+- Upgrade to OpenTelemetry 2.7.1 / 0.216.0 and API 1.9.1. [#1139](https://github.com/signalfx/splunk-otel-js/pull/1139)
+
+## 4.6.0
+
+- Upgrade to OpenTelemetry 2.7.0 / 0.215.0. [#1132](https://github.com/signalfx/splunk-otel-js/pull/1132)
+- Vendor in Fastify instrumentation. [#1130](https://github.com/signalfx/splunk-otel-js/pull/1130)
+
 ## 4.5.1
 
 - Fix YAML substitution when reporting effective config via OpAMP. [#1125](https://github.com/signalfx/splunk-otel-js/pull/1125)

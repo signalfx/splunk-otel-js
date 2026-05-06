@@ -14,4 +14,14 @@
  * limitations under the License.
  */
 
-export const VERSION = '4.7.0';
+import type {
+  SecureAppInstrumentation,
+  SecureAppInstrumentationConfig,
+} from '@splunk/secureapp-agent';
+export type { SecureAppInstrumentationConfig } from '@splunk/secureapp-agent';
+
+export interface SecureappOptions extends SecureAppInstrumentationConfig {
+  instrumentation?: typeof SecureAppInstrumentation;
+}
+
+export type StartSecureappOptions = SecureappOptions;

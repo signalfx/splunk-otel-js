@@ -45,7 +45,7 @@ import { ConnectInstrumentation } from '@opentelemetry/instrumentation-connect';
 import { DataloaderInstrumentation } from '@opentelemetry/instrumentation-dataloader';
 import { DnsInstrumentation } from '@opentelemetry/instrumentation-dns';
 import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
-import { FastifyOtelInstrumentation } from '@fastify/otel';
+import { FastifyOtelInstrumentation } from './external/fastify';
 import { GenericPoolInstrumentation } from '@opentelemetry/instrumentation-generic-pool';
 import { GraphQLInstrumentation } from '@opentelemetry/instrumentation-graphql';
 import { GrpcInstrumentation } from '@opentelemetry/instrumentation-grpc';
@@ -372,7 +372,13 @@ function enableDbTraceContextPropagation(
 
 type CommonOptions = Omit<
   Partial<StartOptions>,
-  'tracing' | 'profiling' | 'metrics' | 'logging' | 'opamp' | 'logLevel'
+  | 'tracing'
+  | 'profiling'
+  | 'metrics'
+  | 'logging'
+  | 'opamp'
+  | 'secureapp'
+  | 'logLevel'
 >;
 
 function coalesceOptions<
@@ -445,8 +451,15 @@ function normalizeOptions<T extends object>(
 export function parseOptionsAndConfigureInstrumentations(
   options: Partial<StartOptions> = {}
 ) {
-  const { metrics, profiling, tracing, logging, opamp, ...commonOptions } =
-    options;
+  const {
+    metrics,
+    profiling,
+    tracing,
+    logging,
+    opamp,
+    secureapp,
+    ...commonOptions
+  } = options;
 
   assertNoExtraneousProperties(commonOptions, [
     'accessToken',
@@ -477,6 +490,7 @@ export function parseOptionsAndConfigureInstrumentations(
     commonOptions,
     normalizeOptions(opamp)
   );
+  const secureappOptions = normalizeOptions(secureapp);
 
   configureInstrumentations({
     tracing: tracingOptions,
@@ -489,5 +503,6 @@ export function parseOptionsAndConfigureInstrumentations(
     profilingOptions,
     metricsOptions,
     opampOptions,
+    secureappOptions,
   };
 }
