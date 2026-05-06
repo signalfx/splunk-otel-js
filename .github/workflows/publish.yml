@@ -60,4 +60,7 @@ jobs:
 
   publish-docker:
     needs: publish
+    permissions:
+      packages: write
+      contents: read
     uses: ./.github/workflows/publish-docker-image.yml
