@@ -61,6 +61,50 @@ jobs:
           name: prebuilds-linux-arm64-${{ matrix.node_api_target }}
           path: prebuilds
 
+  prebuilds-linux-musl:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0', '25.2.0', '26.0.0']
+    container: node:22-alpine3.20
+    steps:
+      - name: Install build deps
+        run: apk add --no-cache python3 make g++ git
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - name: Install npm dependencies
+        run: npm ci --ignore-scripts --no-optional
+      - name: Prebuild
+        run: npm run prebuild:os -- --libc=musl ${{ matrix.node_api_target }}
+      - name: upload prebuilds
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: prebuilds-linux-musl-${{ matrix.node_api_target }}
+          path: prebuilds
+
+  prebuilds-linux-musl-arm64:
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        node_api_target: ['18.0.0', '20.0.0', '21.2.0', '22.0.0', '23.0.0', '24.0.0', '25.2.0', '26.0.0']
+    container: node:22-alpine3.20
+    steps:
+      - name: Install build deps
+        run: apk add --no-cache python3 make g++ git
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - name: Install npm dependencies
+        run: npm ci --ignore-scripts --no-optional
+      - name: Prebuild
+        run: npm run prebuild:os -- --libc=musl ${{ matrix.node_api_target }}
+      - name: upload prebuilds
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: prebuilds-linux-musl-arm64-${{ matrix.node_api_target }}
+          path: prebuilds
+
   prebuilds-macos-windows:
     strategy:
       fail-fast: false
@@ -88,7 +132,7 @@ jobs:
           path: prebuilds
 
   create-package:
-    needs: [prebuilds-linux, prebuilds-linux-arm64, prebuilds-macos-windows]
+    needs: [prebuilds-linux, prebuilds-linux-arm64, prebuilds-linux-musl, prebuilds-linux-musl-arm64, prebuilds-macos-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -106,6 +150,7 @@ jobs:
         run: |
           mkdir -p prebuilds
           cp -r allprebuilds/prebuilds-linux-arm64-*/* prebuilds
+          cp -r allprebuilds/prebuilds-linux-musl-*/* prebuilds
           cp -r allprebuilds/prebuilds-linux-*/* prebuilds
           cp -r allprebuilds/prebuilds-windows-2022-*/* prebuilds
           cp -r allprebuilds/prebuilds-macos-14-*/* prebuilds
