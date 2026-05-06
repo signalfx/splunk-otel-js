@@ -14,22 +14,11 @@
  * limitations under the License.
  */
 
-import type {
-  InstrumentationConfig,
-  Instrumentation,
-} from '@opentelemetry/instrumentation';
-
-export interface SecureAppInstrumentationConfig extends InstrumentationConfig {
-  dependencyScanInterval?: number;
-  initialDelaySeconds?: number;
-}
-
-type InstrumentationClass = new (
-  config?: SecureAppInstrumentationConfig
-) => Instrumentation;
+import type {SecureAppInstrumentation, SecureAppInstrumentationConfig} from '@splunk/secureapp-agent';
+export type {SecureAppInstrumentationConfig} from '@splunk/secureapp-agent';
 
 export interface SecureappOptions extends SecureAppInstrumentationConfig {
-  instrumentation?: InstrumentationClass;
+  instrumentation?: typeof SecureAppInstrumentation;
 }
 
 export type StartSecureappOptions = SecureappOptions;

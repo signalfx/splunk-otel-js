@@ -177,7 +177,7 @@ export const start = (options: Partial<Options> = {}) => {
 
   const secureappEnabled = isFeatureEnabled(
     options.secureapp,
-    'SPLUNK_SECUREAPP_ENABLED',
+    'SPLUNK_SECUREAPP_AGENT_ENABLED',
     false
   );
 
