@@ -11,6 +11,7 @@ env:
 jobs:
   prebuilds-linux:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -37,6 +38,7 @@ jobs:
 
   prebuilds-linux-arm64:
     runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -63,6 +65,7 @@ jobs:
 
   prebuilds-linux-musl:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -85,6 +88,7 @@ jobs:
 
   prebuilds-linux-musl-arm64:
     runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -106,6 +110,7 @@ jobs:
           path: prebuilds
 
   prebuilds-macos-windows:
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -147,6 +152,7 @@ jobs:
   create-package:
     needs: [prebuilds-linux, prebuilds-linux-arm64, prebuilds-linux-musl, prebuilds-linux-musl-arm64, prebuilds-macos-windows]
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
@@ -184,6 +190,7 @@ jobs:
 
   create-workspace-packages:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
@@ -212,6 +219,7 @@ jobs:
 
   unit-tests:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -266,6 +274,7 @@ jobs:
 
   unit-tests-arm64:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -287,6 +296,7 @@ jobs:
 
   workspaces-unit-tests:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -332,6 +342,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
@@ -352,6 +363,7 @@ jobs:
 
   e2e-local:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
