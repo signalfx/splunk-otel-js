@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-import type {SecureAppInstrumentation, SecureAppInstrumentationConfig} from '@splunk/secureapp-agent';
-export type {SecureAppInstrumentationConfig} from '@splunk/secureapp-agent';
+import type {
+  SecureAppInstrumentation,
+  SecureAppInstrumentationConfig,
+} from '@splunk/secureapp-agent';
+export type { SecureAppInstrumentationConfig } from '@splunk/secureapp-agent';
 
 export interface SecureappOptions extends SecureAppInstrumentationConfig {
   instrumentation?: typeof SecureAppInstrumentation;

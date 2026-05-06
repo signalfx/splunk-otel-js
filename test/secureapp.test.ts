@@ -92,10 +92,30 @@ describe('startSecureapp()', () => {
   };
 
   const envVarTests: EnvVarTest[] = [
-    { envVar: 'SPLUNK_SECUREAPP_DEPENDENCY_SCAN_INTERVAL', value: '3600000', field: 'dependencyScanInterval', expected: 3600000 },
-    { envVar: 'SPLUNK_SECUREAPP_DEPENDENCY_INITIAL_DELAY', value: '120', field: 'initialDelaySeconds', expected: 120 },
-    { envVar: 'SPLUNK_SECUREAPP_RUNTIME_PACKAGES_ONLY', value: 'false', field: 'runtimePackagesOnly', expected: false },
-    { envVar: 'SPLUNK_SECUREAPP_NO_SELF_REPORT', value: 'true', field: 'noSelfReport', expected: true },
+    {
+      envVar: 'SPLUNK_SECUREAPP_DEPENDENCY_SCAN_INTERVAL',
+      value: '3600000',
+      field: 'dependencyScanInterval',
+      expected: 3600000,
+    },
+    {
+      envVar: 'SPLUNK_SECUREAPP_DEPENDENCY_INITIAL_DELAY',
+      value: '120',
+      field: 'initialDelaySeconds',
+      expected: 120,
+    },
+    {
+      envVar: 'SPLUNK_SECUREAPP_RUNTIME_PACKAGES_ONLY',
+      value: 'false',
+      field: 'runtimePackagesOnly',
+      expected: false,
+    },
+    {
+      envVar: 'SPLUNK_SECUREAPP_NO_SELF_REPORT',
+      value: 'true',
+      field: 'noSelfReport',
+      expected: true,
+    },
   ];
 
   for (const { envVar, value, field, expected } of envVarTests) {
@@ -207,6 +227,9 @@ describe('SecureAppInstrumentation log emission', () => {
 
     const records = exporter.getFinishedLogRecords();
     assert.ok(records.length > 0, 'expected at least one log record');
-    assert.strictEqual(records[0].attributes['event.name'], 'com.cisco.secureapp.report.v1');
+    assert.strictEqual(
+      records[0].attributes['event.name'],
+      'com.cisco.secureapp.report.v1'
+    );
   });
 });
