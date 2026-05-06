@@ -23,10 +23,7 @@ import {
   HeapProfile,
   ProfilingExporter,
 } from '../../src/profiling/types';
-
-const sleep = (ms: number) => {
-  return new Promise((r) => setTimeout(r, ms));
-};
+import { sleep } from '../utils';
 
 test('profiler exports heap profiles', async () => {
   let sendCallCount = 0;
