@@ -1,8 +1,7 @@
 name: Publish splunk-otel-js Docker image to ghcr.io
 
 on:
-  release:
-    types: [published]
+  workflow_call:
   workflow_dispatch:
 
 jobs:

@@ -57,3 +57,10 @@ jobs:
             dist/*
       - name: Publish
         run: npm publish ./dist/splunk-otel-${{ steps.version.outputs.value }}.tgz
+
+  publish-docker:
+    needs: publish
+    permissions:
+      packages: write
+      contents: read
+    uses: ./.github/workflows/publish-docker-image.yml
