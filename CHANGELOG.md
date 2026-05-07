@@ -1,5 +1,9 @@
 # Change Log - @splunk/otel
 
+## 4.7.1
+
+- Upgrade to OpenTelemetry 2.7.1 / 0.217.0. [#1144](https://github.com/signalfx/splunk-otel-js/issues/1144)
+
 ## 4.7.0
 
 - Add SecureApp. Can be enabled with `SPLUNK_SECUREAPP_AGENT_ENABLED`. [#1141](https://github.com/signalfx/splunk-otel-js/pull/1141)
