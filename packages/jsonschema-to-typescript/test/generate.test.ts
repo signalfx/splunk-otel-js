@@ -1,37 +1,32 @@
-import { describe, before, it } from 'node:test';
+/*
+ * Copyright Splunk Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-type GeneratorResult = {
-  output: string;
-  defCount: number;
-  lineCount: number;
-};
+import { generateTypes } from '../src/generate';
 
-type GeneratorModule = {
-  generateTypes: (schema: Record<string, unknown>) => GeneratorResult;
-};
-
-const SCRIPT_PATH = path.resolve(
-  __dirname,
-  '../../packages/generate-config-types.ts'
-);
 const REAL_SCHEMA_PATH = path.resolve(
   __dirname,
-  '../../schema/opentelemetry_configuration.json'
+  '../../../schema/opentelemetry_configuration.json'
 );
-const TSC_PATH = path.resolve(
-  __dirname,
-  '../../node_modules/typescript/bin/tsc'
-);
-let generateTypes: GeneratorModule['generateTypes'];
-
-function createTempDir() {
-  return mkdtempSync(path.join(tmpdir(), 'config-types-test-'));
-}
 
 function assertInOrder(haystack: string, needles: string[]) {
   let previousIndex = -1;
@@ -47,12 +42,7 @@ function assertInOrder(haystack: string, needles: string[]) {
   }
 }
 
-describe('generate-config-types', () => {
-  before(() => {
-    const mod = require(SCRIPT_PATH) as GeneratorModule;
-    generateTypes = mod.generateTypes;
-  });
-
+describe('jsonschema-to-typescript', () => {
   it('generates focused patterns from a small schema fixture', () => {
     const schema = {
       title: 'FixtureConfiguration',
@@ -277,7 +267,7 @@ describe('generate-config-types', () => {
       },
     };
 
-    const tempDir = createTempDir();
+    const tempDir = mkdtempSync(path.join(tmpdir(), 'config-types-test-'));
 
     try {
       const { output } = generateTypes(schema);
@@ -310,7 +300,7 @@ describe('generate-config-types', () => {
       execFileSync(
         process.execPath,
         [
-          TSC_PATH,
+          require.resolve('typescript/bin/tsc'),
           '--noEmit',
           '--strict',
           '--target',

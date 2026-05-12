@@ -553,7 +553,7 @@ export interface ExperimentalComposableRuleBasedSamplerRuleAttributePatterns {
   key: string;
   /**
    * Configure list of value patterns to include.
-   * Values are evaluated to match as follows:
+   * Matching is case-sensitive. Values are evaluated to match as follows:
    *  * If the value exactly matches.
    *  * If the value matches the wildcard pattern, where '?' matches any single character and '*' matches any number of characters including none.
    * If omitted, all values are included.
@@ -561,7 +561,7 @@ export interface ExperimentalComposableRuleBasedSamplerRuleAttributePatterns {
   included?: [string, ...string[]];
   /**
    * Configure list of value patterns to exclude. Applies after .included (i.e. excluded has higher priority than included).
-   * Values are evaluated to match as follows:
+   * Matching is case-sensitive. Values are evaluated to match as follows:
    *  * If the value exactly matches.
    *  * If the value matches the wildcard pattern, where '?' matches any single character and '*' matches any number of characters including none.
    * If omitted, .included attributes are included.
@@ -688,6 +688,11 @@ export interface ExperimentalDbInstrumentation {
    */
   semconv?: ExperimentalSemconvConfig;
 }
+
+export type ExperimentalEventToSpanEventBridgeLogRecordProcessor = Record<
+  string,
+  never
+> | null;
 
 export interface ExperimentalGenAiInstrumentation {
   /**
@@ -1139,7 +1144,7 @@ export interface ExperimentalLoggerConfig {
 
 export interface ExperimentalLoggerMatcherAndConfig {
   /**
-   * Configure logger names to match, evaluated as follows:
+   * Configure logger names to match. Matching is case-sensitive, evaluated as follows:
    *
    *  * If the logger name exactly matches.
    *  * If the logger name matches the wildcard pattern, where '?' matches any single character and '*' matches any number of characters including none.
@@ -1179,7 +1184,7 @@ export interface ExperimentalMeterConfig {
 
 export interface ExperimentalMeterMatcherAndConfig {
   /**
-   * Configure meter names to match, evaluated as follows:
+   * Configure meter names to match. Matching is case-sensitive, evaluated as follows:
    *
    *  * If the meter name exactly matches.
    *  * If the meter name matches the wildcard pattern, where '?' matches any single character and '*' matches any number of characters including none.
@@ -1240,7 +1245,7 @@ export type ExperimentalProcessResourceDetector = Record<string, never> | null;
 export interface IncludeExclude {
   /**
    * Configure list of value patterns to include.
-   * Values are evaluated to match as follows:
+   * Matching is case-sensitive. Values are evaluated to match as follows:
    *  * If the value exactly matches.
    *  * If the value matches the wildcard pattern, where '?' matches any single character and '*' matches any number of characters including none.
    * If omitted, all values are included.
@@ -1248,7 +1253,7 @@ export interface IncludeExclude {
   included?: [string, ...string[]];
   /**
    * Configure list of value patterns to exclude. Applies after .included (i.e. excluded has higher priority than included).
-   * Values are evaluated to match as follows:
+   * Matching is case-sensitive. Values are evaluated to match as follows:
    *  * If the value exactly matches.
    *  * If the value matches the wildcard pattern, where '?' matches any single character and '*' matches any number of characters including none.
    * If omitted, .included attributes are included.
@@ -1353,7 +1358,7 @@ export interface ExperimentalTracerConfig {
 
 export interface ExperimentalTracerMatcherAndConfig {
   /**
-   * Configure tracer names to match, evaluated as follows:
+   * Configure tracer names to match. Matching is case-sensitive, evaluated as follows:
    *
    *  * If the tracer name exactly matches.
    *  * If the tracer name matches the wildcard pattern, where '?' matches any single character and '*' matches any number of characters including none.
@@ -1414,6 +1419,11 @@ export interface LogRecordProcessor {
    * If omitted, ignore.
    */
   simple?: SimpleLogRecordProcessor;
+  /**
+   * Configure an event to span event bridge log record processor.
+   * If omitted, ignore.
+   */
+  'event_to_span_event_bridge/development'?: ExperimentalEventToSpanEventBridgeLogRecordProcessor;
   [key: string]: object | null | undefined;
 }
 
@@ -1615,6 +1625,11 @@ export interface PeriodicMetricReader {
    * If omitted or null, 30000 is used.
    */
   timeout?: number | null;
+  /**
+   * Configure maximum export batch size.
+   * If omitted or null, no limit is used.
+   */
+  'max_export_batch_size/development'?: number | null;
   /**
    * Configure exporter.
    * Property is required and must be non-null.

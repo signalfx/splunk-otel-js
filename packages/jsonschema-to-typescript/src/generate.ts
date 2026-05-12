@@ -17,20 +17,9 @@
 /**
  * Generates TypeScript type definitions from the OpenTelemetry configuration
  * JSON schema. Zero dependencies beyond Node.js built-ins.
- *
- * Input:  schema/opentelemetry_configuration.json
- * Output: src/configuration/schema.ts
- *
- * Usage:  node -r ts-node/register/transpile-only packages/generate-config-types.ts
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
-
-const ROOT = join(__dirname, '..');
-
-const SCHEMA_PATH = join(ROOT, 'schema', 'opentelemetry_configuration.json');
-const OUTPUT_PATH = join(ROOT, 'src', 'configuration', 'schema.ts');
 
 type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
 type JsonArray = JsonValue[];
@@ -137,7 +126,10 @@ export function generateTypes(schema: Schema): GeneratorStats {
         return 'Record<string, unknown>';
       }
 
-      if (propSchema.additionalProperties && !propSchema.properties) {
+      if (
+        typeof propSchema.additionalProperties === 'object' &&
+        !propSchema.properties
+      ) {
         const valueType = resolveType(propSchema.additionalProperties);
         return `Record<string, ${valueType}>`;
       }
@@ -452,7 +444,7 @@ export function generateTypes(schema: Schema): GeneratorStats {
   };
 }
 
-export function writeTypes(schemaPath = SCHEMA_PATH, outputPath = OUTPUT_PATH) {
+export function writeTypes(schemaPath: string, outputPath: string) {
   const schema = JSON.parse(readFileSync(schemaPath, 'utf-8')) as Schema;
   const { output, defCount, lineCount } = generateTypes(schema);
   writeFileSync(outputPath, output);
@@ -460,8 +452,13 @@ export function writeTypes(schemaPath = SCHEMA_PATH, outputPath = OUTPUT_PATH) {
 }
 
 if (require.main === module) {
-  const { defCount, lineCount, outputPath } = writeTypes();
+  const [schemaPath, outputPath] = process.argv.slice(2);
+  if (!schemaPath || !outputPath) {
+    console.error('Usage: generate <schema-path> <output-path>');
+    process.exit(1);
+  }
+  const result = writeTypes(schemaPath, outputPath);
   console.log(
-    `Generated ${outputPath} (${defCount} types, ${lineCount} lines)`
+    `Generated ${result.outputPath} (${result.defCount} types, ${result.lineCount} lines)`
   );
 }

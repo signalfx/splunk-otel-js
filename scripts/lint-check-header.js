@@ -170,6 +170,24 @@ const rule = {
                 context.report({
                   loc: node.loc,
                   message: 'no newline after header',
+                  fix: function (fixer) {
+                    var src = context.getSourceCode().getText();
+                    var endOfComment = leadingComments[0].range[1];
+                    var i = endOfComment;
+                    while (i < src.length) {
+                      if (src[i] === '\r' && src[i + 1] === '\n') {
+                        i += 2;
+                      } else if (src[i] === '\n' || src[i] === '\r') {
+                        i += 1;
+                      } else {
+                        break;
+                      }
+                    }
+                    return fixer.replaceTextRange(
+                      [endOfComment, i],
+                      eol.repeat(numNewlines)
+                    );
+                  },
                 });
               }
             }

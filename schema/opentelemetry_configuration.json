@@ -9,10 +9,7 @@
       "description": "The file format version.\nRepresented as a string including the semver major, minor version numbers (and optionally the meta tag). For example: \"0.4\", \"1.0-rc.2\", \"1.0\" (after stable release).\nSee https://github.com/open-telemetry/opentelemetry-configuration/blob/main/VERSIONING.md for more details.\nThe yaml format is documented at https://github.com/open-telemetry/opentelemetry-configuration/tree/main/schema\nProperty is required and must be non-null.\n"
     },
     "disabled": {
-      "type": [
-        "boolean",
-        "null"
-      ],
+      "type": ["boolean", "null"],
       "description": "Configure if the SDK is disabled or not.\nIf omitted or null, false is used.\n"
     },
     "log_level": {
@@ -52,9 +49,7 @@
       "description": "Defines configuration parameters specific to a particular OpenTelemetry distribution or vendor.\nThis section provides a standardized location for distribution-specific settings\nthat are not part of the OpenTelemetry configuration model.\nIt allows vendors to expose their own extensions and general configuration options.\nIf omitted, distribution defaults are used.\n"
     }
   },
-  "required": [
-    "file_format"
-  ],
+  "required": ["file_format"],
   "$defs": {
     "Aggregation": {
       "type": "object",
@@ -89,17 +84,11 @@
       }
     },
     "AlwaysOffSampler": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false
     },
     "AlwaysOnSampler": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false
     },
     "AttributeLimits": {
@@ -107,18 +96,12 @@
       "additionalProperties": false,
       "properties": {
         "attribute_value_length_limit": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure max attribute value size. \nValue must be non-negative.\nIf omitted or null, there is no limit.\n"
         },
         "attribute_count_limit": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure max attribute count. \nValue must be non-negative.\nIf omitted or null, 128 is used.\n"
         }
@@ -175,16 +158,10 @@
           "description": "The attribute type.\nValues include:\n* bool: Boolean attribute value.\n* bool_array: Boolean array attribute value.\n* double: Double attribute value.\n* double_array: Double array attribute value.\n* int: Integer attribute value.\n* int_array: Integer array attribute value.\n* string: String attribute value.\n* string_array: String array attribute value.\nIf omitted, string is used.\n"
         }
       },
-      "required": [
-        "name",
-        "value"
-      ]
+      "required": ["name", "value"]
     },
     "AttributeType": {
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": ["string", "null"],
       "enum": [
         "string",
         "bool",
@@ -197,55 +174,34 @@
       ]
     },
     "B3MultiPropagator": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false
     },
     "B3Propagator": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false
     },
     "BaggagePropagator": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false
     },
     "Base2ExponentialBucketHistogramAggregation": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "max_scale": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": -10,
           "maximum": 20,
           "description": "Configure the max scale factor.\nIf omitted or null, 20 is used.\n"
         },
         "max_size": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 2,
           "description": "Configure the maximum number of buckets in each of the positive and negative ranges, not counting the special zero bucket.\nIf omitted or null, 160 is used.\n"
         },
         "record_min_max": {
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": ["boolean", "null"],
           "description": "Configure whether or not to record min and max.\nIf omitted or null, true is used.\n"
         }
       }
@@ -255,34 +211,22 @@
       "additionalProperties": false,
       "properties": {
         "schedule_delay": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure delay interval (in milliseconds) between two consecutive exports. \nValue must be non-negative.\nIf omitted or null, 1000 is used.\n"
         },
         "export_timeout": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure maximum allowed time (in milliseconds) to export data. \nValue must be non-negative. A value of 0 indicates no limit (infinity).\nIf omitted or null, 30000 is used.\n"
         },
         "max_queue_size": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "exclusiveMinimum": 0,
           "description": "Configure maximum queue size. Value must be positive.\nIf omitted or null, 2048 is used.\n"
         },
         "max_export_batch_size": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "exclusiveMinimum": 0,
           "description": "Configure maximum batch size. Value must be positive.\nIf omitted or null, 512 is used.\n"
         },
@@ -291,43 +235,29 @@
           "description": "Configure exporter.\nProperty is required and must be non-null.\n"
         }
       },
-      "required": [
-        "exporter"
-      ]
+      "required": ["exporter"]
     },
     "BatchSpanProcessor": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "schedule_delay": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure delay interval (in milliseconds) between two consecutive exports. \nValue must be non-negative.\nIf omitted or null, 5000 is used.\n"
         },
         "export_timeout": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure maximum allowed time (in milliseconds) to export data. \nValue must be non-negative. A value of 0 indicates no limit (infinity).\nIf omitted or null, 30000 is used.\n"
         },
         "max_queue_size": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "exclusiveMinimum": 0,
           "description": "Configure maximum queue size. Value must be positive.\nIf omitted or null, 2048 is used.\n"
         },
         "max_export_batch_size": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "exclusiveMinimum": 0,
           "description": "Configure maximum batch size. Value must be positive.\nIf omitted or null, 512 is used.\n"
         },
@@ -336,92 +266,60 @@
           "description": "Configure exporter.\nProperty is required and must be non-null.\n"
         }
       },
-      "required": [
-        "exporter"
-      ]
+      "required": ["exporter"]
     },
     "CardinalityLimits": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "default": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "exclusiveMinimum": 0,
           "description": "Configure default cardinality limit for all instrument types.\nInstrument-specific cardinality limits take priority.\nIf omitted or null, 2000 is used.\n"
         },
         "counter": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "exclusiveMinimum": 0,
           "description": "Configure default cardinality limit for counter instruments.\nIf omitted or null, the value from .default is used.\n"
         },
         "gauge": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "exclusiveMinimum": 0,
           "description": "Configure default cardinality limit for gauge instruments.\nIf omitted or null, the value from .default is used.\n"
         },
         "histogram": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "exclusiveMinimum": 0,
           "description": "Configure default cardinality limit for histogram instruments.\nIf omitted or null, the value from .default is used.\n"
         },
         "observable_counter": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "exclusiveMinimum": 0,
           "description": "Configure default cardinality limit for observable_counter instruments.\nIf omitted or null, the value from .default is used.\n"
         },
         "observable_gauge": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "exclusiveMinimum": 0,
           "description": "Configure default cardinality limit for observable_gauge instruments.\nIf omitted or null, the value from .default is used.\n"
         },
         "observable_up_down_counter": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "exclusiveMinimum": 0,
           "description": "Configure default cardinality limit for observable_up_down_counter instruments.\nIf omitted or null, the value from .default is used.\n"
         },
         "up_down_counter": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "exclusiveMinimum": 0,
           "description": "Configure default cardinality limit for up_down_counter instruments.\nIf omitted or null, the value from .default is used.\n"
         }
       }
     },
     "ConsoleExporter": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false
     },
     "ConsoleMetricExporter": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "temporality_preference": {
@@ -435,10 +333,7 @@
       }
     },
     "DefaultAggregation": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false
     },
     "Distribution": {
@@ -449,22 +344,12 @@
       "minProperties": 1
     },
     "DropAggregation": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false
     },
     "ExemplarFilter": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "enum": [
-        "always_on",
-        "always_off",
-        "trace_based"
-      ]
+      "type": ["string", "null"],
+      "enum": ["always_on", "always_off", "trace_based"]
     },
     "ExperimentalCodeInstrumentation": {
       "type": "object",
@@ -477,23 +362,15 @@
       }
     },
     "ExperimentalComposableAlwaysOffSampler": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false
     },
     "ExperimentalComposableAlwaysOnSampler": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false
     },
     "ExperimentalComposableParentThresholdSampler": {
-      "type": [
-        "object"
-      ],
+      "type": ["object"],
       "additionalProperties": false,
       "properties": {
         "root": {
@@ -501,22 +378,14 @@
           "description": "Sampler to use when there is no parent.\nProperty is required and must be non-null.\n"
         }
       },
-      "required": [
-        "root"
-      ]
+      "required": ["root"]
     },
     "ExperimentalComposableProbabilitySampler": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "ratio": {
-          "type": [
-            "number",
-            "null"
-          ],
+          "type": ["number", "null"],
           "minimum": 0,
           "maximum": 1,
           "description": "Configure ratio.\nIf omitted or null, 1.0 is used.\n"
@@ -524,10 +393,7 @@
       }
     },
     "ExperimentalComposableRuleBasedSampler": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "rules": {
@@ -574,9 +440,7 @@
           "description": "The sampler to use for matching spans.\nProperty is required and must be non-null.\n"
         }
       },
-      "required": [
-        "sampler"
-      ]
+      "required": ["sampler"]
     },
     "ExperimentalComposableRuleBasedSamplerRuleAttributePatterns": {
       "type": "object",
@@ -603,9 +467,7 @@
           "description": "Configure list of value patterns to exclude. Applies after .included (i.e. excluded has higher priority than included).\nMatching is case-sensitive. Values are evaluated to match as follows:\n * If the value exactly matches.\n * If the value matches the wildcard pattern, where '?' matches any single character and '*' matches any number of characters including none.\nIf omitted, .included attributes are included.\n"
         }
       },
-      "required": [
-        "key"
-      ]
+      "required": ["key"]
     },
     "ExperimentalComposableRuleBasedSamplerRuleAttributeValues": {
       "type": "object",
@@ -624,18 +486,12 @@
           "description": "The attribute values to match against. If the attribute's value matches any of these, it matches.\nProperty is required and must be non-null.\n"
         }
       },
-      "required": [
-        "key",
-        "values"
-      ]
+      "required": ["key", "values"]
     },
     "ExperimentalComposableSampler": {
       "type": "object",
       "additionalProperties": {
-        "type": [
-          "object",
-          "null"
-        ]
+        "type": ["object", "null"]
       },
       "minProperties": 1,
       "maxProperties": 1,
@@ -663,10 +519,7 @@
       }
     },
     "ExperimentalContainerResourceDetector": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false
     },
     "ExperimentalDbInstrumentation": {
@@ -680,10 +533,7 @@
       }
     },
     "ExperimentalEventToSpanEventBridgeLogRecordProcessor": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false
     },
     "ExperimentalGenAiInstrumentation": {
@@ -729,19 +579,13 @@
           "description": "Configure general sanitization options.\nIf omitted, defaults as described in ExperimentalSanitization are used.\n"
         },
         "stability_opt_in_list": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure semantic convention stability opt-in as a comma-separated list.\nThis property follows the format and semantics of the OTEL_SEMCONV_STABILITY_OPT_IN environment variable.\nControls the emission of stable vs. experimental semantic conventions for instrumentation.\nThis setting is only intended for migrating from experimental to stable semantic conventions.\n\nKnown values include:\n- http: Emit stable HTTP and networking conventions only\n- http/dup: Emit both old and stable HTTP and networking conventions (for phased migration)\n- database: Emit stable database conventions only\n- database/dup: Emit both old and stable database conventions (for phased migration)\n- rpc: Emit stable RPC conventions only\n- rpc/dup: Emit both experimental and stable RPC conventions (for phased migration)\n- messaging: Emit stable messaging conventions only\n- messaging/dup: Emit both old and stable messaging conventions (for phased migration)\n- code: Emit stable code conventions only\n- code/dup: Emit both old and stable code conventions (for phased migration)\n\nMultiple values can be specified as a comma-separated list (e.g., \"http,database/dup\").\nAdditional signal types may be supported in future versions.\n\nDomain-specific semconv properties (e.g., .instrumentation/development.general.db.semconv) take precedence over this general setting.\n\nSee:\n- HTTP migration: https://opentelemetry.io/docs/specs/semconv/non-normative/http-migration/\n- Database migration: https://opentelemetry.io/docs/specs/semconv/database/\n- RPC: https://opentelemetry.io/docs/specs/semconv/rpc/\n- Messaging: https://opentelemetry.io/docs/specs/semconv/messaging/messaging-spans/\nIf omitted or null, no opt-in is configured and instrumentations continue emitting their default semantic convention version.\n"
         }
       }
     },
     "ExperimentalHostResourceDetector": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false
     },
     "ExperimentalHttpClientInstrumentation": {
@@ -877,23 +721,15 @@
       }
     },
     "ExperimentalJaegerRemoteSampler": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "endpoint": {
-          "type": [
-            "string"
-          ],
+          "type": ["string"],
           "description": "Configure the endpoint of the jaeger remote sampling service.\nProperty is required and must be non-null.\n"
         },
         "interval": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure the polling interval (in milliseconds) to fetch from the remote sampling service.\nIf omitted or null, 60000 is used.\n"
         },
@@ -902,10 +738,7 @@
           "description": "Configure the initial sampler used before first configuration is fetched.\nProperty is required and must be non-null.\n"
         }
       },
-      "required": [
-        "endpoint",
-        "initial_sampler"
-      ]
+      "required": ["endpoint", "initial_sampler"]
     },
     "ExperimentalLanguageSpecificInstrumentation": {
       "type": "object",
@@ -914,16 +747,11 @@
       }
     },
     "ExperimentalLoggerConfig": {
-      "type": [
-        "object"
-      ],
+      "type": ["object"],
       "additionalProperties": false,
       "properties": {
         "enabled": {
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": ["boolean", "null"],
           "description": "Configure if the logger is enabled or not.\nIf omitted or null, true is used.\n"
         },
         "minimum_severity": {
@@ -931,18 +759,13 @@
           "description": "Configure severity filtering.\nLog records with an non-zero (i.e. unspecified) severity number which is less than minimum_severity are not processed.\nValues include:\n* debug: debug, severity number 5.\n* debug2: debug2, severity number 6.\n* debug3: debug3, severity number 7.\n* debug4: debug4, severity number 8.\n* error: error, severity number 17.\n* error2: error2, severity number 18.\n* error3: error3, severity number 19.\n* error4: error4, severity number 20.\n* fatal: fatal, severity number 21.\n* fatal2: fatal2, severity number 22.\n* fatal3: fatal3, severity number 23.\n* fatal4: fatal4, severity number 24.\n* info: info, severity number 9.\n* info2: info2, severity number 10.\n* info3: info3, severity number 11.\n* info4: info4, severity number 12.\n* trace: trace, severity number 1.\n* trace2: trace2, severity number 2.\n* trace3: trace3, severity number 3.\n* trace4: trace4, severity number 4.\n* warn: warn, severity number 13.\n* warn2: warn2, severity number 14.\n* warn3: warn3, severity number 15.\n* warn4: warn4, severity number 16.\nIf omitted, severity filtering is not applied.\n"
         },
         "trace_based": {
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": ["boolean", "null"],
           "description": "Configure trace based filtering.\nIf true, log records associated with unsampled trace contexts traces are not processed. If false, or if a log record is not associated with a trace context, trace based filtering is not applied.\nIf omitted or null, trace based filtering is not applied.\n"
         }
       }
     },
     "ExperimentalLoggerConfigurator": {
-      "type": [
-        "object"
-      ],
+      "type": ["object"],
       "additionalProperties": false,
       "properties": {
         "default_config": {
@@ -960,15 +783,11 @@
       }
     },
     "ExperimentalLoggerMatcherAndConfig": {
-      "type": [
-        "object"
-      ],
+      "type": ["object"],
       "additionalProperties": false,
       "properties": {
         "name": {
-          "type": [
-            "string"
-          ],
+          "type": ["string"],
           "description": "Configure logger names to match. Matching is case-sensitive, evaluated as follows:\n\n * If the logger name exactly matches.\n * If the logger name matches the wildcard pattern, where '?' matches any single character and '*' matches any number of characters including none.\nProperty is required and must be non-null.\n"
         },
         "config": {
@@ -976,10 +795,7 @@
           "description": "The logger config.\nProperty is required and must be non-null.\n"
         }
       },
-      "required": [
-        "name",
-        "config"
-      ]
+      "required": ["name", "config"]
     },
     "ExperimentalMessagingInstrumentation": {
       "type": "object",
@@ -992,23 +808,17 @@
       }
     },
     "ExperimentalMeterConfig": {
-      "type": [
-        "object"
-      ],
+      "type": ["object"],
       "additionalProperties": false,
       "properties": {
         "enabled": {
-          "type": [
-            "boolean"
-          ],
+          "type": ["boolean"],
           "description": "Configure if the meter is enabled or not.\nIf omitted, true is used.\n"
         }
       }
     },
     "ExperimentalMeterConfigurator": {
-      "type": [
-        "object"
-      ],
+      "type": ["object"],
       "additionalProperties": false,
       "properties": {
         "default_config": {
@@ -1026,15 +836,11 @@
       }
     },
     "ExperimentalMeterMatcherAndConfig": {
-      "type": [
-        "object"
-      ],
+      "type": ["object"],
       "additionalProperties": false,
       "properties": {
         "name": {
-          "type": [
-            "string"
-          ],
+          "type": ["string"],
           "description": "Configure meter names to match. Matching is case-sensitive, evaluated as follows:\n\n * If the meter name exactly matches.\n * If the meter name matches the wildcard pattern, where '?' matches any single character and '*' matches any number of characters including none.\nProperty is required and must be non-null.\n"
         },
         "config": {
@@ -1042,39 +848,24 @@
           "description": "The meter config.\nProperty is required and must be non-null.\n"
         }
       },
-      "required": [
-        "name",
-        "config"
-      ]
+      "required": ["name", "config"]
     },
     "ExperimentalOtlpFileExporter": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "output_stream": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure output stream. \nValues include stdout, or scheme+destination. For example: file:///path/to/file.jsonl.\nIf omitted or null, stdout is used.\n"
         }
       }
     },
     "ExperimentalOtlpFileMetricExporter": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "output_stream": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure output stream. \nValues include stdout, or scheme+destination. For example: file:///path/to/file.jsonl.\nIf omitted or null, stdout is used.\n"
         },
         "temporality_preference": {
@@ -1088,17 +879,11 @@
       }
     },
     "ExperimentalProbabilitySampler": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "ratio": {
-          "type": [
-            "number",
-            "null"
-          ],
+          "type": ["number", "null"],
           "minimum": 0,
           "maximum": 1,
           "description": "Configure ratio.\nIf omitted or null, 1.0 is used.\n"
@@ -1106,45 +891,27 @@
       }
     },
     "ExperimentalProcessResourceDetector": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false
     },
     "ExperimentalPrometheusMetricExporter": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "host": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure host.\nIf omitted or null, localhost is used.\n"
         },
         "port": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "description": "Configure port.\nIf omitted or null, 9464 is used.\n"
         },
         "without_scope_info": {
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": ["boolean", "null"],
           "description": "Configure Prometheus Exporter to produce metrics without scope labels.\nIf omitted or null, false is used.\n"
         },
         "without_target_info/development": {
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": ["boolean", "null"],
           "description": "Configure Prometheus Exporter to produce metrics without a target info metric for the resource.\nIf omitted or null, false is used.\n"
         },
         "with_resource_constant_labels": {
@@ -1158,10 +925,7 @@
       }
     },
     "ExperimentalPrometheusTranslationStrategy": {
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": ["string", "null"],
       "enum": [
         "underscore_escaping_with_suffixes",
         "underscore_escaping_without_suffixes/development",
@@ -1190,10 +954,7 @@
     "ExperimentalResourceDetector": {
       "type": "object",
       "additionalProperties": {
-        "type": [
-          "object",
-          "null"
-        ]
+        "type": ["object", "null"]
       },
       "minProperties": 1,
       "maxProperties": 1,
@@ -1241,65 +1002,40 @@
       "additionalProperties": false,
       "properties": {
         "version": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "The target semantic convention version for this domain (e.g., 1).\nIf omitted or null, the latest stable version is used, or if no stable version is available and .experimental is true then the latest experimental version is used.\n"
         },
         "experimental": {
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": ["boolean", "null"],
           "description": "Use latest experimental semantic conventions (before stable is available or to enable experimental features on top of stable conventions).\nIf omitted or null, false is used.\n"
         },
         "dual_emit": {
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": ["boolean", "null"],
           "description": "When true, also emit the previous major version alongside the target version.\nFor version=1, the previous version refers to the pre-stable conventions that the instrumentation emitted before the first stable semantic convention version was defined.\nFor version=2 and above, the previous version is the prior stable major version (e.g., version=2, dual_emit=true emits both v2 and v1).\nEnables dual-emit for phased migration between versions.\nIf omitted or null, false is used.\n"
         }
       }
     },
     "ExperimentalServiceResourceDetector": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false
     },
     "ExperimentalSpanParent": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "enum": [
-        "none",
-        "remote",
-        "local"
-      ]
+      "type": ["string", "null"],
+      "enum": ["none", "remote", "local"]
     },
     "ExperimentalTracerConfig": {
-      "type": [
-        "object"
-      ],
+      "type": ["object"],
       "additionalProperties": false,
       "properties": {
         "enabled": {
-          "type": [
-            "boolean"
-          ],
+          "type": ["boolean"],
           "description": "Configure if the tracer is enabled or not.\nIf omitted, true is used.\n"
         }
       }
     },
     "ExperimentalTracerConfigurator": {
-      "type": [
-        "object"
-      ],
+      "type": ["object"],
       "additionalProperties": false,
       "properties": {
         "default_config": {
@@ -1317,15 +1053,11 @@
       }
     },
     "ExperimentalTracerMatcherAndConfig": {
-      "type": [
-        "object"
-      ],
+      "type": ["object"],
       "additionalProperties": false,
       "properties": {
         "name": {
-          "type": [
-            "string"
-          ],
+          "type": ["string"],
           "description": "Configure tracer names to match. Matching is case-sensitive, evaluated as follows:\n\n * If the tracer name exactly matches.\n * If the tracer name matches the wildcard pattern, where '?' matches any single character and '*' matches any number of characters including none.\nProperty is required and must be non-null.\n"
         },
         "config": {
@@ -1333,10 +1065,7 @@
           "description": "The tracer config.\nProperty is required and must be non-null.\n"
         }
       },
-      "required": [
-        "name",
-        "config"
-      ]
+      "required": ["name", "config"]
     },
     "ExperimentalUrlSanitization": {
       "type": "object",
@@ -1353,10 +1082,7 @@
       }
     },
     "ExplicitBucketHistogramAggregation": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "boundaries": {
@@ -1368,98 +1094,58 @@
           "description": "Configure bucket boundaries.\nIf omitted, [0, 5, 10, 25, 50, 75, 100, 250, 500, 750, 1000, 2500, 5000, 7500, 10000] is used.\n"
         },
         "record_min_max": {
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": ["boolean", "null"],
           "description": "Configure record min and max.\nIf omitted or null, true is used.\n"
         }
       }
     },
     "ExporterDefaultHistogramAggregation": {
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": ["string", "null"],
       "enum": [
         "explicit_bucket_histogram",
         "base2_exponential_bucket_histogram"
       ]
     },
     "ExporterTemporalityPreference": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "enum": [
-        "cumulative",
-        "delta",
-        "low_memory"
-      ]
+      "type": ["string", "null"],
+      "enum": ["cumulative", "delta", "low_memory"]
     },
     "GrpcTls": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "ca_file": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure certificate used to verify a server's TLS credentials. \nAbsolute path to certificate file in PEM format.\nIf omitted or null, system default certificate verification is used for secure connections.\n"
         },
         "key_file": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure mTLS private client key. \nAbsolute path to client key file in PEM format. If set, .client_certificate must also be set.\nIf omitted or null, mTLS is not used.\n"
         },
         "cert_file": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure mTLS client certificate. \nAbsolute path to client certificate file in PEM format. If set, .client_key must also be set.\nIf omitted or null, mTLS is not used.\n"
         },
         "insecure": {
-          "type": [
-            "boolean",
-            "null"
-          ],
+          "type": ["boolean", "null"],
           "description": "Configure client transport security for the exporter's connection. \nOnly applicable when .endpoint is provided without http or https scheme. Implementations may choose to ignore .insecure.\nIf omitted or null, false is used.\n"
         }
       }
     },
     "HttpTls": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "ca_file": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure certificate used to verify a server's TLS credentials. \nAbsolute path to certificate file in PEM format.\nIf omitted or null, system default certificate verification is used for secure connections.\n"
         },
         "key_file": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure mTLS private client key. \nAbsolute path to client key file in PEM format. If set, .client_certificate must also be set.\nIf omitted or null, mTLS is not used.\n"
         },
         "cert_file": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure mTLS client certificate. \nAbsolute path to client certificate file in PEM format. If set, .client_key must also be set.\nIf omitted or null, mTLS is not used.\n"
         }
       }
@@ -1487,10 +1173,7 @@
       }
     },
     "InstrumentType": {
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": ["string", "null"],
       "enum": [
         "counter",
         "gauge",
@@ -1502,10 +1185,7 @@
       ]
     },
     "LastValueAggregation": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false
     },
     "LoggerProvider": {
@@ -1529,17 +1209,12 @@
           "description": "Configure loggers.\nIf omitted, all loggers use default values as described in ExperimentalLoggerConfig.\n"
         }
       },
-      "required": [
-        "processors"
-      ]
+      "required": ["processors"]
     },
     "LogRecordExporter": {
       "type": "object",
       "additionalProperties": {
-        "type": [
-          "object",
-          "null"
-        ]
+        "type": ["object", "null"]
       },
       "minProperties": 1,
       "maxProperties": 1,
@@ -1567,18 +1242,12 @@
       "additionalProperties": false,
       "properties": {
         "attribute_value_length_limit": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure max attribute value size. Overrides .attribute_limits.attribute_value_length_limit. \nValue must be non-negative.\nIf omitted or null, there is no limit.\n"
         },
         "attribute_count_limit": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure max attribute count. Overrides .attribute_limits.attribute_count_limit. \nValue must be non-negative.\nIf omitted or null, 128 is used.\n"
         }
@@ -1587,10 +1256,7 @@
     "LogRecordProcessor": {
       "type": "object",
       "additionalProperties": {
-        "type": [
-          "object",
-          "null"
-        ]
+        "type": ["object", "null"]
       },
       "minProperties": 1,
       "maxProperties": 1,
@@ -1638,17 +1304,12 @@
           "description": "Configure meters.\nIf omitted, all meters use default values as described in ExperimentalMeterConfig.\n"
         }
       },
-      "required": [
-        "readers"
-      ]
+      "required": ["readers"]
     },
     "MetricProducer": {
       "type": "object",
       "additionalProperties": {
-        "type": [
-          "object",
-          "null"
-        ]
+        "type": ["object", "null"]
       },
       "minProperties": 1,
       "maxProperties": 1,
@@ -1684,37 +1345,22 @@
           "description": "The name of the pair.\nProperty is required and must be non-null.\n"
         },
         "value": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "The value of the pair.\nProperty must be present, but if null the behavior is dependent on usage context.\n"
         }
       },
-      "required": [
-        "name",
-        "value"
-      ]
+      "required": ["name", "value"]
     },
     "OpenCensusMetricProducer": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false
     },
     "OtlpGrpcExporter": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "endpoint": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure endpoint.\nIf omitted or null, http://localhost:4317 is used.\n"
         },
         "tls": {
@@ -1730,41 +1376,26 @@
           "description": "Configure headers. Entries have higher priority than entries from .headers_list.\nIf an entry's .value is null, the entry is ignored.\nIf omitted, no headers are added.\n"
         },
         "headers_list": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure headers. Entries have lower priority than entries from .headers.\nThe value is a list of comma separated key-value pairs matching the format of OTEL_EXPORTER_OTLP_HEADERS. See https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#configuration-options for details.\nIf omitted or null, no headers are added.\n"
         },
         "compression": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure compression.\nKnown values include: gzip, none. Implementations may support other compression algorithms.\nIf omitted or null, none is used.\n"
         },
         "timeout": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure max time (in milliseconds) to wait for each export.\nValue must be non-negative. A value of 0 indicates no limit (infinity).\nIf omitted or null, 10000 is used.\n"
         }
       }
     },
     "OtlpGrpcMetricExporter": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "endpoint": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure endpoint.\nIf omitted or null, http://localhost:4317 is used.\n"
         },
         "tls": {
@@ -1780,24 +1411,15 @@
           "description": "Configure headers. Entries have higher priority than entries from .headers_list.\nIf an entry's .value is null, the entry is ignored.\nIf omitted, no headers are added.\n"
         },
         "headers_list": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure headers. Entries have lower priority than entries from .headers.\nThe value is a list of comma separated key-value pairs matching the format of OTEL_EXPORTER_OTLP_HEADERS. See https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#configuration-options for details.\nIf omitted or null, no headers are added.\n"
         },
         "compression": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure compression.\nKnown values include: gzip, none. Implementations may support other compression algorithms.\nIf omitted or null, none is used.\n"
         },
         "timeout": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure max time (in milliseconds) to wait for each export.\nValue must be non-negative. A value of 0 indicates no limit (infinity).\nIf omitted or null, 10000 is used.\n"
         },
@@ -1812,27 +1434,15 @@
       }
     },
     "OtlpHttpEncoding": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "enum": [
-        "protobuf",
-        "json"
-      ]
+      "type": ["string", "null"],
+      "enum": ["protobuf", "json"]
     },
     "OtlpHttpExporter": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "endpoint": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure endpoint, including the signal specific path.\nIf omitted or null, the http://localhost:4318/v1/{signal} (where signal is 'traces', 'logs', or 'metrics') is used.\n"
         },
         "tls": {
@@ -1848,24 +1458,15 @@
           "description": "Configure headers. Entries have higher priority than entries from .headers_list.\nIf an entry's .value is null, the entry is ignored.\nIf omitted, no headers are added.\n"
         },
         "headers_list": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure headers. Entries have lower priority than entries from .headers.\nThe value is a list of comma separated key-value pairs matching the format of OTEL_EXPORTER_OTLP_HEADERS. See https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#configuration-options for details.\nIf omitted or null, no headers are added.\n"
         },
         "compression": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure compression.\nKnown values include: gzip, none. Implementations may support other compression algorithms.\nIf omitted or null, none is used.\n"
         },
         "timeout": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure max time (in milliseconds) to wait for each export.\nValue must be non-negative. A value of 0 indicates no limit (infinity).\nIf omitted or null, 10000 is used.\n"
         },
@@ -1876,17 +1477,11 @@
       }
     },
     "OtlpHttpMetricExporter": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "endpoint": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure endpoint.\nIf omitted or null, http://localhost:4318/v1/metrics is used.\n"
         },
         "tls": {
@@ -1902,24 +1497,15 @@
           "description": "Configure headers. Entries have higher priority than entries from .headers_list.\nIf an entry's .value is null, the entry is ignored.\nIf omitted, no headers are added.\n"
         },
         "headers_list": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure headers. Entries have lower priority than entries from .headers.\nThe value is a list of comma separated key-value pairs matching the format of OTEL_EXPORTER_OTLP_HEADERS. See https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#configuration-options for details.\nIf omitted or null, no headers are added.\n"
         },
         "compression": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure compression.\nKnown values include: gzip, none. Implementations may support other compression algorithms.\nIf omitted or null, none is used.\n"
         },
         "timeout": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure max time (in milliseconds) to wait for each export.\nValue must be non-negative. A value of 0 indicates no limit (infinity).\nIf omitted or null, 10000 is used.\n"
         },
@@ -1938,10 +1524,7 @@
       }
     },
     "ParentBasedSampler": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "root": {
@@ -1971,26 +1554,17 @@
       "additionalProperties": false,
       "properties": {
         "interval": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure delay interval (in milliseconds) between start of two consecutive exports. \nValue must be non-negative.\nIf omitted or null, 60000 is used.\n"
         },
         "timeout": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure maximum allowed time (in milliseconds) to export data. \nValue must be non-negative. A value of 0 indicates no limit (infinity).\nIf omitted or null, 30000 is used.\n"
         },
         "max_export_batch_size/development": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 1,
           "description": "Configure maximum export batch size.\nIf omitted or null, no limit is used.\n"
         },
@@ -2011,9 +1585,7 @@
           "description": "Configure cardinality limits.\nIf omitted, default values as described in CardinalityLimits are used.\n"
         }
       },
-      "required": [
-        "exporter"
-      ]
+      "required": ["exporter"]
     },
     "Propagator": {
       "type": "object",
@@ -2028,10 +1600,7 @@
           "description": "Configure the propagators in the composite text map propagator. Entries from .composite_list are appended to the list here with duplicates filtered out.\nBuilt-in propagator keys include: tracecontext, baggage, b3, b3multi. Known third party keys include: xray.\nIf omitted, and .composite_list is omitted or null, a noop propagator is used.\n"
         },
         "composite_list": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure the propagators in the composite text map propagator. Entries are appended to .composite with duplicates filtered out.\nThe value is a comma separated list of propagator identifiers matching the format of OTEL_PROPAGATORS. See https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#general-sdk-configuration for details.\nBuilt-in propagator identifiers include: tracecontext, baggage, b3, b3multi. Known third party identifiers include: xray.\nIf omitted or null, and .composite is omitted or null, a noop propagator is used.\n"
         }
       }
@@ -2039,10 +1608,7 @@
     "PullMetricExporter": {
       "type": "object",
       "additionalProperties": {
-        "type": [
-          "object",
-          "null"
-        ]
+        "type": ["object", "null"]
       },
       "minProperties": 1,
       "maxProperties": 1,
@@ -2074,17 +1640,12 @@
           "description": "Configure cardinality limits.\nIf omitted, default values as described in CardinalityLimits are used.\n"
         }
       },
-      "required": [
-        "exporter"
-      ]
+      "required": ["exporter"]
     },
     "PushMetricExporter": {
       "type": "object",
       "additionalProperties": {
-        "type": [
-          "object",
-          "null"
-        ]
+        "type": ["object", "null"]
       },
       "minProperties": 1,
       "maxProperties": 1,
@@ -2124,17 +1685,11 @@
           "description": "Configure resource detection.\nIf omitted, resource detection is disabled.\n"
         },
         "schema_url": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure resource schema URL.\nIf omitted or null, no schema URL is used.\n"
         },
         "attributes_list": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure resource attributes. Entries have lower priority than entries from .resource.attributes.\nThe value is a list of comma separated key-value pairs matching the format of OTEL_RESOURCE_ATTRIBUTES. See https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#general-sdk-configuration for details.\nIf omitted or null, no resource attributes are added.\n"
         }
       }
@@ -2142,10 +1697,7 @@
     "Sampler": {
       "type": "object",
       "additionalProperties": {
-        "type": [
-          "object",
-          "null"
-        ]
+        "type": ["object", "null"]
       },
       "minProperties": 1,
       "maxProperties": 1,
@@ -2181,10 +1733,7 @@
       }
     },
     "SeverityNumber": {
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": ["string", "null"],
       "enum": [
         "trace",
         "trace2",
@@ -2221,9 +1770,7 @@
           "description": "Configure exporter.\nProperty is required and must be non-null.\n"
         }
       },
-      "required": [
-        "exporter"
-      ]
+      "required": ["exporter"]
     },
     "SimpleSpanProcessor": {
       "type": "object",
@@ -2234,17 +1781,12 @@
           "description": "Configure exporter.\nProperty is required and must be non-null.\n"
         }
       },
-      "required": [
-        "exporter"
-      ]
+      "required": ["exporter"]
     },
     "SpanExporter": {
       "type": "object",
       "additionalProperties": {
-        "type": [
-          "object",
-          "null"
-        ]
+        "type": ["object", "null"]
       },
       "minProperties": 1,
       "maxProperties": 1,
@@ -2268,67 +1810,40 @@
       }
     },
     "SpanKind": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "enum": [
-        "internal",
-        "server",
-        "client",
-        "producer",
-        "consumer"
-      ]
+      "type": ["string", "null"],
+      "enum": ["internal", "server", "client", "producer", "consumer"]
     },
     "SpanLimits": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "attribute_value_length_limit": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure max attribute value size. Overrides .attribute_limits.attribute_value_length_limit. \nValue must be non-negative.\nIf omitted or null, there is no limit.\n"
         },
         "attribute_count_limit": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure max attribute count. Overrides .attribute_limits.attribute_count_limit. \nValue must be non-negative.\nIf omitted or null, 128 is used.\n"
         },
         "event_count_limit": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure max span event count. \nValue must be non-negative.\nIf omitted or null, 128 is used.\n"
         },
         "link_count_limit": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure max span link count. \nValue must be non-negative.\nIf omitted or null, 128 is used.\n"
         },
         "event_attribute_count_limit": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure max attributes per span event. \nValue must be non-negative.\nIf omitted or null, 128 is used.\n"
         },
         "link_attribute_count_limit": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0,
           "description": "Configure max attributes per span link. \nValue must be non-negative.\nIf omitted or null, 128 is used.\n"
         }
@@ -2337,10 +1852,7 @@
     "SpanProcessor": {
       "type": "object",
       "additionalProperties": {
-        "type": [
-          "object",
-          "null"
-        ]
+        "type": ["object", "null"]
       },
       "minProperties": 1,
       "maxProperties": 1,
@@ -2356,19 +1868,13 @@
       }
     },
     "SumAggregation": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false
     },
     "TextMapPropagator": {
       "type": "object",
       "additionalProperties": {
-        "type": [
-          "object",
-          "null"
-        ]
+        "type": ["object", "null"]
       },
       "minProperties": 1,
       "maxProperties": 1,
@@ -2392,24 +1898,15 @@
       }
     },
     "TraceContextPropagator": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false
     },
     "TraceIdRatioBasedSampler": {
-      "type": [
-        "object",
-        "null"
-      ],
+      "type": ["object", "null"],
       "additionalProperties": false,
       "properties": {
         "ratio": {
-          "type": [
-            "number",
-            "null"
-          ],
+          "type": ["number", "null"],
           "minimum": 0,
           "maximum": 1,
           "description": "Configure trace_id_ratio.\nIf omitted or null, 1.0 is used.\n"
@@ -2441,9 +1938,7 @@
           "description": "Configure tracers.\nIf omitted, all tracers use default values as described in ExperimentalTracerConfig.\n"
         }
       },
-      "required": [
-        "processors"
-      ]
+      "required": ["processors"]
     },
     "View": {
       "type": "object",
@@ -2458,20 +1953,14 @@
           "description": "Configure view stream.\nProperty is required and must be non-null.\n"
         }
       },
-      "required": [
-        "selector",
-        "stream"
-      ]
+      "required": ["selector", "stream"]
     },
     "ViewSelector": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "instrument_name": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure instrument name selection criteria.\nIf omitted or null, all instrument names match.\n"
         },
         "instrument_type": {
@@ -2479,31 +1968,19 @@
           "description": "Configure instrument type selection criteria.\nValues include:\n* counter: Synchronous counter instruments.\n* gauge: Synchronous gauge instruments.\n* histogram: Synchronous histogram instruments.\n* observable_counter: Asynchronous counter instruments.\n* observable_gauge: Asynchronous gauge instruments.\n* observable_up_down_counter: Asynchronous up down counter instruments.\n* up_down_counter: Synchronous up down counter instruments.\nIf omitted, all instrument types match.\n"
         },
         "unit": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure the instrument unit selection criteria.\nIf omitted or null, all instrument units match.\n"
         },
         "meter_name": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure meter name selection criteria.\nIf omitted or null, all meter names match.\n"
         },
         "meter_version": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure meter version selection criteria.\nIf omitted or null, all meter versions match.\n"
         },
         "meter_schema_url": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure meter schema url selection criteria.\nIf omitted or null, all meter schema URLs match.\n"
         }
       }
@@ -2513,17 +1990,11 @@
       "additionalProperties": false,
       "properties": {
         "name": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure metric name of the resulting stream(s).\nIf omitted or null, the instrument's original name is used.\n"
         },
         "description": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "description": "Configure metric description of the resulting stream(s).\nIf omitted or null, the instrument's origin description is used.\n"
         },
         "aggregation": {
@@ -2531,10 +2002,7 @@
           "description": "Configure aggregation of the resulting stream(s).\nIf omitted, default is used.\n"
         },
         "aggregation_cardinality_limit": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "exclusiveMinimum": 0,
           "description": "Configure the aggregation cardinality limit.\nIf omitted or null, the metric reader's default cardinality limit is used.\n"
         },
