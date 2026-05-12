@@ -3,6 +3,7 @@
   "ignorePatterns": [
     ".github/**",
     "**.md",
+    "**/build/**",
     "src/profiling/proto/**",
     "src/instrumentations/external/fastify/*",
     "**.yml",

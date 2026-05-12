@@ -1,0 +1,42 @@
+{
+  "name": "@splunk/jsonschema-to-typescript",
+  "version": "0.1.0",
+  "description": "JSON Schema to Typescript generator",
+  "keywords": [
+    "jsonschema",
+    "typescript"
+  ],
+  "homepage": "https://github.com/signalfx/splunk-otel-js#readme",
+  "bugs": {
+    "url": "https://github.com/signalfx/splunk-otel-js/issues"
+  },
+  "license": "Apache-2.0",
+  "author": "Splunk <splunk-oss@splunk.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/signalfx/splunk-otel-js.git"
+  },
+  "files": [
+    "build/**/*.js",
+    "build/**/*.js.map",
+    "build/**/*.d.ts",
+    "LICENSE"
+  ],
+  "main": "build/generate.js",
+  "types": "build/generate.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "compile": "tsc --build",
+    "clean": "tsc --build --clean",
+    "fmt:check": "oxfmt --check",
+    "fmt:fix": "oxfmt",
+    "lint": "oxlint --deny-warnings && npm run fmt:check",
+    "lint:fix": "oxlint --fix && npm run fmt:fix",
+    "test": "cross-env TEST_DIR=../packages/jsonschema-to-typescript node ../../test/runner.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

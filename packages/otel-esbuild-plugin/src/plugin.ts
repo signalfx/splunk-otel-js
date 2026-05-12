@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import { promises as fs, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
 import type { Plugin, PluginBuild } from 'esbuild';
