@@ -17,7 +17,7 @@
 import { strict as assert } from 'assert';
 import { afterEach, beforeEach, describe, it, mock, Mock } from 'node:test';
 
-import { diag } from '@opentelemetry/api';
+import { diag, DiagLogLevel } from '@opentelemetry/api';
 import { start, stop } from '../../src';
 import * as logging from '../../src/logging';
 import * as metrics from '../../src/metrics';
@@ -78,15 +78,11 @@ describe('start with file configuration', () => {
   });
 
   describe('log levels', () => {
-    let infoSpy: Mock<typeof console.info>;
-    let warnSpy: Mock<typeof console.warn>;
-    let debugSpy: Mock<typeof console.debug>;
+    let setLoggerSpy: Mock<typeof diag.setLogger>;
 
     beforeEach(() => {
       cleanEnvironment();
-      infoSpy = mock.method(console, 'info');
-      warnSpy = mock.method(console, 'warn');
-      debugSpy = mock.method(console, 'debug');
+      setLoggerSpy = mock.method(diag, 'setLogger');
     });
 
     afterEach(() => {
@@ -94,16 +90,15 @@ describe('start with file configuration', () => {
     });
 
     it('uses the defined log level', () => {
-      // The test config file has debug log level set
+      // The example config file pins log_level: warn (overrides the env var below).
       process.env.OTEL_EXPERIMENTAL_CONFIG_FILE = exampleConfigPath();
-      process.env.OTEL_LOG_LEVEL = 'warn';
+      process.env.OTEL_LOG_LEVEL = 'debug';
       start();
-      diag.debug('debug');
-      diag.info('info');
-      diag.warn('log level test - warn');
-      assert.strictEqual(debugSpy.mock.callCount(), 0);
-      assert.strictEqual(infoSpy.mock.callCount(), 0);
-      assert.ok(warnSpy.mock.callCount() > 1);
+      assert.strictEqual(setLoggerSpy.mock.callCount(), 1);
+      assert.strictEqual(
+        setLoggerSpy.mock.calls[0].arguments[1],
+        DiagLogLevel.WARN
+      );
     });
   });
 });

@@ -19,6 +19,7 @@ import { strict as assert } from 'assert';
 import { loadConfiguration } from '../../src/configuration';
 import { join } from 'path';
 import { cleanEnvironment } from '../utils';
+import { readFileUtf8 } from './utils';
 
 describe('YAML environment variable substitution', () => {
   beforeEach(() => {
@@ -33,9 +34,8 @@ describe('YAML environment variable substitution', () => {
     process.env.SPLUNK_SNAPSHOT_SELECTION_PROBABILITY = '0.02';
     process.env.OTEL_SERVICE_NAME = 'foobar42';
 
-    const config = loadConfiguration(
-      join(__dirname, 'example-env-config.yaml')
-    );
+    const content = readFileUtf8(join(__dirname, 'example-env-config.yaml'));
+    const config = loadConfiguration(content);
     assert.ok(config);
 
     assert.deepStrictEqual(

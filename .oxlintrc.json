@@ -38,7 +38,7 @@
     "builtin": true
   },
   "globals": {},
-  "ignorePatterns": [],
+  "ignorePatterns": ["src/instrumentations/external/fastify/*"],
   "overrides": [
     {
       "files": ["src/**.ts", "src/**.js", "test/**.ts"],

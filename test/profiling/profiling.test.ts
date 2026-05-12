@@ -36,11 +36,7 @@ import {
   ProfilingExporter,
 } from '../../src/profiling/types';
 
-import { cleanEnvironment, detectResource, spinMs } from '../utils';
-
-const sleep = (ms: number) => {
-  return new Promise((r) => setTimeout(r, ms));
-};
+import { cleanEnvironment, detectResource, sleep, spinMs } from '../utils';
 
 describe('profiling', () => {
   describe('options', () => {

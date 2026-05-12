@@ -1,5 +1,35 @@
 # Change Log - @splunk/otel
 
+## 4.7.1
+
+- Upgrade to OpenTelemetry 2.7.1 / 0.217.0. [#1144](https://github.com/signalfx/splunk-otel-js/issues/1144)
+
+## 4.7.0
+
+- Add SecureApp. Can be enabled with `SPLUNK_SECUREAPP_AGENT_ENABLED`. [#1141](https://github.com/signalfx/splunk-otel-js/pull/1141)
+- Add support for Node.js 26. [#1140](https://github.com/signalfx/splunk-otel-js/pull/1140)
+- Upgrade to OpenTelemetry 2.7.1 / 0.216.0 and API 1.9.1. [#1139](https://github.com/signalfx/splunk-otel-js/pull/1139)
+
+## 4.6.0
+
+- Upgrade to OpenTelemetry 2.7.0 / 0.215.0. [#1132](https://github.com/signalfx/splunk-otel-js/pull/1132)
+- Vendor in Fastify instrumentation. [#1130](https://github.com/signalfx/splunk-otel-js/pull/1130)
+
+## 4.5.1
+
+- Fix YAML substitution when reporting effective config via OpAMP. [#1125](https://github.com/signalfx/splunk-otel-js/pull/1125)
+- Update protobufjs used by @grpc/proto-loader to 7.5.5 for a [vulnerability fix](https://github.com/advisories/GHSA-xq3m-2v4x-88gg). [#1126](https://github.com/signalfx/splunk-otel-js/pull/1126)
+
+## 4.5.0
+
+- Use `sequelize` instrumentation from upstream. [#1113](https://github.com/signalfx/splunk-otel-js/pull/1113)
+- Upgrade to OpenTelemetry 2.6.1 / 0.214.0. [#1107](https://github.com/signalfx/splunk-otel-js/pull/1107)
+- Initial OpAMP support with status and effective configuration reporting. [#1090](https://github.com/signalfx/splunk-otel-js/pull/1090)
+- Add Oracle DB support for DB context propagation. Can be enabled via `SPLUNK_DB_TRACE_CONTEXT_PROPAGATION_ENABLED` env var or `databaseTraceContextPropagationEnabled` config option. [#1101](https://github.com/signalfx/splunk-otel-js/pull/1101)
+- Fix `Accessing resource attributes before async attributes settled` warning on startup. [#1097](https://github.com/signalfx/splunk-otel-js/pull/1097)
+- Migrate default URLs from signalfx.com to observability.splunkcloud.com. [#1095](https://github.com/signalfx/splunk-otel-js/pull/1095)
+- Add rule based sampling. [#1096](https://github.com/signalfx/splunk-otel-js/pull/1096)
+
 ## 4.4.0
 
 - Upgrade to OpenTelemetry 2.5.1 / 0.212.0. [#1092](https://github.com/signalfx/splunk-otel-js/pull/1092)

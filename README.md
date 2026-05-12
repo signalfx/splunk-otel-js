@@ -71,6 +71,7 @@ By default, the following instrumentations are active:
 * [`@opentelemetry/instrumentation-redis`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/packages/instrumentation-redis)
 * [`@opentelemetry/instrumentation-restify`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/packages/instrumentation-restify)
 * [`@opentelemetry/instrumentation-router`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/packages/instrumentation-router)
+* [`@opentelemetry/instrumentation-sequelize`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/packages/instrumentation-sequelize)
 * [`@opentelemetry/instrumentation-socket.io`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/packages/instrumentation-socket.io)
 * [`@opentelemetry/instrumentation-tedious`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/packages/instrumentation-tedious)
 * [`@opentelemetry/instrumentation-typeorm`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/packages/instrumentation-typeorm)
@@ -78,7 +79,6 @@ By default, the following instrumentations are active:
 * [`@opentelemetry/instrumentation-winston`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/packages/instrumentation-winston)
 * [`splunk-opentelemetry-instrumentation-elasticsearch`](https://github.com/signalfx/splunk-otel-js/tree/main/src/instrumentations/external/elasticsearch)
 * [`splunk-opentelemetry-instrumentation-neo4j`](https://github.com/signalfx/splunk-otel-js/tree/main/src/instrumentations/external/neo4j)
-* [`splunk-opentelemetry-instrumentation-sequelize`](https://github.com/signalfx/splunk-otel-js/tree/main/src/instrumentations/external/sequelize)
 
 You can find more instrumentation packages in the [OpenTelemetry Registry](https://opentelemetry.io/registry/?language=js).
 

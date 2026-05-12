@@ -82,7 +82,7 @@ const INSTRUMENTATIONS = [
     support: 'supported',
   },
   {
-    name: 'splunk-opentelemetry-instrumentation-sequelize',
+    name: '@opentelemetry/instrumentation-sequelize',
     target: 'sequelize',
     support: 'supported',
   },

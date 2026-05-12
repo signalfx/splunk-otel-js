@@ -17,11 +17,14 @@
 import {
   bundledInstrumentations,
   getInstrumentations,
+  configureInstrumentations,
 } from '../src/instrumentations';
 import { cleanEnvironment } from './utils';
 import { Instrumentation } from '@opentelemetry/instrumentation';
 import { strict as assert } from 'assert';
 import { describe, it, beforeEach } from 'node:test';
+import { TediousInstrumentation } from '@opentelemetry/instrumentation-tedious';
+import { OracleInstrumentation } from '@opentelemetry/instrumentation-oracledb';
 
 describe('instrumentations', () => {
   beforeEach(cleanEnvironment);
@@ -77,5 +80,35 @@ describe('instrumentations', () => {
       undefined
     );
     assert.equal(loadedInstrumentations.length, 41);
+  });
+
+  describe('database trace context propagation', () => {
+    it('sets enableTraceContextPropagation on TediousInstrumentation when enabled', () => {
+      const tediousInstr = new TediousInstrumentation();
+
+      configureInstrumentations({
+        tracing: {
+          databaseTraceContextPropagationEnabled: true,
+          instrumentations: [tediousInstr],
+        },
+      } as any);
+
+      const config = tediousInstr.getConfig() as Record<string, unknown>;
+      assert.strictEqual(config.enableTraceContextPropagation, true);
+    });
+
+    it('sets propagateTraceContextToSessionAction on OracleInstrumentation when enabled', () => {
+      const oracleInstr = new OracleInstrumentation();
+
+      configureInstrumentations({
+        tracing: {
+          databaseTraceContextPropagationEnabled: true,
+          instrumentations: [oracleInstr],
+        },
+      } as any);
+
+      const config = oracleInstr.getConfig() as Record<string, unknown>;
+      assert.strictEqual(config.propagateTraceContextToSessionAction, true);
+    });
   });
 });

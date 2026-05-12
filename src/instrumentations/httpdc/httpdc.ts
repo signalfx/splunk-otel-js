@@ -566,6 +566,8 @@ export class HttpDcInstrumentation extends InstrumentationBase<HttpDcInstrumenta
       stableMetricAttributes,
     };
 
+    request.on('close', () => this._closeHttpSpan(request));
+
     const requestContext = trace.setSpan(parentContext, span);
     context.bind(parentContext, request);
 

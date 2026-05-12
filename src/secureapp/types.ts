@@ -13,5 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export * from './sequelize';
-export * from './types';
+
+import type {
+  SecureAppInstrumentation,
+  SecureAppInstrumentationConfig,
+} from '@splunk/secureapp-agent';
+export type { SecureAppInstrumentationConfig } from '@splunk/secureapp-agent';
+
+export interface SecureappOptions extends SecureAppInstrumentationConfig {
+  instrumentation?: typeof SecureAppInstrumentation;
+}
+
+export type StartSecureappOptions = SecureappOptions;

@@ -155,7 +155,7 @@ describe('nocode', () => {
 
   after(() => {
     fs.unlinkSync(configPath);
-    fs.rmdirSync(fakeModulePath, { recursive: true });
+    fs.rmSync(fakeModulePath, { recursive: true });
   });
 
   describe('nocode', () => {

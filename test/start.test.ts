@@ -17,7 +17,7 @@
 import { strict as assert } from 'assert';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 
-import { diag } from '@opentelemetry/api';
+import { diag, DiagLogLevel } from '@opentelemetry/api';
 import { emptyResource } from '@opentelemetry/resources';
 import { start, stop } from '../src';
 import * as logging from '../src/logging';
@@ -267,56 +267,57 @@ describe('start', () => {
   });
 
   describe('diagnostic logging', () => {
-    let logSpy;
-    let infoSpy;
-    let warnSpy;
-    let debugSpy;
+    let setLoggerSpy: any;
+    let warnSpy: any;
 
     beforeEach(() => {
       utils.cleanEnvironment();
-      logSpy = mock.method(console, 'log');
-      infoSpy = mock.method(console, 'info');
-      warnSpy = mock.method(console, 'warn');
-      debugSpy = mock.method(console, 'debug');
+      setLoggerSpy = mock.method(diag, 'setLogger');
+      warnSpy = mock.method(diag, 'warn');
     });
 
     afterEach(() => {
-      logSpy.mock.resetCalls();
-      infoSpy.mock.resetCalls();
+      setLoggerSpy.mock.resetCalls();
       warnSpy.mock.resetCalls();
-      debugSpy.mock.resetCalls();
     });
 
     it('does not enable diagnostic logging by default', () => {
       start();
-      diag.info('42');
-      assert.strictEqual(logSpy.mock.callCount(), 0);
+      assert.strictEqual(setLoggerSpy.mock.callCount(), 0);
     });
 
     it('does not enable diagnostic logging via explicit config', () => {
       start({ logLevel: 'none' });
-      diag.info('42');
-      assert.strictEqual(logSpy.mock.callCount(), 0);
+      assert.strictEqual(setLoggerSpy.mock.callCount(), 0);
     });
 
     it('is possible to enable diag logging via config', () => {
       start({ logLevel: 'debug' });
-      diag.debug('42');
-      utils.calledWithExactly(debugSpy, '42');
+      assert.strictEqual(setLoggerSpy.mock.callCount(), 1);
+      assert.strictEqual(
+        setLoggerSpy.mock.calls[0].arguments[1],
+        DiagLogLevel.DEBUG
+      );
     });
 
     it('is possible to enable diag logging via env vars', () => {
       process.env.OTEL_LOG_LEVEL = 'info';
       start();
-      diag.info('42');
-      utils.calledWithExactly(infoSpy, '42');
+      assert.strictEqual(setLoggerSpy.mock.callCount(), 1);
+      assert.strictEqual(
+        setLoggerSpy.mock.calls[0].arguments[1],
+        DiagLogLevel.INFO
+      );
     });
 
     it('prefers programmatic config over env var', () => {
       process.env.OTEL_LOG_LEVEL = 'debug';
       start({ logLevel: 'info' });
-      diag.debug('42');
-      assert(debugSpy.mock.callCount() === 0);
+      assert.strictEqual(setLoggerSpy.mock.callCount(), 1);
+      assert.strictEqual(
+        setLoggerSpy.mock.calls[0].arguments[1],
+        DiagLogLevel.INFO
+      );
     });
 
     it('logs a warning when service name is not set', () => {

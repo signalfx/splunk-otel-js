@@ -40,6 +40,9 @@ import {
 } from '@opentelemetry/api';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { StartLoggingOptions, startLogging } from './logging';
+import { startOpAMP, type StartOpAMPOptions, type OpAMPHandle } from './opamp';
+import { startSecureapp } from './secureapp';
+import type { StartSecureappOptions } from './secureapp/types';
 import { Resource } from '@opentelemetry/resources';
 import { getDetectedResource } from './resource';
 import {
@@ -53,6 +56,7 @@ import {
   setGlobalConfiguration,
   loadConfiguration,
 } from './configuration';
+import { readFileSync } from 'node:fs';
 
 export interface Options {
   accessToken: string;
@@ -66,6 +70,8 @@ export interface Options {
   profiling: boolean | StartProfilingOptions;
   tracing: boolean | StartTracingOptions;
   logging: boolean | StartLoggingOptions;
+  opamp: boolean | StartOpAMPOptions;
+  secureapp: boolean | StartSecureappOptions;
 }
 
 interface RunningState {
@@ -73,6 +79,8 @@ interface RunningState {
   profiling: ReturnType<typeof startProfiling> | null;
   tracing: ReturnType<typeof startTracing> | null;
   logging: ReturnType<typeof startLogging> | null;
+  opamp: OpAMPHandle | null;
+  secureapp: ReturnType<typeof startSecureapp> | null;
 }
 
 const running: RunningState = {
@@ -80,9 +88,11 @@ const running: RunningState = {
   profiling: null,
   tracing: null,
   logging: null,
+  opamp: null,
+  secureapp: null,
 };
 
-function isSignalEnabled<T>(
+function isFeatureEnabled<T>(
   option: T | undefined | null,
   envVar: EnvVarKey,
   def: boolean
@@ -100,9 +110,10 @@ export const start = (options: Partial<Options> = {}) => {
     throw new Error('Splunk APM already started');
   }
 
-  const configFile = getNonEmptyEnvVar('OTEL_EXPERIMENTAL_CONFIG_FILE');
-  if (configFile) {
-    const configuration = loadConfiguration(configFile);
+  const configFilePath = getNonEmptyEnvVar('OTEL_EXPERIMENTAL_CONFIG_FILE');
+  if (configFilePath) {
+    const content = readFileSync(configFilePath, { encoding: 'utf-8' });
+    const configuration = loadConfiguration(content);
     setGlobalConfiguration(configuration);
 
     if (configuration.disabled === true) {
@@ -133,11 +144,21 @@ export const start = (options: Partial<Options> = {}) => {
     );
   }
 
-  const { tracingOptions, loggingOptions, profilingOptions, metricsOptions } =
-    parseOptionsAndConfigureInstrumentations(options);
+  const {
+    tracingOptions,
+    loggingOptions,
+    profilingOptions,
+    metricsOptions,
+    opampOptions,
+    secureappOptions,
+  } = parseOptionsAndConfigureInstrumentations(options);
+
+  if (isFeatureEnabled(options.opamp, 'SPLUNK_OPAMP_ENABLED', false)) {
+    running.opamp = startOpAMP(opampOptions);
+  }
 
   let metricsEnabledByDefault = false;
-  if (isSignalEnabled(options.profiling, 'SPLUNK_PROFILER_ENABLED', false)) {
+  if (isFeatureEnabled(options.profiling, 'SPLUNK_PROFILER_ENABLED', false)) {
     running.profiling = startProfiling(profilingOptions);
     if (profilingOptions.memoryProfilingEnabled) {
       metricsEnabledByDefault = true;
@@ -152,18 +173,33 @@ export const start = (options: Partial<Options> = {}) => {
     });
   }
 
-  if (isSignalEnabled(options.tracing, 'SPLUNK_TRACING_ENABLED', true)) {
+  if (isFeatureEnabled(options.tracing, 'SPLUNK_TRACING_ENABLED', true)) {
     running.tracing = startTracing(tracingOptions);
   }
 
+  const secureappEnabled = isFeatureEnabled(
+    options.secureapp,
+    'SPLUNK_SECUREAPP_AGENT_ENABLED',
+    false
+  );
+
   if (
-    isSignalEnabled(options.logging, 'SPLUNK_AUTOMATIC_LOG_COLLECTION', false)
+    isFeatureEnabled(
+      options.logging,
+      'SPLUNK_AUTOMATIC_LOG_COLLECTION',
+      false
+    ) ||
+    secureappEnabled
   ) {
     running.logging = startLogging(loggingOptions);
   }
 
+  if (secureappEnabled) {
+    running.secureapp = startSecureapp(secureappOptions) ?? null;
+  }
+
   if (
-    isSignalEnabled(
+    isFeatureEnabled(
       options.metrics,
       'SPLUNK_METRICS_ENABLED',
       metricsEnabledByDefault
@@ -200,6 +236,11 @@ function createNoopMeterProvider() {
 export const stop = async () => {
   const promises = [];
 
+  if (running.opamp) {
+    promises.push(running.opamp.stop());
+    running.opamp = null;
+  }
+
   if (running.logging) {
     promises.push(running.logging.stop());
     running.logging = null;
@@ -218,6 +259,11 @@ export const stop = async () => {
   if (running.profiling) {
     promises.push(promises.push(running.profiling!.stop()));
     running.profiling = null;
+  }
+
+  if (running.secureapp) {
+    running.secureapp.stop();
+    running.secureapp = null;
   }
 
   return Promise.all(promises);
