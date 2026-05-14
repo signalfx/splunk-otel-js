@@ -1,5 +1,12 @@
 # Change Log - @splunk/otel
 
+## 4.7.2
+
+- Upgrade to OpenTelemetry 0.218.0. [#1151](https://github.com/signalfx/splunk-otel-js/issues/1151)
+  - Includes a fix to router instrumentation for `MaxListenersExceededWarning`.
+    [js-contrib #3495](https://github.com/open-telemetry/opentelemetry-js-contrib/issues/3495)
+    Fixes [#1134](https://github.com/signalfx/splunk-otel-js/issues/1134).
+
 ## 4.7.1
 
 - Upgrade to OpenTelemetry 2.7.1 / 0.217.0. [#1144](https://github.com/signalfx/splunk-otel-js/issues/1144)
