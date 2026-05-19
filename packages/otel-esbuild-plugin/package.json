@@ -41,11 +41,11 @@
     "test": "cross-env TEST_DIR=../packages/otel-esbuild-plugin node ../../test/runner.js"
   },
   "dependencies": {
-    "esbuild": "^0.25.8",
-    "opentelemetry-esbuild-plugin-node": "^4.1.0"
+    "esbuild": "^0.28.0",
+    "opentelemetry-esbuild-plugin-node": "^4.4.0"
   },
   "peerDependencies": {
-    "@splunk/otel": "^4.4.0"
+    "@splunk/otel": "^4.7.2"
   },
   "engines": {
     "node": ">=18"
