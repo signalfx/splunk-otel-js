@@ -38,7 +38,10 @@
     "builtin": true
   },
   "globals": {},
-  "ignorePatterns": ["src/instrumentations/external/fastify/*"],
+  "ignorePatterns": [
+    "src/instrumentations/external/fastify/*",
+    "src/instrumentations/external/mysql2/**"
+  ],
   "overrides": [
     {
       "files": ["**/src/**.ts", "**/src/**.js", "**/test/**.ts"],
