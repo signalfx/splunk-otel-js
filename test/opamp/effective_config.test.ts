@@ -331,5 +331,27 @@ distribution:
       assert.strictEqual(config.type, 'yaml');
       assert(config.name.length > 0, 'a defaulted name must be provided');
     });
+
+    it('reports every exporter when a signal has multiple processors', () => {
+      // Spec C9: all active exporters/endpoints for a signal are reported.
+      const config = loadAndReport(
+        'file_format: "1.0-rc.2"\ntracer_provider:\n  processors:\n' +
+          '    - batch:\n        exporter:\n          otlp_http:\n' +
+          '            endpoint: http://a:4318/v1/traces\n' +
+          '    - simple:\n        exporter:\n          otlp_grpc:\n' +
+          '            endpoint: http://b:4317\n'
+      );
+
+      const processors = parseYaml(config.content).tracer_provider.processors;
+      assert.strictEqual(processors.length, 2);
+      assert.strictEqual(
+        processors[0].batch.exporter.otlp_http.endpoint,
+        'http://a:4318/v1/traces'
+      );
+      assert.strictEqual(
+        processors[1].simple.exporter.otlp_grpc.endpoint,
+        'http://b:4317'
+      );
+    });
   });
 });

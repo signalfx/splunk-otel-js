@@ -776,30 +776,41 @@ const OTLP_HTTP_DEFAULT_ENDPOINTS: Record<SignalName, string> = {
   logs: 'http://localhost:4318/v1/logs',
 };
 
-// Projects a declarative exporter block down to just its endpoint, supplying
+// Minimal structural views of the declarative schema, capturing only the
+// fields the projection reads. The concrete schema types (SpanExporter,
+// LogRecordProcessor, MetricReader, ...) are all assignable to these, so the
+// projection can share one code path across signals.
+interface OtlpExporterView {
+  otlp_http?: { endpoint?: string | null };
+  otlp_grpc?: { endpoint?: string | null };
+}
+
+interface SignalProcessorView {
+  batch?: { exporter?: OtlpExporterView };
+  simple?: { exporter?: OtlpExporterView };
+}
+
+// Projects a declarative exporter block down to just its endpoint(s), supplying
 // the OTLP/HTTP default when an otlp_http exporter omits the endpoint. Returns
 // undefined when no OTLP exporter is present.
 function projectExporterEndpoint(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  exporter: any,
+  exporter: OtlpExporterView | undefined,
   signal: SignalName
 ): Record<string, { endpoint: string | null }> | undefined {
-  if (exporter === null || typeof exporter !== 'object') {
+  if (exporter === undefined) {
     return undefined;
   }
 
   const out: Record<string, { endpoint: string | null }> = {};
 
-  for (const kind of ['otlp_http', 'otlp_grpc'] as const) {
-    const ex = exporter[kind];
-    if (ex === undefined) {
-      continue;
-    }
-
-    const endpoint =
-      ex?.endpoint ??
-      (kind === 'otlp_http' ? OTLP_HTTP_DEFAULT_ENDPOINTS[signal] : null);
-    out[kind] = { endpoint: endpoint ?? null };
+  if (exporter.otlp_http != null) {
+    out.otlp_http = {
+      endpoint:
+        exporter.otlp_http.endpoint ?? OTLP_HTTP_DEFAULT_ENDPOINTS[signal],
+    };
+  }
+  if (exporter.otlp_grpc != null) {
+    out.otlp_grpc = { endpoint: exporter.otlp_grpc.endpoint ?? null };
   }
 
   return Object.keys(out).length > 0 ? out : undefined;
@@ -808,19 +819,14 @@ function projectExporterEndpoint(
 // Projects a span/log record processor (batch|simple) to a minimal form that
 // keeps only the exporter endpoint(s). All active exporters are reported (C9).
 function projectSignalProcessor(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  processor: any,
+  processor: SignalProcessorView,
   signal: SignalName
 ): Record<string, object> | undefined {
-  if (processor === null || typeof processor !== 'object') {
-    return undefined;
-  }
-
   const out: Record<string, object> = {};
 
   for (const procType of ['batch', 'simple'] as const) {
     const exporter = projectExporterEndpoint(
-      processor[procType]?.exporter,
+      processor?.[procType]?.exporter,
       signal
     );
     if (exporter !== undefined) {
@@ -832,11 +838,10 @@ function projectSignalProcessor(
 }
 
 function projectProcessorList(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  processors: any,
+  processors: SignalProcessorView[] | undefined,
   signal: SignalName
 ): object | undefined {
-  if (!Array.isArray(processors)) {
+  if (processors === undefined) {
     return undefined;
   }
 
@@ -849,7 +854,7 @@ function projectProcessorList(
 
 function projectMeterProvider(config: DistroConfiguration): object | undefined {
   const readers = config.meter_provider?.readers;
-  if (!Array.isArray(readers)) {
+  if (readers === undefined) {
     return undefined;
   }
 
