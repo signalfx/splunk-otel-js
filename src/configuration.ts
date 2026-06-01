@@ -45,6 +45,7 @@ import {
 } from '@opentelemetry/resources';
 import { AttributeValue } from '@opentelemetry/api';
 import { convertSubstitution, envSubstitute } from './configuration/substitute';
+import { getEffectiveState } from './opamp/effective-state';
 
 type ConfigSampler = ConfigSchemaSampler;
 
@@ -742,53 +743,67 @@ function quoteEnvValue(value: string | number | boolean | null): string {
 
 // Builds the "Effective Environment Config" body mandated by the GDI
 // specification (specification/opamp_datamodel.md). Only the required keys are
-// reported, each with a value derived from the distro's own configuration
-// resolution (so defaults are applied) rather than echoing raw process.env.
+// reported. Each value reflects what is actually in effect at runtime: values
+// reported by the components as they start (the effective-state holder) are
+// preferred, since those capture programmatic options and runtime outcomes
+// (e.g. the profiler failing to load). Anything not yet reported falls back to
+// the distro's own configuration resolution so defaults are still applied.
 function getEffectiveEnvironmentConfig(): string {
+  const state = getEffectiveState();
+
   const entries: Array<[string, string | number | boolean | null]> = [
     [
       'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT',
-      resolveOtlpEndpoint(
-        'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT',
-        '/v2/trace/otlp'
-      ),
+      state.tracesEndpoint ??
+        resolveOtlpEndpoint(
+          'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT',
+          '/v2/trace/otlp'
+        ),
     ],
     [
       'OTEL_EXPORTER_OTLP_METRICS_ENDPOINT',
-      resolveOtlpEndpoint(
-        'OTEL_EXPORTER_OTLP_METRICS_ENDPOINT',
-        '/v2/datapoint/otlp'
-      ),
+      state.metricsEndpoint ??
+        resolveOtlpEndpoint(
+          'OTEL_EXPORTER_OTLP_METRICS_ENDPOINT',
+          '/v2/datapoint/otlp'
+        ),
     ],
     [
       'OTEL_EXPORTER_OTLP_LOGS_ENDPOINT',
       // Logs have no realm-based default; they fall back to the local
       // collector default resolved inside the exporter, so report null when
       // unset rather than fabricating an endpoint here.
-      getEnvValueByPrecedence([
-        'OTEL_EXPORTER_OTLP_LOGS_ENDPOINT',
-        'OTEL_EXPORTER_OTLP_ENDPOINT',
-      ]) ?? null,
+      state.logsEndpoint ??
+        getEnvValueByPrecedence([
+          'OTEL_EXPORTER_OTLP_LOGS_ENDPOINT',
+          'OTEL_EXPORTER_OTLP_ENDPOINT',
+        ]) ??
+        null,
     ],
     [
       'SPLUNK_PROFILER_ENABLED',
-      getConfigBoolean('SPLUNK_PROFILER_ENABLED', false),
+      state.profilerEnabled ??
+        getConfigBoolean('SPLUNK_PROFILER_ENABLED', false),
     ],
     [
       'SPLUNK_PROFILER_MEMORY_ENABLED',
-      getConfigBoolean('SPLUNK_PROFILER_MEMORY_ENABLED', false),
+      state.memoryProfilerEnabled ??
+        getConfigBoolean('SPLUNK_PROFILER_MEMORY_ENABLED', false),
     ],
     [
       'SPLUNK_SNAPSHOT_PROFILER_ENABLED',
-      getConfigBoolean('SPLUNK_SNAPSHOT_PROFILER_ENABLED', false),
+      state.snapshotProfilerEnabled ??
+        getConfigBoolean('SPLUNK_SNAPSHOT_PROFILER_ENABLED', false),
     ],
     [
       'SPLUNK_SNAPSHOT_PROFILER_SAMPLING_INTERVAL',
-      getConfigNumber('SPLUNK_SNAPSHOT_PROFILER_SAMPLING_INTERVAL', 1),
+      state.snapshotSamplingInterval ??
+        getConfigNumber('SPLUNK_SNAPSHOT_PROFILER_SAMPLING_INTERVAL', 1),
     ],
     [
       'SPLUNK_PROFILER_CALL_STACK_INTERVAL',
-      getConfigNumber('SPLUNK_PROFILER_CALL_STACK_INTERVAL', 1000),
+      state.callStackInterval ??
+        getConfigNumber('SPLUNK_PROFILER_CALL_STACK_INTERVAL', 1000),
     ],
     // In the pure-environment case there is, by definition, no declarative
     // config file, so both config-file keys report null.
@@ -901,23 +916,35 @@ function projectMeterProvider(config: DistroConfiguration): object | undefined {
 }
 
 // Projects the Splunk profiling config. Presence implies enabled (C6); absent
-// features are omitted, which the spec treats as disabled.
+// features are omitted, which the spec treats as disabled. Where a component
+// reported its actual runtime outcome (e.g. the profiler failed to load), that
+// outcome wins over what the file declared (spec B7): a feature that did not
+// actually start is dropped from the report.
 function projectProfiling(config: DistroConfiguration): object | undefined {
   const profiling = splunkConfig(config)?.profiling;
   if (profiling === undefined) {
     return undefined;
   }
 
+  const state = getEffectiveState();
+
   const alwaysOn: Record<string, unknown> = {};
   const cpuProfiler = profiling.always_on?.cpu_profiler;
-  if (cpuProfiler !== undefined) {
+  // A configured cpu_profiler implies always-on profiling is enabled, unless a
+  // component reported that it did not actually start.
+  if (cpuProfiler !== undefined && state.profilerEnabled !== false) {
     alwaysOn.cpu_profiler = {
-      // A configured cpu_profiler implies always-on profiling is enabled; fill
-      // the default sampling interval when omitted (C7).
-      sampling_interval: cpuProfiler?.sampling_interval ?? 1000,
+      // Prefer the interval the profiler actually started with; otherwise fill
+      // the default sampling interval when omitted from the file (C7).
+      sampling_interval:
+        state.callStackInterval ?? cpuProfiler?.sampling_interval ?? 1000,
     };
   }
-  if (profiling.always_on?.memory_profiler !== undefined) {
+  if (
+    profiling.always_on?.memory_profiler !== undefined &&
+    state.memoryProfilerEnabled !== false &&
+    state.profilerEnabled !== false
+  ) {
     alwaysOn.memory_profiler = profiling.always_on.memory_profiler;
   }
 
@@ -925,9 +952,15 @@ function projectProfiling(config: DistroConfiguration): object | undefined {
   if (Object.keys(alwaysOn).length > 0) {
     profilingOut.always_on = alwaysOn;
   }
-  if (profiling.callgraphs !== undefined && profiling.callgraphs !== null) {
+  if (
+    profiling.callgraphs !== undefined &&
+    profiling.callgraphs !== null &&
+    state.snapshotProfilerEnabled !== false
+  ) {
     profilingOut.callgraphs = {
-      sampling_interval: profiling.callgraphs.sampling_interval,
+      sampling_interval:
+        state.snapshotSamplingInterval ??
+        profiling.callgraphs.sampling_interval,
     };
   }
 

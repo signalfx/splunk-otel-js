@@ -22,6 +22,10 @@ import {
   resetConfiguration,
   setGlobalConfiguration,
 } from '../../src/configuration';
+import {
+  recordEffectiveState,
+  resetEffectiveState,
+} from '../../src/opamp/effective-state';
 import { cleanEnvironment } from '../utils';
 
 import { parse as parseYaml } from 'yaml';
@@ -56,6 +60,7 @@ describe('EffectiveConfig', () => {
     beforeEach(() => {
       cleanEnvironment();
       resetConfiguration();
+      resetEffectiveState();
     });
 
     it('reports the environment format named "environment"', () => {
@@ -151,10 +156,69 @@ describe('EffectiveConfig', () => {
     });
   });
 
+  describe('runtime-effective values (state holder)', () => {
+    beforeEach(() => {
+      cleanEnvironment();
+      resetConfiguration();
+      resetEffectiveState();
+    });
+
+    it('prefers recorded runtime values over env/config derivation', () => {
+      // Simulate values a component reported as it actually started, e.g. an
+      // endpoint and call-stack interval passed via the programmatic API.
+      recordEffectiveState({
+        tracesEndpoint: 'http://programmatic:4318/v1/traces',
+        callStackInterval: 9999,
+        memoryProfilerEnabled: true,
+      });
+
+      const map = parseEnvBody(getLoadedConfigurationString().content);
+      assert.strictEqual(
+        map.get('OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'),
+        'http://programmatic:4318/v1/traces'
+      );
+      assert.strictEqual(
+        map.get('SPLUNK_PROFILER_CALL_STACK_INTERVAL'),
+        '9999'
+      );
+      assert.strictEqual(map.get('SPLUNK_PROFILER_MEMORY_ENABLED'), 'true');
+    });
+
+    it('reports the profiler as disabled when it failed to start', () => {
+      // The env says enabled, but the component recorded that it did not
+      // actually start (e.g. native extension unavailable) — spec B7.
+      process.env.SPLUNK_PROFILER_ENABLED = 'true';
+      recordEffectiveState({ profilerEnabled: false });
+
+      const map = parseEnvBody(getLoadedConfigurationString().content);
+      assert.strictEqual(map.get('SPLUNK_PROFILER_ENABLED'), 'false');
+    });
+
+    it('drops a declared profiler from the yaml view when it failed to start', () => {
+      recordEffectiveState({ profilerEnabled: false });
+      setGlobalConfiguration(
+        loadConfiguration(
+          'file_format: "1.0-rc.2"\ndistribution:\n  splunk:\n' +
+            '    profiling:\n      always_on:\n        cpu_profiler:\n' +
+            '          sampling_interval: 1001\n'
+        )
+      );
+
+      const body = parseYaml(getLoadedConfigurationString().content);
+      assert(
+        body.distribution === undefined ||
+          body.distribution.splunk?.profiling?.always_on?.cpu_profiler ===
+            undefined,
+        'cpu_profiler must be absent when it did not start'
+      );
+    });
+  });
+
   describe('effective declarative config', () => {
     beforeEach(() => {
       cleanEnvironment();
       resetConfiguration();
+      resetEffectiveState();
     });
 
     // Mirrors the worked example in the GDI specification's "Effective

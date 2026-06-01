@@ -20,6 +20,7 @@ import { SnapshotSpanProcessor } from './SnapshotSpanProcessor';
 import type { CpuProfile, ProfilingExtension } from '../../profiling/types';
 import { OtlpHttpProfilingExporter } from '../../profiling/OtlpHttpProfilingExporter';
 import { loadExtension } from '../../profiling';
+import { recordEffectiveState } from '../../opamp/effective-state';
 
 export interface StartSnapshotProfilingOptions {
   serviceName: string;
@@ -145,6 +146,13 @@ export function startSnapshotProfiling(options: StartSnapshotProfilingOptions) {
   const collectionIntervalMs =
     options.collectionIntervalMs ??
     getConfigNumber('SPLUNK_CPU_PROFILER_COLLECTION_INTERVAL', 30_000);
+
+  // The snapshot profiler can only actually run when the native extension is
+  // available; otherwise it falls back to a no-op extension (spec B7/C6).
+  recordEffectiveState({
+    snapshotProfilerEnabled: loadExtension() !== undefined,
+    snapshotSamplingInterval: samplingIntervalMs,
+  });
 
   profiler = new SnapshotProfiler({
     serviceName: options.serviceName,

@@ -32,6 +32,7 @@ import {
   recordHeapProfilerMetrics,
 } from '../metrics/debug_metrics';
 import { getDetectedResource } from '../resource';
+import { recordEffectiveState } from '../opamp/effective-state';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import type {
   HeapProfile,
@@ -122,10 +123,19 @@ export function startProfiling(options: ProfilingOptions) {
   const extension = loadExtension();
 
   if (extension === undefined) {
+    // Profiling was requested but the native extension is unavailable, so the
+    // profiler did not actually start. Report it as disabled (spec B7/C6).
+    recordEffectiveState({ profilerEnabled: false });
     return {
       stop: async () => {},
     };
   }
+
+  recordEffectiveState({
+    profilerEnabled: true,
+    callStackInterval: options.callstackInterval,
+    memoryProfilerEnabled: options.memoryProfilingEnabled,
+  });
 
   if (isTracingContextManagerEnabled()) {
     diag.warn(

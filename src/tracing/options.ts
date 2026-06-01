@@ -26,6 +26,7 @@ import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 import { AWSXRayPropagator } from '@opentelemetry/propagator-aws-xray';
 
 import { getInstrumentations } from '../instrumentations';
+import { recordEffectiveState } from '../opamp/effective-state';
 import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 import type * as OtlpGrpc from '@opentelemetry/exporter-trace-otlp-grpc';
 import type * as grpc from '@grpc/grpc-js';
@@ -304,6 +305,14 @@ export function otlpSpanExporterFactory(options: TracingOptions): SpanExporter {
   }
 
   protocol = protocol ?? 'http/protobuf';
+
+  // Record the effective traces endpoint for OpAMP effective-config reporting.
+  // `endpoint` is the resolved value (programmatic option, env var, or realm
+  // default); when still undefined the SDK exporter applies its own collector
+  // default, which we mirror here.
+  recordEffectiveState({
+    tracesEndpoint: endpoint ?? 'http://localhost:4318/v1/traces',
+  });
 
   switch (protocol) {
     case 'grpc': {

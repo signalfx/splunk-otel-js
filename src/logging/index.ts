@@ -41,6 +41,7 @@ import {
   getNonEmptyConfigVar,
 } from '../configuration';
 import { getDetectedResource } from '../resource';
+import { recordEffectiveState } from '../opamp/effective-state';
 import type { LoggingOptions, StartLoggingOptions } from './types';
 import type {
   LogRecordExporter as ConfigLogRecordExporter,
@@ -136,6 +137,12 @@ function createExporters(options: LoggingOptions) {
     switch (type) {
       case 'otlp': {
         const url = ensureResourcePath(options.endpoint, '/v1/logs');
+        // Record the effective logs endpoint for OpAMP effective-config
+        // reporting. When unset the SDK exporter applies its own collector
+        // default, mirrored here.
+        recordEffectiveState({
+          logsEndpoint: options.endpoint ?? 'http://localhost:4318/v1/logs',
+        });
         return new OTLPLogExporter({
           url,
         });

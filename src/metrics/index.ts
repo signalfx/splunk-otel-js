@@ -38,6 +38,7 @@ import { AggregationTemporalityPreference } from '@opentelemetry/exporter-metric
 import type * as grpc from '@grpc/grpc-js';
 import type * as OtlpGrpc from '@opentelemetry/exporter-metrics-otlp-grpc';
 import type { MetricsOptions, StartMetricsOptions } from './types';
+import { recordEffectiveState } from '../opamp/effective-state';
 
 import {
   defaultServiceName,
@@ -176,6 +177,12 @@ export function createOtlpExporter(options: MetricsOptions) {
   }
 
   protocol = protocol ?? 'http/protobuf';
+
+  // Record the effective metrics endpoint for OpAMP effective-config reporting.
+  // See the equivalent note in the traces exporter factory.
+  recordEffectiveState({
+    metricsEndpoint: endpoint ?? 'http://localhost:4318/v1/metrics',
+  });
 
   switch (protocol) {
     case 'grpc': {

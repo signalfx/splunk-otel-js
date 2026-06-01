@@ -41,6 +41,7 @@ import {
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { StartLoggingOptions, startLogging } from './logging';
 import { startOpAMP, type StartOpAMPOptions, type OpAMPHandle } from './opamp';
+import { resetEffectiveState } from './opamp/effective-state';
 import { startSecureapp } from './secureapp';
 import type { StartSecureappOptions } from './secureapp/types';
 import { Resource } from '@opentelemetry/resources';
@@ -153,10 +154,6 @@ export const start = (options: Partial<Options> = {}) => {
     secureappOptions,
   } = parseOptionsAndConfigureInstrumentations(options);
 
-  if (isFeatureEnabled(options.opamp, 'SPLUNK_OPAMP_ENABLED', false)) {
-    running.opamp = startOpAMP(opampOptions);
-  }
-
   let metricsEnabledByDefault = false;
   if (isFeatureEnabled(options.profiling, 'SPLUNK_PROFILER_ENABLED', false)) {
     running.profiling = startProfiling(profilingOptions);
@@ -217,6 +214,13 @@ export const start = (options: Partial<Options> = {}) => {
   for (const instrumentation of getLoadedInstrumentations()) {
     instrumentation.setMeterProvider(meterProvider);
   }
+
+  // Start OpAMP last so that, by the time it builds its first effective-config
+  // report, every component has recorded the configuration it actually started
+  // with (endpoints, profiler state, etc.) into the effective-state holder.
+  if (isFeatureEnabled(options.opamp, 'SPLUNK_OPAMP_ENABLED', false)) {
+    running.opamp = startOpAMP(opampOptions);
+  }
 };
 
 function createNoopMeterProvider() {
@@ -265,6 +269,10 @@ export const stop = async () => {
     running.secureapp.stop();
     running.secureapp = null;
   }
+
+  // Clear recorded effective state so a subsequent start() does not report
+  // stale endpoints/feature state from this run.
+  resetEffectiveState();
 
   return Promise.all(promises);
 };
