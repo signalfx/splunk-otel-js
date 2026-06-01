@@ -19,8 +19,12 @@ import { describe, it, beforeEach } from 'node:test';
 import {
   getLoadedConfigurationString,
   loadConfiguration,
+  resetConfiguration,
+  setGlobalConfiguration,
 } from '../../src/configuration';
 import { cleanEnvironment } from '../utils';
+
+import { parse as parseYaml } from 'yaml';
 
 // The exact set of keys mandated by the GDI specification's "Effective
 // Environment Config" section. The reported body must contain these and only
@@ -51,6 +55,7 @@ describe('EffectiveConfig', () => {
   describe('getLoadedConfigurationString', () => {
     beforeEach(() => {
       cleanEnvironment();
+      resetConfiguration();
     });
 
     it('reports the environment format named "environment"', () => {
@@ -144,20 +149,142 @@ describe('EffectiveConfig', () => {
       // Logs have no realm-based default.
       assert.strictEqual(map.get('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT'), 'null');
     });
+  });
 
-    it('returns yaml type when yaml configuration is loaded', () => {
-      process.env.MY_LOG_LEVEL = 'warn';
-      const yamlContent =
-        'file_format: "1.0-rc.2"\nlog_level: ${MY_LOG_LEVEL}\n';
-      loadConfiguration(yamlContent);
+  describe('effective declarative config', () => {
+    beforeEach(() => {
+      cleanEnvironment();
+      resetConfiguration();
+    });
 
-      const config = getLoadedConfigurationString();
+    // Mirrors the worked example in the GDI specification's "Effective
+    // Declarative Config" section.
+    const SPEC_EXAMPLE_YAML = `
+file_format: "1.0-rc.2"
+tracer_provider:
+  processors:
+    - batch:
+        exporter:
+          otlp_http:
+            endpoint: http://localhost:4318/v1/traces
+meter_provider:
+  readers:
+    - periodic:
+        exporter:
+          otlp_grpc:
+            endpoint: http://localhost:4318/v1/metrics
+logger_provider:
+  processors:
+    - simple:
+        exporter:
+          otlp_http:
+            endpoint: http://localhost:4318/v1/logs
+distribution:
+  splunk:
+    profiling:
+      always_on:
+        cpu_profiler:
+          sampling_interval: 1001
+        memory_profiler:
+`;
+
+    function loadAndReport(yamlContent: string) {
+      setGlobalConfiguration(loadConfiguration(yamlContent));
+      return getLoadedConfigurationString();
+    }
+
+    it('reports a filtered minimal view of the required fields', () => {
+      process.env.OTEL_CONFIG_FILE = '/usr/otel/agent.yaml';
+      const config = loadAndReport(SPEC_EXAMPLE_YAML);
 
       assert.strictEqual(config.type, 'yaml');
+      // AgentConfigFile name matches OTEL_CONFIG_FILE, including the path.
+      assert.strictEqual(config.name, '/usr/otel/agent.yaml');
+
+      const body = parseYaml(config.content);
+      assert.strictEqual(body.otel_config_file, '/usr/otel/agent.yaml');
+      assert.strictEqual(body.otel_experimental_config_file, null);
       assert.strictEqual(
-        config.content,
-        'file_format: "1.0-rc.2"\nlog_level: warn\n'
+        body.tracer_provider.processors[0].batch.exporter.otlp_http.endpoint,
+        'http://localhost:4318/v1/traces'
       );
+      assert.strictEqual(
+        body.meter_provider.readers[0].periodic.exporter.otlp_grpc.endpoint,
+        'http://localhost:4318/v1/metrics'
+      );
+      assert.strictEqual(
+        body.logger_provider.processors[0].simple.exporter.otlp_http.endpoint,
+        'http://localhost:4318/v1/logs'
+      );
+      assert.strictEqual(
+        body.distribution.splunk.profiling.always_on.cpu_profiler
+          .sampling_interval,
+        1001
+      );
+      assert('memory_profiler' in body.distribution.splunk.profiling.always_on);
+      // No callgraphs were configured, so the feature is absent (inactive).
+      assert(!('callgraphs' in body.distribution.splunk.profiling));
+    });
+
+    it('drops fields that are not part of the required set', () => {
+      const config = loadAndReport(
+        'file_format: "1.0-rc.2"\nlog_level: debug\n' +
+          'tracer_provider:\n  processors:\n    - batch:\n' +
+          '        exporter:\n          otlp_http:\n' +
+          '            endpoint: http://localhost:4318/v1/traces\n'
+      );
+
+      const body = parseYaml(config.content);
+      assert(!('file_format' in body), 'file_format must be filtered out');
+      assert(!('log_level' in body), 'log_level must be filtered out');
+      assert('tracer_provider' in body);
+    });
+
+    it('reports callgraphs.sampling_interval when configured', () => {
+      const config = loadAndReport(
+        'file_format: "1.0-rc.2"\ndistribution:\n  splunk:\n' +
+          '    profiling:\n      callgraphs:\n        sampling_interval: 10\n'
+      );
+
+      const body = parseYaml(config.content);
+      assert.strictEqual(
+        body.distribution.splunk.profiling.callgraphs.sampling_interval,
+        10
+      );
+    });
+
+    it('reports evaluated env-variable templates, not the template text', () => {
+      process.env.MY_ENDPOINT = 'http://collector.example:4318/v1/traces';
+      const config = loadAndReport(
+        'file_format: "1.0-rc.2"\ntracer_provider:\n  processors:\n' +
+          '    - batch:\n        exporter:\n          otlp_http:\n' +
+          '            endpoint: ${MY_ENDPOINT}\n'
+      );
+
+      const body = parseYaml(config.content);
+      assert.strictEqual(
+        body.tracer_provider.processors[0].batch.exporter.otlp_http.endpoint,
+        'http://collector.example:4318/v1/traces'
+      );
+    });
+
+    it('fills the default endpoint when an otlp_http exporter omits it', () => {
+      const config = loadAndReport(
+        'file_format: "1.0-rc.2"\ntracer_provider:\n  processors:\n' +
+          '    - batch:\n        exporter:\n          otlp_http: {}\n'
+      );
+
+      const body = parseYaml(config.content);
+      assert.strictEqual(
+        body.tracer_provider.processors[0].batch.exporter.otlp_http.endpoint,
+        'http://localhost:4318/v1/traces'
+      );
+    });
+
+    it('uses a defaulted AgentConfigFile name when no path env var is set', () => {
+      const config = loadAndReport('file_format: "1.0-rc.2"\n');
+      assert.strictEqual(config.type, 'yaml');
+      assert(config.name.length > 0, 'a defaulted name must be provided');
     });
   });
 });

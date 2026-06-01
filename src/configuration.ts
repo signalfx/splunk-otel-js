@@ -36,7 +36,7 @@ import {
   TraceIdRatioBasedSampler,
 } from '@opentelemetry/sdk-trace-base';
 import { Sampler } from '@opentelemetry/sdk-trace-base';
-import { parseDocument, visit } from 'yaml';
+import { parseDocument, stringify as stringifyYaml, visit } from 'yaml';
 import { bundledInstrumentations } from './instrumentations';
 import {
   emptyResource,
@@ -135,6 +135,13 @@ let rawGlobalConfiguration: string | undefined;
 
 export function setGlobalConfiguration(config: DistroConfiguration) {
   globalConfiguration = config;
+}
+
+// Test-only: clears the loaded declarative configuration state so the next
+// getLoadedConfigurationString() call reverts to the environment format.
+export function resetConfiguration() {
+  globalConfiguration = undefined;
+  rawGlobalConfiguration = undefined;
 }
 
 function findAttributeValue(attributes: AttributeNameValue[], name: string) {
@@ -792,13 +799,210 @@ function getEffectiveEnvironmentConfig(): string {
   return entries.map(([k, v]) => `${k}=${quoteEnvValue(v)}`).join('\n');
 }
 
+type SignalName = 'traces' | 'metrics' | 'logs';
+
+// Default OTLP/HTTP endpoints used by the SDK exporters when a declarative
+// config declares an exporter but omits the endpoint. Reported so the
+// effective declarative config reflects the value actually in effect (C7).
+const OTLP_HTTP_DEFAULT_ENDPOINTS: Record<SignalName, string> = {
+  traces: 'http://localhost:4318/v1/traces',
+  metrics: 'http://localhost:4318/v1/metrics',
+  logs: 'http://localhost:4318/v1/logs',
+};
+
+// Projects a declarative exporter block down to just its endpoint, supplying
+// the OTLP/HTTP default when an otlp_http exporter omits the endpoint. Returns
+// undefined when no OTLP exporter is present.
+function projectExporterEndpoint(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  exporter: any,
+  signal: SignalName
+): Record<string, { endpoint: string | null }> | undefined {
+  if (exporter === null || typeof exporter !== 'object') {
+    return undefined;
+  }
+
+  const out: Record<string, { endpoint: string | null }> = {};
+
+  for (const kind of ['otlp_http', 'otlp_grpc'] as const) {
+    const ex = exporter[kind];
+    if (ex === undefined) {
+      continue;
+    }
+
+    const endpoint =
+      ex?.endpoint ??
+      (kind === 'otlp_http' ? OTLP_HTTP_DEFAULT_ENDPOINTS[signal] : null);
+    out[kind] = { endpoint: endpoint ?? null };
+  }
+
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+// Projects a span/log record processor (batch|simple) to a minimal form that
+// keeps only the exporter endpoint(s). All active exporters are reported (C9).
+function projectSignalProcessor(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  processor: any,
+  signal: SignalName
+): Record<string, object> | undefined {
+  if (processor === null || typeof processor !== 'object') {
+    return undefined;
+  }
+
+  const out: Record<string, object> = {};
+
+  for (const procType of ['batch', 'simple'] as const) {
+    const exporter = projectExporterEndpoint(
+      processor[procType]?.exporter,
+      signal
+    );
+    if (exporter !== undefined) {
+      out[procType] = { exporter };
+    }
+  }
+
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+function projectProcessorList(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  processors: any,
+  signal: SignalName
+): object | undefined {
+  if (!Array.isArray(processors)) {
+    return undefined;
+  }
+
+  const projected = processors
+    .map((p) => projectSignalProcessor(p, signal))
+    .filter((p): p is Record<string, object> => p !== undefined);
+
+  return projected.length > 0 ? { processors: projected } : undefined;
+}
+
+function projectMeterProvider(config: DistroConfiguration): object | undefined {
+  const readers = config.meter_provider?.readers;
+  if (!Array.isArray(readers)) {
+    return undefined;
+  }
+
+  const projected = readers
+    .map((reader) => {
+      const exporter = projectExporterEndpoint(
+        reader?.periodic?.exporter,
+        'metrics'
+      );
+      return exporter !== undefined ? { periodic: { exporter } } : undefined;
+    })
+    .filter((r) => r !== undefined);
+
+  return projected.length > 0 ? { readers: projected } : undefined;
+}
+
+// Projects the Splunk profiling config. Presence implies enabled (C6); absent
+// features are omitted, which the spec treats as disabled.
+function projectProfiling(config: DistroConfiguration): object | undefined {
+  const profiling = splunkConfig(config)?.profiling;
+  if (profiling === undefined) {
+    return undefined;
+  }
+
+  const alwaysOn: Record<string, unknown> = {};
+  const cpuProfiler = profiling.always_on?.cpu_profiler;
+  if (cpuProfiler !== undefined) {
+    alwaysOn.cpu_profiler = {
+      // A configured cpu_profiler implies always-on profiling is enabled; fill
+      // the default sampling interval when omitted (C7).
+      sampling_interval: cpuProfiler?.sampling_interval ?? 1000,
+    };
+  }
+  if (profiling.always_on?.memory_profiler !== undefined) {
+    alwaysOn.memory_profiler = profiling.always_on.memory_profiler;
+  }
+
+  const profilingOut: Record<string, unknown> = {};
+  if (Object.keys(alwaysOn).length > 0) {
+    profilingOut.always_on = alwaysOn;
+  }
+  if (profiling.callgraphs !== undefined && profiling.callgraphs !== null) {
+    profilingOut.callgraphs = {
+      sampling_interval: profiling.callgraphs.sampling_interval,
+    };
+  }
+
+  return Object.keys(profilingOut).length > 0
+    ? { splunk: { profiling: profilingOut } }
+    : undefined;
+}
+
+// Builds the "Effective Declarative Config" body mandated by the GDI
+// specification (specification/opamp_datamodel.md): a minimal, filtered view of
+// the loaded declarative config containing only the required fields. Values are
+// sourced from the already env-substituted globalConfiguration, so config
+// templates are reported as their evaluated values (C8).
+function getEffectiveDeclarativeConfig(): string {
+  const config = globalConfiguration ?? ({} as DistroConfiguration);
+
+  const tracerProvider = projectProcessorList(
+    config.tracer_provider?.processors,
+    'traces'
+  );
+  const meterProvider = projectMeterProvider(config);
+  const loggerProvider = projectProcessorList(
+    config.logger_provider?.processors,
+    'logs'
+  );
+  const distribution = projectProfiling(config);
+
+  // The config-file paths are environment variables that point at the loaded
+  // file, not fields within the declarative config itself, so read them from
+  // the environment directly rather than via the config object.
+  const doc: Record<string, unknown> = {
+    otel_config_file: getNonEmptyEnvVar('OTEL_CONFIG_FILE') ?? null,
+    otel_experimental_config_file:
+      getNonEmptyEnvVar('OTEL_EXPERIMENTAL_CONFIG_FILE') ?? null,
+  };
+
+  if (tracerProvider !== undefined) {
+    doc.tracer_provider = tracerProvider;
+  }
+  if (meterProvider !== undefined) {
+    doc.meter_provider = meterProvider;
+  }
+  if (loggerProvider !== undefined) {
+    doc.logger_provider = loggerProvider;
+  }
+  if (distribution !== undefined) {
+    doc.distribution = distribution;
+  }
+
+  return stringifyYaml(doc);
+}
+
+// The AgentConfigFile name for the declarative format must match the loaded
+// config filename including path (OTEL_CONFIG_FILE). The distro currently reads
+// the file via OTEL_EXPERIMENTAL_CONFIG_FILE, so fall back to that; a defaulted
+// name must still be provided per spec.
+function effectiveDeclarativeConfigName(): string {
+  return (
+    getNonEmptyEnvVar('OTEL_CONFIG_FILE') ??
+    getNonEmptyEnvVar('OTEL_EXPERIMENTAL_CONFIG_FILE') ??
+    'config.yaml'
+  );
+}
+
 export function getLoadedConfigurationString(): {
   type: 'yaml' | 'env';
   name: string;
   content: string;
 } {
   if (rawGlobalConfiguration !== undefined) {
-    return { type: 'yaml', name: 'yaml', content: rawGlobalConfiguration };
+    return {
+      type: 'yaml',
+      name: effectiveDeclarativeConfigName(),
+      content: getEffectiveDeclarativeConfig(),
+    };
   }
 
   return {
