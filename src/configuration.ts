@@ -18,6 +18,7 @@ import {
   getEnvArray,
   getEnvBoolean,
   getEnvNumber,
+  getEnvValueByPrecedence,
   getNonEmptyEnvVar,
 } from './utils';
 import { EnvVarKey } from './types';
@@ -701,20 +702,108 @@ function isNil<T>(v: T | undefined | null): boolean {
   return v === undefined || v === null;
 }
 
+// Resolves the effective OTLP exporter endpoint for a signal as reported in the
+// effective environment config. Mirrors the precedence used by the exporter
+// factories (signal-specific endpoint, then the shared OTLP endpoint, then the
+// realm-based Splunk ingest URL). The trailing resource path (e.g. /v1/traces)
+// is appended downstream inside the OTLP exporter, so it is intentionally not
+// reproduced here; this is the resolved base endpoint, not the final URL.
+function resolveOtlpEndpoint(
+  signalEnvKey: EnvVarKey,
+  realmPath: string
+): string | null {
+  const explicit = getEnvValueByPrecedence([
+    signalEnvKey,
+    'OTEL_EXPORTER_OTLP_ENDPOINT',
+  ]);
+
+  if (explicit !== undefined) {
+    return explicit;
+  }
+
+  const realm = getNonEmptyConfigVar('SPLUNK_REALM');
+  if (realm !== undefined) {
+    return `https://ingest.${realm}.observability.splunkcloud.com${realmPath}`;
+  }
+
+  return null;
+}
+
+function quoteEnvValue(value: string | number | boolean | null): string {
+  return value === null ? 'null' : String(value);
+}
+
+// Builds the "Effective Environment Config" body mandated by the GDI
+// specification (specification/opamp_datamodel.md). Only the required keys are
+// reported, each with a value derived from the distro's own configuration
+// resolution (so defaults are applied) rather than echoing raw process.env.
+function getEffectiveEnvironmentConfig(): string {
+  const entries: Array<[string, string | number | boolean | null]> = [
+    [
+      'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT',
+      resolveOtlpEndpoint(
+        'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT',
+        '/v2/trace/otlp'
+      ),
+    ],
+    [
+      'OTEL_EXPORTER_OTLP_METRICS_ENDPOINT',
+      resolveOtlpEndpoint(
+        'OTEL_EXPORTER_OTLP_METRICS_ENDPOINT',
+        '/v2/datapoint/otlp'
+      ),
+    ],
+    [
+      'OTEL_EXPORTER_OTLP_LOGS_ENDPOINT',
+      // Logs have no realm-based default; they fall back to the local
+      // collector default resolved inside the exporter, so report null when
+      // unset rather than fabricating an endpoint here.
+      getEnvValueByPrecedence([
+        'OTEL_EXPORTER_OTLP_LOGS_ENDPOINT',
+        'OTEL_EXPORTER_OTLP_ENDPOINT',
+      ]) ?? null,
+    ],
+    [
+      'SPLUNK_PROFILER_ENABLED',
+      getConfigBoolean('SPLUNK_PROFILER_ENABLED', false),
+    ],
+    [
+      'SPLUNK_PROFILER_MEMORY_ENABLED',
+      getConfigBoolean('SPLUNK_PROFILER_MEMORY_ENABLED', false),
+    ],
+    [
+      'SPLUNK_SNAPSHOT_PROFILER_ENABLED',
+      getConfigBoolean('SPLUNK_SNAPSHOT_PROFILER_ENABLED', false),
+    ],
+    [
+      'SPLUNK_SNAPSHOT_PROFILER_SAMPLING_INTERVAL',
+      getConfigNumber('SPLUNK_SNAPSHOT_PROFILER_SAMPLING_INTERVAL', 1),
+    ],
+    [
+      'SPLUNK_PROFILER_CALL_STACK_INTERVAL',
+      getConfigNumber('SPLUNK_PROFILER_CALL_STACK_INTERVAL', 1000),
+    ],
+    // In the pure-environment case there is, by definition, no declarative
+    // config file, so both config-file keys report null.
+    ['OTEL_CONFIG_FILE', null],
+    ['OTEL_EXPERIMENTAL_CONFIG_FILE', null],
+  ];
+
+  return entries.map(([k, v]) => `${k}=${quoteEnvValue(v)}`).join('\n');
+}
+
 export function getLoadedConfigurationString(): {
   type: 'yaml' | 'env';
+  name: string;
   content: string;
 } {
   if (rawGlobalConfiguration !== undefined) {
-    return { type: 'yaml', content: rawGlobalConfiguration };
+    return { type: 'yaml', name: 'yaml', content: rawGlobalConfiguration };
   }
 
-  const envVars: string[] = [];
-  for (const k of Object.keys(process.env)) {
-    if (k.startsWith('SPLUNK_') || k.startsWith('OTEL_')) {
-      envVars.push(`${k}=${process.env[k]}`);
-    }
-  }
-
-  return { type: 'env', content: envVars.join('\n') };
+  return {
+    type: 'env',
+    name: 'environment',
+    content: getEffectiveEnvironmentConfig(),
+  };
 }

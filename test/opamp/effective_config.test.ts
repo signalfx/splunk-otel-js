@@ -22,56 +22,127 @@ import {
 } from '../../src/configuration';
 import { cleanEnvironment } from '../utils';
 
+// The exact set of keys mandated by the GDI specification's "Effective
+// Environment Config" section. The reported body must contain these and only
+// these, one occurrence each.
+const REQUIRED_ENV_KEYS = [
+  'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT',
+  'OTEL_EXPORTER_OTLP_METRICS_ENDPOINT',
+  'OTEL_EXPORTER_OTLP_LOGS_ENDPOINT',
+  'SPLUNK_PROFILER_ENABLED',
+  'SPLUNK_PROFILER_MEMORY_ENABLED',
+  'SPLUNK_SNAPSHOT_PROFILER_ENABLED',
+  'SPLUNK_SNAPSHOT_PROFILER_SAMPLING_INTERVAL',
+  'SPLUNK_PROFILER_CALL_STACK_INTERVAL',
+  'OTEL_CONFIG_FILE',
+  'OTEL_EXPERIMENTAL_CONFIG_FILE',
+];
+
+function parseEnvBody(content: string): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const line of content.split('\n')) {
+    const eq = line.indexOf('=');
+    map.set(line.slice(0, eq), line.slice(eq + 1));
+  }
+  return map;
+}
+
 describe('EffectiveConfig', () => {
   describe('getLoadedConfigurationString', () => {
     beforeEach(() => {
       cleanEnvironment();
     });
 
-    it('returns env type with SPLUNK_ and OTEL_ vars when no yaml config loaded', () => {
-      process.env.SPLUNK_ACCESS_TOKEN = 'test-token';
+    it('reports the environment format named "environment"', () => {
+      const config = getLoadedConfigurationString();
+
+      assert.strictEqual(config.type, 'env');
+      assert.strictEqual(config.name, 'environment');
+    });
+
+    it('reports exactly the required keys with defaults when nothing is set', () => {
+      const config = getLoadedConfigurationString();
+      const map = parseEnvBody(config.content);
+
+      assert.deepStrictEqual(
+        [...map.keys()].sort(),
+        [...REQUIRED_ENV_KEYS].sort(),
+        'should report exactly the required keys, no extras'
+      );
+
+      // Defaults per spec / distro resolution.
+      assert.strictEqual(map.get('SPLUNK_PROFILER_ENABLED'), 'false');
+      assert.strictEqual(map.get('SPLUNK_PROFILER_MEMORY_ENABLED'), 'false');
+      assert.strictEqual(map.get('SPLUNK_SNAPSHOT_PROFILER_ENABLED'), 'false');
+      assert.strictEqual(
+        map.get('SPLUNK_SNAPSHOT_PROFILER_SAMPLING_INTERVAL'),
+        '1'
+      );
+      assert.strictEqual(
+        map.get('SPLUNK_PROFILER_CALL_STACK_INTERVAL'),
+        '1000'
+      );
+      // Unset string-valued keys report the literal `null`.
+      assert.strictEqual(map.get('OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'), 'null');
+      assert.strictEqual(
+        map.get('OTEL_EXPORTER_OTLP_METRICS_ENDPOINT'),
+        'null'
+      );
+      assert.strictEqual(map.get('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT'), 'null');
+      assert.strictEqual(map.get('OTEL_CONFIG_FILE'), 'null');
+      assert.strictEqual(map.get('OTEL_EXPERIMENTAL_CONFIG_FILE'), 'null');
+    });
+
+    it('reflects resolved/effective values, not raw env passthrough', () => {
+      process.env.SPLUNK_PROFILER_ENABLED = 'true';
+      process.env.SPLUNK_PROFILER_CALL_STACK_INTERVAL = '1001';
+      process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT =
+        'http://localhost:4318/v1/traces';
+      // Not in the required set — must be dropped.
       process.env.OTEL_SERVICE_NAME = 'my-service';
-      process.env.UNRELATED_VAR = 'should-not-appear';
 
       const config = getLoadedConfigurationString();
+      const map = parseEnvBody(config.content);
 
-      assert.strictEqual(config.type, 'env');
-      assert(
-        config.content.includes('SPLUNK_ACCESS_TOKEN=test-token'),
-        'should include SPLUNK_ vars'
+      assert.strictEqual(map.get('SPLUNK_PROFILER_ENABLED'), 'true');
+      assert.strictEqual(
+        map.get('SPLUNK_PROFILER_CALL_STACK_INTERVAL'),
+        '1001'
       );
-      assert(
-        config.content.includes('OTEL_SERVICE_NAME=my-service'),
-        'should include OTEL_ vars'
+      assert.strictEqual(
+        map.get('OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'),
+        'http://localhost:4318/v1/traces'
       );
-      assert(
-        !config.content.includes('UNRELATED_VAR'),
-        'should not include unrelated vars'
-      );
+      assert(!map.has('OTEL_SERVICE_NAME'), 'extra keys must not be reported');
     });
 
-    it('returns empty content when no SPLUNK_ or OTEL_ vars are set', () => {
-      const config = getLoadedConfigurationString();
+    it('resolves endpoints from the shared OTLP endpoint and realm', () => {
+      process.env.OTEL_EXPORTER_OTLP_ENDPOINT = 'http://collector:4318';
+      let config = getLoadedConfigurationString();
+      let map = parseEnvBody(config.content);
+      assert.strictEqual(
+        map.get('OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'),
+        'http://collector:4318'
+      );
+      assert.strictEqual(
+        map.get('OTEL_EXPORTER_OTLP_METRICS_ENDPOINT'),
+        'http://collector:4318'
+      );
 
-      assert.strictEqual(config.type, 'env');
-      assert.strictEqual(config.content, '');
-    });
-
-    it('includes multiple env vars separated by newlines', () => {
+      cleanEnvironment();
       process.env.SPLUNK_REALM = 'us0';
-      process.env.OTEL_LOG_LEVEL = 'debug';
-      process.env.SPLUNK_TRACE_RESPONSE_HEADER_ENABLED = 'true';
-
-      const config = getLoadedConfigurationString();
-
-      assert.strictEqual(config.type, 'env');
-      const lines = config.content.split('\n');
-      assert.strictEqual(lines.length, 3, 'should have 3 env var lines');
-      assert(lines.some((l) => l === 'SPLUNK_REALM=us0'));
-      assert(lines.some((l) => l === 'OTEL_LOG_LEVEL=debug'));
-      assert(
-        lines.some((l) => l === 'SPLUNK_TRACE_RESPONSE_HEADER_ENABLED=true')
+      config = getLoadedConfigurationString();
+      map = parseEnvBody(config.content);
+      assert.strictEqual(
+        map.get('OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'),
+        'https://ingest.us0.observability.splunkcloud.com/v2/trace/otlp'
       );
+      assert.strictEqual(
+        map.get('OTEL_EXPORTER_OTLP_METRICS_ENDPOINT'),
+        'https://ingest.us0.observability.splunkcloud.com/v2/datapoint/otlp'
+      );
+      // Logs have no realm-based default.
+      assert.strictEqual(map.get('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT'), 'null');
     });
 
     it('returns yaml type when yaml configuration is loaded', () => {
