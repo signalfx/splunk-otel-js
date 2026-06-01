@@ -103,11 +103,9 @@ describe('EffectiveConfig', () => {
       assert.strictEqual(map.get('OTEL_EXPERIMENTAL_CONFIG_FILE'), 'null');
     });
 
-    it('reflects resolved/effective values, not raw env passthrough', () => {
+    it('reflects resolved/effective values and drops extras', () => {
       process.env.SPLUNK_PROFILER_ENABLED = 'true';
       process.env.SPLUNK_PROFILER_CALL_STACK_INTERVAL = '1001';
-      process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT =
-        'http://localhost:4318/v1/traces';
       // Not in the required set — must be dropped.
       process.env.OTEL_SERVICE_NAME = 'my-service';
 
@@ -119,39 +117,22 @@ describe('EffectiveConfig', () => {
         map.get('SPLUNK_PROFILER_CALL_STACK_INTERVAL'),
         '1001'
       );
-      assert.strictEqual(
-        map.get('OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'),
-        'http://localhost:4318/v1/traces'
-      );
       assert(!map.has('OTEL_SERVICE_NAME'), 'extra keys must not be reported');
     });
 
-    it('resolves endpoints from the shared OTLP endpoint and realm', () => {
+    it('reports endpoints as null when no exporter has started', () => {
+      // Endpoints are sourced from what an exporter actually started with, not
+      // re-derived from the environment. With no exporter running there is no
+      // active endpoint to report.
       process.env.OTEL_EXPORTER_OTLP_ENDPOINT = 'http://collector:4318';
-      let config = getLoadedConfigurationString();
-      let map = parseEnvBody(config.content);
-      assert.strictEqual(
-        map.get('OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'),
-        'http://collector:4318'
-      );
-      assert.strictEqual(
-        map.get('OTEL_EXPORTER_OTLP_METRICS_ENDPOINT'),
-        'http://collector:4318'
-      );
-
-      cleanEnvironment();
       process.env.SPLUNK_REALM = 'us0';
-      config = getLoadedConfigurationString();
-      map = parseEnvBody(config.content);
-      assert.strictEqual(
-        map.get('OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'),
-        'https://ingest.us0.observability.splunkcloud.com/v2/trace/otlp'
-      );
+
+      const map = parseEnvBody(getLoadedConfigurationString().content);
+      assert.strictEqual(map.get('OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'), 'null');
       assert.strictEqual(
         map.get('OTEL_EXPORTER_OTLP_METRICS_ENDPOINT'),
-        'https://ingest.us0.observability.splunkcloud.com/v2/datapoint/otlp'
+        'null'
       );
-      // Logs have no realm-based default.
       assert.strictEqual(map.get('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT'), 'null');
     });
   });

@@ -18,7 +18,6 @@ import {
   getEnvArray,
   getEnvBoolean,
   getEnvNumber,
-  getEnvValueByPrecedence,
   getNonEmptyEnvVar,
 } from './utils';
 import { EnvVarKey } from './types';
@@ -710,33 +709,6 @@ function isNil<T>(v: T | undefined | null): boolean {
   return v === undefined || v === null;
 }
 
-// Resolves the effective OTLP exporter endpoint for a signal as reported in the
-// effective environment config. Mirrors the precedence used by the exporter
-// factories (signal-specific endpoint, then the shared OTLP endpoint, then the
-// realm-based Splunk ingest URL). The trailing resource path (e.g. /v1/traces)
-// is appended downstream inside the OTLP exporter, so it is intentionally not
-// reproduced here; this is the resolved base endpoint, not the final URL.
-function resolveOtlpEndpoint(
-  signalEnvKey: EnvVarKey,
-  realmPath: string
-): string | null {
-  const explicit = getEnvValueByPrecedence([
-    signalEnvKey,
-    'OTEL_EXPORTER_OTLP_ENDPOINT',
-  ]);
-
-  if (explicit !== undefined) {
-    return explicit;
-  }
-
-  const realm = getNonEmptyConfigVar('SPLUNK_REALM');
-  if (realm !== undefined) {
-    return `https://ingest.${realm}.observability.splunkcloud.com${realmPath}`;
-  }
-
-  return null;
-}
-
 function quoteEnvValue(value: string | number | boolean | null): string {
   return value === null ? 'null' : String(value);
 }
@@ -752,34 +724,13 @@ function getEffectiveEnvironmentConfig(): string {
   const state = getEffectiveState();
 
   const entries: Array<[string, string | number | boolean | null]> = [
-    [
-      'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT',
-      state.tracesEndpoint ??
-        resolveOtlpEndpoint(
-          'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT',
-          '/v2/trace/otlp'
-        ),
-    ],
-    [
-      'OTEL_EXPORTER_OTLP_METRICS_ENDPOINT',
-      state.metricsEndpoint ??
-        resolveOtlpEndpoint(
-          'OTEL_EXPORTER_OTLP_METRICS_ENDPOINT',
-          '/v2/datapoint/otlp'
-        ),
-    ],
-    [
-      'OTEL_EXPORTER_OTLP_LOGS_ENDPOINT',
-      // Logs have no realm-based default; they fall back to the local
-      // collector default resolved inside the exporter, so report null when
-      // unset rather than fabricating an endpoint here.
-      state.logsEndpoint ??
-        getEnvValueByPrecedence([
-          'OTEL_EXPORTER_OTLP_LOGS_ENDPOINT',
-          'OTEL_EXPORTER_OTLP_ENDPOINT',
-        ]) ??
-        null,
-    ],
+    // Endpoints are reported as the value the exporter actually started with.
+    // When a signal's exporter never runs (disabled, or a non-OTLP exporter)
+    // there is no active endpoint, so null is reported per spec rather than a
+    // configured-but-unused value.
+    ['OTEL_EXPORTER_OTLP_TRACES_ENDPOINT', state.tracesEndpoint ?? null],
+    ['OTEL_EXPORTER_OTLP_METRICS_ENDPOINT', state.metricsEndpoint ?? null],
+    ['OTEL_EXPORTER_OTLP_LOGS_ENDPOINT', state.logsEndpoint ?? null],
     [
       'SPLUNK_PROFILER_ENABLED',
       state.profilerEnabled ??
