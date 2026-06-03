@@ -767,14 +767,16 @@ function getEffectiveEnvironmentConfig(): string {
 
 type SignalName = 'traces' | 'metrics' | 'logs';
 
-// Default OTLP/HTTP endpoints used by the SDK exporters when a declarative
-// config declares an exporter but omits the endpoint. Reported so the
-// effective declarative config reflects the value actually in effect (C7).
+// Default OTLP endpoints used by the SDK exporters when a declarative config
+// declares an exporter but omits the endpoint. Reported so the effective
+// declarative config reflects the value actually in effect (C7). The gRPC
+// default is the same for every signal (no signal-specific path), unlike http.
 const OTLP_HTTP_DEFAULT_ENDPOINTS: Record<SignalName, string> = {
   traces: 'http://localhost:4318/v1/traces',
   metrics: 'http://localhost:4318/v1/metrics',
   logs: 'http://localhost:4318/v1/logs',
 };
+const OTLP_GRPC_DEFAULT_ENDPOINT = 'http://localhost:4317';
 
 // Minimal structural views of the declarative schema, capturing only the
 // fields the projection reads. The concrete schema types (SpanExporter,
@@ -791,8 +793,8 @@ interface SignalProcessorView {
 }
 
 // Projects a declarative exporter block down to just its endpoint(s), supplying
-// the OTLP/HTTP default when an otlp_http exporter omits the endpoint. Returns
-// undefined when no OTLP exporter is present.
+// the OTLP default when an exporter omits the endpoint (the SDK uses these
+// defaults). Returns undefined when no OTLP exporter is present.
 function projectExporterEndpoint(
   exporter: OtlpExporterView | undefined,
   signal: SignalName
@@ -810,7 +812,9 @@ function projectExporterEndpoint(
     };
   }
   if (exporter.otlp_grpc != null) {
-    out.otlp_grpc = { endpoint: exporter.otlp_grpc.endpoint ?? null };
+    out.otlp_grpc = {
+      endpoint: exporter.otlp_grpc.endpoint ?? OTLP_GRPC_DEFAULT_ENDPOINT,
+    };
   }
 
   return Object.keys(out).length > 0 ? out : undefined;

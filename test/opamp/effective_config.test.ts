@@ -419,6 +419,21 @@ distribution:
       );
     });
 
+    it('fills the default gRPC endpoint when an otlp_grpc exporter omits it', () => {
+      // The SDK defaults an omitted gRPC endpoint to http://localhost:4317
+      // (no signal-specific path), so the report must not say null.
+      const config = loadAndReport(
+        'file_format: "1.0-rc.2"\ntracer_provider:\n  processors:\n' +
+          '    - batch:\n        exporter:\n          otlp_grpc: {}\n'
+      );
+
+      const body = parseYaml(config.content);
+      assert.strictEqual(
+        body.tracer_provider.processors[0].batch.exporter.otlp_grpc.endpoint,
+        'http://localhost:4317'
+      );
+    });
+
     it('uses a defaulted AgentConfigFile name when no path env var is set', () => {
       const config = loadAndReport('file_format: "1.0-rc.2"\n');
       assert.strictEqual(config.type, 'yaml');
