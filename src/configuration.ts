@@ -15,6 +15,7 @@
  */
 
 import {
+  ensureResourcePath,
   getEnvArray,
   getEnvBoolean,
   getEnvNumber,
@@ -767,6 +768,14 @@ function getEffectiveEnvironmentConfig(): string {
 
 type SignalName = 'traces' | 'metrics' | 'logs';
 
+// OTLP/HTTP signal resource paths. The traces and metrics declarative exporter
+// factories append these to a host-only endpoint via ensureResourcePath; the
+// logs factory does not, so it is intentionally absent here.
+const OTLP_HTTP_RESOURCE_PATHS: Partial<Record<SignalName, string>> = {
+  traces: '/v1/traces',
+  metrics: '/v1/metrics',
+};
+
 // Default OTLP endpoints used by the SDK exporters when a declarative config
 // declares an exporter but omits the endpoint. Reported so the effective
 // declarative config reflects the value actually in effect (C7). The gRPC
@@ -806,10 +815,19 @@ function projectExporterEndpoint(
   const out: Record<string, { endpoint: string | null }> = {};
 
   if (exporter.otlp_http != null) {
-    out.otlp_http = {
-      endpoint:
-        exporter.otlp_http.endpoint ?? OTLP_HTTP_DEFAULT_ENDPOINTS[signal],
-    };
+    const configured = exporter.otlp_http.endpoint;
+    const resourcePath = OTLP_HTTP_RESOURCE_PATHS[signal];
+    // Mirror the exporter factory: traces/metrics append the signal resource
+    // path to a host-only endpoint (ensureResourcePath only appends when the
+    // URL has no path); logs use the endpoint verbatim. When omitted, report
+    // the full default the SDK would use.
+    const endpoint =
+      configured != null
+        ? resourcePath !== undefined
+          ? (ensureResourcePath(configured, resourcePath) ?? configured)
+          : configured
+        : OTLP_HTTP_DEFAULT_ENDPOINTS[signal];
+    out.otlp_http = { endpoint };
   }
   if (exporter.otlp_grpc != null) {
     out.otlp_grpc = {

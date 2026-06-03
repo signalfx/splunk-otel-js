@@ -435,6 +435,52 @@ distribution:
       );
     });
 
+    it('appends the signal path to a host-only traces otlp_http endpoint', () => {
+      // The traces exporter factory calls ensureResourcePath, so a host-only
+      // endpoint actually exports to /v1/traces; the report must match.
+      const config = loadAndReport(
+        'file_format: "1.0-rc.2"\ntracer_provider:\n  processors:\n' +
+          '    - batch:\n        exporter:\n          otlp_http:\n' +
+          '            endpoint: http://collector:4318\n'
+      );
+
+      const body = parseYaml(config.content);
+      assert.strictEqual(
+        body.tracer_provider.processors[0].batch.exporter.otlp_http.endpoint,
+        'http://collector:4318/v1/traces'
+      );
+    });
+
+    it('leaves a fully-pathed traces endpoint unchanged', () => {
+      const config = loadAndReport(
+        'file_format: "1.0-rc.2"\ntracer_provider:\n  processors:\n' +
+          '    - batch:\n        exporter:\n          otlp_http:\n' +
+          '            endpoint: http://collector:4318/custom\n'
+      );
+
+      const body = parseYaml(config.content);
+      assert.strictEqual(
+        body.tracer_provider.processors[0].batch.exporter.otlp_http.endpoint,
+        'http://collector:4318/custom'
+      );
+    });
+
+    it('reports a host-only logs otlp_http endpoint verbatim', () => {
+      // Unlike traces/metrics, the logs exporter factory does not append a
+      // resource path, so the report must not invent one either.
+      const config = loadAndReport(
+        'file_format: "1.0-rc.2"\nlogger_provider:\n  processors:\n' +
+          '    - batch:\n        exporter:\n          otlp_http:\n' +
+          '            endpoint: http://collector:4318\n'
+      );
+
+      const body = parseYaml(config.content);
+      assert.strictEqual(
+        body.logger_provider.processors[0].batch.exporter.otlp_http.endpoint,
+        'http://collector:4318'
+      );
+    });
+
     it('fills the default gRPC endpoint when an otlp_grpc exporter omits it', () => {
       // The SDK defaults an omitted gRPC endpoint to http://localhost:4317
       // (no signal-specific path), so the report must not say null.
