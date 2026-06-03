@@ -39,6 +39,7 @@ import {
   getNonEmptyEnvVar,
   ensureResourcePath,
   readFileContent,
+  resolveOtlpExporterUrl,
 } from '../utils';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { diag, TextMapPropagator } from '@opentelemetry/api';
@@ -306,12 +307,16 @@ export function otlpSpanExporterFactory(options: TracingOptions): SpanExporter {
 
   protocol = protocol ?? 'http/protobuf';
 
-  // Record the effective traces endpoint for OpAMP effective-config reporting.
-  // `endpoint` is the resolved value (programmatic option, env var, or realm
-  // default); when still undefined the SDK exporter applies its own collector
-  // default, which we mirror here.
+  // Record the final traces endpoint the exporter will actually use (including
+  // any signal path the SDK appends and the OTEL_EXPORTER_OTLP_* env vars it
+  // reads internally) for OpAMP effective-config reporting.
   recordEffectiveState({
-    tracesEndpoint: endpoint ?? 'http://localhost:4318/v1/traces',
+    tracesEndpoint: resolveOtlpExporterUrl({
+      endpoint,
+      protocol,
+      signalEndpointKey: 'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT',
+      resourcePath: '/v1/traces',
+    }),
   });
 
   switch (protocol) {

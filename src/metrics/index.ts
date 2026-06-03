@@ -45,6 +45,7 @@ import {
   ensureResourcePath,
   findAttribute,
   readFileContent,
+  resolveOtlpExporterUrl,
 } from '../utils';
 import { enableDebugMetrics, getDebugMetricsViews } from './debug_metrics';
 import * as util from 'util';
@@ -178,10 +179,15 @@ export function createOtlpExporter(options: MetricsOptions) {
 
   protocol = protocol ?? 'http/protobuf';
 
-  // Record the effective metrics endpoint for OpAMP effective-config reporting.
-  // See the equivalent note in the traces exporter factory.
+  // Record the final metrics endpoint the exporter will actually use for OpAMP
+  // effective-config reporting. See the note in the traces exporter factory.
   recordEffectiveState({
-    metricsEndpoint: endpoint ?? 'http://localhost:4318/v1/metrics',
+    metricsEndpoint: resolveOtlpExporterUrl({
+      endpoint,
+      protocol,
+      signalEndpointKey: 'OTEL_EXPORTER_OTLP_METRICS_ENDPOINT',
+      resourcePath: '/v1/metrics',
+    }),
   });
 
   switch (protocol) {

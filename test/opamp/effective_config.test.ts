@@ -23,9 +23,14 @@ import {
   setGlobalConfiguration,
 } from '../../src/configuration';
 import {
+  getEffectiveState,
   recordEffectiveState,
   resetEffectiveState,
 } from '../../src/opamp/effective-state';
+import {
+  _setDefaultOptions as setDefaultTracingOptions,
+  otlpSpanExporterFactory,
+} from '../../src/tracing/options';
 import { cleanEnvironment } from '../utils';
 
 import { parse as parseYaml } from 'yaml';
@@ -175,6 +180,23 @@ describe('EffectiveConfig', () => {
       assert.strictEqual(map.get('SPLUNK_PROFILER_ENABLED'), 'false');
     });
 
+    it('reports memory profiling disabled when the profiler failed to start', () => {
+      // Both flags are requested via env, but the native extension was
+      // unavailable so neither the CPU nor memory profiler started. Memory
+      // profiling must not fall back to the configured value (spec B7).
+      process.env.SPLUNK_PROFILER_ENABLED = 'true';
+      process.env.SPLUNK_PROFILER_MEMORY_ENABLED = 'true';
+      // Matches what startProfiling() records on the missing-extension path.
+      recordEffectiveState({
+        profilerEnabled: false,
+        memoryProfilerEnabled: false,
+      });
+
+      const map = parseEnvBody(getLoadedConfigurationString().content);
+      assert.strictEqual(map.get('SPLUNK_PROFILER_ENABLED'), 'false');
+      assert.strictEqual(map.get('SPLUNK_PROFILER_MEMORY_ENABLED'), 'false');
+    });
+
     it('drops a declared profiler from the yaml view when it failed to start', () => {
       recordEffectiveState({ profilerEnabled: false });
       setGlobalConfiguration(
@@ -191,6 +213,62 @@ describe('EffectiveConfig', () => {
           body.distribution.splunk?.profiling?.always_on?.cpu_profiler ===
             undefined,
         'cpu_profiler must be absent when it did not start'
+      );
+    });
+  });
+
+  // Exercises the real exporter factory (not recordEffectiveState directly) so
+  // the recorded endpoint matches the URL the SDK exporter actually uses.
+  describe('endpoint recorded by the exporter factory', () => {
+    beforeEach(() => {
+      cleanEnvironment();
+      resetConfiguration();
+      resetEffectiveState();
+    });
+
+    it('records the programmatic endpoint with the signal path appended', () => {
+      otlpSpanExporterFactory(
+        setDefaultTracingOptions({ endpoint: 'http://collector:4318' })
+      );
+      assert.strictEqual(
+        getEffectiveState().tracesEndpoint,
+        'http://collector:4318/v1/traces'
+      );
+    });
+
+    it('records the OTEL_EXPORTER_OTLP_ENDPOINT base env var with the path appended', () => {
+      process.env.OTEL_EXPORTER_OTLP_ENDPOINT = 'http://collector:4318';
+      otlpSpanExporterFactory(setDefaultTracingOptions());
+      assert.strictEqual(
+        getEffectiveState().tracesEndpoint,
+        'http://collector:4318/v1/traces'
+      );
+    });
+
+    it('records the signal-specific endpoint verbatim', () => {
+      process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT =
+        'http://collector:4318/v1/traces';
+      otlpSpanExporterFactory(setDefaultTracingOptions());
+      assert.strictEqual(
+        getEffectiveState().tracesEndpoint,
+        'http://collector:4318/v1/traces'
+      );
+    });
+
+    it('records the collector default when nothing is configured', () => {
+      otlpSpanExporterFactory(setDefaultTracingOptions());
+      assert.strictEqual(
+        getEffectiveState().tracesEndpoint,
+        'http://localhost:4318/v1/traces'
+      );
+    });
+
+    it('records the grpc default port when grpc protocol is selected', () => {
+      process.env.OTEL_EXPORTER_OTLP_TRACES_PROTOCOL = 'grpc';
+      otlpSpanExporterFactory(setDefaultTracingOptions());
+      assert.strictEqual(
+        getEffectiveState().tracesEndpoint,
+        'http://localhost:4317'
       );
     });
   });

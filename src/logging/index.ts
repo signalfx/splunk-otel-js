@@ -33,6 +33,7 @@ import {
   defaultServiceName,
   ensureResourcePath,
   findAttribute,
+  resolveOtlpExporterUrl,
 } from '../utils';
 import {
   configGetResource,
@@ -137,11 +138,17 @@ function createExporters(options: LoggingOptions) {
     switch (type) {
       case 'otlp': {
         const url = ensureResourcePath(options.endpoint, '/v1/logs');
-        // Record the effective logs endpoint for OpAMP effective-config
-        // reporting. When unset the SDK exporter applies its own collector
-        // default, mirrored here.
+        // Record the final logs endpoint the exporter will actually use
+        // (including the OTEL_EXPORTER_OTLP_* env vars the SDK reads
+        // internally) for OpAMP effective-config reporting. Logs always use
+        // the OTLP/HTTP exporter.
         recordEffectiveState({
-          logsEndpoint: options.endpoint ?? 'http://localhost:4318/v1/logs',
+          logsEndpoint: resolveOtlpExporterUrl({
+            endpoint: options.endpoint,
+            protocol: 'http/protobuf',
+            signalEndpointKey: 'OTEL_EXPORTER_OTLP_LOGS_ENDPOINT',
+            resourcePath: '/v1/logs',
+          }),
         });
         return new OTLPLogExporter({
           url,
