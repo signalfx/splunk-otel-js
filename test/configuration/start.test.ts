@@ -24,6 +24,11 @@ import * as metrics from '../../src/metrics';
 import * as profiling from '../../src/profiling';
 import * as snapshots from '../../src/tracing/snapshots/Snapshots';
 import * as tracing from '../../src/tracing';
+import {
+  getLoadedConfigurationString,
+  resetConfiguration,
+} from '../../src/configuration';
+import { resetEffectiveState } from '../../src/opamp/effective-state';
 import { cleanEnvironment } from '../utils';
 import { exampleConfigPath } from './utils';
 
@@ -74,6 +79,38 @@ describe('start with file configuration', () => {
       assert.deepStrictEqual(signals.logging?.mock.callCount(), 1);
       assert.deepStrictEqual(signals.profiling?.mock.callCount(), 1);
       assert.deepStrictEqual(signals.snapshots?.mock.callCount(), 1);
+    });
+  });
+
+  describe('effective config gating', () => {
+    beforeEach(() => {
+      // Other tests in this suite load declarative config / record effective
+      // state; clear both so this test sees the environment-format report.
+      resetConfiguration();
+      resetEffectiveState();
+    });
+
+    function envReport(): Map<string, string> {
+      const map = new Map<string, string>();
+      for (const line of getLoadedConfigurationString().content.split('\n')) {
+        const eq = line.indexOf('=');
+        map.set(line.slice(0, eq), line.slice(eq + 1));
+      }
+      return map;
+    }
+
+    it('reports the profiler disabled when disabled via the API despite env', () => {
+      // Profiler is enabled in the environment but disabled programmatically,
+      // so it never starts; OpAMP must not report it as enabled.
+      process.env.SPLUNK_PROFILER_ENABLED = 'true';
+      process.env.SPLUNK_PROFILER_MEMORY_ENABLED = 'true';
+
+      start({ profiling: false });
+
+      const map = envReport();
+      assert.strictEqual(signals.profiling?.mock.callCount(), 0);
+      assert.strictEqual(map.get('SPLUNK_PROFILER_ENABLED'), 'false');
+      assert.strictEqual(map.get('SPLUNK_PROFILER_MEMORY_ENABLED'), 'false');
     });
   });
 

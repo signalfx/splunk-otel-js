@@ -969,16 +969,14 @@ function getEffectiveDeclarativeConfig(): string {
   return stringifyYaml(doc);
 }
 
-// The AgentConfigFile name for the declarative format must match the loaded
-// config filename including path (OTEL_CONFIG_FILE). The distro currently reads
-// the file via OTEL_EXPERIMENTAL_CONFIG_FILE, so fall back to that; a defaulted
-// name must still be provided per spec.
+// The AgentConfigFile name for the declarative format must match the filename
+// of the config that was actually loaded, including its path. The distro loads
+// the declarative config from OTEL_EXPERIMENTAL_CONFIG_FILE (see start.ts), so
+// the name is taken from there rather than OTEL_CONFIG_FILE — otherwise the
+// loaded file's body would be attributed to a path that was never read. A
+// defaulted name must still be provided per spec.
 function effectiveDeclarativeConfigName(): string {
-  return (
-    getNonEmptyEnvVar('OTEL_CONFIG_FILE') ??
-    getNonEmptyEnvVar('OTEL_EXPERIMENTAL_CONFIG_FILE') ??
-    'config.yaml'
-  );
+  return getNonEmptyEnvVar('OTEL_EXPERIMENTAL_CONFIG_FILE') ?? 'config.yaml';
 }
 
 export function getLoadedConfigurationString(): {

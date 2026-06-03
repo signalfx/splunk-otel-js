@@ -41,7 +41,10 @@ import {
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { StartLoggingOptions, startLogging } from './logging';
 import { startOpAMP, type StartOpAMPOptions, type OpAMPHandle } from './opamp';
-import { resetEffectiveState } from './opamp/effective-state';
+import {
+  recordEffectiveState,
+  resetEffectiveState,
+} from './opamp/effective-state';
 import { startSecureapp } from './secureapp';
 import type { StartSecureappOptions } from './secureapp/types';
 import { Resource } from '@opentelemetry/resources';
@@ -160,6 +163,14 @@ export const start = (options: Partial<Options> = {}) => {
     if (profilingOptions.memoryProfilingEnabled) {
       metricsEnabledByDefault = true;
     }
+  } else {
+    // Profiling was disabled (e.g. start({ profiling: false })), so neither the
+    // CPU nor memory profiler runs. Record this so OpAMP does not report a
+    // stale SPLUNK_PROFILER_ENABLED=true from the environment (spec B7).
+    recordEffectiveState({
+      profilerEnabled: false,
+      memoryProfilerEnabled: false,
+    });
   }
 
   if (isSnapshotProfilingEnabled()) {
@@ -168,6 +179,8 @@ export const start = (options: Partial<Options> = {}) => {
       serviceName: profilingOptions.serviceName,
       resource: profilingOptions.resource,
     });
+  } else {
+    recordEffectiveState({ snapshotProfilerEnabled: false });
   }
 
   if (isFeatureEnabled(options.tracing, 'SPLUNK_TRACING_ENABLED', true)) {

@@ -328,16 +328,20 @@ distribution:
     }
 
     it('reports a filtered minimal view of the required fields', () => {
-      process.env.OTEL_CONFIG_FILE = '/usr/otel/agent.yaml';
+      process.env.OTEL_EXPERIMENTAL_CONFIG_FILE = '/usr/otel/agent.yaml';
       const config = loadAndReport(SPEC_EXAMPLE_YAML);
 
       assert.strictEqual(config.type, 'yaml');
-      // AgentConfigFile name matches OTEL_CONFIG_FILE, including the path.
+      // AgentConfigFile name matches the file that was actually loaded
+      // (OTEL_EXPERIMENTAL_CONFIG_FILE), including the path.
       assert.strictEqual(config.name, '/usr/otel/agent.yaml');
 
       const body = parseYaml(config.content);
-      assert.strictEqual(body.otel_config_file, '/usr/otel/agent.yaml');
-      assert.strictEqual(body.otel_experimental_config_file, null);
+      assert.strictEqual(body.otel_config_file, null);
+      assert.strictEqual(
+        body.otel_experimental_config_file,
+        '/usr/otel/agent.yaml'
+      );
       assert.strictEqual(
         body.tracer_provider.processors[0].batch.exporter.otlp_http.endpoint,
         'http://localhost:4318/v1/traces'
@@ -419,6 +423,16 @@ distribution:
       const config = loadAndReport('file_format: "1.0-rc.2"\n');
       assert.strictEqual(config.type, 'yaml');
       assert(config.name.length > 0, 'a defaulted name must be provided');
+    });
+
+    it('names the AgentConfigFile after the file actually loaded', () => {
+      // The distro loads OTEL_EXPERIMENTAL_CONFIG_FILE; the body must not be
+      // attributed to a different OTEL_CONFIG_FILE path that was never read.
+      process.env.OTEL_CONFIG_FILE = '/stable/never-loaded.yaml';
+      process.env.OTEL_EXPERIMENTAL_CONFIG_FILE = '/experimental/loaded.yaml';
+
+      const config = loadAndReport('file_format: "1.0-rc.2"\n');
+      assert.strictEqual(config.name, '/experimental/loaded.yaml');
     });
 
     it('reports every exporter when a signal has multiple processors', () => {
