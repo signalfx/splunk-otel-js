@@ -245,6 +245,17 @@ describe('EffectiveConfig', () => {
       );
     });
 
+    it('appends the signal path to a path-prefixed base endpoint', () => {
+      // The SDK appends /v1/<signal> to OTEL_EXPORTER_OTLP_ENDPOINT even when it
+      // already has a path prefix, unlike a signal-specific endpoint.
+      process.env.OTEL_EXPORTER_OTLP_ENDPOINT = 'http://collector:4318/base/';
+      otlpSpanExporterFactory(setDefaultTracingOptions());
+      assert.strictEqual(
+        getEffectiveState().tracesEndpoint,
+        'http://collector:4318/base/v1/traces'
+      );
+    });
+
     it('records the signal-specific endpoint verbatim', () => {
       process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT =
         'http://collector:4318/v1/traces';

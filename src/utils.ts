@@ -252,10 +252,8 @@ export function ensureResourcePath(
 // reported as effective configuration:
 //   explicit endpoint (already resolved by the caller, incl. realm default)
 //   -> OTEL_EXPORTER_OTLP_<SIGNAL>_ENDPOINT (used verbatim)
-//   -> OTEL_EXPORTER_OTLP_ENDPOINT (base; signal path appended for http)
+//   -> OTEL_EXPORTER_OTLP_ENDPOINT (base; signal path always appended for http)
 //   -> protocol default (http: localhost:4318/<resourcePath>, grpc: localhost:4317)
-// For http/protobuf the signal resource path (e.g. /v1/traces) is appended when
-// the URL has no path, matching ensureResourcePath / the SDK.
 export function resolveOtlpExporterUrl(args: {
   endpoint: string | undefined;
   protocol: string;
@@ -266,16 +264,15 @@ export function resolveOtlpExporterUrl(args: {
   // Anything other than grpc resolves like http/protobuf (the SDK default).
   const isHttp = protocol !== 'grpc';
 
-  // For http the signal resource path is appended when the URL has no path
-  // (matching the SDK); for grpc the value is used as-is. ensureResourcePath
-  // returns undefined for an unparseable URL, in which case the raw value is
-  // reported since that is what the exporter would receive.
-  const withPath = (url: string) =>
-    isHttp ? (ensureResourcePath(url, resourcePath) ?? url) : url;
-
-  // An explicitly resolved endpoint (programmatic option or realm default).
+  // An explicit endpoint (programmatic option or realm default) is used as the
+  // exporter receives it: for http the signal resource path is appended only
+  // when the URL has no path, matching the factory's ensureResourcePath call.
+  // ensureResourcePath returns undefined for an unparseable URL, in which case
+  // the raw value is reported since that is what the exporter would receive.
   if (endpoint !== undefined) {
-    return withPath(endpoint);
+    return isHttp
+      ? (ensureResourcePath(endpoint, resourcePath) ?? endpoint)
+      : endpoint;
   }
 
   // A signal-specific endpoint is used verbatim by the SDK (it must already
@@ -285,10 +282,14 @@ export function resolveOtlpExporterUrl(args: {
     return signalEndpoint;
   }
 
-  // The shared base endpoint has the resource path appended for http.
+  // Unlike a signal-specific endpoint, the SDK appends the signal resource path
+  // to the shared base endpoint unconditionally for http — even when the base
+  // already has a path prefix (e.g. http://host/base -> http://host/base/v1/traces).
   const baseEndpoint = getNonEmptyEnvVar('OTEL_EXPORTER_OTLP_ENDPOINT');
   if (baseEndpoint !== undefined) {
-    return withPath(baseEndpoint);
+    return isHttp
+      ? `${baseEndpoint.replace(/\/$/, '')}${resourcePath}`
+      : baseEndpoint;
   }
 
   return isHttp
