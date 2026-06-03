@@ -912,15 +912,22 @@ function projectProfiling(config: DistroConfiguration): object | undefined {
   if (Object.keys(alwaysOn).length > 0) {
     profilingOut.always_on = alwaysOn;
   }
+  // The runtime treats snapshot profiling as enabled whenever a callgraphs key
+  // is present, including a bare `callgraphs:` that YAML parses as null (see
+  // SPLUNK_SNAPSHOT_PROFILER_ENABLED). Match that here so a config relying on
+  // default snapshot settings is not reported as inactive, unless a component
+  // reported it did not actually start (spec B7).
   if (
     profiling.callgraphs !== undefined &&
-    profiling.callgraphs !== null &&
     state.snapshotProfilerEnabled !== false
   ) {
     profilingOut.callgraphs = {
+      // Default the sampling interval (matching startSnapshotProfiling) when it
+      // is absent, e.g. for a bare callgraphs block.
       sampling_interval:
         state.snapshotSamplingInterval ??
-        profiling.callgraphs.sampling_interval,
+        profiling.callgraphs?.sampling_interval ??
+        1,
     };
   }
 

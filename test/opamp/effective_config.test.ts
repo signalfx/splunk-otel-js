@@ -391,6 +391,22 @@ distribution:
       );
     });
 
+    it('reports a bare callgraphs block as enabled with the default interval', () => {
+      // A bare `callgraphs:` parses as null but the runtime enables snapshots
+      // (SPLUNK_SNAPSHOT_PROFILER_ENABLED derives from callgraphs !== undefined),
+      // so it must be reported, not dropped.
+      const config = loadAndReport(
+        'file_format: "1.0-rc.2"\ndistribution:\n  splunk:\n' +
+          '    profiling:\n      callgraphs:\n'
+      );
+
+      const body = parseYaml(config.content);
+      assert.strictEqual(
+        body.distribution.splunk.profiling.callgraphs.sampling_interval,
+        1
+      );
+    });
+
     it('reports evaluated env-variable templates, not the template text', () => {
       process.env.MY_ENDPOINT = 'http://collector.example:4318/v1/traces';
       const config = loadAndReport(
