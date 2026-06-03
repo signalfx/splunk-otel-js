@@ -496,6 +496,75 @@ distribution:
       );
     });
 
+    it('reports the signal-specific env endpoint when an http exporter omits it', () => {
+      // The factory passes url: undefined, so the SDK resolves the endpoint
+      // from OTEL_EXPORTER_OTLP_TRACES_ENDPOINT. The report must reflect that
+      // rather than the localhost default.
+      process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT =
+        'http://collector:4318/v1/traces';
+
+      const config = loadAndReport(
+        'file_format: "1.0-rc.2"\ntracer_provider:\n  processors:\n' +
+          '    - batch:\n        exporter:\n          otlp_http: {}\n'
+      );
+
+      const body = parseYaml(config.content);
+      assert.strictEqual(
+        body.tracer_provider.processors[0].batch.exporter.otlp_http.endpoint,
+        'http://collector:4318/v1/traces'
+      );
+    });
+
+    it('reports the base env endpoint with the signal path when an http exporter omits it', () => {
+      // With only OTEL_EXPORTER_OTLP_ENDPOINT set, the SDK appends the signal
+      // path; the report must match what telemetry actually uses, not localhost.
+      process.env.OTEL_EXPORTER_OTLP_ENDPOINT = 'http://collector:4318';
+
+      const config = loadAndReport(
+        'file_format: "1.0-rc.2"\nmeter_provider:\n  readers:\n' +
+          '    - periodic:\n        exporter:\n          otlp_http: {}\n'
+      );
+
+      const body = parseYaml(config.content);
+      assert.strictEqual(
+        body.meter_provider.readers[0].periodic.exporter.otlp_http.endpoint,
+        'http://collector:4318/v1/metrics'
+      );
+    });
+
+    it('reports the base env endpoint with /v1/logs when a logs http exporter omits it', () => {
+      // Even though a configured logs endpoint is used verbatim, an omitted one
+      // resolves through the SDK precedence, which appends /v1/logs to the base.
+      process.env.OTEL_EXPORTER_OTLP_ENDPOINT = 'http://collector:4318';
+
+      const config = loadAndReport(
+        'file_format: "1.0-rc.2"\nlogger_provider:\n  processors:\n' +
+          '    - batch:\n        exporter:\n          otlp_http: {}\n'
+      );
+
+      const body = parseYaml(config.content);
+      assert.strictEqual(
+        body.logger_provider.processors[0].batch.exporter.otlp_http.endpoint,
+        'http://collector:4318/v1/logs'
+      );
+    });
+
+    it('reports the base env endpoint when a gRPC exporter omits it', () => {
+      // gRPC has no resource path: the SDK uses the base endpoint as-is.
+      process.env.OTEL_EXPORTER_OTLP_ENDPOINT = 'http://collector:4317';
+
+      const config = loadAndReport(
+        'file_format: "1.0-rc.2"\ntracer_provider:\n  processors:\n' +
+          '    - batch:\n        exporter:\n          otlp_grpc: {}\n'
+      );
+
+      const body = parseYaml(config.content);
+      assert.strictEqual(
+        body.tracer_provider.processors[0].batch.exporter.otlp_grpc.endpoint,
+        'http://collector:4317'
+      );
+    });
+
     it('uses a defaulted AgentConfigFile name when no path env var is set', () => {
       const config = loadAndReport('file_format: "1.0-rc.2"\n');
       assert.strictEqual(config.type, 'yaml');

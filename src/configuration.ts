@@ -20,6 +20,7 @@ import {
   getEnvBoolean,
   getEnvNumber,
   getNonEmptyEnvVar,
+  resolveOtlpExporterUrl,
 } from './utils';
 import { EnvVarKey } from './types';
 import {
@@ -776,16 +777,24 @@ const OTLP_HTTP_RESOURCE_PATHS: Partial<Record<SignalName, string>> = {
   metrics: '/v1/metrics',
 };
 
-// Default OTLP endpoints used by the SDK exporters when a declarative config
-// declares an exporter but omits the endpoint. Reported so the effective
-// declarative config reflects the value actually in effect (C7). The gRPC
-// default is the same for every signal (no signal-specific path), unlike http.
-const OTLP_HTTP_DEFAULT_ENDPOINTS: Record<SignalName, string> = {
-  traces: 'http://localhost:4318/v1/traces',
-  metrics: 'http://localhost:4318/v1/metrics',
-  logs: 'http://localhost:4318/v1/logs',
+// Signal-specific OTLP endpoint env vars, used to mirror the SDK precedence when
+// a declarative exporter omits the endpoint (see projectExporterEndpoint).
+const OTLP_SIGNAL_ENDPOINT_KEYS: Record<SignalName, EnvVarKey> = {
+  traces: 'OTEL_EXPORTER_OTLP_TRACES_ENDPOINT',
+  metrics: 'OTEL_EXPORTER_OTLP_METRICS_ENDPOINT',
+  logs: 'OTEL_EXPORTER_OTLP_LOGS_ENDPOINT',
 };
-const OTLP_GRPC_DEFAULT_ENDPOINT = 'http://localhost:4317';
+
+// Full per-signal OTLP/HTTP resource paths. Unlike OTLP_HTTP_RESOURCE_PATHS
+// (which omits logs because the logs factory uses a configured endpoint
+// verbatim), this includes logs: when the endpoint is omitted the factory
+// passes url: undefined and the SDK appends the signal path to the base env
+// endpoint for every signal, including logs.
+const OTLP_SIGNAL_RESOURCE_PATHS: Record<SignalName, string> = {
+  traces: '/v1/traces',
+  metrics: '/v1/metrics',
+  logs: '/v1/logs',
+};
 
 // Minimal structural views of the declarative schema, capturing only the
 // fields the projection reads. The concrete schema types (SpanExporter,
@@ -817,21 +826,43 @@ function projectExporterEndpoint(
   if (exporter.otlp_http != null) {
     const configured = exporter.otlp_http.endpoint;
     const resourcePath = OTLP_HTTP_RESOURCE_PATHS[signal];
-    // Mirror the exporter factory: traces/metrics append the signal resource
-    // path to a host-only endpoint (ensureResourcePath only appends when the
-    // URL has no path); logs use the endpoint verbatim. When omitted, report
-    // the full default the SDK would use.
-    const endpoint =
-      configured != null
-        ? resourcePath !== undefined
+    let endpoint: string;
+    if (configured != null) {
+      // A configured endpoint reaches the factory as-is: traces/metrics append
+      // the signal resource path to a host-only URL (ensureResourcePath only
+      // appends when the URL has no path); logs use it verbatim.
+      endpoint =
+        resourcePath !== undefined
           ? (ensureResourcePath(configured, resourcePath) ?? configured)
-          : configured
-        : OTLP_HTTP_DEFAULT_ENDPOINTS[signal];
+          : configured;
+    } else {
+      // The endpoint is omitted, so the factory passes url: undefined and the
+      // SDK resolves it from OTEL_EXPORTER_OTLP_<SIGNAL>_ENDPOINT, then the base
+      // OTEL_EXPORTER_OTLP_ENDPOINT (with the signal path appended), then the
+      // localhost default. Report whichever the exporter will actually use
+      // rather than hard-coding localhost (C7).
+      endpoint = resolveOtlpExporterUrl({
+        endpoint: undefined,
+        protocol: 'http/protobuf',
+        signalEndpointKey: OTLP_SIGNAL_ENDPOINT_KEYS[signal],
+        resourcePath: OTLP_SIGNAL_RESOURCE_PATHS[signal],
+      });
+    }
     out.otlp_http = { endpoint };
   }
   if (exporter.otlp_grpc != null) {
+    const configured = exporter.otlp_grpc.endpoint;
+    // gRPC has no resource path; a configured endpoint is used verbatim, an
+    // omitted one resolves through the same env-var precedence as http.
     out.otlp_grpc = {
-      endpoint: exporter.otlp_grpc.endpoint ?? OTLP_GRPC_DEFAULT_ENDPOINT,
+      endpoint:
+        configured ??
+        resolveOtlpExporterUrl({
+          endpoint: undefined,
+          protocol: 'grpc',
+          signalEndpointKey: OTLP_SIGNAL_ENDPOINT_KEYS[signal],
+          resourcePath: OTLP_SIGNAL_RESOURCE_PATHS[signal],
+        }),
     };
   }
 
