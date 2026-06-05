@@ -840,7 +840,7 @@ function projectExporterEndpoint(
       // SDK resolves it from OTEL_EXPORTER_OTLP_<SIGNAL>_ENDPOINT, then the base
       // OTEL_EXPORTER_OTLP_ENDPOINT (with the signal path appended), then the
       // localhost default. Report whichever the exporter will actually use
-      // rather than hard-coding localhost (C7).
+      // rather than hard-coding localhost.
       endpoint = resolveOtlpExporterUrl({
         endpoint: undefined,
         protocol: 'http/protobuf',
@@ -870,7 +870,7 @@ function projectExporterEndpoint(
 }
 
 // Projects a span/log record processor (batch|simple) to a minimal form that
-// keeps only the exporter endpoint(s). All active exporters are reported (C9).
+// keeps only the exporter endpoint(s). All active exporters are reported.
 function projectSignalProcessor(
   processor: SignalProcessorView,
   signal: SignalName
@@ -924,11 +924,11 @@ function projectMeterProvider(config: DistroConfiguration): object | undefined {
   return projected.length > 0 ? { readers: projected } : undefined;
 }
 
-// Projects the Splunk profiling config. Presence implies enabled (C6); absent
+// Projects the Splunk profiling config. Presence implies enabled; absent
 // features are omitted, which the spec treats as disabled. Where a component
 // reported its actual runtime outcome (e.g. the profiler failed to load), that
-// outcome wins over what the file declared (spec B7): a feature that did not
-// actually start is dropped from the report.
+// outcome wins over what the file declared: a feature that did not actually
+// start is dropped from the report.
 function projectProfiling(config: DistroConfiguration): object | undefined {
   const profiling = splunkConfig(config)?.profiling;
   if (profiling === undefined) {
@@ -944,7 +944,7 @@ function projectProfiling(config: DistroConfiguration): object | undefined {
   if (cpuProfiler !== undefined && state.profilerEnabled !== false) {
     alwaysOn.cpu_profiler = {
       // Prefer the interval the profiler actually started with; otherwise fill
-      // the default sampling interval when omitted from the file (C7).
+      // the default sampling interval when omitted from the file.
       sampling_interval:
         state.callStackInterval ?? cpuProfiler?.sampling_interval ?? 1000,
     };
@@ -965,7 +965,7 @@ function projectProfiling(config: DistroConfiguration): object | undefined {
   // is present, including a bare `callgraphs:` that YAML parses as null (see
   // SPLUNK_SNAPSHOT_PROFILER_ENABLED). Match that here so a config relying on
   // default snapshot settings is not reported as inactive, unless a component
-  // reported it did not actually start (spec B7).
+  // reported it did not actually start.
   if (
     profiling.callgraphs !== undefined &&
     state.snapshotProfilerEnabled !== false
@@ -989,7 +989,7 @@ function projectProfiling(config: DistroConfiguration): object | undefined {
 // specification (specification/opamp_datamodel.md): a minimal, filtered view of
 // the loaded declarative config containing only the required fields. Values are
 // sourced from the already env-substituted globalConfiguration, so config
-// templates are reported as their evaluated values (C8).
+// templates are reported as their evaluated values.
 function getEffectiveDeclarativeConfig(): string {
   const config = globalConfiguration ?? ({} as DistroConfiguration);
 

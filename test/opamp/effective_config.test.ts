@@ -172,7 +172,7 @@ describe('EffectiveConfig', () => {
 
     it('reports the profiler as disabled when it failed to start', () => {
       // The env says enabled, but the component recorded that it did not
-      // actually start (e.g. native extension unavailable) — spec B7.
+      // actually start (e.g. native extension unavailable).
       process.env.SPLUNK_PROFILER_ENABLED = 'true';
       recordEffectiveState({ profilerEnabled: false });
 
@@ -183,7 +183,7 @@ describe('EffectiveConfig', () => {
     it('reports memory profiling disabled when the profiler failed to start', () => {
       // Both flags are requested via env, but the native extension was
       // unavailable so neither the CPU nor memory profiler started. Memory
-      // profiling must not fall back to the configured value (spec B7).
+      // profiling must not fall back to the configured value.
       process.env.SPLUNK_PROFILER_ENABLED = 'true';
       process.env.SPLUNK_PROFILER_MEMORY_ENABLED = 'true';
       // Matches what startProfiling() records on the missing-extension path.
@@ -582,7 +582,7 @@ distribution:
     });
 
     it('reports every exporter when a signal has multiple processors', () => {
-      // Spec C9: all active exporters/endpoints for a signal are reported.
+      // All active exporters/endpoints for a signal are reported.
       const config = loadAndReport(
         'file_format: "1.0-rc.2"\ntracer_provider:\n  processors:\n' +
           '    - batch:\n        exporter:\n          otlp_http:\n' +

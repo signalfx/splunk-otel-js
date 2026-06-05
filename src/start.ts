@@ -166,7 +166,7 @@ export const start = (options: Partial<Options> = {}) => {
   } else {
     // Profiling was disabled (e.g. start({ profiling: false })), so neither the
     // CPU nor memory profiler runs. Record this so OpAMP does not report a
-    // stale SPLUNK_PROFILER_ENABLED=true from the environment (spec B7).
+    // stale SPLUNK_PROFILER_ENABLED=true from the environment.
     recordEffectiveState({
       profilerEnabled: false,
       memoryProfilerEnabled: false,

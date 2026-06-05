@@ -148,7 +148,7 @@ export function startSnapshotProfiling(options: StartSnapshotProfilingOptions) {
     getConfigNumber('SPLUNK_CPU_PROFILER_COLLECTION_INTERVAL', 30_000);
 
   // The snapshot profiler can only actually run when the native extension is
-  // available; otherwise it falls back to a no-op extension (spec B7/C6).
+  // available; otherwise it falls back to a no-op extension.
   recordEffectiveState({
     snapshotProfilerEnabled: loadExtension() !== undefined,
     snapshotSamplingInterval: samplingIntervalMs,

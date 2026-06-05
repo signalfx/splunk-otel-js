@@ -125,8 +125,8 @@ export function startProfiling(options: ProfilingOptions) {
   if (extension === undefined) {
     // Profiling was requested but the native extension is unavailable, so
     // neither the CPU nor the memory profiler actually started. Report both as
-    // disabled (spec B7/C6) — memory profiling cannot run without the
-    // extension, so it must not fall back to the configured value.
+    // disabled — memory profiling cannot run without the extension, so it must
+    // not fall back to the configured value.
     recordEffectiveState({
       profilerEnabled: false,
       memoryProfilerEnabled: false,
