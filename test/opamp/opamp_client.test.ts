@@ -61,6 +61,7 @@ const DEFAULT_CAPABILITIES =
 
 const EMPTY_EFFECTIVE_CONFIG: EffectiveConfig = {
   type: 'yaml',
+  name: 'yaml',
   content: '',
 };
 
@@ -143,6 +144,7 @@ describe('OpAMPClient', () => {
       const transport = createMockTransport();
       const effectiveConfig: EffectiveConfig = {
         type: 'yaml',
+        name: 'yaml',
         content: 'key: value',
       };
       const client = new OpAMPClient(
@@ -163,6 +165,7 @@ describe('OpAMPClient', () => {
     it('omits unchanged effectiveConfig after first successful send', async () => {
       const effectiveConfig: EffectiveConfig = {
         type: 'yaml',
+        name: 'yaml',
         content: 'key: value',
       };
       const transport = createMockTransport();
@@ -194,6 +197,7 @@ describe('OpAMPClient', () => {
         createOptions({
           getEffectiveConfig: () => ({
             type: 'yaml' as const,
+            name: 'yaml',
             content: currentContent,
           }),
         }),
@@ -227,6 +231,7 @@ describe('OpAMPClient', () => {
     it('re-sends effectiveConfig after HTTP 409 response', async () => {
       const effectiveConfig: EffectiveConfig = {
         type: 'yaml',
+        name: 'yaml',
         content: 'key: value',
       };
 
@@ -288,6 +293,7 @@ describe('OpAMPClient', () => {
     it('re-sends effectiveConfig when server requests ReportFullState', async () => {
       const effectiveConfig: EffectiveConfig = {
         type: 'yaml',
+        name: 'yaml',
         content: 'key: value',
       };
       const transport = createMockTransport(() => ({

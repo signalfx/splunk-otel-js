@@ -18,7 +18,12 @@ import type { Resource } from '@opentelemetry/resources';
 import type { ResourceFactory } from '../types';
 
 export interface EffectiveConfig {
+  // Selects the wire format (content type) per the GDI spec.
   type: 'yaml' | 'env';
+  // The AgentConfigFile name used as the key in the OpAMP ConfigMap. For the
+  // env format this is always `environment`; for the yaml format it is the
+  // effective declarative config filename (OTEL_CONFIG_FILE).
+  name: string;
   content: string;
 }
 

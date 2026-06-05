@@ -247,6 +247,56 @@ export function ensureResourcePath(
   return url;
 }
 
+// Resolves the final OTLP endpoint URL an exporter will actually use, mirroring
+// the precedence applied by the OpenTelemetry SDK exporters so the value can be
+// reported as effective configuration:
+//   explicit endpoint (already resolved by the caller, incl. realm default)
+//   -> OTEL_EXPORTER_OTLP_<SIGNAL>_ENDPOINT (used verbatim)
+//   -> OTEL_EXPORTER_OTLP_ENDPOINT (base; signal path always appended for http)
+//   -> protocol default (http: localhost:4318/<resourcePath>, grpc: localhost:4317)
+export function resolveOtlpExporterUrl(args: {
+  endpoint: string | undefined;
+  protocol: string;
+  signalEndpointKey: EnvVarKey;
+  resourcePath: string;
+}): string {
+  const { endpoint, protocol, signalEndpointKey, resourcePath } = args;
+  // Anything other than grpc resolves like http/protobuf (the SDK default).
+  const isHttp = protocol !== 'grpc';
+
+  // An explicit endpoint (programmatic option or realm default) is used as the
+  // exporter receives it: for http the signal resource path is appended only
+  // when the URL has no path, matching the factory's ensureResourcePath call.
+  // ensureResourcePath returns undefined for an unparseable URL, in which case
+  // the raw value is reported since that is what the exporter would receive.
+  if (endpoint !== undefined) {
+    return isHttp
+      ? (ensureResourcePath(endpoint, resourcePath) ?? endpoint)
+      : endpoint;
+  }
+
+  // A signal-specific endpoint is used verbatim by the SDK (it must already
+  // include the resource path).
+  const signalEndpoint = getNonEmptyEnvVar(signalEndpointKey);
+  if (signalEndpoint !== undefined) {
+    return signalEndpoint;
+  }
+
+  // Unlike a signal-specific endpoint, the SDK appends the signal resource path
+  // to the shared base endpoint unconditionally for http — even when the base
+  // already has a path prefix (e.g. http://host/base -> http://host/base/v1/traces).
+  const baseEndpoint = getNonEmptyEnvVar('OTEL_EXPORTER_OTLP_ENDPOINT');
+  if (baseEndpoint !== undefined) {
+    return isHttp
+      ? `${baseEndpoint.replace(/\/$/, '')}${resourcePath}`
+      : baseEndpoint;
+  }
+
+  return isHttp
+    ? `http://localhost:4318${resourcePath}`
+    : 'http://localhost:4317';
+}
+
 export function readFileContent(
   path: string | undefined | null
 ): Buffer | undefined {
