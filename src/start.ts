@@ -183,7 +183,13 @@ export const start = (options: Partial<Options> = {}) => {
     recordEffectiveState({ snapshotProfilerEnabled: false });
   }
 
-  if (isFeatureEnabled(options.tracing, 'SPLUNK_TRACING_ENABLED', true)) {
+  // isFeatureEnabled returns the option object itself when a signal is
+  // configured via an options object, so coerce to a plain boolean.
+  const tracingEnabled = Boolean(
+    isFeatureEnabled(options.tracing, 'SPLUNK_TRACING_ENABLED', true)
+  );
+  recordEffectiveState({ tracingEnabled });
+  if (tracingEnabled) {
     running.tracing = startTracing(tracingOptions);
   }
 
@@ -193,14 +199,15 @@ export const start = (options: Partial<Options> = {}) => {
     false
   );
 
-  if (
+  const loggingEnabled = Boolean(
     isFeatureEnabled(
       options.logging,
       'SPLUNK_AUTOMATIC_LOG_COLLECTION',
       false
-    ) ||
-    secureappEnabled
-  ) {
+    ) || secureappEnabled
+  );
+  recordEffectiveState({ loggingEnabled });
+  if (loggingEnabled) {
     running.logging = startLogging(loggingOptions);
   }
 
@@ -208,13 +215,15 @@ export const start = (options: Partial<Options> = {}) => {
     running.secureapp = startSecureapp(secureappOptions) ?? null;
   }
 
-  if (
+  const metricsEnabled = Boolean(
     isFeatureEnabled(
       options.metrics,
       'SPLUNK_METRICS_ENABLED',
       metricsEnabledByDefault
     )
-  ) {
+  );
+  recordEffectiveState({ metricsEnabled });
+  if (metricsEnabled) {
     running.metrics = startMetrics(metricsOptions);
   }
 

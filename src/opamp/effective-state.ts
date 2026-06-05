@@ -29,6 +29,13 @@
 // has reported yet.
 
 export interface EffectiveState {
+  // Whether each signal pipeline actually started. A declarative config file can
+  // declare a provider for a signal that is then disabled via the programmatic
+  // API or an env var, in which case no pipeline starts and the corresponding
+  // provider block must be dropped from the effective declarative config.
+  tracingEnabled: boolean;
+  metricsEnabled: boolean;
+  loggingEnabled: boolean;
   // Resolved OTLP exporter base endpoints (no trailing resource path).
   tracesEndpoint: string | null;
   metricsEndpoint: string | null;

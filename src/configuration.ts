@@ -993,15 +993,22 @@ function projectProfiling(config: DistroConfiguration): object | undefined {
 function getEffectiveDeclarativeConfig(): string {
   const config = globalConfiguration ?? ({} as DistroConfiguration);
 
-  const tracerProvider = projectProcessorList(
-    config.tracer_provider?.processors,
-    'traces'
-  );
-  const meterProvider = projectMeterProvider(config);
-  const loggerProvider = projectProcessorList(
-    config.logger_provider?.processors,
-    'logs'
-  );
+  // A signal pipeline can be declared in the file yet disabled via the
+  // programmatic API or an env var, in which case it never starts and must not
+  // appear in the report. A signal is dropped only when a component explicitly
+  // recorded it as disabled; when nothing was recorded (state is empty) the
+  // declared provider is included.
+  const state = getEffectiveState();
+  const tracerProvider =
+    state.tracingEnabled === false
+      ? undefined
+      : projectProcessorList(config.tracer_provider?.processors, 'traces');
+  const meterProvider =
+    state.metricsEnabled === false ? undefined : projectMeterProvider(config);
+  const loggerProvider =
+    state.loggingEnabled === false
+      ? undefined
+      : projectProcessorList(config.logger_provider?.processors, 'logs');
   const distribution = projectProfiling(config);
 
   // The config-file paths are environment variables that point at the loaded

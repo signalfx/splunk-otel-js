@@ -602,5 +602,29 @@ distribution:
         'http://b:4317'
       );
     });
+
+    it('drops a declared provider for a signal disabled at runtime', () => {
+      // The file declares all three signal providers, but tracing and logging
+      // were disabled (e.g. start({ tracing: false })) so their pipelines never
+      // started. Only the still-active meter_provider must be reported.
+      recordEffectiveState({ tracingEnabled: false, loggingEnabled: false });
+
+      const config = loadAndReport(SPEC_EXAMPLE_YAML);
+      const body = parseYaml(config.content);
+
+      assert.strictEqual(body.tracer_provider, undefined);
+      assert.strictEqual(body.logger_provider, undefined);
+      assert.notStrictEqual(body.meter_provider, undefined);
+    });
+
+    it('reports a declared provider when its signal stays enabled', () => {
+      // Recording one signal as disabled must not suppress the others.
+      recordEffectiveState({ tracingEnabled: true });
+
+      const config = loadAndReport(SPEC_EXAMPLE_YAML);
+      const body = parseYaml(config.content);
+
+      assert.notStrictEqual(body.tracer_provider, undefined);
+    });
   });
 });
