@@ -1,5 +1,9 @@
 # Change Log - @splunk/otel
 
+## 4.8.0
+
+- Align OpAMP with GDI spec. [#1159](https://github.com/signalfx/splunk-otel-js/pull/1159)
+
 ## 4.7.2
 
 - Upgrade to OpenTelemetry 0.218.0. [#1151](https://github.com/signalfx/splunk-otel-js/issues/1151)
