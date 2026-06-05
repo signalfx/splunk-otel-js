@@ -1,6 +1,6 @@
 {
   "name": "@splunk/otel",
-  "version": "4.7.2",
+  "version": "4.8.0",
   "description": "The Splunk distribution of OpenTelemetry Node Instrumentation provides a Node agent that automatically instruments your Node application to capture and report distributed traces to Splunk APM.",
   "keywords": [
     "apm",
@@ -74,7 +74,7 @@
     "watch": "tsc --build --watch"
   },
   "dependencies": {
-    "@grpc/grpc-js": "^1.14.3",
+    "@grpc/grpc-js": "^1.14.4",
     "@opentelemetry/api": "^1.9.1",
     "@opentelemetry/api-logs": "^0.218.0",
     "@opentelemetry/context-async-hooks": "2.7.1",
@@ -141,7 +141,7 @@
     "minimatch": "^10.2.5",
     "nan": "^2.27.0",
     "node-gyp-build": "^4.8.4",
-    "protobufjs": "^8.3.0",
+    "protobufjs": "^8.6.0",
     "semver": "^7.8.0",
     "yaml": "^2.9.0"
   },
@@ -159,7 +159,7 @@
     "pg": "^8.16.2",
     "pino": "^8.7.0",
     "prebuildify": "^6.0.1",
-    "protobufjs-cli": "2.2.0",
+    "protobufjs-cli": "2.5.1",
     "redis": "^3.1.2",
     "rxjs": "^7.8.2",
     "semver": "^7.7.2",
