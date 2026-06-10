@@ -60,7 +60,7 @@ import { MemcachedInstrumentation } from '@opentelemetry/instrumentation-memcach
 import { MongoDBInstrumentation } from '@opentelemetry/instrumentation-mongodb';
 import { MongooseInstrumentation } from '@opentelemetry/instrumentation-mongoose';
 import { MySQLInstrumentation } from '@opentelemetry/instrumentation-mysql';
-import { MySQL2Instrumentation } from '@opentelemetry/instrumentation-mysql2';
+import { MySQL2Instrumentation } from './external/mysql2';
 import { NestInstrumentation } from '@opentelemetry/instrumentation-nestjs-core';
 import { Neo4jInstrumentation } from './external/neo4j';
 import { NetInstrumentation } from '@opentelemetry/instrumentation-net';
