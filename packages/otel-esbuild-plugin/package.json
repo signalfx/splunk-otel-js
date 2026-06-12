@@ -41,7 +41,7 @@
     "test": "cross-env TEST_DIR=../packages/otel-esbuild-plugin node ../../test/runner.js"
   },
   "dependencies": {
-    "esbuild": "^0.28.0",
+    "esbuild": "^0.28.1",
     "opentelemetry-esbuild-plugin-node": "^4.4.0"
   },
   "peerDependencies": {
