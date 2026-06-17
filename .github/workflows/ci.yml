@@ -7,6 +7,7 @@ permissions: read-all
 env:
   # https://github.com/actions/checkout/issues/1590
   ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+  PREBUILDIFY_CACHE: .node-gyp-cache
 
 jobs:
   prebuilds-linux:
@@ -26,6 +27,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
+      - name: Cache Node headers
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: .node-gyp-cache
+          key: node-headers-linux-x64-${{ matrix.node_api_target }}
       - name: Install npm dependencies
         run: npm ci --ignore-scripts --no-optional
       - name: Prebuild
@@ -53,6 +59,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
+      - name: Cache Node headers
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: .node-gyp-cache
+          key: node-headers-linux-arm64-${{ matrix.node_api_target }}
       - name: Install npm dependencies
         run: npm ci --ignore-scripts --no-optional
       - name: Prebuild
@@ -73,9 +84,14 @@ jobs:
     container: node:22-alpine3.20
     steps:
       - name: Install build deps
-        run: apk add --no-cache python3 make g++ git
+        run: apk add --no-cache python3 make g++ git tar zstd
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
+      - name: Cache Node headers
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: .node-gyp-cache
+          key: node-headers-linux-musl-x64-${{ matrix.node_api_target }}
       - name: Install npm dependencies
         run: npm ci --ignore-scripts --no-optional
       - name: Prebuild
@@ -96,9 +112,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
+      - name: Cache Node headers
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: .node-gyp-cache
+          key: node-headers-linux-musl-arm64-${{ matrix.node_api_target }}
       - name: Build in alpine
         run: |
-          docker run --rm -v "$PWD:/work" -w /work node:22-alpine3.20 sh -c '
+          docker run --rm -v "$PWD:/work" -w /work \
+            -e PREBUILDIFY_CACHE=.node-gyp-cache \
+            node:22-alpine3.20 sh -c '
             apk add --no-cache python3 make g++ git &&
             npm ci --ignore-scripts --no-optional &&
             npm run prebuild:os -- --libc=musl ${{ matrix.node_api_target }}
@@ -133,6 +156,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # 6.0.2
+      - name: Cache Node headers
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: .node-gyp-cache
+          key: node-headers-${{ matrix.os }}-${{ matrix.node_api_target }}
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '3.11'

@@ -32,6 +32,7 @@ prebuildify(
     targets,
     libc,
     tagLibc: libc || undefined,
+    cache: process.env.PREBUILDIFY_CACHE || undefined,
   },
   (err) => {
     if (err) {
