@@ -33,12 +33,12 @@ import type { ExperimentalResourceDetector } from './configuration/schema';
 const defaultDetectors = [
   distroDetector,
   containerDetector,
+  serviceInstanceIdDetector,
   envDetector,
   hostDetector,
   osDetector,
   processDetector,
   telemetrySdkDetector,
-  serviceInstanceIdDetector,
 ];
 
 let detectedResource: Resource | undefined;
