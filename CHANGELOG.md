@@ -1,5 +1,10 @@
 # Change Log - @splunk/otel
 
+## 4.9.0
+
+- Upgrade to OpenTelemetry 2.8.0 / 0.219.0. [#1163](https://github.com/signalfx/splunk-otel-js/pull/1163)
+- Add service ID instance detector to default detectors. [#1165](https://github.com/signalfx/splunk-otel-js/pull/1165)
+
 ## 4.8.0
 
 - Align OpAMP with GDI spec. [#1159](https://github.com/signalfx/splunk-otel-js/pull/1159)
