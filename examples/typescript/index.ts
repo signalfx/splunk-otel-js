@@ -10,7 +10,7 @@ start({
 });
 
 // Load libraries after calling start()
-import * as express from 'express';
+import express = require('express');
 
 const tracer = otel.trace.getTracer('rng-app');
 const meter = otel.metrics.getMeter('rng-app');
