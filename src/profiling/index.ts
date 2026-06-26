@@ -132,6 +132,10 @@ export function startProfiling(options: ProfilingOptions) {
       memoryProfilerEnabled: false,
     });
     return {
+      // started:false lets the runtime controller distinguish "requested but
+      // the native extension was unavailable" from a real start, so a remote
+      // cpu_profiler enable can report FAILED instead of a silent APPLIED.
+      started: false,
       stop: async () => {},
     };
   }
@@ -200,6 +204,7 @@ export function startProfiling(options: ProfilingOptions) {
   });
 
   return {
+    started: true,
     stop: async () => {
       if (options.memoryProfilingEnabled) {
         clearInterval(memSamplesCollectInterval);

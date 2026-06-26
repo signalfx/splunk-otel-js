@@ -63,6 +63,72 @@ describe('profiling native extension', () => {
     assert.strictEqual(extension.stop(handle), null);
   });
 
+  it('start reuses a stopped same-named profiler instead of colliding', () => {
+    // Regression: the profiler registry is append-only (stop() only pauses),
+    // so a second start() of the always-on profiler used to throw
+    // "CpuProfiler: profiler already exists." This blocked remote config from
+    // restarting the profiler to change the sampling interval or toggle memory
+    // profiling. start() now reuses the stopped profiler.
+    const name = 'start-reuse-test';
+    const handle = extension.start({
+      name,
+      samplingIntervalMicroseconds: 10_000,
+      recordDebugInfo: false,
+    });
+    assert.ok(handle >= 0);
+    assert.notEqual(extension.stop(handle), null);
+
+    // Restart with a different sampling interval: must not throw, and reuses
+    // the same handle rather than allocating a new profiler.
+    const handle2 = extension.start({
+      name,
+      samplingIntervalMicroseconds: 1_000,
+      recordDebugInfo: false,
+    });
+    assert.strictEqual(handle2, handle);
+    assert.notEqual(extension.stop(handle2), null);
+  });
+
+  it('start throws when the same-named profiler is still running', () => {
+    const name = 'start-running-test';
+    const handle = extension.start({
+      name,
+      samplingIntervalMicroseconds: 10_000,
+      recordDebugInfo: false,
+    });
+    assert.ok(handle >= 0);
+
+    assert.throws(
+      () =>
+        extension.start({
+          name,
+          samplingIntervalMicroseconds: 10_000,
+          recordDebugInfo: false,
+        }),
+      /profiler already running/
+    );
+
+    extension.stop(handle);
+  });
+
+  it('createCpuProfiler still rejects a duplicate name', () => {
+    const name = 'create-dup-test';
+    const handle = extension.createCpuProfiler({
+      name,
+      samplingIntervalMicroseconds: 10_000,
+    });
+    assert.ok(handle >= 0);
+
+    assert.throws(
+      () =>
+        extension.createCpuProfiler({
+          name,
+          samplingIntervalMicroseconds: 10_000,
+        }),
+      /profiler already exists/
+    );
+  });
+
   it('is possible to add trace id filters', () => {
     const handle = extension.createCpuProfiler({
       name: 'filter-test',

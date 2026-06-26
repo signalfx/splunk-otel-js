@@ -20,9 +20,12 @@ const parseRealmFromEndpoint = (endpoint) => {
 // has a sideeffect of populating the basic opentelemetry config environment variables
 const populateEnv = () => {
   if (!process.env.OTEL_EXPORTER_OTLP_ENDPOINT && !process.env.SPLUNK_REALM) {
-    process.env.SPLUNK_REALM = parseRealmFromEndpoint(
-      process.env.OTEL_EXPORTER_JAEGER_ENDPOINT ?? ''
+    const realm = parseRealmFromEndpoint(
+      process.env.OTEL_EXPORTER_JAEGER_ENDPOINT ?? undefined
     );
+    if (realm) { // Don't set it to empty for whatever reason
+      process.env.SPLUNK_REALM = realm;
+    }
   }
 };
 const logConfig = () => {

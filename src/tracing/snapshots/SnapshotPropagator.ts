@@ -51,10 +51,16 @@ function normalizeRate(rate: number): number {
 export class SnapshotPropagator implements TextMapPropagator<unknown> {
   selectionRate: number;
   sampler: TraceIdRatioBasedSampler;
+  // Consulted on every extract so a registered-but-dormant profiler (the
+  // inactive pre-registration for remote config) does not make snapshot-volume
+  // decisions. Injected rather than imported so the propagator stays decoupled
+  // from the snapshot profiler module.
+  private _isActive: () => boolean;
 
-  constructor(selectionRate: number) {
+  constructor(selectionRate: number, isActive: () => boolean = () => true) {
     this.selectionRate = normalizeRate(selectionRate);
     this.sampler = new TraceIdRatioBasedSampler(this.selectionRate);
+    this._isActive = isActive;
   }
 
   inject(
@@ -68,6 +74,13 @@ export class SnapshotPropagator implements TextMapPropagator<unknown> {
     _carrier: unknown,
     _getter: TextMapGetter<unknown>
   ): Context {
+    // While snapshot profiling is dormant, leave the context untouched: do not
+    // originate volume baggage (which would propagate downstream and dictate
+    // selection) and do not overwrite a decision already made upstream.
+    if (!this._isActive()) {
+      return context;
+    }
+
     const baggage = propagation.getBaggage(context);
 
     if (baggage === undefined) {
