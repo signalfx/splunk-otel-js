@@ -123,21 +123,26 @@ export class OpAMPClient {
   private _currentHealth: opamp.proto.IComponentHealth;
   private _agentDescription: opamp.proto.IAgentDescription | null = null;
 
-  // Hash of the last remote config we finished applying successfully. Used to
-  // dedup repeated server pushes of an unchanged config. Kept in memory only —
-  // the GDI spec forbids persisting remote configuration — so it resets on
-  // restart and the server re-sends.
+  // Hash of the last remote config we have *attempted* — whether it applied or
+  // failed. Used to dedup repeated server pushes of the same config: each config
+  // is attempted at most once and its status reported, and an identical re-send
+  // is ignored. Recording on failure (not just success) is what stops a server
+  // that blindly re-sends a failing config from driving a re-apply / re-poll
+  // loop; to request another attempt the operator changes the config (new hash).
+  // Our apply failures are deterministic (bad YAML, unsupported content type,
+  // unavailable extension, misconfiguration), so retrying an identical config
+  // would only fail again. Kept in memory only — the GDI spec forbids persisting
+  // remote configuration — so it resets on restart and the server re-sends.
   private _lastRemoteConfigHash: Uint8Array | null = null;
-  // Content of the last hashless config we applied successfully. A conformant
-  // server always sends a configHash; when one is omitted we fall back to
-  // deduping by the config body itself, so an unchanged re-send is ignored
-  // (no busy-polling) while a genuinely different config still applies. Kept in
-  // memory only — same as _lastRemoteConfigHash — so it resets on restart.
-  // null means no hashless config has been applied since the last hashed one.
+  // Body of the last hashless config we attempted. A conformant server always
+  // sends a configHash; when one is omitted (or is unreadable) we dedup by the
+  // config body itself instead, with the same one-attempt-per-config semantics.
+  // Kept in memory only — same as _lastRemoteConfigHash — so it resets on
+  // restart. null means no hashless config has been attempted since the last
+  // hashed one.
   private _lastHashlessConfig: string | null = null;
   // True while an apply is in flight. Guards against the apply's trailing
-  // immediate poll re-delivering the same config and applying it twice before
-  // _lastRemoteConfigHash is recorded.
+  // immediate poll re-delivering the same config and starting a second apply.
   private _applyInFlight: boolean = false;
   private _remoteConfigStatus: opamp.proto.IRemoteConfigStatus | null = null;
 
@@ -291,6 +296,16 @@ export class OpAMPClient {
         ? new Uint8Array(remoteConfig.configHash)
         : null;
     } catch (err) {
+      // The hash is unreadable, so we cannot dedup by it; fall back to the body
+      // so an identical re-send of this malformed message is still attempted
+      // only once (consistent with the one-attempt-per-config policy) rather
+      // than re-failing and re-polling on every push.
+      const body = this._remoteConfigBody(remoteConfig);
+      if (body === this._lastHashlessConfig) {
+        return;
+      }
+      this._lastHashlessConfig = body;
+      this._lastRemoteConfigHash = null;
       this._reportRemoteConfigFailure(
         null,
         'Failed to read remote config hash',
@@ -300,8 +315,12 @@ export class OpAMPClient {
       return;
     }
 
-    // Dedup: ignore a config we have already applied. A failed apply advances
-    // neither dedup key, so the server's re-send still retries.
+    // Dedup: each distinct config is attempted at most once. A re-send of a
+    // config we have already attempted — whether it applied or failed — is
+    // ignored. This is what prevents a server that re-sends a failing config on
+    // every poll from driving a re-apply / re-poll loop; the FAILED status we
+    // recorded is still reported each poll, and a genuinely changed config
+    // (new hash, or new body when hashless) still applies.
     const hashlessBody = configHash
       ? null
       : this._remoteConfigBody(remoteConfig);
@@ -310,18 +329,24 @@ export class OpAMPClient {
         return;
       }
     } else if (hashlessBody === this._lastHashlessConfig) {
-      // A conformant server always sends a configHash; without one we dedup by
-      // the config body so an unchanged re-send is ignored (no busy-polling)
-      // while a genuinely different config still applies.
       return;
     }
 
     // Guard against the trailing immediate poll (see _triggerPoll) re-delivering
-    // the same config and starting a second apply before the hash is recorded.
+    // the same config and starting a second apply before it completes.
     if (this._applyInFlight) {
       return;
     }
     this._applyInFlight = true;
+
+    // Record the dedup key now, before attempting: a single attempt is made per
+    // config regardless of outcome, so failures dedup exactly as successes do.
+    // (Setting it after the await would let the trailing FAILED poll's re-send
+    // slip through the _applyInFlight window on the next tick.)
+    this._lastRemoteConfigHash = configHash;
+    // Track the hashless body only when there is no hash; a hashed config clears
+    // it so a later hashless re-send is not wrongly deduped.
+    this._lastHashlessConfig = configHash ? null : hashlessBody;
 
     try {
       // Report APPLYING and push it out promptly so the server sees progress
@@ -347,16 +372,11 @@ export class OpAMPClient {
 
       try {
         await applyRemoteConfig(parsed);
-        this._lastRemoteConfigHash = configHash;
-        // Track the hashless body only when there is no hash; a hashed config
-        // clears it so a later hashless re-send is not wrongly deduped.
-        this._lastHashlessConfig = configHash ? null : hashlessBody;
         this._setRemoteConfigStatus(
           RemoteConfigStatuses.RemoteConfigStatuses_APPLIED,
           configHash
         );
       } catch (err) {
-        // Leave _lastRemoteConfigHash unchanged so a re-send retries the apply.
         this._reportRemoteConfigFailure(
           configHash,
           'Failed to apply remote config',

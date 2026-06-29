@@ -302,7 +302,7 @@ describe('OpAMP remote config', () => {
       );
     });
 
-    it('reports FAILED when the apply callback rejects, without advancing the hash', async () => {
+    it('reports FAILED when the apply callback rejects, and reports the failing hash', async () => {
       let calls = 0;
       const client = new OpAMPClient(
         createOptions({
@@ -326,14 +326,80 @@ describe('OpAMP remote config', () => {
         RemoteConfigStatuses.RemoteConfigStatuses_FAILED
       );
       assert.match(status!.errorMessage!, /boom/);
+      assert.deepStrictEqual(
+        new Uint8Array(status!.lastRemoteConfigHash!),
+        hash,
+        'FAILED status should carry the attempted hash'
+      );
+      assert.strictEqual(calls, 1);
+    });
 
-      // Re-sending the same hash retries because the failed apply did not
-      // advance _lastRemoteConfigHash.
+    it('does not re-attempt a re-sent config that already failed (no loop)', async () => {
+      // A server that re-sends the same (failing) config on every poll must not
+      // drive a re-apply / re-poll loop: a config is attempted once and its
+      // FAILED status reported, and identical re-sends are deduped just like a
+      // successful apply. The operator changes the config (new hash) to retry.
+      let calls = 0;
+      const client = new OpAMPClient(
+        createOptions({
+          applyRemoteConfig: async () => {
+            calls += 1;
+            throw new Error('boom');
+          },
+        }),
+        createMockTransport()
+      );
+      const hash = new Uint8Array([4, 5, 6]);
+
+      for (let i = 0; i < 3; i++) {
+        client.processServerResponse(
+          remoteConfigResponse({ body: '', configHash: hash })
+        );
+        await waitForApply();
+      }
+
+      assert.strictEqual(calls, 1, 'a failing config is attempted only once');
+      // The FAILED status is still reported on every poll, so the server keeps
+      // seeing the failure for the hash it offered.
+      const status = client.buildAgentToServerMessage().remoteConfigStatus;
+      assert.strictEqual(
+        status!.status,
+        RemoteConfigStatuses.RemoteConfigStatuses_FAILED
+      );
+      assert.deepStrictEqual(
+        new Uint8Array(status!.lastRemoteConfigHash!),
+        hash
+      );
+    });
+
+    it('attempts a changed config after a previous one failed', async () => {
+      // Deduping failures must not wedge the agent: a genuinely different config
+      // (new hash) is still attempted even right after a failure.
+      let calls = 0;
+      const client = new OpAMPClient(
+        createOptions({
+          applyRemoteConfig: async () => {
+            calls += 1;
+            throw new Error('boom');
+          },
+        }),
+        createMockTransport()
+      );
+
       client.processServerResponse(
-        remoteConfigResponse({ body: '', configHash: hash })
+        remoteConfigResponse({ body: '', configHash: new Uint8Array([1]) })
       );
       await waitForApply();
-      assert.strictEqual(calls, 2, 'should retry after failure');
+      client.processServerResponse(
+        remoteConfigResponse({ body: '', configHash: new Uint8Array([2]) })
+      );
+      await waitForApply();
+
+      assert.strictEqual(
+        calls,
+        2,
+        'a changed config is attempted after a failure'
+      );
     });
 
     it('reports FAILED on unparseable YAML', async () => {
