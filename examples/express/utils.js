@@ -23,7 +23,8 @@ const populateEnv = () => {
     const realm = parseRealmFromEndpoint(
       process.env.OTEL_EXPORTER_JAEGER_ENDPOINT ?? undefined
     );
-    if (realm) { // Don't set it to empty for whatever reason
+    if (realm) {
+      // Don't set it to empty for whatever reason
       process.env.SPLUNK_REALM = realm;
     }
   }
