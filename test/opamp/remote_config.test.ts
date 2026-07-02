@@ -155,8 +155,35 @@ describe('OpAMP remote config', () => {
       assert.deepStrictEqual(applied, {
         cpuProfiler: { enabled: true, samplingInterval: 250 },
         memoryProfiler: { enabled: false },
-        callgraphs: { enabled: false },
+        callgraphs: { enabled: false, samplingInterval: undefined },
       });
+    });
+
+    it('parses a callgraphs sampling interval', async () => {
+      let applied: RemoteProfilingConfig | undefined;
+      const client = new OpAMPClient(
+        createOptions({
+          applyRemoteConfig: async (cfg) => {
+            applied = cfg;
+          },
+        }),
+        createMockTransport()
+      );
+
+      const body = [
+        'distribution:',
+        '  splunk:',
+        '    profiling:',
+        '      callgraphs:',
+        '        sampling_interval: 5',
+      ].join('\n');
+
+      client.processServerResponse(remoteConfigResponse({ body }));
+      await waitForApply();
+
+      assert(applied);
+      assert.strictEqual(applied.callgraphs.enabled, true);
+      assert.strictEqual(applied.callgraphs.samplingInterval, 5);
     });
 
     it('treats a bare cpu_profiler key as enabled with no interval', async () => {

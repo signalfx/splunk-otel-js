@@ -510,6 +510,42 @@ NAN_METHOD(CreateCpuProfiler) {
   info.GetReturnValue().Set(profiling->handle);
 }
 
+NAN_METHOD(ConfigureCpuProfiler) {
+  ProfilingOptions opts;
+  if (!CreateCpuProfilingOptions(info, &opts)) {
+    // Error was thrown.
+    return;
+  }
+
+  // Like StartProfiling, reuse a previously-created profiler of the same name
+  // instead of allocating a new one. The registry is append-only (stop() only
+  // pauses and leaves the entry in place), so a fresh createCpuProfiler on a
+  // second SDK start/stop/start cycle would collide with the stopped entry and
+  // throw. Reusing lets the snapshot profiler be re-registered any number of
+  // times, and re-applying the options picks up a changed sampling interval
+  // (honored by the next startCpuProfiler, since v8 bakes it in at start).
+  Profiling *profiling = GetProfilingByName(opts.name, opts.name_length);
+
+  if (profiling) {
+    ApplyProfilingOptions(profiling, &opts);
+    // Only reset accumulated state when the profiler is not mid-run: a running
+    // profiler's activation stack/arena are in use, and callers reconfigure the
+    // interval while stopped anyway.
+    if (!profiling->running) {
+      ProfilingReset(profiling);
+    }
+  } else {
+    profiling = SetupProfiling(&opts, info.GetIsolate());
+  }
+
+  if (!profiling) {
+    Nan::ThrowError("ConfigureCpuProfiler: unable to allocate profiler.");
+    return;
+  }
+
+  info.GetReturnValue().Set(profiling->handle);
+}
+
 NAN_METHOD(StartCpuProfiler) {
   auto handle = Nan::To<int32_t>(info[0]).ToChecked();
 
@@ -1109,6 +1145,10 @@ void Initialize(v8::Local<v8::Object> target) {
   auto profilingModule = Nan::New<v8::Object>();
   Nan::Set(profilingModule, Nan::New("createCpuProfiler").ToLocalChecked(),
            Nan::GetFunction(Nan::New<v8::FunctionTemplate>(CreateCpuProfiler))
+               .ToLocalChecked());
+
+  Nan::Set(profilingModule, Nan::New("configureCpuProfiler").ToLocalChecked(),
+           Nan::GetFunction(Nan::New<v8::FunctionTemplate>(ConfigureCpuProfiler))
                .ToLocalChecked());
 
   Nan::Set(profilingModule, Nan::New("startCpuProfiler").ToLocalChecked(),

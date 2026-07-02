@@ -44,6 +44,10 @@ export class ProfilingController {
   // Last applied callgraphs state, so apply() logs only on an actual toggle.
   // Matches the pre-registered snapshot profiler, which starts inactive.
   private _callgraphsActive = false;
+  // Last callgraphs sampling interval applied via remote config, so apply()
+  // reconfigures/logs only on an actual change. Undefined until a config sets
+  // one (the snapshot profiler keeps its startup default in the meantime).
+  private _callgraphsSamplingInterval: number | undefined;
 
   constructor(baseOptions: ProfilingOptions) {
     this._baseOptions = baseOptions;
@@ -214,7 +218,15 @@ export class ProfilingController {
 
   private _applyCallgraphs(config: RemoteProfilingConfig): void {
     const requested = config.callgraphs.enabled;
-    const effective = setSnapshotProfilingActive(requested);
+    // A non-positive interval is invalid; pass undefined so the snapshot
+    // profiler keeps its current interval rather than reconfiguring to 0.
+    const requestedInterval = config.callgraphs.samplingInterval;
+    const samplingInterval =
+      typeof requestedInterval === 'number' && requestedInterval > 0
+        ? requestedInterval
+        : undefined;
+
+    const effective = setSnapshotProfilingActive(requested, samplingInterval);
 
     // setSnapshotProfilingActive returns the state it could actually reach: it
     // is false when enabling but no snapshot profiler is registered or the
@@ -227,10 +239,25 @@ export class ProfilingController {
       );
     }
 
+    const intervalChanged =
+      effective &&
+      samplingInterval !== undefined &&
+      samplingInterval !== this._callgraphsSamplingInterval;
+    if (intervalChanged) {
+      this._callgraphsSamplingInterval = samplingInterval;
+    }
+
     if (effective !== this._callgraphsActive) {
       this._callgraphsActive = effective;
       diag.info(
-        `opamp: remote config ${effective ? 'enabled' : 'disabled'} callgraphs (snapshot profiling)`
+        `opamp: remote config ${effective ? 'enabled' : 'disabled'} callgraphs (snapshot profiling)` +
+          (effective && samplingInterval !== undefined
+            ? ` (sampling interval ${samplingInterval}ms)`
+            : '')
+      );
+    } else if (intervalChanged) {
+      diag.info(
+        `opamp: remote config reconfigured callgraphs sampling interval to ${samplingInterval}ms`
       );
     }
   }

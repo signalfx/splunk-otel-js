@@ -54,6 +54,7 @@ function remoteConfig(
     samplingInterval?: number;
     memory: boolean;
     callgraphs: boolean;
+    callgraphsInterval?: number;
   }> = {}
 ): RemoteProfilingConfig {
   return {
@@ -62,13 +63,23 @@ function remoteConfig(
       samplingInterval: overrides.samplingInterval,
     },
     memoryProfiler: { enabled: overrides.memory ?? false },
-    callgraphs: { enabled: overrides.callgraphs ?? false },
+    callgraphs: {
+      enabled: overrides.callgraphs ?? false,
+      samplingInterval: overrides.callgraphsInterval,
+    },
   };
+}
+
+// Records each setSnapshotProfilingActive call so tests can assert both the
+// active toggle and any sampling interval the controller forwarded.
+interface ActiveCall {
+  active: boolean;
+  samplingIntervalMs: number | undefined;
 }
 
 describe('ProfilingController', () => {
   let startCalls: StartCall[];
-  let activeCalls: boolean[];
+  let activeCalls: ActiveCall[];
 
   beforeEach(() => {
     resetEffectiveState();
@@ -89,10 +100,14 @@ describe('ProfilingController', () => {
       }
     );
 
-    mock.method(snapshots, 'setSnapshotProfilingActive', (active: boolean) => {
-      activeCalls.push(active);
-      return active;
-    });
+    mock.method(
+      snapshots,
+      'setSnapshotProfilingActive',
+      (active: boolean, samplingIntervalMs?: number) => {
+        activeCalls.push({ active, samplingIntervalMs });
+        return active;
+      }
+    );
   });
 
   afterEach(() => {
@@ -250,7 +265,10 @@ describe('ProfilingController', () => {
       await controller.apply(remoteConfig({ callgraphs: true }));
       await controller.apply(remoteConfig({ callgraphs: false }));
 
-      assert.deepStrictEqual(activeCalls, [true, false]);
+      assert.deepStrictEqual(
+        activeCalls.map((c) => c.active),
+        [true, false]
+      );
     });
 
     it('fails when callgraphs is requested but cannot be activated', async () => {
@@ -260,8 +278,8 @@ describe('ProfilingController', () => {
       mock.method(
         snapshots,
         'setSnapshotProfilingActive',
-        (active: boolean) => {
-          activeCalls.push(active);
+        (active: boolean, samplingIntervalMs?: number) => {
+          activeCalls.push({ active, samplingIntervalMs });
           return false;
         }
       );
@@ -291,7 +309,55 @@ describe('ProfilingController', () => {
       );
 
       // callgraphs was still activated despite the cpu/memory failure.
-      assert.deepStrictEqual(activeCalls, [true]);
+      assert.deepStrictEqual(
+        activeCalls.map((c) => c.active),
+        [true]
+      );
+    });
+
+    it('forwards the sampling interval when enabling callgraphs', async () => {
+      const controller = new ProfilingController(BASE_OPTIONS);
+      controller.startInitial(false);
+
+      await controller.apply(
+        remoteConfig({ callgraphs: true, callgraphsInterval: 5 })
+      );
+
+      assert.deepStrictEqual(activeCalls, [
+        { active: true, samplingIntervalMs: 5 },
+      ]);
+    });
+
+    it('reconfigures the sampling interval while callgraphs stays on', async () => {
+      const controller = new ProfilingController(BASE_OPTIONS);
+      controller.startInitial(false);
+
+      await controller.apply(
+        remoteConfig({ callgraphs: true, callgraphsInterval: 5 })
+      );
+      await controller.apply(
+        remoteConfig({ callgraphs: true, callgraphsInterval: 10 })
+      );
+
+      assert.deepStrictEqual(activeCalls, [
+        { active: true, samplingIntervalMs: 5 },
+        { active: true, samplingIntervalMs: 10 },
+      ]);
+    });
+
+    it('does not forward a non-positive sampling interval', async () => {
+      const controller = new ProfilingController(BASE_OPTIONS);
+      controller.startInitial(false);
+
+      // 0 and negatives are invalid; the snapshot profiler must keep its
+      // current interval rather than being reconfigured to 0.
+      await controller.apply(
+        remoteConfig({ callgraphs: true, callgraphsInterval: 0 })
+      );
+
+      assert.deepStrictEqual(activeCalls, [
+        { active: true, samplingIntervalMs: undefined },
+      ]);
     });
   });
 

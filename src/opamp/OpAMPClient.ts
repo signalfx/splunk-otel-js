@@ -447,6 +447,7 @@ export class OpAMPClient {
     // means the feature is on; an absent (undefined) key means off.
     const alwaysOn = profiling.always_on;
     const cpuProfiler = alwaysOn?.cpu_profiler;
+    const callgraphs = profiling.callgraphs;
 
     return {
       cpuProfiler: {
@@ -462,7 +463,11 @@ export class OpAMPClient {
         enabled: alwaysOn?.memory_profiler !== undefined,
       },
       callgraphs: {
-        enabled: profiling.callgraphs !== undefined,
+        enabled: callgraphs !== undefined,
+        samplingInterval:
+          typeof callgraphs?.sampling_interval === 'number'
+            ? callgraphs.sampling_interval
+            : undefined,
       },
     };
   }

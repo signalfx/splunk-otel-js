@@ -248,6 +248,7 @@ export function loadExtension(): ProfilingExtension | undefined {
 export function noopExtension(): ProfilingExtension {
   return {
     createCpuProfiler: (_options: NativeProfilingOptions) => -1,
+    configureCpuProfiler: (_options: NativeProfilingOptions) => -1,
     startCpuProfiler: (_handle: number) => false,
     addTraceIdFilter: (_handle: number, _traceId: string) => {},
     removeTraceIdFilter: (_handle: number, _traceId: string) => {},

@@ -39,6 +39,22 @@ type SnapshotProfilingOptions = Required<StartSnapshotProfilingOptions>;
 // After the last snapshot has ended, keep the profiler running to avoid cold starts.
 const LINGER_PERIOD_MS = 60_000;
 
+// Fixed native profiler name for the snapshot profiler. The native registry is
+// keyed by name and append-only, so this must stay stable across an SDK
+// stop/start cycle (see configureCpuProfiler, which reuses it).
+const SNAPSHOT_PROFILER_NAME = 'splunk-snapshot-profiler';
+
+function nativeSnapshotOptions(samplingIntervalMs: number) {
+  const samplingIntervalMicroseconds = samplingIntervalMs * 1_000;
+  return {
+    name: SNAPSHOT_PROFILER_NAME,
+    samplingIntervalMicroseconds,
+    maxSampleCutoffDelayMicroseconds: samplingIntervalMicroseconds / 2,
+    recordDebugInfo: false,
+    onlyFilteredStacktraces: true,
+  };
+}
+
 export class SnapshotProfiler {
   processor: SnapshotSpanProcessor;
   extension: ProfilingExtension = loadExtension() || noopExtension();
@@ -54,6 +70,12 @@ export class SnapshotProfiler {
   collectionLoop: NodeJS.Timeout;
   stopTimeout: NodeJS.Timeout | undefined;
   exporter: OtlpHttpProfilingExporter | undefined;
+  // Current sampling interval (ms). Tracked so a remote-config change can
+  // reconfigure the native profiler and the exporter's reported sampling
+  // period without recreating the (immutable) span processor.
+  private _samplingIntervalMs: number;
+  private _endpoint: string;
+  private _resource: Resource;
   // Stored so stop() can detach it; otherwise each start()/stop() cycle leaks a
   // listener that calls extension.stop on an already-stopped handle.
   private _onExit: () => void;
@@ -62,6 +84,9 @@ export class SnapshotProfiler {
     ensureProfilingContextManager();
 
     this.active = options.active;
+    this._samplingIntervalMs = options.samplingIntervalMs;
+    this._endpoint = options.endpoint;
+    this._resource = options.resource;
 
     this.processor = new SnapshotSpanProcessor({
       traceSnapshotBegin: (traceId) => {
@@ -93,16 +118,13 @@ export class SnapshotProfiler {
       },
     });
 
-    const samplingIntervalMicroseconds = options.samplingIntervalMs * 1_000;
-
+    // configureCpuProfiler (not createCpuProfiler) so a second SDK start/stop/
+    // start cycle reuses the same-named native profiler the registry still
+    // holds instead of throwing "profiler already exists".
     this.profilerHandle =
-      this.extension.createCpuProfiler({
-        name: 'splunk-snapshot-profiler',
-        samplingIntervalMicroseconds,
-        maxSampleCutoffDelayMicroseconds: samplingIntervalMicroseconds / 2,
-        recordDebugInfo: false,
-        onlyFilteredStacktraces: true,
-      }) ?? -1;
+      this.extension.configureCpuProfiler(
+        nativeSnapshotOptions(options.samplingIntervalMs)
+      ) ?? -1;
 
     this.collectionLoop = setInterval(async () => {
       if (!this.active) {
@@ -123,9 +145,9 @@ export class SnapshotProfiler {
     // has finished, load it next event loop.
     setImmediate(() => {
       this.exporter = new OtlpHttpProfilingExporter({
-        endpoint: options.endpoint,
-        callstackInterval: options.samplingIntervalMs,
-        resource: options.resource,
+        endpoint: this._endpoint,
+        callstackInterval: this._samplingIntervalMs,
+        resource: this._resource,
         instrumentationSource: 'snapshot',
       });
     });
@@ -191,6 +213,29 @@ export class SnapshotProfiler {
       void this._export(profile);
     }
   }
+
+  // Reconfigures the sampling interval at runtime (remote config) without
+  // recreating the immutable span processor. configureCpuProfiler re-applies
+  // the interval to the same-named native profiler; v8 bakes the interval in at
+  // start, so the change takes effect on the next snapshot the profiler begins
+  // (the native profiler is stopped between snapshots). The exporter's reported
+  // sampling period is updated to match so serialized profiles are consistent.
+  setSamplingInterval(samplingIntervalMs: number) {
+    if (this._samplingIntervalMs === samplingIntervalMs) {
+      return;
+    }
+
+    this._samplingIntervalMs = samplingIntervalMs;
+    this.extension.configureCpuProfiler(
+      nativeSnapshotOptions(samplingIntervalMs)
+    );
+
+    // The exporter is created on setImmediate; when it exists already, update
+    // its sampling period, otherwise it reads the updated field on creation.
+    if (this.exporter) {
+      this.exporter._callstackInterval = samplingIntervalMs;
+    }
+  }
 }
 
 let profiler: SnapshotProfiler | undefined;
@@ -230,12 +275,24 @@ export function startSnapshotProfiling(options: StartSnapshotProfilingOptions) {
   });
 }
 
-// Toggles the pre-registered snapshot profiler at runtime (remote config).
-// Returns whether the profiler is actually active afterwards: false when no
-// profiler was registered or the native extension is unavailable.
-export function setSnapshotProfilingActive(active: boolean): boolean {
+// Toggles the pre-registered snapshot profiler at runtime (remote config), and
+// optionally reconfigures its sampling interval. Returns whether the profiler
+// is actually active afterwards: false when no profiler was registered or the
+// native extension is unavailable.
+export function setSnapshotProfilingActive(
+  active: boolean,
+  samplingIntervalMs?: number
+): boolean {
   if (!profiler) {
     return false;
+  }
+
+  // Apply an interval change before toggling active: the native interval is
+  // baked in at the next start, so reconfiguring while the profiler is (about
+  // to be) stopped ensures the next snapshot uses it.
+  if (typeof samplingIntervalMs === 'number' && samplingIntervalMs > 0) {
+    profiler.setSamplingInterval(samplingIntervalMs);
+    recordEffectiveState({ snapshotSamplingInterval: samplingIntervalMs });
   }
 
   // Resolve the reachable state before toggling: activating without a valid

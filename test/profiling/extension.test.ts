@@ -111,6 +111,42 @@ describe('profiling native extension', () => {
     extension.stop(handle);
   });
 
+  it('configureCpuProfiler reuses a same-named profiler instead of throwing', () => {
+    // Regression for the snapshot profiler: createCpuProfiler rejects a
+    // duplicate name, so an SDK stop/start cycle (which re-registers the fixed
+    // 'splunk-snapshot-profiler' name) used to throw on the second start.
+    // configureCpuProfiler reuses the stopped entry and returns the same handle.
+    const name = 'configure-reuse-test';
+    const handle = extension.configureCpuProfiler({
+      name,
+      samplingIntervalMicroseconds: 10_000,
+    });
+    assert.ok(handle >= 0);
+
+    // Reconfigure with a different interval: must not throw and reuses the
+    // same handle rather than allocating a new profiler.
+    const handle2 = extension.configureCpuProfiler({
+      name,
+      samplingIntervalMicroseconds: 1_000,
+    });
+    assert.strictEqual(handle2, handle);
+  });
+
+  it('configureCpuProfiler reuses a profiler originally created by createCpuProfiler', () => {
+    const name = 'configure-after-create-test';
+    const handle = extension.createCpuProfiler({
+      name,
+      samplingIntervalMicroseconds: 10_000,
+    });
+    assert.ok(handle >= 0);
+
+    const handle2 = extension.configureCpuProfiler({
+      name,
+      samplingIntervalMicroseconds: 5_000,
+    });
+    assert.strictEqual(handle2, handle);
+  });
+
   it('createCpuProfiler still rejects a duplicate name', () => {
     const name = 'create-dup-test';
     const handle = extension.createCpuProfiler({

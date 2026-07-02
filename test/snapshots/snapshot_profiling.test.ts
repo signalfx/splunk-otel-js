@@ -184,8 +184,9 @@ describe('snapshot profiler setActive', () => {
     const removed: string[] = [];
     const extension: ProfilingExtension = {
       ...noopExtension(),
-      // Hand out a valid handle so begin records snapshots against it.
-      createCpuProfiler: () => 1,
+      // Hand out a valid handle so begin records snapshots against it. The
+      // constructor registers via configureCpuProfiler (reuse-by-name).
+      configureCpuProfiler: () => 1,
       removeTraceIdFilter: (_handle: number, traceId: string) => {
         removed.push(traceId);
       },
@@ -221,5 +222,48 @@ describe('snapshot profiler setActive', () => {
     // Each in-flight trace id is unfiltered exactly once (deduped across spans).
     assert.deepStrictEqual(removed.sort(), [traceB, traceA].sort());
     assert.strictEqual(profiler.activeSnapshots, 0);
+  });
+
+  it('reconfigures the native profiler and exporter on a sampling interval change', async () => {
+    // Remote config can change the callgraphs sampling interval at runtime. The
+    // span processor is immutable, so the interval is re-applied in place via
+    // configureCpuProfiler and the exporter's reported period is updated to
+    // match; a no-op change must not touch either.
+    const configured: number[] = [];
+    const extension: ProfilingExtension = {
+      ...noopExtension(),
+      configureCpuProfiler: (options) => {
+        configured.push(options.samplingIntervalMicroseconds);
+        return 1;
+      },
+    };
+    mock.method(profilingIndex, 'loadExtension', () => extension);
+
+    const profiler = new SnapshotProfiler({
+      serviceName: 'test',
+      endpoint: 'http://localhost:4318',
+      resource: emptyResource(),
+      samplingIntervalMs: 1,
+      collectionIntervalMs: 30_000,
+      active: true,
+    });
+
+    // Constructor registers once at the initial 1ms interval.
+    assert.deepStrictEqual(configured, [1_000]);
+
+    // Let the exporter be created (setImmediate in the constructor).
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    assert.ok(profiler.exporter);
+    assert.strictEqual(profiler.exporter._callstackInterval, 1);
+
+    profiler.setSamplingInterval(5);
+    assert.deepStrictEqual(configured, [1_000, 5_000]);
+    assert.strictEqual(profiler.exporter._callstackInterval, 5);
+
+    // A no-op change (same interval) neither reconfigures nor re-touches state.
+    profiler.setSamplingInterval(5);
+    assert.deepStrictEqual(configured, [1_000, 5_000]);
+
+    await profiler.stop();
   });
 });

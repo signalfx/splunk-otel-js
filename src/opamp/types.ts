@@ -47,6 +47,8 @@ export interface RemoteProfilingConfig {
   // Snapshot profiling (callgraphs).
   callgraphs: {
     enabled: boolean;
+    // Sampling interval in milliseconds, when the server specified one.
+    samplingInterval?: number;
   };
 }
 
