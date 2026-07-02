@@ -36,7 +36,7 @@ import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-ho
 import type { StartTracingOptions, TracingOptions } from './types';
 import { isProfilingContextManagerSet } from '../profiling';
 import {
-  isSnapshotProfilingEnabled,
+  isSnapshotProfilingActive,
   snapshotSpanProcessor,
 } from './snapshots/Snapshots';
 import { SnapshotPropagator } from './snapshots';
@@ -93,7 +93,10 @@ export function startTracing(options: TracingOptions): boolean {
 
   let propagator = options.propagatorFactory(options);
 
-  if (isSnapshotProfilingEnabled()) {
+  // Install the snapshot propagator whenever a snapshot profiler is registered,
+  // even an inactive one pre-registered for remote config: trace selection must
+  // happen at span creation so callgraphs can be toggled on later.
+  if (snapshotSpanProcessor() !== undefined) {
     propagator = new CompositePropagator({
       propagators: [
         propagator,
@@ -104,7 +107,11 @@ export function startTracing(options: TracingOptions): boolean {
               'SPLUNK_SNAPSHOT_SELECTION_RATE',
             ],
             0.01
-          )
+          ),
+          // Only originate/observe snapshot-volume baggage while the profiler is
+          // actually collecting, not merely registered (it may be pre-registered
+          // inactive for remote config and never enabled).
+          isSnapshotProfilingActive
         ),
       ],
     });
@@ -131,11 +138,9 @@ export function startTracing(options: TracingOptions): boolean {
     spanProcessors = [spanProcessors];
   }
 
-  if (isSnapshotProfilingEnabled()) {
-    const processor = snapshotSpanProcessor();
-    if (processor !== undefined) {
-      spanProcessors.push(processor);
-    }
+  const processor = snapshotSpanProcessor();
+  if (processor !== undefined) {
+    spanProcessors.push(processor);
   }
 
   const tracerConfig: NodeTracerConfig = {

@@ -27,6 +27,31 @@ export interface EffectiveConfig {
   content: string;
 }
 
+// Normalized runtime profiling configuration parsed out of a remote config
+// document. The OpAMP client builds this from the `splunk.remote.config` file
+// and hands it to the `applyRemoteConfig` callback; the client itself imports
+// nothing from `profiling/`. Per the GDI datamodel, presence of a feature key
+// means "on" and its absence means "off", so each feature is a discrete flag
+// rather than an optional value.
+export interface RemoteProfilingConfig {
+  // Always-on CPU profiler.
+  cpuProfiler: {
+    enabled: boolean;
+    // Sampling interval in milliseconds, when the server specified one.
+    samplingInterval?: number;
+  };
+  // Always-on memory profiler.
+  memoryProfiler: {
+    enabled: boolean;
+  };
+  // Snapshot profiling (callgraphs).
+  callgraphs: {
+    enabled: boolean;
+    // Sampling interval in milliseconds, when the server specified one.
+    samplingInterval?: number;
+  };
+}
+
 export interface OpAMPOptions {
   endpoint: string;
   serviceName: string;
@@ -34,10 +59,17 @@ export interface OpAMPOptions {
   pollingIntervalMs: number;
   accessToken?: string;
   getEffectiveConfig: () => EffectiveConfig;
+  // When provided, the client advertises remote-config capabilities and routes
+  // received `splunk.remote.config` documents here. Absent ⇒ remote config is
+  // not opted in and the client ignores any server-pushed config.
+  applyRemoteConfig?: (config: RemoteProfilingConfig) => Promise<void>;
 }
 
 export type StartOpAMPOptions = Partial<
-  Omit<OpAMPOptions, 'resource' | 'serviceName' | 'getEffectiveConfig'>
+  Omit<
+    OpAMPOptions,
+    'resource' | 'serviceName' | 'getEffectiveConfig' | 'applyRemoteConfig'
+  >
 > & {
   serviceName?: string;
   resourceFactory?: ResourceFactory;

@@ -21,7 +21,8 @@ import {
   toDiagLogLevel,
 } from './utils';
 import { startMetrics, StartMetricsOptions } from './metrics';
-import { startProfiling, StartProfilingOptions } from './profiling';
+import { StartProfilingOptions } from './profiling';
+import { ProfilingController } from './profiling/ProfilingController';
 import type { EnvVarKey, LogLevel } from './types';
 import {
   getLoadedInstrumentations,
@@ -52,6 +53,7 @@ import { getDetectedResource } from './resource';
 import {
   isSnapshotProfilingEnabled,
   startSnapshotProfiling,
+  stopSnapshotProfiling,
 } from './tracing/snapshots/Snapshots';
 import { getNonEmptyEnvVar } from './utils';
 import {
@@ -80,7 +82,7 @@ export interface Options {
 
 interface RunningState {
   metrics: ReturnType<typeof startMetrics> | null;
-  profiling: ReturnType<typeof startProfiling> | null;
+  profilingController: ProfilingController | null;
   tracing: ReturnType<typeof startTracing> | null;
   logging: ReturnType<typeof startLogging> | null;
   opamp: OpAMPHandle | null;
@@ -89,7 +91,7 @@ interface RunningState {
 
 const running: RunningState = {
   metrics: null,
-  profiling: null,
+  profilingController: null,
   tracing: null,
   logging: null,
   opamp: null,
@@ -108,7 +110,7 @@ export const start = (options: Partial<Options> = {}) => {
   if (
     running.logging ||
     running.metrics ||
-    running.profiling ||
+    running.profilingController ||
     running.tracing
   ) {
     throw new Error('Splunk APM already started');
@@ -157,27 +159,60 @@ export const start = (options: Partial<Options> = {}) => {
     secureappOptions,
   } = parseOptionsAndConfigureInstrumentations(options);
 
-  let metricsEnabledByDefault = false;
-  if (isFeatureEnabled(options.profiling, 'SPLUNK_PROFILER_ENABLED', false)) {
-    running.profiling = startProfiling(profilingOptions);
-    if (profilingOptions.memoryProfilingEnabled) {
-      metricsEnabledByDefault = true;
-    }
-  } else {
-    // Profiling was disabled (e.g. start({ profiling: false })), so neither the
-    // CPU nor memory profiler runs. Record this so OpAMP does not report a
-    // stale SPLUNK_PROFILER_ENABLED=true from the environment.
-    recordEffectiveState({
-      profilerEnabled: false,
-      memoryProfilerEnabled: false,
-    });
-  }
+  // Remote configuration requires OpAMP (the transport) and its own opt-in
+  // flag. When enabled, server-pushed config can start/stop profiling at
+  // runtime via the ProfilingController's apply() callback.
+  const opampEnabled = Boolean(
+    isFeatureEnabled(options.opamp, 'SPLUNK_OPAMP_ENABLED', false)
+  );
+  const remoteConfigEnabled =
+    opampEnabled && getConfigBoolean('SPLUNK_OPAMP_REMOTE_CONFIG', false);
+
+  const profilerEnabled = Boolean(
+    isFeatureEnabled(options.profiling, 'SPLUNK_PROFILER_ENABLED', false)
+  );
+
+  // The ProfilingController always owns the always-on profiler lifecycle.
+  // startInitial() starts it per the local config (or records the disabled
+  // effective state when off), and when remote config is enabled a later
+  // server push can stop/restart it through apply(). Without remote config the
+  // controller simply never receives an apply() — same start path, one teardown.
+  const controller = new ProfilingController(profilingOptions);
+  controller.startInitial(profilerEnabled);
+  running.profilingController = controller;
+
+  // The memory profiler reports through the metrics pipeline, whose
+  // MeterProvider is built once here at startup. When remote config is enabled
+  // it can turn the memory profiler on at any time, so default the pipeline on
+  // now — otherwise a later remote enable would have nowhere to report. When
+  // remote config is off, only default it on when the memory profiler actually
+  // started. An explicit SPLUNK_METRICS_ENABLED still wins over this default.
+  const metricsEnabledByDefault =
+    remoteConfigEnabled ||
+    (profilerEnabled && profilingOptions.memoryProfilingEnabled);
 
   if (isSnapshotProfilingEnabled()) {
     startSnapshotProfiling({
       endpoint: profilingOptions.endpoint,
       serviceName: profilingOptions.serviceName,
       resource: profilingOptions.resource,
+    });
+  } else if (remoteConfigEnabled) {
+    // Pre-register an inactive snapshot profiler so callgraphs can be toggled
+    // on at runtime — tracer-provider span processors are immutable once built,
+    // so the processor must be registered before tracing starts.
+    //
+    // This also installs the profiling context manager (the SnapshotProfiler
+    // constructor calls ensureProfilingContextManager) before startTracing runs
+    // below. That is what lets a *later* remote-config CPU enable produce
+    // trace-correlated profiles: by the time tracing claims the global context
+    // manager it sees the profiling one already set and defers, so the runtime
+    // startProfiling never hits the "tracing owns the context manager" path.
+    startSnapshotProfiling({
+      endpoint: profilingOptions.endpoint,
+      serviceName: profilingOptions.serviceName,
+      resource: profilingOptions.resource,
+      active: false,
     });
   } else {
     recordEffectiveState({ snapshotProfilerEnabled: false });
@@ -225,6 +260,16 @@ export const start = (options: Partial<Options> = {}) => {
   recordEffectiveState({ metricsEnabled });
   if (metricsEnabled) {
     running.metrics = startMetrics(metricsOptions);
+  } else if (remoteConfigEnabled) {
+    // The memory profiler reports through the metrics pipeline. With metrics
+    // explicitly off, a later remote enable of memory_profiler would report
+    // APPLIED yet emit nothing, since there is no MeterProvider to report
+    // through. Warn so the silent no-op is diagnosable.
+    diag.warn(
+      'Remote configuration is enabled but metrics are disabled; ' +
+        'a remotely-enabled memory profiler will not emit any data. ' +
+        'Enable metrics (SPLUNK_METRICS_ENABLED=true) to allow it to report.'
+    );
   }
 
   const meterProvider = getConfigBoolean(
@@ -240,7 +285,10 @@ export const start = (options: Partial<Options> = {}) => {
   // Start OpAMP last so that, by the time it builds its first effective-config
   // report, every component has recorded the configuration it actually started
   // with (endpoints, profiler state, etc.) into the effective-state holder.
-  if (isFeatureEnabled(options.opamp, 'SPLUNK_OPAMP_ENABLED', false)) {
+  if (opampEnabled) {
+    if (remoteConfigEnabled) {
+      opampOptions.applyRemoteConfig = (cfg) => controller.apply(cfg);
+    }
     running.opamp = startOpAMP(opampOptions);
   }
 };
@@ -282,9 +330,16 @@ export const stop = async () => {
     running.tracing = null;
   }
 
-  if (running.profiling) {
-    promises.push(promises.push(running.profiling!.stop()));
-    running.profiling = null;
+  // The snapshot profiler is owned by a module-level singleton, not `running`.
+  // It may have been registered for snapshot profiling or pre-registered
+  // (inactive) for remote config; stopping is a no-op when neither applies.
+  // Detaches its exit listener and clears its collection loop so start()/stop()
+  // cycles do not leak.
+  promises.push(stopSnapshotProfiling());
+
+  if (running.profilingController) {
+    promises.push(running.profilingController.stopAll());
+    running.profilingController = null;
   }
 
   if (running.secureapp) {
