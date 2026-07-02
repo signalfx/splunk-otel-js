@@ -224,11 +224,54 @@ describe('snapshot profiler setActive', () => {
     assert.strictEqual(profiler.activeSnapshots, 0);
   });
 
-  it('reconfigures the native profiler and exporter on a sampling interval change', async () => {
+  it('removes the native trace-id filters for in-flight traces on stop', async () => {
+    // stop() reuses the same native profiler across SDK start/stop cycles, and
+    // native stop()/reset does not clear the filter table. In-flight traces
+    // must have their trace-id filters removed on stop, or they leak into the
+    // next start (mirrors the setActive(false) path).
+    const removed: string[] = [];
+    const extension: ProfilingExtension = {
+      ...noopExtension(),
+      configureCpuProfiler: () => 1,
+      removeTraceIdFilter: (_handle: number, traceId: string) => {
+        removed.push(traceId);
+      },
+    };
+    mock.method(profilingIndex, 'loadExtension', () => extension);
+
+    const profiler = new SnapshotProfiler({
+      serviceName: 'test',
+      endpoint: 'http://localhost:4318',
+      resource: emptyResource(),
+      samplingIntervalMs: 1,
+      collectionIntervalMs: 30_000,
+      active: true,
+    });
+
+    const tracer = trace.getTracer('test');
+    const traceA = 'aaaabbbbccccddddeeeeffff11112222';
+    const traceB = 'bbbbccccddddeeeeffff111122223333';
+    for (const [traceId, spanId] of [
+      [traceA, 'aaaabbbbcccc0001'],
+      [traceB, 'aaaabbbbcccc0002'],
+    ] as const) {
+      const ctx = highestVolumeContext(traceId, spanId);
+      const span = tracer.startSpan('child', undefined, ctx) as SdkSpan;
+      profiler.processor.onStart(span, ctx);
+    }
+
+    await profiler.stop();
+
+    assert.deepStrictEqual(removed.sort(), [traceB, traceA].sort());
+  });
+
+  it('reconfigures the native profiler on a sampling interval change but defers the exporter period', async () => {
     // Remote config can change the callgraphs sampling interval at runtime. The
     // span processor is immutable, so the interval is re-applied in place via
-    // configureCpuProfiler and the exporter's reported period is updated to
-    // match; a no-op change must not touch either.
+    // configureCpuProfiler. The exporter's reported period must NOT change until
+    // the next fresh native start, so a mid-collection profile is never
+    // serialized with a period its samples did not use. A no-op change must not
+    // reconfigure at all.
     const configured: number[] = [];
     const extension: ProfilingExtension = {
       ...noopExtension(),
@@ -257,12 +300,25 @@ describe('snapshot profiler setActive', () => {
     assert.strictEqual(profiler.exporter._callstackInterval, 1);
 
     profiler.setSamplingInterval(5);
+    // Native profiler reconfigured immediately...
     assert.deepStrictEqual(configured, [1_000, 5_000]);
-    assert.strictEqual(profiler.exporter._callstackInterval, 5);
+    // ...but the exporter period stays at the old value until a fresh start.
+    assert.strictEqual(profiler.exporter._callstackInterval, 1);
 
-    // A no-op change (same interval) neither reconfigures nor re-touches state.
+    // A no-op change (same interval) does not reconfigure.
     profiler.setSamplingInterval(5);
     assert.deepStrictEqual(configured, [1_000, 5_000]);
+
+    // Beginning a snapshot from a fully-stopped profiler is a fresh native
+    // start: the exporter period is synced to the pending interval here.
+    const ctx = highestVolumeContext(
+      'aaaabbbbccccddddeeeeffff11112222',
+      'aaaabbbbcccc0001'
+    );
+    const tracer = trace.getTracer('test');
+    const span = tracer.startSpan('child', undefined, ctx) as SdkSpan;
+    profiler.processor.onStart(span, ctx);
+    assert.strictEqual(profiler.exporter._callstackInterval, 5);
 
     await profiler.stop();
   });

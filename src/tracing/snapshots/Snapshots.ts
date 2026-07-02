@@ -93,6 +93,16 @@ export class SnapshotProfiler {
         if (!this.active) {
           return false;
         }
+        // A fresh native start (profiler fully stopped: no active snapshots and
+        // not in the linger window) begins a new session that adopts the
+        // current sampling interval. Sync the exporter's reported period here,
+        // so a pending interval change is reflected only once the collected
+        // samples actually use it — never on an in-flight/lingering profile.
+        if (this.activeSnapshots === 0 && this.stopTimeout === undefined) {
+          if (this.exporter) {
+            this.exporter._callstackInterval = this._samplingIntervalMs;
+          }
+        }
         this.extension.addTraceIdFilter(this.profilerHandle, traceId);
         this.extension.startCpuProfiler(this.profilerHandle);
         this.activeSnapshots += 1;
@@ -171,7 +181,14 @@ export class SnapshotProfiler {
     clearTimeout(this.stopTimeout);
     clearInterval(this.collectionLoop);
     process.removeListener('exit', this._onExit);
-    this.processor.clearActiveSnapshots();
+    // Remove the native trace-id filters of any in-flight traces. The native
+    // profiler is reused across SDK start/stop cycles (configureCpuProfiler)
+    // and native stop() does not clear the filter table, so leaving these
+    // behind would leak stale trace ids into the next start (mirrors the
+    // setActive(false) path).
+    for (const traceId of this.processor.clearActiveSnapshots()) {
+      this.extension.removeTraceIdFilter(this.profilerHandle, traceId);
+    }
 
     const profile = this.extension.stop(this.profilerHandle);
 
@@ -218,8 +235,13 @@ export class SnapshotProfiler {
   // recreating the immutable span processor. configureCpuProfiler re-applies
   // the interval to the same-named native profiler; v8 bakes the interval in at
   // start, so the change takes effect on the next snapshot the profiler begins
-  // (the native profiler is stopped between snapshots). The exporter's reported
-  // sampling period is updated to match so serialized profiles are consistent.
+  // (the native profiler is stopped between snapshots).
+  //
+  // The exporter's reported sampling period is deliberately NOT updated here: a
+  // snapshot may be mid-collection or in its linger window, still sampling at
+  // the old interval. Updating now would serialize old-interval samples with
+  // the new period. traceSnapshotBegin syncs the exporter on the next fresh
+  // native start instead, when the collected samples actually use the new rate.
   setSamplingInterval(samplingIntervalMs: number) {
     if (this._samplingIntervalMs === samplingIntervalMs) {
       return;
@@ -229,12 +251,6 @@ export class SnapshotProfiler {
     this.extension.configureCpuProfiler(
       nativeSnapshotOptions(samplingIntervalMs)
     );
-
-    // The exporter is created on setImmediate; when it exists already, update
-    // its sampling period, otherwise it reads the updated field on creation.
-    if (this.exporter) {
-      this.exporter._callstackInterval = samplingIntervalMs;
-    }
   }
 }
 
