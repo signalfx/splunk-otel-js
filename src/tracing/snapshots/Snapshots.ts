@@ -41,7 +41,7 @@ const LINGER_PERIOD_MS = 60_000;
 
 // Fixed native profiler name for the snapshot profiler. The native registry is
 // keyed by name and append-only, so this must stay stable across an SDK
-// stop/start cycle (see configureCpuProfiler, which reuses it).
+// stop/start cycle (see getOrCreateCpuProfiler, which reuses it).
 const SNAPSHOT_PROFILER_NAME = 'splunk-snapshot-profiler';
 
 function nativeSnapshotOptions(samplingIntervalMs: number) {
@@ -128,11 +128,11 @@ export class SnapshotProfiler {
       },
     });
 
-    // configureCpuProfiler (not createCpuProfiler) so a second SDK start/stop/
+    // getOrCreateCpuProfiler (not a strict create) so a second SDK start/stop/
     // start cycle reuses the same-named native profiler the registry still
-    // holds instead of throwing "profiler already exists".
+    // holds instead of allocating a duplicate.
     this.profilerHandle =
-      this.extension.configureCpuProfiler(
+      this.extension.getOrCreateCpuProfiler(
         nativeSnapshotOptions(options.samplingIntervalMs)
       ) ?? -1;
 
@@ -182,7 +182,7 @@ export class SnapshotProfiler {
     clearInterval(this.collectionLoop);
     process.removeListener('exit', this._onExit);
     // Remove the native trace-id filters of any in-flight traces. The native
-    // profiler is reused across SDK start/stop cycles (configureCpuProfiler)
+    // profiler is reused across SDK start/stop cycles (getOrCreateCpuProfiler)
     // and native stop() does not clear the filter table, so leaving these
     // behind would leak stale trace ids into the next start (mirrors the
     // setActive(false) path).
@@ -232,7 +232,7 @@ export class SnapshotProfiler {
   }
 
   // Reconfigures the sampling interval at runtime (remote config) without
-  // recreating the immutable span processor. configureCpuProfiler re-applies
+  // recreating the immutable span processor. getOrCreateCpuProfiler re-applies
   // the interval to the same-named native profiler; v8 bakes the interval in at
   // start, so the change takes effect on the next snapshot the profiler begins
   // (the native profiler is stopped between snapshots).
@@ -248,7 +248,7 @@ export class SnapshotProfiler {
     }
 
     this._samplingIntervalMs = samplingIntervalMs;
-    this.extension.configureCpuProfiler(
+    this.extension.getOrCreateCpuProfiler(
       nativeSnapshotOptions(samplingIntervalMs)
     );
   }
@@ -282,7 +282,7 @@ export function startSnapshotProfiling(options: StartSnapshotProfilingOptions) {
   });
 
   // The snapshot profiler can only actually run when the native profiler handle
-  // is valid; a no-op extension (or a failed createCpuProfiler) leaves it at -1,
+  // is valid; a no-op extension (or a failed getOrCreateCpuProfiler) leaves it at -1,
   // in which case nothing is collected. An inactive pre-registered profiler is
   // reported as disabled until toggled on.
   recordEffectiveState({

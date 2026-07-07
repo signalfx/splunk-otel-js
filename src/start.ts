@@ -287,7 +287,8 @@ export const start = (options: Partial<Options> = {}) => {
   // with (endpoints, profiler state, etc.) into the effective-state holder.
   if (opampEnabled) {
     if (remoteConfigEnabled) {
-      opampOptions.applyRemoteConfig = (cfg) => controller.apply(cfg);
+      opampOptions.applyRemoteConfig = (cfg) =>
+        controller.applyRemoteConfiguration(cfg);
     }
     running.opamp = startOpAMP(opampOptions);
   }

@@ -42,7 +42,7 @@ describe('profiling native extension', () => {
   });
 
   it('is possible to create a profiler', () => {
-    const handle = extension.createCpuProfiler({
+    const handle = extension.getOrCreateCpuProfiler({
       name: 'create-test',
       samplingIntervalMicroseconds: 10_000,
     });
@@ -51,7 +51,7 @@ describe('profiling native extension', () => {
   });
 
   it('is possible to call start and stop multiple times', () => {
-    const handle = extension.createCpuProfiler({
+    const handle = extension.getOrCreateCpuProfiler({
       name: 'stop-test',
       samplingIntervalMicroseconds: 10_000,
     });
@@ -111,62 +111,29 @@ describe('profiling native extension', () => {
     extension.stop(handle);
   });
 
-  it('configureCpuProfiler reuses a same-named profiler instead of throwing', () => {
-    // Regression for the snapshot profiler: createCpuProfiler rejects a
-    // duplicate name, so an SDK stop/start cycle (which re-registers the fixed
-    // 'splunk-snapshot-profiler' name) used to throw on the second start.
-    // configureCpuProfiler reuses the stopped entry and returns the same handle.
-    const name = 'configure-reuse-test';
-    const handle = extension.configureCpuProfiler({
+  it('getOrCreateCpuProfiler reuses a same-named profiler instead of allocating a new one', () => {
+    // Regression for the snapshot profiler: an SDK stop/start cycle re-registers
+    // the fixed 'splunk-snapshot-profiler' name. getOrCreateCpuProfiler reuses
+    // the existing entry (re-applying options) and returns the same handle
+    // instead of allocating a duplicate.
+    const name = 'get-or-create-reuse-test';
+    const handle = extension.getOrCreateCpuProfiler({
       name,
       samplingIntervalMicroseconds: 10_000,
     });
     assert.ok(handle >= 0);
 
-    // Reconfigure with a different interval: must not throw and reuses the
-    // same handle rather than allocating a new profiler.
-    const handle2 = extension.configureCpuProfiler({
+    // Reconfigure with a different interval: reuses the same handle rather than
+    // allocating a new profiler.
+    const handle2 = extension.getOrCreateCpuProfiler({
       name,
       samplingIntervalMicroseconds: 1_000,
     });
     assert.strictEqual(handle2, handle);
   });
 
-  it('configureCpuProfiler reuses a profiler originally created by createCpuProfiler', () => {
-    const name = 'configure-after-create-test';
-    const handle = extension.createCpuProfiler({
-      name,
-      samplingIntervalMicroseconds: 10_000,
-    });
-    assert.ok(handle >= 0);
-
-    const handle2 = extension.configureCpuProfiler({
-      name,
-      samplingIntervalMicroseconds: 5_000,
-    });
-    assert.strictEqual(handle2, handle);
-  });
-
-  it('createCpuProfiler still rejects a duplicate name', () => {
-    const name = 'create-dup-test';
-    const handle = extension.createCpuProfiler({
-      name,
-      samplingIntervalMicroseconds: 10_000,
-    });
-    assert.ok(handle >= 0);
-
-    assert.throws(
-      () =>
-        extension.createCpuProfiler({
-          name,
-          samplingIntervalMicroseconds: 10_000,
-        }),
-      /profiler already exists/
-    );
-  });
-
   it('is possible to add trace id filters', () => {
-    const handle = extension.createCpuProfiler({
+    const handle = extension.getOrCreateCpuProfiler({
       name: 'filter-test',
       samplingIntervalMicroseconds: 1000,
       onlyFilteredStacktraces: true,

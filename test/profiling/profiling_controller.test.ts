@@ -139,7 +139,7 @@ describe('ProfilingController', () => {
       const controller = new ProfilingController(BASE_OPTIONS);
       controller.startInitial(false);
 
-      await controller.apply(
+      await controller.applyRemoteConfiguration(
         remoteConfig({ cpu: true, samplingInterval: 250 })
       );
 
@@ -151,7 +151,7 @@ describe('ProfilingController', () => {
       const controller = new ProfilingController(BASE_OPTIONS);
       controller.startInitial(false);
 
-      await controller.apply(remoteConfig({ cpu: true }));
+      await controller.applyRemoteConfiguration(remoteConfig({ cpu: true }));
 
       assert.strictEqual(startCalls[0].callstackInterval, 1_000);
     });
@@ -161,8 +161,12 @@ describe('ProfilingController', () => {
       controller.startInitial(false);
 
       // 0 and negatives are invalid; never forward them to the native profiler.
-      await controller.apply(remoteConfig({ cpu: true, samplingInterval: 0 }));
-      await controller.apply(remoteConfig({ cpu: true, samplingInterval: -5 }));
+      await controller.applyRemoteConfiguration(
+        remoteConfig({ cpu: true, samplingInterval: 0 })
+      );
+      await controller.applyRemoteConfiguration(
+        remoteConfig({ cpu: true, samplingInterval: -5 })
+      );
 
       for (const call of startCalls) {
         assert.strictEqual(call.callstackInterval, 1_000);
@@ -174,7 +178,7 @@ describe('ProfilingController', () => {
       controller.startInitial(true);
       const initial = startCalls[0];
 
-      await controller.apply(remoteConfig({ cpu: false }));
+      await controller.applyRemoteConfiguration(remoteConfig({ cpu: false }));
 
       assert.strictEqual(initial.stop.mock.callCount(), 1);
       assert.strictEqual(getEffectiveState().profilerEnabled, false);
@@ -184,7 +188,7 @@ describe('ProfilingController', () => {
       const controller = new ProfilingController(BASE_OPTIONS);
       controller.startInitial(true);
 
-      await controller.apply(
+      await controller.applyRemoteConfiguration(
         remoteConfig({ cpu: true, samplingInterval: 1_000 })
       );
 
@@ -198,7 +202,7 @@ describe('ProfilingController', () => {
       controller.startInitial(true);
       const initial = startCalls[0];
 
-      await controller.apply(
+      await controller.applyRemoteConfiguration(
         remoteConfig({ cpu: true, samplingInterval: 500 })
       );
 
@@ -216,7 +220,9 @@ describe('ProfilingController', () => {
       controller.startInitial(true);
       const initial = startCalls[0];
 
-      await controller.apply(remoteConfig({ cpu: true, memory: true }));
+      await controller.applyRemoteConfiguration(
+        remoteConfig({ cpu: true, memory: true })
+      );
 
       assert.strictEqual(initial.stop.mock.callCount(), 1);
       assert.strictEqual(startCalls.length, 2);
@@ -237,7 +243,7 @@ describe('ProfilingController', () => {
       controller.startInitial(false);
 
       await assert.rejects(
-        () => controller.apply(remoteConfig({ cpu: true })),
+        () => controller.applyRemoteConfiguration(remoteConfig({ cpu: true })),
         /profiling extension is unavailable/
       );
     });
@@ -250,7 +256,10 @@ describe('ProfilingController', () => {
       // as a rejection lets the OpAMP layer report FAILED rather than a silent
       // APPLIED that does nothing.
       await assert.rejects(
-        () => controller.apply(remoteConfig({ cpu: false, memory: true })),
+        () =>
+          controller.applyRemoteConfiguration(
+            remoteConfig({ cpu: false, memory: true })
+          ),
         /memory_profiler requires cpu_profiler/
       );
       assert.strictEqual(startCalls.length, 0);
@@ -262,8 +271,12 @@ describe('ProfilingController', () => {
       const controller = new ProfilingController(BASE_OPTIONS);
       controller.startInitial(false);
 
-      await controller.apply(remoteConfig({ callgraphs: true }));
-      await controller.apply(remoteConfig({ callgraphs: false }));
+      await controller.applyRemoteConfiguration(
+        remoteConfig({ callgraphs: true })
+      );
+      await controller.applyRemoteConfiguration(
+        remoteConfig({ callgraphs: false })
+      );
 
       assert.deepStrictEqual(
         activeCalls.map((c) => c.active),
@@ -288,7 +301,10 @@ describe('ProfilingController', () => {
       controller.startInitial(false);
 
       await assert.rejects(
-        () => controller.apply(remoteConfig({ callgraphs: true })),
+        () =>
+          controller.applyRemoteConfiguration(
+            remoteConfig({ callgraphs: true })
+          ),
         /could not be activated/
       );
     });
@@ -302,7 +318,7 @@ describe('ProfilingController', () => {
 
       await assert.rejects(
         () =>
-          controller.apply(
+          controller.applyRemoteConfiguration(
             remoteConfig({ cpu: false, memory: true, callgraphs: true })
           ),
         /memory_profiler requires cpu_profiler/
@@ -319,7 +335,7 @@ describe('ProfilingController', () => {
       const controller = new ProfilingController(BASE_OPTIONS);
       controller.startInitial(false);
 
-      await controller.apply(
+      await controller.applyRemoteConfiguration(
         remoteConfig({ callgraphs: true, callgraphsInterval: 5 })
       );
 
@@ -332,10 +348,10 @@ describe('ProfilingController', () => {
       const controller = new ProfilingController(BASE_OPTIONS);
       controller.startInitial(false);
 
-      await controller.apply(
+      await controller.applyRemoteConfiguration(
         remoteConfig({ callgraphs: true, callgraphsInterval: 5 })
       );
-      await controller.apply(
+      await controller.applyRemoteConfiguration(
         remoteConfig({ callgraphs: true, callgraphsInterval: 10 })
       );
 
@@ -351,7 +367,7 @@ describe('ProfilingController', () => {
 
       // 0 and negatives are invalid; the snapshot profiler must keep its
       // current interval rather than being reconfigured to 0.
-      await controller.apply(
+      await controller.applyRemoteConfiguration(
         remoteConfig({ callgraphs: true, callgraphsInterval: 0 })
       );
 
@@ -368,10 +384,10 @@ describe('ProfilingController', () => {
 
       // Fire two applies without awaiting the first; the controller must run
       // them sequentially so the native start/stop never interleave.
-      const first = controller.apply(
+      const first = controller.applyRemoteConfiguration(
         remoteConfig({ cpu: true, samplingInterval: 100 })
       );
-      const second = controller.apply(
+      const second = controller.applyRemoteConfiguration(
         remoteConfig({ cpu: true, samplingInterval: 200 })
       );
       await Promise.all([first, second]);
@@ -391,7 +407,7 @@ describe('ProfilingController', () => {
 
       // Interval change forces stop+start; the stop rejects but the controller
       // swallows it and proceeds with the restart.
-      await controller.apply(
+      await controller.applyRemoteConfiguration(
         remoteConfig({ cpu: true, samplingInterval: 500 })
       );
 
@@ -436,13 +452,13 @@ describe('ProfilingController', () => {
       const controller = new ProfilingController(BASE_OPTIONS);
       controller.startInitial(false);
 
-      await controller.apply(
+      await controller.applyRemoteConfiguration(
         remoteConfig({ cpu: true, samplingInterval: 250 })
       );
-      await controller.apply(
+      await controller.applyRemoteConfiguration(
         remoteConfig({ cpu: true, samplingInterval: 500 })
       );
-      await controller.apply(remoteConfig({ cpu: false }));
+      await controller.applyRemoteConfiguration(remoteConfig({ cpu: false }));
 
       assert.deepStrictEqual(infoLogs, [
         'opamp: remote config enabled the CPU profiler (sampling interval 250ms, memory profiling off)',
@@ -455,8 +471,12 @@ describe('ProfilingController', () => {
       const controller = new ProfilingController(BASE_OPTIONS);
       controller.startInitial(false);
 
-      await controller.apply(remoteConfig({ callgraphs: true }));
-      await controller.apply(remoteConfig({ callgraphs: false }));
+      await controller.applyRemoteConfiguration(
+        remoteConfig({ callgraphs: true })
+      );
+      await controller.applyRemoteConfiguration(
+        remoteConfig({ callgraphs: false })
+      );
 
       assert.deepStrictEqual(infoLogs, [
         'opamp: remote config enabled callgraphs (snapshot profiling)',
@@ -471,7 +491,7 @@ describe('ProfilingController', () => {
 
       // Same interval/memory as the initial start, callgraphs already off: a
       // pure no-op apply must stay silent.
-      await controller.apply(
+      await controller.applyRemoteConfiguration(
         remoteConfig({ cpu: true, samplingInterval: 1_000 })
       );
 

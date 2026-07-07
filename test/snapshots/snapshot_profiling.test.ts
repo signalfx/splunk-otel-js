@@ -185,8 +185,8 @@ describe('snapshot profiler setActive', () => {
     const extension: ProfilingExtension = {
       ...noopExtension(),
       // Hand out a valid handle so begin records snapshots against it. The
-      // constructor registers via configureCpuProfiler (reuse-by-name).
-      configureCpuProfiler: () => 1,
+      // constructor registers via getOrCreateCpuProfiler (reuse-by-name).
+      getOrCreateCpuProfiler: () => 1,
       removeTraceIdFilter: (_handle: number, traceId: string) => {
         removed.push(traceId);
       },
@@ -232,7 +232,7 @@ describe('snapshot profiler setActive', () => {
     const removed: string[] = [];
     const extension: ProfilingExtension = {
       ...noopExtension(),
-      configureCpuProfiler: () => 1,
+      getOrCreateCpuProfiler: () => 1,
       removeTraceIdFilter: (_handle: number, traceId: string) => {
         removed.push(traceId);
       },
@@ -268,14 +268,14 @@ describe('snapshot profiler setActive', () => {
   it('reconfigures the native profiler on a sampling interval change but defers the exporter period', async () => {
     // Remote config can change the callgraphs sampling interval at runtime. The
     // span processor is immutable, so the interval is re-applied in place via
-    // configureCpuProfiler. The exporter's reported period must NOT change until
+    // getOrCreateCpuProfiler. The exporter's reported period must NOT change until
     // the next fresh native start, so a mid-collection profile is never
     // serialized with a period its samples did not use. A no-op change must not
     // reconfigure at all.
     const configured: number[] = [];
     const extension: ProfilingExtension = {
       ...noopExtension(),
-      configureCpuProfiler: (options) => {
+      getOrCreateCpuProfiler: (options) => {
         configured.push(options.samplingIntervalMicroseconds);
         return 1;
       },

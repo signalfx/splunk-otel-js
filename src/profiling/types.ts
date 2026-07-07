@@ -77,14 +77,12 @@ export interface HeapProfile {
 }
 
 export interface ProfilingExtension {
-  // Creates a profiler, but doesn't start it. Throws if a profiler with the
-  // same name already exists.
-  createCpuProfiler(options: NativeProfilingOptions): number;
-  // Like createCpuProfiler, but reuses (and re-applies the options to) an
-  // existing same-named profiler instead of throwing. Lets the snapshot
-  // profiler survive an SDK stop/start cycle and pick up a changed sampling
-  // interval (honored by the next startCpuProfiler).
-  configureCpuProfiler(options: NativeProfilingOptions): number;
+  // Gets or creates a profiler by name, but doesn't start it. Reuses (and
+  // re-applies the options to) an existing same-named profiler instead of
+  // allocating a new one; the native registry is append-only, so this lets the
+  // snapshot profiler survive an SDK stop/start cycle and pick up a changed
+  // sampling interval (honored by the next startCpuProfiler).
+  getOrCreateCpuProfiler(options: NativeProfilingOptions): number;
   // Start the profiler, no-op if it is already running.
   startCpuProfiler(handle: number): boolean;
   addTraceIdFilter(handle: number, traceId: string): void;

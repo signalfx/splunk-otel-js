@@ -71,7 +71,7 @@ export class ProfilingController {
     }
   }
 
-  apply(config: RemoteProfilingConfig): Promise<void> {
+  applyRemoteConfiguration(config: RemoteProfilingConfig): Promise<void> {
     // Chain onto the previous apply/stop so calls run one at a time and a
     // rejection in one does not break the chain for the next.
     const next = this._queue.then(() => this._apply(config));
