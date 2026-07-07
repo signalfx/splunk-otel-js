@@ -53,7 +53,7 @@ import {
   isSnapshotProfilingEnabled,
   startSnapshotProfiling,
 } from './tracing/snapshots/Snapshots';
-import { getNonEmptyEnvVar } from './utils';
+import { getEnvValueByPrecedence } from './utils';
 import {
   getNonEmptyConfigVar,
   getConfigBoolean,
@@ -114,7 +114,10 @@ export const start = (options: Partial<Options> = {}) => {
     throw new Error('Splunk APM already started');
   }
 
-  const configFilePath = getNonEmptyEnvVar('OTEL_EXPERIMENTAL_CONFIG_FILE');
+  const configFilePath = getEnvValueByPrecedence([
+    'OTEL_CONFIG_FILE',
+    'OTEL_EXPERIMENTAL_CONFIG_FILE',
+  ]);
   if (configFilePath) {
     const content = readFileSync(configFilePath, { encoding: 'utf-8' });
     const configuration = loadConfiguration(content);
