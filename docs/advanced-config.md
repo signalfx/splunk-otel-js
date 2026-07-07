@@ -158,7 +158,7 @@ The following config options can be set by passing them as tracing arguments to 
 
 **Status**: Experimental
 
-An [OpenTelemetry configuration YAML file](https://github.com/open-telemetry/opentelemetry-configuration/blob/main/schema-docs.md) can be provided via `OTEL_EXPERIMENTAL_CONFIG_FILE` environment variable. When set, all of the configuration options will be loaded from the given path.
+An [OpenTelemetry configuration YAML file](https://github.com/open-telemetry/opentelemetry-configuration/blob/main/schema-docs.md) can be provided via the `OTEL_CONFIG_FILE` environment variable (the deprecated `OTEL_EXPERIMENTAL_CONFIG_FILE` is still supported as a fallback). When set, all of the configuration options will be loaded from the given path.
 
 Other options provided via environment variables will be ignored. Programmatic options sill take preference over the file based configuration.
 

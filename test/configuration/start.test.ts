@@ -81,6 +81,35 @@ describe('start with file configuration', () => {
       assert.deepStrictEqual(signals.profiling?.mock.callCount(), 1);
       assert.deepStrictEqual(signals.snapshots?.mock.callCount(), 1);
     });
+
+    it('should load the config file from OTEL_CONFIG_FILE', () => {
+      process.env.OTEL_CONFIG_FILE = exampleConfigPath();
+      process.env.SPLUNK_METRICS_ENABLED = 'false';
+      process.env.SPLUNK_PROFILER_ENABLED = 'false';
+      process.env.SPLUNK_TRACING_ENABLED = 'false';
+      process.env.SPLUNK_AUTOMATIC_LOG_COLLECTION = 'false';
+
+      start();
+
+      assert.deepStrictEqual(signals.tracing?.mock.callCount(), 1);
+      assert.deepStrictEqual(signals.metrics?.mock.callCount(), 1);
+      assert.deepStrictEqual(signals.logging?.mock.callCount(), 1);
+      assert.deepStrictEqual(signals.profiling?.mock.callCount(), 1);
+      assert.deepStrictEqual(signals.snapshots?.mock.callCount(), 1);
+    });
+
+    it('prefers OTEL_CONFIG_FILE over the deprecated OTEL_EXPERIMENTAL_CONFIG_FILE', () => {
+      process.env.OTEL_CONFIG_FILE = exampleConfigPath();
+      process.env.OTEL_EXPERIMENTAL_CONFIG_FILE = '/does/not/exist.yaml';
+      process.env.SPLUNK_METRICS_ENABLED = 'false';
+      process.env.SPLUNK_PROFILER_ENABLED = 'false';
+      process.env.SPLUNK_TRACING_ENABLED = 'false';
+      process.env.SPLUNK_AUTOMATIC_LOG_COLLECTION = 'false';
+
+      start();
+
+      assert.deepStrictEqual(signals.tracing?.mock.callCount(), 1);
+    });
   });
 
   describe('effective config gating', () => {

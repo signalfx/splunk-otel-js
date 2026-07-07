@@ -572,13 +572,15 @@ distribution:
     });
 
     it('names the AgentConfigFile after the file actually loaded', () => {
-      // The distro loads OTEL_EXPERIMENTAL_CONFIG_FILE; the body must not be
-      // attributed to a different OTEL_CONFIG_FILE path that was never read.
-      process.env.OTEL_CONFIG_FILE = '/stable/never-loaded.yaml';
-      process.env.OTEL_EXPERIMENTAL_CONFIG_FILE = '/experimental/loaded.yaml';
+      // The distro prefers OTEL_CONFIG_FILE over the deprecated
+      // OTEL_EXPERIMENTAL_CONFIG_FILE; the body must not be attributed to the
+      // fallback path that was never read.
+      process.env.OTEL_CONFIG_FILE = '/stable/loaded.yaml';
+      process.env.OTEL_EXPERIMENTAL_CONFIG_FILE =
+        '/experimental/never-loaded.yaml';
 
       const config = loadAndReport('file_format: "1.0-rc.2"\n');
-      assert.strictEqual(config.name, '/experimental/loaded.yaml');
+      assert.strictEqual(config.name, '/stable/loaded.yaml');
     });
 
     it('reports every exporter when a signal has multiple processors', () => {

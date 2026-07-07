@@ -19,6 +19,7 @@ import {
   getEnvArray,
   getEnvBoolean,
   getEnvNumber,
+  getEnvValueByPrecedence,
   getNonEmptyEnvVar,
   resolveOtlpExporterUrl,
 } from './utils';
@@ -1038,12 +1039,17 @@ function getEffectiveDeclarativeConfig(): string {
 
 // The AgentConfigFile name for the declarative format must match the filename
 // of the config that was actually loaded, including its path. The distro loads
-// the declarative config from OTEL_EXPERIMENTAL_CONFIG_FILE (see start.ts), so
-// the name is taken from there rather than OTEL_CONFIG_FILE — otherwise the
-// loaded file's body would be attributed to a path that was never read. A
-// defaulted name must still be provided per spec.
+// the declarative config from OTEL_CONFIG_FILE, falling back to the deprecated
+// OTEL_EXPERIMENTAL_CONFIG_FILE (see start.ts), so the name is taken with the
+// same precedence — otherwise the loaded file's body would be attributed to a
+// path that was never read. A defaulted name must still be provided per spec.
 function effectiveDeclarativeConfigName(): string {
-  return getNonEmptyEnvVar('OTEL_EXPERIMENTAL_CONFIG_FILE') ?? 'config.yaml';
+  return (
+    getEnvValueByPrecedence([
+      'OTEL_CONFIG_FILE',
+      'OTEL_EXPERIMENTAL_CONFIG_FILE',
+    ]) ?? 'config.yaml'
+  );
 }
 
 export function getLoadedConfigurationString(): {
