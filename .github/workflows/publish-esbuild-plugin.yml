@@ -31,7 +31,7 @@ jobs:
           node-version: 'lts/*'
       - name: Validate package version
         run: |
-          package_version="$(npm pkg get version --workspace @splunk/otel-esbuild-plugin-node | tr -d '"')"
+          package_version="$(node -p "require('./packages/otel-esbuild-plugin/package.json').version")"
           if [[ "$package_version" != "${{ steps.version.outputs.value }}" ]]; then
             echo "Error: package version '$package_version' does not match tag version '${{ steps.version.outputs.value }}'"
             exit 1
