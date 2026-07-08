@@ -164,7 +164,7 @@
     "rxjs": "^7.8.2",
     "semver": "^7.7.2",
     "ts-node": "^10.9.2",
-    "typescript": "6.0.2",
+    "typescript": "7.0.2",
     "winston": "3.10.0"
   },
   "peerDependencies": {
