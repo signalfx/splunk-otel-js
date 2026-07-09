@@ -25,6 +25,7 @@ import { strict as assert } from 'assert';
 import { describe, it, beforeEach } from 'node:test';
 import { TediousInstrumentation } from '@opentelemetry/instrumentation-tedious';
 import { OracleInstrumentation } from '@opentelemetry/instrumentation-oracledb';
+import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
 
 describe('instrumentations', () => {
   beforeEach(cleanEnvironment);
@@ -94,6 +95,20 @@ describe('instrumentations', () => {
       } as any);
 
       const config = tediousInstr.getConfig() as Record<string, unknown>;
+      assert.strictEqual(config.enableTraceContextPropagation, true);
+    });
+
+    it('sets enableTraceContextPropagation on PgInstrumentation when enabled', () => {
+      const pgInstr = new PgInstrumentation();
+
+      configureInstrumentations({
+        tracing: {
+          databaseTraceContextPropagationEnabled: true,
+          instrumentations: [pgInstr],
+        },
+      } as any);
+
+      const config = pgInstr.getConfig() as Record<string, unknown>;
       assert.strictEqual(config.enableTraceContextPropagation, true);
     });
 
