@@ -41,6 +41,10 @@ import {
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { StartLoggingOptions, startLogging } from './logging';
 import { startOpAMP, type StartOpAMPOptions, type OpAMPHandle } from './opamp';
+import {
+  recordEffectiveState,
+  resetEffectiveState,
+} from './opamp/effective-state';
 import { startSecureapp } from './secureapp';
 import type { StartSecureappOptions } from './secureapp/types';
 import { Resource } from '@opentelemetry/resources';
@@ -49,7 +53,7 @@ import {
   isSnapshotProfilingEnabled,
   startSnapshotProfiling,
 } from './tracing/snapshots/Snapshots';
-import { getNonEmptyEnvVar } from './utils';
+import { getEnvValueByPrecedence } from './utils';
 import {
   getNonEmptyConfigVar,
   getConfigBoolean,
@@ -110,7 +114,10 @@ export const start = (options: Partial<Options> = {}) => {
     throw new Error('Splunk APM already started');
   }
 
-  const configFilePath = getNonEmptyEnvVar('OTEL_EXPERIMENTAL_CONFIG_FILE');
+  const configFilePath = getEnvValueByPrecedence([
+    'OTEL_CONFIG_FILE',
+    'OTEL_EXPERIMENTAL_CONFIG_FILE',
+  ]);
   if (configFilePath) {
     const content = readFileSync(configFilePath, { encoding: 'utf-8' });
     const configuration = loadConfiguration(content);
@@ -153,16 +160,20 @@ export const start = (options: Partial<Options> = {}) => {
     secureappOptions,
   } = parseOptionsAndConfigureInstrumentations(options);
 
-  if (isFeatureEnabled(options.opamp, 'SPLUNK_OPAMP_ENABLED', false)) {
-    running.opamp = startOpAMP(opampOptions);
-  }
-
   let metricsEnabledByDefault = false;
   if (isFeatureEnabled(options.profiling, 'SPLUNK_PROFILER_ENABLED', false)) {
     running.profiling = startProfiling(profilingOptions);
     if (profilingOptions.memoryProfilingEnabled) {
       metricsEnabledByDefault = true;
     }
+  } else {
+    // Profiling was disabled (e.g. start({ profiling: false })), so neither the
+    // CPU nor memory profiler runs. Record this so OpAMP does not report a
+    // stale SPLUNK_PROFILER_ENABLED=true from the environment.
+    recordEffectiveState({
+      profilerEnabled: false,
+      memoryProfilerEnabled: false,
+    });
   }
 
   if (isSnapshotProfilingEnabled()) {
@@ -171,9 +182,17 @@ export const start = (options: Partial<Options> = {}) => {
       serviceName: profilingOptions.serviceName,
       resource: profilingOptions.resource,
     });
+  } else {
+    recordEffectiveState({ snapshotProfilerEnabled: false });
   }
 
-  if (isFeatureEnabled(options.tracing, 'SPLUNK_TRACING_ENABLED', true)) {
+  // isFeatureEnabled returns the option object itself when a signal is
+  // configured via an options object, so coerce to a plain boolean.
+  const tracingEnabled = Boolean(
+    isFeatureEnabled(options.tracing, 'SPLUNK_TRACING_ENABLED', true)
+  );
+  recordEffectiveState({ tracingEnabled });
+  if (tracingEnabled) {
     running.tracing = startTracing(tracingOptions);
   }
 
@@ -183,14 +202,15 @@ export const start = (options: Partial<Options> = {}) => {
     false
   );
 
-  if (
+  const loggingEnabled = Boolean(
     isFeatureEnabled(
       options.logging,
       'SPLUNK_AUTOMATIC_LOG_COLLECTION',
       false
-    ) ||
-    secureappEnabled
-  ) {
+    ) || secureappEnabled
+  );
+  recordEffectiveState({ loggingEnabled });
+  if (loggingEnabled) {
     running.logging = startLogging(loggingOptions);
   }
 
@@ -198,13 +218,15 @@ export const start = (options: Partial<Options> = {}) => {
     running.secureapp = startSecureapp(secureappOptions) ?? null;
   }
 
-  if (
+  const metricsEnabled = Boolean(
     isFeatureEnabled(
       options.metrics,
       'SPLUNK_METRICS_ENABLED',
       metricsEnabledByDefault
     )
-  ) {
+  );
+  recordEffectiveState({ metricsEnabled });
+  if (metricsEnabled) {
     running.metrics = startMetrics(metricsOptions);
   }
 
@@ -216,6 +238,13 @@ export const start = (options: Partial<Options> = {}) => {
     : createNoopMeterProvider();
   for (const instrumentation of getLoadedInstrumentations()) {
     instrumentation.setMeterProvider(meterProvider);
+  }
+
+  // Start OpAMP last so that, by the time it builds its first effective-config
+  // report, every component has recorded the configuration it actually started
+  // with (endpoints, profiler state, etc.) into the effective-state holder.
+  if (isFeatureEnabled(options.opamp, 'SPLUNK_OPAMP_ENABLED', false)) {
+    running.opamp = startOpAMP(opampOptions);
   }
 };
 
@@ -265,6 +294,10 @@ export const stop = async () => {
     running.secureapp.stop();
     running.secureapp = null;
   }
+
+  // Clear recorded effective state so a subsequent start() does not report
+  // stale endpoints/feature state from this run.
+  resetEffectiveState();
 
   return Promise.all(promises);
 };

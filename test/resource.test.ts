@@ -21,6 +21,7 @@ import {
   ATTR_TELEMETRY_SDK_LANGUAGE,
   ATTR_TELEMETRY_SDK_VERSION,
   ATTR_TELEMETRY_SDK_NAME,
+  ATTR_SERVICE_INSTANCE_ID,
 } from '@opentelemetry/semantic-conventions';
 
 describe('resource detector', () => {
@@ -29,6 +30,19 @@ describe('resource detector', () => {
   });
 
   describe('resource.detect', () => {
+    it('adds service instance ID', () => {
+      const resource = detectResource();
+
+      const serviceInstanceId = resource.attributes?.[ATTR_SERVICE_INSTANCE_ID];
+
+      assert.strictEqual(typeof serviceInstanceId, 'string');
+      // UUID v4 check
+      assert.match(
+        serviceInstanceId as string,
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+      );
+    });
+
     it('catches resource attributes from the env', () => {
       process.env.OTEL_RESOURCE_ATTRIBUTES =
         'k=v,service.name=node-svc,x=a%20b';

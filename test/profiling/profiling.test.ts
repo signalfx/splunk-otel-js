@@ -36,12 +36,14 @@ import {
   ProfilingExporter,
 } from '../../src/profiling/types';
 
-import { cleanEnvironment, detectResource, sleep, spinMs } from '../utils';
+import { cleanEnvironment, sleep, spinMs } from '../utils';
+import { clearResource, getDetectedResource } from '../../src/resource';
 
 describe('profiling', () => {
   describe('options', () => {
     beforeEach(() => {
       cleanEnvironment();
+      clearResource();
     });
 
     it('sets default options when no options are provided', async () => {
@@ -49,7 +51,7 @@ describe('profiling', () => {
       await options.resource.waitForAsyncAttributes?.();
       const testResource = resourceFromAttributes({
         [ATTR_SERVICE_NAME]: '@splunk/otel',
-      }).merge(detectResource());
+      }).merge(getDetectedResource());
       await testResource.waitForAsyncAttributes?.();
 
       const { resource: defaultResource, ...defaultOtherAttrs } = options;

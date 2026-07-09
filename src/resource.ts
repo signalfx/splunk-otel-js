@@ -33,6 +33,7 @@ import type { ExperimentalResourceDetector } from './configuration/schema';
 const defaultDetectors = [
   distroDetector,
   containerDetector,
+  serviceInstanceIdDetector,
   envDetector,
   hostDetector,
   osDetector,
@@ -54,21 +55,23 @@ function toDetector(
 }
 
 export function getDetectedResource() {
-  if (detectedResource === undefined) {
-    const configDetectors = getConfigResourceDetectors();
+  if (detectedResource !== undefined) {
+    return detectedResource;
+  }
 
-    if (configDetectors === undefined) {
-      detectedResource = detectResources({
-        detectors: defaultDetectors,
-      });
-    } else {
-      const detectors = configDetectors
-        .map(toDetector)
-        .filter((d) => d !== undefined);
-      detectedResource = detectResources({
-        detectors: [distroDetector, telemetrySdkDetector, ...detectors],
-      });
-    }
+  const configDetectors = getConfigResourceDetectors();
+
+  if (configDetectors === undefined) {
+    detectedResource = detectResources({
+      detectors: defaultDetectors,
+    });
+  } else {
+    const detectors = configDetectors
+      .map(toDetector)
+      .filter((d) => d !== undefined);
+    detectedResource = detectResources({
+      detectors: [distroDetector, telemetrySdkDetector, ...detectors],
+    });
   }
 
   return detectedResource;

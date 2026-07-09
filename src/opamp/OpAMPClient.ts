@@ -61,11 +61,13 @@ function toAnyValue(value: unknown): opamp.proto.IAnyValue {
 }
 
 function contentType(type: 'yaml' | 'env'): string {
+  // Content types are mandated by the GDI specification's effective
+  // configuration section (specification/opamp_datamodel.md).
   if (type === 'yaml') {
-    return 'application/yaml';
+    return 'application/yaml; vendor=splunk; v=1.0.0';
   }
 
-  return 'text/plain';
+  return 'text/plain; format=properties; vendor=splunk; v=1.0.0';
 }
 
 async function getResourceAttributes(
@@ -162,7 +164,7 @@ export class OpAMPClient {
       msg.effectiveConfig = {
         configMap: {
           configMap: {
-            [effectiveConfig.type]: {
+            [effectiveConfig.name]: {
               contentType: contentType(effectiveConfig.type),
               body: new TextEncoder().encode(effectiveConfig.content),
             },
