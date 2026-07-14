@@ -492,14 +492,6 @@ NAN_METHOD(GetOrCreateCpuProfiler) {
     return;
   }
 
-  // Get-or-create by name: reuse a previously-created profiler of the same name
-  // (re-applying the options) instead of allocating a new one, otherwise set up
-  // a fresh profiler. The registry is append-only (stop() only pauses and
-  // leaves the entry in place), so allocating a fresh profiler on a second SDK
-  // start/stop/start cycle would collide with the stopped entry. Reusing lets
-  // the snapshot profiler be re-registered any number of times, and re-applying
-  // the options picks up a changed sampling interval (honored by the next
-  // startCpuProfiler, since v8 bakes it in at start).
   Profiling *profiling = GetProfilingByName(opts.name, opts.name_length);
 
   if (profiling) {

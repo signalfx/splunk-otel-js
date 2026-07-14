@@ -76,9 +76,6 @@ export class SnapshotProfiler {
   private _samplingIntervalMs: number;
   private _endpoint: string;
   private _resource: Resource;
-  // Stored so stop() can detach it; otherwise each start()/stop() cycle leaks a
-  // listener that calls extension.stop on an already-stopped handle.
-  private _onExit: () => void;
 
   constructor(options: SnapshotProfilingOptions) {
     ensureProfilingContextManager();
@@ -145,11 +142,6 @@ export class SnapshotProfiler {
     }, options.collectionIntervalMs);
     this.collectionLoop.unref();
 
-    this._onExit = () => {
-      this.extension.stop(this.profilerHandle);
-    };
-    process.on('exit', this._onExit);
-
     // Tracing needs to be started after profiling, setting up the profiling exporter
     // causes @grpc/grpc-js to be loaded, but to avoid any loads before tracing's setup
     // has finished, load it next event loop.
@@ -180,7 +172,6 @@ export class SnapshotProfiler {
     this.active = false;
     clearTimeout(this.stopTimeout);
     clearInterval(this.collectionLoop);
-    process.removeListener('exit', this._onExit);
     // Remove the native trace-id filters of any in-flight traces. The native
     // profiler is reused across SDK start/stop cycles (getOrCreateCpuProfiler)
     // and native stop() does not clear the filter table, so leaving these

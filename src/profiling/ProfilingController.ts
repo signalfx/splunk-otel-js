@@ -21,7 +21,7 @@ import { recordEffectiveState } from '../opamp/effective-state';
 import { setSnapshotProfilingActive } from '../tracing/snapshots/Snapshots';
 import type { RemoteProfilingConfig } from '../opamp/types';
 
-// Tracks a currently-running always-on profiler so apply() can decide between a
+// Tracks a currently-running always-on profiler so applyRemoteConfiguration() can decide between a
 // no-op, a fresh start, or a stop+restart (the native sampling interval and the
 // memory-profiler toggle are baked in at start, so changing either requires a
 // restart).
@@ -35,16 +35,18 @@ interface RunningProfiler {
 // handles so the OpAMP client can stay profiling-agnostic, dispatching parsed
 // config here via the `applyRemoteConfig` callback.
 //
-// `apply()` is serialized: each call awaits the previous one so overlapping
-// remote-config pushes cannot interleave stop/start of the native profiler.
+// `applyRemoteConfiguration()` is serialized: each call awaits the previous
+// one so overlapping remote-config pushes cannot interleave stop/start of the
+// native profiler.
 export class ProfilingController {
   private readonly _baseOptions: ProfilingOptions;
   private _running: RunningProfiler | null = null;
   private _queue: Promise<void> = Promise.resolve();
-  // Last applied callgraphs state, so apply() logs only on an actual toggle.
-  // Matches the pre-registered snapshot profiler, which starts inactive.
+  // Last applied callgraphs state, so applyRemoteConfiguration() logs
+  // only on an actual toggle. Matches the pre-registered snapshot profiler,
+  // which starts inactive.
   private _callgraphsActive = false;
-  // Last callgraphs sampling interval applied via remote config, so apply()
+  // Last callgraphs sampling interval applied via remote config, so applyRemoteConfiguration()
   // reconfigures/logs only on an actual change. Undefined until a config sets
   // one (the snapshot profiler keeps its startup default in the meantime).
   private _callgraphsSamplingInterval: number | undefined;
