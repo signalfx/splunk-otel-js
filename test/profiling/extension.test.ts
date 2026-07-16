@@ -42,7 +42,7 @@ describe('profiling native extension', () => {
   });
 
   it('is possible to create a profiler', () => {
-    const handle = extension.createCpuProfiler({
+    const handle = extension.getOrCreateCpuProfiler({
       name: 'create-test',
       samplingIntervalMicroseconds: 10_000,
     });
@@ -51,7 +51,7 @@ describe('profiling native extension', () => {
   });
 
   it('is possible to call start and stop multiple times', () => {
-    const handle = extension.createCpuProfiler({
+    const handle = extension.getOrCreateCpuProfiler({
       name: 'stop-test',
       samplingIntervalMicroseconds: 10_000,
     });
@@ -63,8 +63,77 @@ describe('profiling native extension', () => {
     assert.strictEqual(extension.stop(handle), null);
   });
 
+  it('start reuses a stopped same-named profiler instead of colliding', () => {
+    // Regression: the profiler registry is append-only (stop() only pauses),
+    // so a second start() of the always-on profiler used to throw
+    // "CpuProfiler: profiler already exists." This blocked remote config from
+    // restarting the profiler to change the sampling interval or toggle memory
+    // profiling. start() now reuses the stopped profiler.
+    const name = 'start-reuse-test';
+    const handle = extension.start({
+      name,
+      samplingIntervalMicroseconds: 10_000,
+      recordDebugInfo: false,
+    });
+    assert.ok(handle >= 0);
+    assert.notEqual(extension.stop(handle), null);
+
+    // Restart with a different sampling interval: must not throw, and reuses
+    // the same handle rather than allocating a new profiler.
+    const handle2 = extension.start({
+      name,
+      samplingIntervalMicroseconds: 1_000,
+      recordDebugInfo: false,
+    });
+    assert.strictEqual(handle2, handle);
+    assert.notEqual(extension.stop(handle2), null);
+  });
+
+  it('start throws when the same-named profiler is still running', () => {
+    const name = 'start-running-test';
+    const handle = extension.start({
+      name,
+      samplingIntervalMicroseconds: 10_000,
+      recordDebugInfo: false,
+    });
+    assert.ok(handle >= 0);
+
+    assert.throws(
+      () =>
+        extension.start({
+          name,
+          samplingIntervalMicroseconds: 10_000,
+          recordDebugInfo: false,
+        }),
+      /profiler already running/
+    );
+
+    extension.stop(handle);
+  });
+
+  it('getOrCreateCpuProfiler reuses a same-named profiler instead of allocating a new one', () => {
+    // Regression for the snapshot profiler: an SDK stop/start cycle re-registers
+    // the fixed 'splunk-snapshot-profiler' name. getOrCreateCpuProfiler reuses
+    // the existing entry (re-applying options) and returns the same handle
+    // instead of allocating a duplicate.
+    const name = 'get-or-create-reuse-test';
+    const handle = extension.getOrCreateCpuProfiler({
+      name,
+      samplingIntervalMicroseconds: 10_000,
+    });
+    assert.ok(handle >= 0);
+
+    // Reconfigure with a different interval: reuses the same handle rather than
+    // allocating a new profiler.
+    const handle2 = extension.getOrCreateCpuProfiler({
+      name,
+      samplingIntervalMicroseconds: 1_000,
+    });
+    assert.strictEqual(handle2, handle);
+  });
+
   it('is possible to add trace id filters', () => {
-    const handle = extension.createCpuProfiler({
+    const handle = extension.getOrCreateCpuProfiler({
       name: 'filter-test',
       samplingIntervalMicroseconds: 1000,
       onlyFilteredStacktraces: true,

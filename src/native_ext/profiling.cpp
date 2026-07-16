@@ -352,6 +352,23 @@ struct ProfilingOptions {
   size_t name_length;
 };
 
+// Defined below; reused profilers are reset before restart (see StartProfiling).
+void ProfilingReset(Profiling *profiling);
+
+// Applies the (re)configurable knobs to an existing profiler. Split out so a
+// reused profiler (see StartProfiling) can pick up a changed sampling interval
+// without reallocating; the sampling interval is only honored by the next
+// StartProfiling because v8 bakes it in at start.
+void ApplyProfilingOptions(Profiling *profiling,
+                           const ProfilingOptions *options) {
+  profiling->recordDebugInfo = options->recordDebugInfo;
+  profiling->onlyFilteredStacktraces = options->onlyFilteredStacktraces;
+  profiling->maxSampleCutoffDelayNanos = options->maxSampleCutoffDelayNanos;
+  profiling->samplingIntervalNanos =
+      int64_t(options->samplingIntervalMicros) * 1000L;
+  profiling->profiler->SetSamplingInterval(options->samplingIntervalMicros);
+}
+
 Profiling *SetupProfiling(const ProfilingOptions *options,
                           v8::Isolate *isolate) {
   Profiling *profiling = globals.NewProfiling();
@@ -372,12 +389,7 @@ Profiling *SetupProfiling(const ProfilingOptions *options,
     return nullptr;
   }
 
-  profiling->recordDebugInfo = options->recordDebugInfo;
-  profiling->onlyFilteredStacktraces = options->onlyFilteredStacktraces;
-  profiling->maxSampleCutoffDelayNanos = options->maxSampleCutoffDelayNanos;
-  profiling->samplingIntervalNanos =
-      int64_t(options->samplingIntervalMicros) * 1000L;
-  profiling->profiler->SetSamplingInterval(options->samplingIntervalMicros);
+  ApplyProfilingOptions(profiling, options);
 
   return profiling;
 }
@@ -415,14 +427,6 @@ bool CreateCpuProfilingOptions(const Nan::FunctionCallbackInfo<v8::Value> &info,
   }
 
   v8::String::Utf8Value profilerNameUtf8(info.GetIsolate(), profilerName);
-
-  Profiling *existing =
-      GetProfilingByName(*profilerNameUtf8, profilerNameUtf8.length());
-
-  if (existing) {
-    Nan::ThrowError("CpuProfiler: profiler already exists.");
-    return false;
-  }
 
   auto maybeInterval = Nan::Get(
       options, Nan::New("samplingIntervalMicroseconds").ToLocalChecked());
@@ -481,17 +485,29 @@ bool CreateCpuProfilingOptions(const Nan::FunctionCallbackInfo<v8::Value> &info,
   return true;
 }
 
-NAN_METHOD(CreateCpuProfiler) {
+NAN_METHOD(GetOrCreateCpuProfiler) {
   ProfilingOptions opts;
   if (!CreateCpuProfilingOptions(info, &opts)) {
     // Error was thrown.
     return;
   }
 
-  Profiling *profiling = SetupProfiling(&opts, info.GetIsolate());
+  Profiling *profiling = GetProfilingByName(opts.name, opts.name_length);
+
+  if (profiling) {
+    ApplyProfilingOptions(profiling, &opts);
+    // Only reset accumulated state when the profiler is not mid-run: a running
+    // profiler's activation stack/arena are in use, and callers reconfigure the
+    // interval while stopped anyway.
+    if (!profiling->running) {
+      ProfilingReset(profiling);
+    }
+  } else {
+    profiling = SetupProfiling(&opts, info.GetIsolate());
+  }
 
   if (!profiling) {
-    Nan::ThrowError("CreateCpuProfiler: unable to allocate profiler.");
+    Nan::ThrowError("GetOrCreateCpuProfiler: unable to allocate profiler.");
     return;
   }
 
@@ -585,7 +601,26 @@ NAN_METHOD(StartProfiling) {
     return;
   }
 
-  Profiling *profiling = SetupProfiling(&opts, info.GetIsolate());
+  // Reuse a previously-created profiler of the same name rather than allocating
+  // a new one. The profiler registry is append-only (stop() only pauses and
+  // leaves the entry in place), so allocating on every start would both leak
+  // the old profiler's arena/v8 instance and, since the registry is keyed by
+  // name, make the next start collide. Reuse lets remote config restart the
+  // always-on profiler (e.g. to change the sampling interval or toggle memory
+  // profiling) any number of times. Re-apply the options so an interval change
+  // takes effect, and reset accumulated state as a stop()+create would.
+  Profiling *profiling = GetProfilingByName(opts.name, opts.name_length);
+
+  if (profiling) {
+    if (profiling->running) {
+      Nan::ThrowError("CpuProfiler: profiler already running.");
+      return;
+    }
+    ApplyProfilingOptions(profiling, &opts);
+    ProfilingReset(profiling);
+  } else {
+    profiling = SetupProfiling(&opts, info.GetIsolate());
+  }
 
   if (!profiling) {
     Nan::ThrowError("StartProfiling: unable to allocate profiler.");
@@ -1076,9 +1111,10 @@ void Initialize(v8::Local<v8::Object> target) {
   globals.Init();
 
   auto profilingModule = Nan::New<v8::Object>();
-  Nan::Set(profilingModule, Nan::New("createCpuProfiler").ToLocalChecked(),
-           Nan::GetFunction(Nan::New<v8::FunctionTemplate>(CreateCpuProfiler))
-               .ToLocalChecked());
+  Nan::Set(
+    profilingModule, Nan::New("getOrCreateCpuProfiler").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<v8::FunctionTemplate>(GetOrCreateCpuProfiler))
+      .ToLocalChecked());
 
   Nan::Set(profilingModule, Nan::New("startCpuProfiler").ToLocalChecked(),
            Nan::GetFunction(Nan::New<v8::FunctionTemplate>(StartCpuProfiler))

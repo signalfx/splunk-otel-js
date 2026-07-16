@@ -140,4 +140,38 @@ describe('snapshot propagator', () => {
       'off'
     );
   });
+
+  it('does not originate volume baggage while inactive', () => {
+    // A dormant (pre-registered, callgraphs-not-enabled) profiler must not write
+    // snapshot-volume baggage: doing so would propagate downstream and dictate
+    // selection for services that are actually collecting.
+    const propagator = new SnapshotPropagator(1.0, () => false);
+
+    const extractedCtx = propagator.extract(
+      ROOT_CONTEXT,
+      undefined,
+      NoopGetter
+    );
+
+    assert.strictEqual(extractedCtx, ROOT_CONTEXT, 'context is untouched');
+    assert.strictEqual(propagation.getBaggage(extractedCtx), undefined);
+  });
+
+  it('does not overwrite an upstream decision while inactive', () => {
+    // Even with an upstream "highest" decision, an inactive propagator leaves the
+    // context exactly as received rather than re-deciding.
+    const baggage = propagation.createBaggage({
+      [VOLUME_BAGGAGE_KEY]: { value: 'highest' },
+    });
+    const propagator = new SnapshotPropagator(0.0, () => false);
+
+    const ctx = propagation.setBaggage(ROOT_CONTEXT, baggage);
+    const extractedCtx = propagator.extract(ctx, undefined, NoopGetter);
+
+    assert.strictEqual(
+      extractedCtx,
+      ctx,
+      'context is passed through unchanged'
+    );
+  });
 });

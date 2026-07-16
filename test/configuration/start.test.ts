@@ -53,6 +53,7 @@ describe('start with file configuration', () => {
         stop: () => Promise.resolve(),
       })),
       profiling: mock.method(profiling, 'startProfiling', () => ({
+        started: true,
         stop: () => Promise.resolve(),
       })),
       tracing: mock.method(tracing, 'startTracing', () => true),

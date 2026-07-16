@@ -17,6 +17,7 @@
 import { strict as assert } from 'assert';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
 import * as tracing from '../src/tracing';
+import { stop } from '../src';
 import { cleanEnvironment } from './utils';
 
 describe('instrumentation', () => {
@@ -28,7 +29,10 @@ describe('instrumentation', () => {
     startTracingMock = mock.method(tracing, 'startTracing', () => {});
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // start() now always registers a ProfilingController, so the double-start
+    // guard trips on the next require unless we tear the run down between cases.
+    await stop();
     startTracingMock.mock.restore();
   });
 

@@ -215,6 +215,61 @@ describe('EffectiveConfig', () => {
         'cpu_profiler must be absent when it did not start'
       );
     });
+
+    it('surfaces a remote-enabled cpu profiler with no local declaration', () => {
+      // A remote config turned the CPU profiler on at runtime; nothing was
+      // declared locally. The reported effective config must reflect what is
+      // actually running, at the interval the profiler started with.
+      setGlobalConfiguration(
+        loadConfiguration(
+          'file_format: "1.0-rc.2"\ndistribution:\n  splunk: {}\n'
+        )
+      );
+      recordEffectiveState({ profilerEnabled: true, callStackInterval: 250 });
+
+      const body = parseYaml(getLoadedConfigurationString().content);
+      assert.strictEqual(
+        body.distribution.splunk.profiling.always_on.cpu_profiler
+          .sampling_interval,
+        250
+      );
+    });
+
+    it('surfaces a remote-enabled snapshot profiler with no local declaration', () => {
+      setGlobalConfiguration(
+        loadConfiguration(
+          'file_format: "1.0-rc.2"\ndistribution:\n  splunk: {}\n'
+        )
+      );
+      recordEffectiveState({ snapshotProfilerEnabled: true });
+
+      const body = parseYaml(getLoadedConfigurationString().content);
+      assert(
+        body.distribution.splunk.profiling.callgraphs !== undefined,
+        'callgraphs must be present when snapshot profiling is running'
+      );
+    });
+
+    it('omits the memory profiler when only it (not cpu) is running', () => {
+      // Memory profiling only runs alongside the CPU profiler, so a memory-only
+      // runtime state must not be reported.
+      setGlobalConfiguration(
+        loadConfiguration(
+          'file_format: "1.0-rc.2"\ndistribution:\n  splunk: {}\n'
+        )
+      );
+      recordEffectiveState({
+        profilerEnabled: false,
+        memoryProfilerEnabled: true,
+      });
+
+      const body = parseYaml(getLoadedConfigurationString().content);
+      assert(
+        body.distribution === undefined ||
+          body.distribution.splunk?.profiling === undefined,
+        'no profiling block should be reported'
+      );
+    });
   });
 
   // Exercises the real exporter factory (not recordEffectiveState directly) so
