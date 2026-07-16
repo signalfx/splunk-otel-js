@@ -5,8 +5,6 @@
 - Update `esbuild` to `^0.28.1`
 - Update `opentelemetry-esbuild-plugin-node` to `^4.4.0`
 - Update the `@splunk/otel` peer dependency to `^4.9.0`
-- Migrate package linting to `oxlint` and formatting to `oxfmt`
-- Expand esbuild example coverage with CommonJS and ESM e2e tests
 
 ## 0.0.2
 
