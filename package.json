@@ -136,6 +136,7 @@
     "@opentelemetry/sdk-trace-base": "2.8.0",
     "@opentelemetry/sdk-trace-node": "2.8.0",
     "@opentelemetry/semantic-conventions": "1.41.1",
+    "@opentelemetry/sql-common": "^0.42.0",
     "@opentelemetry/winston-transport": "0.29.0",
     "@splunk/secureapp-agent": "^0.2.0",
     "minimatch": "^10.2.5",
