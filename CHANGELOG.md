@@ -1,5 +1,12 @@
 # Change Log - @splunk/otel
 
+## 4.10.0
+
+- Upgrade to OpenTelemetry 2.9.0 / 0.220.0. [#1175](https://github.com/signalfx/splunk-otel-js/pull/1175)
+- Add OpAMP remote configuration support. [#1170](https://github.com/signalfx/splunk-otel-js/pull/1170)
+- Add support for trace context propagation to `pg` instrumentation. [#1174](https://github.com/signalfx/splunk-otel-js/pull/1174)
+- Support `OTEL_CONFIG_FILE`. `OTEL_EXPERIMENTAL_CONFIG_FILE` still works, but support will be removed in 5.0. [#1171](https://github.com/signalfx/splunk-otel-js/pull/1171)
+
 ## 4.9.0
 
 - Upgrade to OpenTelemetry 2.8.0 / 0.219.0. [#1163](https://github.com/signalfx/splunk-otel-js/pull/1163)
