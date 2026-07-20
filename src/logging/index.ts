@@ -216,7 +216,7 @@ export function defaultLogRecordProcessorFactory(
       exporters = [exporters];
     }
     return exporters.map(
-      (exporter) => new BatchLogRecordProcessor(exporter, {})
+      (exporter) => new BatchLogRecordProcessor({ exporter })
     );
   }
 
@@ -226,7 +226,8 @@ export function defaultLogRecordProcessorFactory(
     if (configProcessor.batch !== undefined) {
       const batch = configProcessor.batch;
       processors.push(
-        new BatchLogRecordProcessor(toExporter(batch.exporter), {
+        new BatchLogRecordProcessor({
+          exporter: toExporter(batch.exporter),
           maxExportBatchSize: batch.max_export_batch_size ?? undefined,
           scheduledDelayMillis: batch.schedule_delay ?? undefined,
           exportTimeoutMillis: batch.export_timeout ?? undefined,
@@ -236,7 +237,9 @@ export function defaultLogRecordProcessorFactory(
     } else if (configProcessor.simple !== undefined) {
       const simple = configProcessor.simple;
       processors.push(
-        new SimpleLogRecordProcessor(toExporter(simple.exporter))
+        new SimpleLogRecordProcessor({
+          exporter: toExporter(simple.exporter),
+        })
       );
     }
   }
