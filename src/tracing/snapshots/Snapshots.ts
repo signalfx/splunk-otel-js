@@ -17,6 +17,7 @@ import { Resource } from '@opentelemetry/resources';
 import { ensureProfilingContextManager, noopExtension } from '../../profiling';
 import { getConfigBoolean, getConfigNumber } from '../../configuration';
 import { SnapshotSpanProcessor } from './SnapshotSpanProcessor';
+import type { SnapshotPropagator } from './SnapshotPropagator';
 import type { CpuProfile, ProfilingExtension } from '../../profiling/types';
 import { OtlpHttpProfilingExporter } from '../../profiling/OtlpHttpProfilingExporter';
 import { loadExtension } from '../../profiling';
@@ -246,6 +247,7 @@ export class SnapshotProfiler {
 }
 
 let profiler: SnapshotProfiler | undefined;
+let snapshotPropagator: SnapshotPropagator | undefined;
 
 export function startSnapshotProfiling(options: StartSnapshotProfilingOptions) {
   const samplingIntervalMs =
@@ -311,6 +313,29 @@ export function setSnapshotProfilingActive(
 
   recordEffectiveState({ snapshotProfilerEnabled: effective });
   return effective;
+}
+
+export function registerSnapshotPropagator(p: SnapshotPropagator) {
+  snapshotPropagator = p;
+  recordEffectiveState({ snapshotSelectionProbability: p.selectionRate });
+}
+
+export function unregisterSnapshotPropagator() {
+  snapshotPropagator = undefined;
+}
+
+export function setSnapshotSelectionProbability(
+  probability: number | undefined
+): boolean {
+  if (!snapshotPropagator) {
+    return false;
+  }
+
+  snapshotPropagator.setSelectionRate(probability);
+  recordEffectiveState({
+    snapshotSelectionProbability: snapshotPropagator.selectionRate,
+  });
+  return true;
 }
 
 export async function stopSnapshotProfiling() {

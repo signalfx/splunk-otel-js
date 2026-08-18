@@ -55,6 +55,7 @@ function remoteConfig(
     memory: boolean;
     callgraphs: boolean;
     callgraphsInterval?: number;
+    callgraphsProbability?: number;
   }> = {}
 ): RemoteProfilingConfig {
   return {
@@ -66,6 +67,7 @@ function remoteConfig(
     callgraphs: {
       enabled: overrides.callgraphs ?? false,
       samplingInterval: overrides.callgraphsInterval,
+      selectionProbability: overrides.callgraphsProbability,
     },
   };
 }
@@ -80,11 +82,15 @@ interface ActiveCall {
 describe('ProfilingController', () => {
   let startCalls: StartCall[];
   let activeCalls: ActiveCall[];
+  // Each probability the controller forwarded to the propagator; undefined means
+  // "restore the startup-configured probability".
+  let probabilityCalls: (number | undefined)[];
 
   beforeEach(() => {
     resetEffectiveState();
     startCalls = [];
     activeCalls = [];
+    probabilityCalls = [];
 
     mock.method(
       profilingIndex,
@@ -106,6 +112,15 @@ describe('ProfilingController', () => {
       (active: boolean, samplingIntervalMs?: number) => {
         activeCalls.push({ active, samplingIntervalMs });
         return active;
+      }
+    );
+
+    mock.method(
+      snapshots,
+      'setSnapshotSelectionProbability',
+      (probability?: number) => {
+        probabilityCalls.push(probability);
+        return true;
       }
     );
   });
@@ -374,6 +389,48 @@ describe('ProfilingController', () => {
       assert.deepStrictEqual(activeCalls, [
         { active: true, samplingIntervalMs: undefined },
       ]);
+    });
+
+    it('forwards the selection probability when enabling callgraphs', async () => {
+      const controller = new ProfilingController(BASE_OPTIONS);
+      controller.startInitial(false);
+
+      await controller.applyRemoteConfiguration(
+        remoteConfig({ callgraphs: true, callgraphsProbability: 0.5 })
+      );
+
+      assert.deepStrictEqual(probabilityCalls, [0.5]);
+    });
+
+    it('restores the default probability when the config omits it', async () => {
+      const controller = new ProfilingController(BASE_OPTIONS);
+      controller.startInitial(false);
+
+      await controller.applyRemoteConfiguration(
+        remoteConfig({ callgraphs: true, callgraphsProbability: 0.5 })
+      );
+      // The accepted remote config is authoritative: without a probability the
+      // propagator goes back to its startup-configured value.
+      await controller.applyRemoteConfiguration(
+        remoteConfig({ callgraphs: true })
+      );
+
+      assert.deepStrictEqual(probabilityCalls, [0.5, undefined]);
+    });
+
+    it('ignores an out-of-range selection probability', async () => {
+      const controller = new ProfilingController(BASE_OPTIONS);
+      controller.startInitial(false);
+
+      // Per the GDI datamodel the probability must be > 0 and <= 1.
+      await controller.applyRemoteConfiguration(
+        remoteConfig({ callgraphs: true, callgraphsProbability: 0 })
+      );
+      await controller.applyRemoteConfiguration(
+        remoteConfig({ callgraphs: true, callgraphsProbability: 1.5 })
+      );
+
+      assert.deepStrictEqual(probabilityCalls, [undefined, undefined]);
     });
   });
 

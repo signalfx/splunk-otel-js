@@ -174,4 +174,26 @@ describe('snapshot propagator', () => {
       'context is passed through unchanged'
     );
   });
+
+  it('selects traces at a probability set at runtime', () => {
+    // Remote config can change the selection probability after startup.
+    const propagator = new SnapshotPropagator(0.0);
+
+    propagator.setSelectionRate(1.0);
+    const selected = propagation.getBaggage(
+      propagator.extract(ROOT_CONTEXT, undefined, NoopGetter)
+    );
+    assert.strictEqual(
+      selected?.getEntry(VOLUME_BAGGAGE_KEY)?.value,
+      'highest'
+    );
+
+    // Omitting a probability means "the default", i.e. the rate the propagator
+    // was constructed with.
+    propagator.setSelectionRate(undefined);
+    const notSelected = propagation.getBaggage(
+      propagator.extract(ROOT_CONTEXT, undefined, NoopGetter)
+    );
+    assert.strictEqual(notSelected?.getEntry(VOLUME_BAGGAGE_KEY)?.value, 'off');
+  });
 });

@@ -13,4 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export { SnapshotPropagator } from './SnapshotPropagator';
+export {
+  DEFAULT_SNAPSHOT_SELECTION_PROBABILITY,
+  SnapshotPropagator,
+} from './SnapshotPropagator';

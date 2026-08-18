@@ -49,6 +49,8 @@ export interface RemoteProfilingConfig {
     enabled: boolean;
     // Sampling interval in milliseconds, when the server specified one.
     samplingInterval?: number;
+    // Probability of selecting a trace for snapshot profiling. Must be > 0 and <= 1.
+    selectionProbability?: number;
   };
 }
 

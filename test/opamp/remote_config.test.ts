@@ -155,7 +155,11 @@ describe('OpAMP remote config', () => {
       assert.deepStrictEqual(applied, {
         cpuProfiler: { enabled: true, samplingInterval: 250 },
         memoryProfiler: { enabled: false },
-        callgraphs: { enabled: false, samplingInterval: undefined },
+        callgraphs: {
+          enabled: false,
+          samplingInterval: undefined,
+          selectionProbability: undefined,
+        },
       });
     });
 
@@ -184,6 +188,61 @@ describe('OpAMP remote config', () => {
       assert(applied);
       assert.strictEqual(applied.callgraphs.enabled, true);
       assert.strictEqual(applied.callgraphs.samplingInterval, 5);
+    });
+
+    it('parses a callgraphs selection probability', async () => {
+      let applied: RemoteProfilingConfig | undefined;
+      const client = new OpAMPClient(
+        createOptions({
+          applyRemoteConfig: async (cfg) => {
+            applied = cfg;
+          },
+        }),
+        createMockTransport()
+      );
+
+      const body = [
+        'distribution:',
+        '  splunk:',
+        '    profiling:',
+        '      callgraphs:',
+        '        sampling_interval: 10',
+        '        selection_probability: 0.5',
+      ].join('\n');
+
+      client.processServerResponse(remoteConfigResponse({ body }));
+      await waitForApply();
+
+      assert(applied);
+      assert.strictEqual(applied.callgraphs.enabled, true);
+      assert.strictEqual(applied.callgraphs.selectionProbability, 0.5);
+    });
+
+    it('ignores a non-numeric callgraphs selection probability', async () => {
+      let applied: RemoteProfilingConfig | undefined;
+      const client = new OpAMPClient(
+        createOptions({
+          applyRemoteConfig: async (cfg) => {
+            applied = cfg;
+          },
+        }),
+        createMockTransport()
+      );
+
+      const body = [
+        'distribution:',
+        '  splunk:',
+        '    profiling:',
+        '      callgraphs:',
+        '        selection_probability: "half"',
+      ].join('\n');
+
+      client.processServerResponse(remoteConfigResponse({ body }));
+      await waitForApply();
+
+      assert(applied);
+      assert.strictEqual(applied.callgraphs.enabled, true);
+      assert.strictEqual(applied.callgraphs.selectionProbability, undefined);
     });
 
     it('treats a bare cpu_profiler key as enabled with no interval', async () => {
