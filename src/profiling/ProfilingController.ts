@@ -225,6 +225,16 @@ export class ProfilingController {
   }
 
   private _applyCallgraphs(config: RemoteProfilingConfig): void {
+    const selectionProbability = config.callgraphs.selectionProbability;
+    if (
+      selectionProbability !== undefined &&
+      !(selectionProbability > 0 && selectionProbability <= 1)
+    ) {
+      throw new Error(
+        `callgraphs selection_probability ${selectionProbability} is out of range, it must be greater than 0 and at most 1`
+      );
+    }
+
     const requested = config.callgraphs.enabled;
     // A non-positive interval is invalid; pass undefined so the snapshot
     // profiler keeps its current interval rather than reconfiguring to 0.
@@ -234,18 +244,6 @@ export class ProfilingController {
         ? requestedInterval
         : undefined;
 
-    const requestedProbability = config.callgraphs.selectionProbability;
-    const validProbability =
-      requestedProbability === undefined ||
-      (requestedProbability > 0 && requestedProbability <= 1);
-    if (!validProbability) {
-      diag.warn(
-        `opamp: ignoring callgraphs selection_probability ${requestedProbability}, it must be greater than 0 and at most 1`
-      );
-    }
-    const selectionProbability = validProbability
-      ? requestedProbability
-      : undefined;
     const probabilityApplied =
       setSnapshotSelectionProbability(selectionProbability);
 

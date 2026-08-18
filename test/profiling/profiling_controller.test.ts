@@ -418,19 +418,50 @@ describe('ProfilingController', () => {
       assert.deepStrictEqual(probabilityCalls, [0.5, undefined]);
     });
 
-    it('ignores an out-of-range selection probability', async () => {
+    it('rejects an out-of-range selection probability', async () => {
       const controller = new ProfilingController(BASE_OPTIONS);
       controller.startInitial(false);
 
-      // Per the GDI datamodel the probability must be > 0 and <= 1.
-      await controller.applyRemoteConfiguration(
-        remoteConfig({ callgraphs: true, callgraphsProbability: 0 })
+      // Per the GDI datamodel the probability must be greater than 0 and at most
+      // 1. Such a config is rejected (OpAMP reports FAILED) and nothing is
+      // applied: coercing the value to "omitted" would restore the startup
+      // probability and silently change trace selection.
+      await assert.rejects(
+        controller.applyRemoteConfiguration(
+          remoteConfig({ callgraphs: true, callgraphsProbability: 0 })
+        ),
+        /selection_probability 0 is out of range/
       );
-      await controller.applyRemoteConfiguration(
-        remoteConfig({ callgraphs: true, callgraphsProbability: 1.5 })
+      await assert.rejects(
+        controller.applyRemoteConfiguration(
+          remoteConfig({ callgraphs: true, callgraphsProbability: 1.5 })
+        ),
+        /selection_probability 1.5 is out of range/
       );
 
-      assert.deepStrictEqual(probabilityCalls, [undefined, undefined]);
+      assert.deepStrictEqual(probabilityCalls, []);
+      assert.deepStrictEqual(activeCalls, []);
+    });
+
+    it('still applies cpu config when the selection probability is rejected', async () => {
+      const controller = new ProfilingController(BASE_OPTIONS);
+      controller.startInitial(false);
+
+      // The two halves are applied independently, so a rejected callgraphs block
+      // must not drop a valid cpu_profiler change.
+      await assert.rejects(
+        controller.applyRemoteConfiguration(
+          remoteConfig({
+            cpu: true,
+            samplingInterval: 250,
+            callgraphs: true,
+            callgraphsProbability: 2,
+          })
+        )
+      );
+
+      assert.strictEqual(startCalls.length, 1);
+      assert.strictEqual(startCalls[0].callstackInterval, 250);
     });
   });
 
