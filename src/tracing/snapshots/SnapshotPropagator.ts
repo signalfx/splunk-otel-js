@@ -28,6 +28,7 @@ import {
 } from '@opentelemetry/sdk-trace-base';
 
 export const VOLUME_BAGGAGE_KEY = 'splunk.trace.snapshot.volume' as const;
+export const DEFAULT_SNAPSHOT_SELECTION_PROBABILITY = 0.01;
 
 function withVolumeBaggage(context: Context, isSelected: boolean) {
   let baggage = propagation.getBaggage(context);
@@ -56,11 +57,26 @@ export class SnapshotPropagator implements TextMapPropagator<unknown> {
   // decisions. Injected rather than imported so the propagator stays decoupled
   // from the snapshot profiler module.
   private _isActive: () => boolean;
+  // The startup-configured rate, restored when remote config enables snapshot
+  // profiling without specifying a selection probability.
+  private readonly _startupSelectionRate: number;
 
   constructor(selectionRate: number, isActive: () => boolean = () => true) {
     this.selectionRate = normalizeRate(selectionRate);
+    this._startupSelectionRate = this.selectionRate;
     this.sampler = new TraceIdRatioBasedSampler(this.selectionRate);
     this._isActive = isActive;
+  }
+
+  setSelectionRate(selectionRate: number | undefined) {
+    const rate = normalizeRate(selectionRate ?? this._startupSelectionRate);
+
+    if (rate === this.selectionRate) {
+      return;
+    }
+
+    this.selectionRate = rate;
+    this.sampler = new TraceIdRatioBasedSampler(rate);
   }
 
   inject(

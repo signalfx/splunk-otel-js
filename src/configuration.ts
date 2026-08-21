@@ -48,6 +48,7 @@ import {
 import { AttributeValue } from '@opentelemetry/api';
 import { convertSubstitution, envSubstitute } from './configuration/substitute';
 import { getEffectiveState } from './opamp/effective-state';
+import { DEFAULT_SNAPSHOT_SELECTION_PROBABILITY } from './tracing/snapshots';
 
 type ConfigSampler = ConfigSchemaSampler;
 
@@ -761,6 +762,17 @@ function getEffectiveEnvironmentConfig(): string {
         getConfigNumber('SPLUNK_SNAPSHOT_PROFILER_SAMPLING_INTERVAL', 1),
     ],
     [
+      'SPLUNK_SNAPSHOT_SELECTION_PROBABILITY',
+      state.snapshotSelectionProbability ??
+        getConfigNumber(
+          [
+            'SPLUNK_SNAPSHOT_SELECTION_PROBABILITY',
+            'SPLUNK_SNAPSHOT_SELECTION_RATE',
+          ],
+          DEFAULT_SNAPSHOT_SELECTION_PROBABILITY
+        ),
+    ],
+    [
       'SPLUNK_PROFILER_CALL_STACK_INTERVAL',
       state.callStackInterval ??
         getConfigNumber('SPLUNK_PROFILER_CALL_STACK_INTERVAL', 1000),
@@ -994,6 +1006,10 @@ function projectProfiling(config: DistroConfiguration): object | undefined {
         state.snapshotSamplingInterval ??
         profiling?.callgraphs?.sampling_interval ??
         1,
+      selection_probability:
+        state.snapshotSelectionProbability ??
+        profiling?.callgraphs?.selection_probability ??
+        DEFAULT_SNAPSHOT_SELECTION_PROBABILITY,
     };
   }
 

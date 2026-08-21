@@ -468,6 +468,10 @@ export class OpAMPClient {
           typeof callgraphs?.sampling_interval === 'number'
             ? callgraphs.sampling_interval
             : undefined,
+        selectionProbability:
+          typeof callgraphs?.selection_probability === 'number'
+            ? callgraphs.selection_probability
+            : undefined,
       },
     };
   }

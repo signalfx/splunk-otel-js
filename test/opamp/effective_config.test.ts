@@ -46,6 +46,7 @@ const REQUIRED_ENV_KEYS = [
   'SPLUNK_PROFILER_MEMORY_ENABLED',
   'SPLUNK_SNAPSHOT_PROFILER_ENABLED',
   'SPLUNK_SNAPSHOT_PROFILER_SAMPLING_INTERVAL',
+  'SPLUNK_SNAPSHOT_SELECTION_PROBABILITY',
   'SPLUNK_PROFILER_CALL_STACK_INTERVAL',
   'OTEL_CONFIG_FILE',
   'OTEL_EXPERIMENTAL_CONFIG_FILE',
@@ -92,6 +93,10 @@ describe('EffectiveConfig', () => {
       assert.strictEqual(
         map.get('SPLUNK_SNAPSHOT_PROFILER_SAMPLING_INTERVAL'),
         '1'
+      );
+      assert.strictEqual(
+        map.get('SPLUNK_SNAPSHOT_SELECTION_PROBABILITY'),
+        '0.01'
       );
       assert.strictEqual(
         map.get('SPLUNK_PROFILER_CALL_STACK_INTERVAL'),
@@ -168,6 +173,29 @@ describe('EffectiveConfig', () => {
         '9999'
       );
       assert.strictEqual(map.get('SPLUNK_PROFILER_MEMORY_ENABLED'), 'true');
+    });
+
+    it('reports a selection probability changed at runtime', () => {
+      process.env.SPLUNK_SNAPSHOT_SELECTION_PROBABILITY = '0.02';
+      // Remote config can change the probability after startup; the report must
+      // reflect the value actually in use, not the one from the environment.
+      recordEffectiveState({ snapshotSelectionProbability: 0.5 });
+
+      const map = parseEnvBody(getLoadedConfigurationString().content);
+      assert.strictEqual(
+        map.get('SPLUNK_SNAPSHOT_SELECTION_PROBABILITY'),
+        '0.5'
+      );
+    });
+
+    it('reports the configured selection probability when unchanged', () => {
+      process.env.SPLUNK_SNAPSHOT_SELECTION_PROBABILITY = '0.02';
+
+      const map = parseEnvBody(getLoadedConfigurationString().content);
+      assert.strictEqual(
+        map.get('SPLUNK_SNAPSHOT_SELECTION_PROBABILITY'),
+        '0.02'
+      );
     });
 
     it('reports the profiler as disabled when it failed to start', () => {
@@ -446,6 +474,20 @@ distribution:
       );
     });
 
+    it('reports callgraphs.selection_probability when configured', () => {
+      const config = loadAndReport(
+        'file_format: "1.0-rc.2"\ndistribution:\n  splunk:\n' +
+          '    profiling:\n      callgraphs:\n        sampling_interval: 10\n' +
+          '        selection_probability: 0.25\n'
+      );
+
+      const body = parseYaml(config.content);
+      assert.strictEqual(
+        body.distribution.splunk.profiling.callgraphs.selection_probability,
+        0.25
+      );
+    });
+
     it('reports a bare callgraphs block as enabled with the default interval', () => {
       // A bare `callgraphs:` parses as null but the runtime enables snapshots
       // (SPLUNK_SNAPSHOT_PROFILER_ENABLED derives from callgraphs !== undefined),
@@ -459,6 +501,10 @@ distribution:
       assert.strictEqual(
         body.distribution.splunk.profiling.callgraphs.sampling_interval,
         1
+      );
+      assert.strictEqual(
+        body.distribution.splunk.profiling.callgraphs.selection_probability,
+        0.01
       );
     });
 

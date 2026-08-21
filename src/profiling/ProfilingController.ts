@@ -18,7 +18,10 @@ import { diag } from '@opentelemetry/api';
 import { startProfiling } from './index';
 import type { ProfilingOptions } from './types';
 import { recordEffectiveState } from '../opamp/effective-state';
-import { setSnapshotProfilingActive } from '../tracing/snapshots/Snapshots';
+import {
+  setSnapshotProfilingActive,
+  setSnapshotSelectionProbability,
+} from '../tracing/snapshots/Snapshots';
 import type { RemoteProfilingConfig } from '../opamp/types';
 
 // Tracks a currently-running always-on profiler so applyRemoteConfiguration() can decide between a
@@ -50,6 +53,9 @@ export class ProfilingController {
   // reconfigures/logs only on an actual change. Undefined until a config sets
   // one (the snapshot profiler keeps its startup default in the meantime).
   private _callgraphsSamplingInterval: number | undefined;
+  // Last callgraphs selection probability applied via remote config. Undefined
+  // means the startup-configured probability is in effect.
+  private _callgraphsSelectionProbability: number | undefined;
 
   constructor(baseOptions: ProfilingOptions) {
     this._baseOptions = baseOptions;
@@ -219,6 +225,16 @@ export class ProfilingController {
   }
 
   private _applyCallgraphs(config: RemoteProfilingConfig): void {
+    const selectionProbability = config.callgraphs.selectionProbability;
+    if (
+      selectionProbability !== undefined &&
+      !(selectionProbability > 0 && selectionProbability <= 1)
+    ) {
+      throw new Error(
+        `callgraphs selection_probability ${selectionProbability} is out of range, it must be greater than 0 and at most 1`
+      );
+    }
+
     const requested = config.callgraphs.enabled;
     // A non-positive interval is invalid; pass undefined so the snapshot
     // profiler keeps its current interval rather than reconfiguring to 0.
@@ -227,6 +243,9 @@ export class ProfilingController {
       typeof requestedInterval === 'number' && requestedInterval > 0
         ? requestedInterval
         : undefined;
+
+    const probabilityApplied =
+      setSnapshotSelectionProbability(selectionProbability);
 
     const effective = setSnapshotProfilingActive(requested, samplingInterval);
 
@@ -249,17 +268,34 @@ export class ProfilingController {
       this._callgraphsSamplingInterval = samplingInterval;
     }
 
+    const probabilityChanged =
+      probabilityApplied &&
+      selectionProbability !== this._callgraphsSelectionProbability;
+    if (probabilityChanged) {
+      this._callgraphsSelectionProbability = selectionProbability;
+    }
+
+    const settings: string[] = [];
+    if (samplingInterval !== undefined) {
+      settings.push(`sampling interval ${samplingInterval}ms`);
+    }
+    if (selectionProbability !== undefined) {
+      settings.push(`selection probability ${selectionProbability}`);
+    } else if (probabilityChanged) {
+      settings.push('default selection probability');
+    }
+    const describedSettings =
+      settings.length > 0 ? ` (${settings.join(', ')})` : '';
+
     if (effective !== this._callgraphsActive) {
       this._callgraphsActive = effective;
       diag.info(
         `opamp: remote config ${effective ? 'enabled' : 'disabled'} callgraphs (snapshot profiling)` +
-          (effective && samplingInterval !== undefined
-            ? ` (sampling interval ${samplingInterval}ms)`
-            : '')
+          (effective ? describedSettings : '')
       );
-    } else if (intervalChanged) {
+    } else if (intervalChanged || probabilityChanged) {
       diag.info(
-        `opamp: remote config reconfigured callgraphs sampling interval to ${samplingInterval}ms`
+        `opamp: remote config reconfigured callgraphs${describedSettings}`
       );
     }
   }

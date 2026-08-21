@@ -48,6 +48,7 @@ export interface EffectiveState {
   // Whether the snapshot profiler actually started.
   snapshotProfilerEnabled: boolean;
   snapshotSamplingInterval: number;
+  snapshotSelectionProbability: number;
 }
 
 let state: Partial<EffectiveState> = {};

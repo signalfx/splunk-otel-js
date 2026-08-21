@@ -55,6 +55,7 @@ function remoteConfig(
     memory: boolean;
     callgraphs: boolean;
     callgraphsInterval?: number;
+    callgraphsProbability?: number;
   }> = {}
 ): RemoteProfilingConfig {
   return {
@@ -66,6 +67,7 @@ function remoteConfig(
     callgraphs: {
       enabled: overrides.callgraphs ?? false,
       samplingInterval: overrides.callgraphsInterval,
+      selectionProbability: overrides.callgraphsProbability,
     },
   };
 }
@@ -80,11 +82,15 @@ interface ActiveCall {
 describe('ProfilingController', () => {
   let startCalls: StartCall[];
   let activeCalls: ActiveCall[];
+  // Each probability the controller forwarded to the propagator; undefined means
+  // "restore the startup-configured probability".
+  let probabilityCalls: (number | undefined)[];
 
   beforeEach(() => {
     resetEffectiveState();
     startCalls = [];
     activeCalls = [];
+    probabilityCalls = [];
 
     mock.method(
       profilingIndex,
@@ -106,6 +112,15 @@ describe('ProfilingController', () => {
       (active: boolean, samplingIntervalMs?: number) => {
         activeCalls.push({ active, samplingIntervalMs });
         return active;
+      }
+    );
+
+    mock.method(
+      snapshots,
+      'setSnapshotSelectionProbability',
+      (probability?: number) => {
+        probabilityCalls.push(probability);
+        return true;
       }
     );
   });
@@ -374,6 +389,79 @@ describe('ProfilingController', () => {
       assert.deepStrictEqual(activeCalls, [
         { active: true, samplingIntervalMs: undefined },
       ]);
+    });
+
+    it('forwards the selection probability when enabling callgraphs', async () => {
+      const controller = new ProfilingController(BASE_OPTIONS);
+      controller.startInitial(false);
+
+      await controller.applyRemoteConfiguration(
+        remoteConfig({ callgraphs: true, callgraphsProbability: 0.5 })
+      );
+
+      assert.deepStrictEqual(probabilityCalls, [0.5]);
+    });
+
+    it('restores the default probability when the config omits it', async () => {
+      const controller = new ProfilingController(BASE_OPTIONS);
+      controller.startInitial(false);
+
+      await controller.applyRemoteConfiguration(
+        remoteConfig({ callgraphs: true, callgraphsProbability: 0.5 })
+      );
+      // The accepted remote config is authoritative: without a probability the
+      // propagator goes back to its startup-configured value.
+      await controller.applyRemoteConfiguration(
+        remoteConfig({ callgraphs: true })
+      );
+
+      assert.deepStrictEqual(probabilityCalls, [0.5, undefined]);
+    });
+
+    it('rejects an out-of-range selection probability', async () => {
+      const controller = new ProfilingController(BASE_OPTIONS);
+      controller.startInitial(false);
+
+      // Per the GDI datamodel the probability must be greater than 0 and at most
+      // 1. Such a config is rejected (OpAMP reports FAILED) and nothing is
+      // applied: coercing the value to "omitted" would restore the startup
+      // probability and silently change trace selection.
+      await assert.rejects(
+        controller.applyRemoteConfiguration(
+          remoteConfig({ callgraphs: true, callgraphsProbability: 0 })
+        ),
+        /selection_probability 0 is out of range/
+      );
+      await assert.rejects(
+        controller.applyRemoteConfiguration(
+          remoteConfig({ callgraphs: true, callgraphsProbability: 1.5 })
+        ),
+        /selection_probability 1.5 is out of range/
+      );
+
+      assert.deepStrictEqual(probabilityCalls, []);
+      assert.deepStrictEqual(activeCalls, []);
+    });
+
+    it('still applies cpu config when the selection probability is rejected', async () => {
+      const controller = new ProfilingController(BASE_OPTIONS);
+      controller.startInitial(false);
+
+      // The two halves are applied independently, so a rejected callgraphs block
+      // must not drop a valid cpu_profiler change.
+      await assert.rejects(
+        controller.applyRemoteConfiguration(
+          remoteConfig({
+            cpu: true,
+            samplingInterval: 250,
+            callgraphs: true,
+            callgraphsProbability: 2,
+          })
+        )
+      );
+
+      assert.strictEqual(startCalls.length, 1);
+      assert.strictEqual(startCalls[0].callstackInterval, 250);
     });
   });
 
