@@ -65,7 +65,7 @@ test('Redis instrumentation: db statement is not added when SPLUNK_REDIS_INCLUDE
       await spanProcessor.forceFlush();
       const [span] = exporter.getFinishedSpans();
       assert.deepStrictEqual(
-        span.attributes['db.statement'],
+        span.attributes['db.query.text'],
         'hget [2 other arguments]'
       );
 
