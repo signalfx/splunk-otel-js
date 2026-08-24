@@ -36,7 +36,7 @@ module.exports = [
       'net.host.name': 'app',
       'http.method': 'GET',
       'http.scheme': 'http',
-      'http.target': '/',
+      'url.path': '/',
       'http.user_agent': 'node',
       'http.flavor': '1.1',
       'net.transport': 'ip_tcp',
