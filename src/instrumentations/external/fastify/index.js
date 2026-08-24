@@ -1,5 +1,6 @@
 'use strict'
 const dc = require('node:diagnostics_channel')
+const path = require('node:path')
 const { context, trace, SpanStatusCode, propagation, diag } = require('@opentelemetry/api')
 const { getRPCMetadata, RPCType } = require('@opentelemetry/core')
 const {
@@ -79,19 +80,15 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
         )
       }
 
-      let globMatcher = null
+      if (typeof ignorePaths === 'string' && typeof path.matchesGlob !== 'function') {
+        throw new Error('Fastify ignorePaths glob matching requires Node.js 20.17.0 or later')
+      }
 
       this[kIgnorePaths] = (routeOptions) => {
         if (typeof ignorePaths === 'function') {
           return ignorePaths(routeOptions)
         } else {
-          // Using minimatch to match the path until path.matchesGlob is out of experimental
-          // path.matchesGlob uses minimatch internally
-          if (globMatcher == null) {
-            globMatcher = require('minimatch').minimatch
-          }
-
-          return globMatcher(routeOptions.url, ignorePaths)
+          return path.matchesGlob(routeOptions.url, ignorePaths)
         }
       }
     }

@@ -127,6 +127,9 @@ The following config options can be set by passing them as tracing arguments to 
 
 - `tracing.tracerConfig`: An object that is merged into the default tracer config replacing any existing keys. It's passed to the tracer provider during initialization. This can be used to customize the tracer provider or tracer.
 
+#### Instrumentation specific
+
+* Fastify ignore-path glob matching, configured with `OTEL_FASTIFY_IGNORE_PATHS` or a string in the instrumentation's `ignorePaths` option, requires Node.js 20.17.0 or later. On older Node.js versions, configure `ignorePaths` with a function instead.
 
 ### Metrics
 
