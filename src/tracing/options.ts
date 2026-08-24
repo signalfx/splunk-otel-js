@@ -21,6 +21,7 @@ import {
   SpanExporter,
   SpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
+import { buildSamplerFromEnv } from '@opentelemetry/sdk-trace-base/build/src/config';
 import { createRuleBasedSampler } from './RuleBasedSampler';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 import { AWSXRayPropagator } from '@opentelemetry/propagator-aws-xray';
@@ -92,6 +93,8 @@ function createSampler(userConfig: NodeTracerConfig) {
         getNonEmptyEnvVar('OTEL_TRACES_SAMPLER_ARG')
       );
     }
+
+    return buildSamplerFromEnv();
   }
 
   return configSampler;

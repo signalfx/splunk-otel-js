@@ -42,6 +42,7 @@ import {
   SpanExporter,
   InMemorySpanExporter,
   AlwaysOffSampler,
+  TraceIdRatioBasedSampler,
 } from '@opentelemetry/sdk-trace-base';
 
 import { strict as assert } from 'assert';
@@ -272,6 +273,27 @@ describe('options', () => {
       'v9001'
     );
     assert.strictEqual(options.tracerConfig.resource?.attributes['abc'], 42);
+  });
+
+  describe('OTEL_TRACES_SAMPLER', () => {
+    it('uses a standard sampler from the environment', () => {
+      process.env.OTEL_TRACES_SAMPLER = 'always_off';
+
+      const options = _setDefaultOptions();
+
+      assert.ok(options.tracerConfig.sampler instanceof AlwaysOffSampler);
+    });
+
+    it('passes the sampler argument to a standard sampler', () => {
+      process.env.OTEL_TRACES_SAMPLER = 'traceidratio';
+      process.env.OTEL_TRACES_SAMPLER_ARG = '0.25';
+
+      const options = _setDefaultOptions();
+      const sampler = options.tracerConfig.sampler;
+
+      assert.ok(sampler instanceof TraceIdRatioBasedSampler);
+      assert.equal(sampler['_ratio'], 0.25);
+    });
   });
 
   describe('OTEL_TRACES_EXPORTER', () => {
