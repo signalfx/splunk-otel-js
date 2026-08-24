@@ -60,7 +60,7 @@ describe('Fastify ignorePaths', () => {
     () => {
       assert.throws(
         () => new FastifyOtelInstrumentation({ ignorePaths: '/health/**' }),
-        /requires Node\.js 20\.17\.0 or later/
+        /requires Node\.js 20\.17\.0 through 20\.x, 22\.5\.0 through 22\.x, or 23\.0\.0 and later/
       );
     }
   );

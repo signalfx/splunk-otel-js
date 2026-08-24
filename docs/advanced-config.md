@@ -129,7 +129,7 @@ The following config options can be set by passing them as tracing arguments to 
 
 #### Instrumentation specific
 
-* Fastify ignore-path glob matching, configured with `OTEL_FASTIFY_IGNORE_PATHS` or a string in the instrumentation's `ignorePaths` option, requires Node.js 20.17.0 or later. On older Node.js versions, configure `ignorePaths` with a function instead.
+* Fastify ignore-path glob matching, configured with `OTEL_FASTIFY_IGNORE_PATHS` or a string in the instrumentation's `ignorePaths` option, requires Node.js 20.17.0 through 20.x, 22.5.0 through 22.x, or 23.0.0 and later. It is unavailable on Node.js 21.x and Node.js 22.0.0 through 22.4.x. On unsupported Node.js versions, configure `ignorePaths` with a function instead.
 
 ### Metrics
 
