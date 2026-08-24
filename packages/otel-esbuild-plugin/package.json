@@ -44,9 +44,6 @@
     "esbuild": "^0.28.1",
     "opentelemetry-esbuild-plugin-node": "^4.4.0"
   },
-  "devDependencies": {
-    "@splunk/otel": "file:../.."
-  },
   "peerDependencies": {
     "@splunk/otel": "^4.9.0"
   },
