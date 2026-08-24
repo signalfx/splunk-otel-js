@@ -20,10 +20,10 @@ import { assertTracingPipeline } from './common';
 
 import { parseOptionsAndConfigureInstrumentations } from '../../src/instrumentations';
 import { startTracing, stopTracing } from '../../src/tracing';
-import { trace } from '@opentelemetry/api';
-import { ParentBasedSampler } from '@opentelemetry/sdk-trace-base';
+import { context, trace, TraceFlags } from '@opentelemetry/api';
+import { TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
 
-test('Tracing: set up with env options', async () => {
+test('Tracing: honors standard sampler env options', async () => {
   const url = 'url-from-env:3030';
   const serviceName = 'env-service';
   const accessToken = 'zxcvb';
@@ -31,14 +31,30 @@ test('Tracing: set up with env options', async () => {
   process.env.OTEL_EXPORTER_OTLP_ENDPOINT = url;
   process.env.OTEL_SERVICE_NAME = serviceName;
   process.env.SPLUNK_ACCESS_TOKEN = accessToken;
-  process.env.OTEL_TRACES_SAMPLER = 'parentbased_always_on';
+  process.env.OTEL_TRACES_SAMPLER = 'traceidratio';
+  process.env.OTEL_TRACES_SAMPLER_ARG = '1.0';
 
   const { tracingOptions } = parseOptionsAndConfigureInstrumentations();
   startTracing(tracingOptions);
   await assertTracingPipeline(`${url}/v1/traces`, serviceName, accessToken);
 
   const provider = trace.getTracerProvider();
-  assert(provider.getTracer('test')['_sampler'] instanceof ParentBasedSampler);
+  assert(
+    provider.getTracer('test')['_sampler'] instanceof TraceIdRatioBasedSampler
+  );
+
+  const unsampledRemoteParent = trace.setSpanContext(context.active(), {
+    traceId: '4bf92f3577b34da6a3ce929d0e0e4736',
+    spanId: '00f067aa0ba902b7',
+    traceFlags: TraceFlags.NONE,
+    isRemote: true,
+  });
+  const span = trace
+    .getTracer('test')
+    .startSpan('child', {}, unsampledRemoteParent);
+
+  assert.equal(span.spanContext().traceFlags & TraceFlags.SAMPLED, 1);
+  span.end();
 
   await stopTracing();
 });
