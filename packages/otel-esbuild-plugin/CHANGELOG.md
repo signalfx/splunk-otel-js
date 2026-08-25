@@ -1,5 +1,11 @@
 # Change Log - @splunk/otel-esbuild-plugin-node
 
+## 0.1.0
+
+- Update `esbuild` to `^0.28.1`
+- Update `opentelemetry-esbuild-plugin-node` to `^4.4.0`
+- Update the `@splunk/otel` peer dependency to `^4.9.0`
+
 ## 0.0.2
 
 - Add `publishConfig.access: public` to ensure public publishing on npm

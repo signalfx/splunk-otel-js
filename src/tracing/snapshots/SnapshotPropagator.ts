@@ -28,6 +28,7 @@ import {
 } from '@opentelemetry/sdk-trace-base';
 
 export const VOLUME_BAGGAGE_KEY = 'splunk.trace.snapshot.volume' as const;
+export const DEFAULT_SNAPSHOT_SELECTION_PROBABILITY = 0.01;
 
 function withVolumeBaggage(context: Context, isSelected: boolean) {
   let baggage = propagation.getBaggage(context);
@@ -51,10 +52,31 @@ function normalizeRate(rate: number): number {
 export class SnapshotPropagator implements TextMapPropagator<unknown> {
   selectionRate: number;
   sampler: TraceIdRatioBasedSampler;
+  // Consulted on every extract so a registered-but-dormant profiler (the
+  // inactive pre-registration for remote config) does not make snapshot-volume
+  // decisions. Injected rather than imported so the propagator stays decoupled
+  // from the snapshot profiler module.
+  private _isActive: () => boolean;
+  // The startup-configured rate, restored when remote config enables snapshot
+  // profiling without specifying a selection probability.
+  private readonly _startupSelectionRate: number;
 
-  constructor(selectionRate: number) {
+  constructor(selectionRate: number, isActive: () => boolean = () => true) {
     this.selectionRate = normalizeRate(selectionRate);
+    this._startupSelectionRate = this.selectionRate;
     this.sampler = new TraceIdRatioBasedSampler(this.selectionRate);
+    this._isActive = isActive;
+  }
+
+  setSelectionRate(selectionRate: number | undefined) {
+    const rate = normalizeRate(selectionRate ?? this._startupSelectionRate);
+
+    if (rate === this.selectionRate) {
+      return;
+    }
+
+    this.selectionRate = rate;
+    this.sampler = new TraceIdRatioBasedSampler(rate);
   }
 
   inject(
@@ -68,6 +90,13 @@ export class SnapshotPropagator implements TextMapPropagator<unknown> {
     _carrier: unknown,
     _getter: TextMapGetter<unknown>
   ): Context {
+    // While snapshot profiling is dormant, leave the context untouched: do not
+    // originate volume baggage (which would propagate downstream and dictate
+    // selection) and do not overwrite a decision already made upstream.
+    if (!this._isActive()) {
+      return context;
+    }
+
     const baggage = propagation.getBaggage(context);
 
     if (baggage === undefined) {

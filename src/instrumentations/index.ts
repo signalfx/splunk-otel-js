@@ -334,6 +334,7 @@ export function configureInstrumentations(options: Options) {
       case '@opentelemetry/instrumentation-redis':
         configureRedisInstrumentation(instr, options.tracing);
         break;
+      case '@opentelemetry/instrumentation-pg':
       case '@opentelemetry/instrumentation-tedious':
         enableDbTraceContextPropagation(
           instr,
@@ -359,7 +360,10 @@ export function configureInstrumentations(options: Options) {
 }
 
 function enableDbTraceContextPropagation(
-  instrumentation: TediousInstrumentation | OracleInstrumentation,
+  instrumentation:
+    | TediousInstrumentation
+    | OracleInstrumentation
+    | PgInstrumentation,
   otelPropName: string,
   options: TracingOptions
 ) {

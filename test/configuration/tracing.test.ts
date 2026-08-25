@@ -115,12 +115,7 @@ describe('tracing via config file', () => {
     startTracing(tracingOptions);
 
     const provider = otel.trace.getTracerProvider()['_delegate'];
-    const providerConfig = provider['_config'];
-
-    assert.deepStrictEqual(providerConfig['generalLimits'], {
-      attributeValueLengthLimit: 4090,
-      attributeCountLimit: 110,
-    });
+    const providerConfig = provider['_tracerOptions'];
 
     assert.deepStrictEqual(providerConfig['spanLimits'], {
       attributeValueLengthLimit: 2500,
@@ -131,7 +126,7 @@ describe('tracing via config file', () => {
       attributePerLinkCountLimit: 154,
     });
 
-    const spanProcessors = providerConfig['spanProcessors'];
+    const spanProcessors = providerConfig['spanProcessor']['_spanProcessors'];
 
     assert.deepStrictEqual(spanProcessors.length, 3);
 

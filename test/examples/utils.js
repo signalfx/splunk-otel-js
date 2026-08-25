@@ -11,24 +11,25 @@ entry:
   duration: '0.013452544s',
   tags: [
     {
-      key: 'otel.library.name',
+      key: 'otel.scope.name',
       vStr: '@opentelemetry/instrumentation-http'
     },
-    { key: 'otel.library.version', vStr: '0.23.0' },
-    { key: 'http.url', vStr: 'http://app/all' },
-    { key: 'http.host', vStr: 'app' },
-    { key: 'net.host.name', vStr: 'app' },
-    { key: 'http.method', vStr: 'GET' },
+    { key: 'otel.scope.version', vStr: '0.221.0' },
+    { key: 'http.request.method', vStr: 'GET' },
     { key: 'http.route', vStr: '/all' },
-    { key: 'http.target', vStr: '/all' },
-    { key: 'http.flavor', vStr: '1.1' },
-    { key: 'net.transport', vStr: 'ip_tcp' },
-    { key: 'net.host.ip', vStr: '::ffff:172.18.0.3' },
-    { key: 'net.host.port', vType: 'INT64', vInt64: '80' },
-    { key: 'net.peer.ip', vStr: '::ffff:172.18.0.4' },
-    { key: 'net.peer.port', vType: 'INT64', vInt64: '46886' },
-    { key: 'http.status_code', vType: 'INT64', vInt64: '200' },
-    { key: 'http.status_text', vStr: 'OK' },
+    { key: 'url.path', vStr: '/all' },
+    { key: 'url.scheme', vStr: 'http' },
+    { key: 'server.address', vStr: 'app' },
+    { key: 'network.protocol.version', vStr: '1.1' },
+    { key: 'network.peer.address', vStr: '::ffff:172.18.0.4' },
+    { key: 'network.peer.port', vType: 'INT64', vInt64: '46886' },
+    { key: 'client.address', vStr: '::ffff:172.18.0.4' },
+    { key: 'user_agent.original', vStr: 'node' },
+    {
+      key: 'http.response.status_code',
+      vType: 'INT64',
+      vInt64: '200'
+    },
     { key: 'span.kind', vStr: 'server' },
     { key: 'status.code', vType: 'INT64', vInt64: '1' }
   ]
@@ -185,24 +186,24 @@ function compareSpans(actual, expected) {
     assert.strictEqual(actual.name, expected.name);
 
     assert.strictEqual(
-      actual.attributes['http.method'],
-      expected.attributes['http.method']
+      actual.attributes['http.request.method'],
+      expected.attributes['http.request.method']
     );
     assert.strictEqual(
-      actual.attributes['http.url'],
-      expected.attributes['http.url']
+      actual.attributes['server.address'],
+      expected.attributes['server.address']
     );
     assert.strictEqual(
       actual.attributes['http.route'],
       expected.attributes['http.route']
     );
     assert.strictEqual(
-      actual.attributes['http.target'],
-      expected.attributes['http.target']
+      actual.attributes['url.path'],
+      expected.attributes['url.path']
     );
     assert.strictEqual(
-      actual.attributes['otel.library.name'],
-      expected.attributes['otel.library.name']
+      actual.attributes['otel.scope.name'],
+      expected.attributes['otel.scope.name']
     );
 
     // TODO: Check for status. HTTP Sink endpoint on the collector doesn't return status correctly.

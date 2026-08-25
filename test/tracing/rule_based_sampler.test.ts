@@ -161,5 +161,5 @@ test('Tracing: OTEL_TRACES_SAMPLER=rules uses composite sampler', async () => {
   const spans = exporter.getFinishedSpans();
 
   assert.equal(spans.length, 1);
-  assert.equal(spans[0].attributes['http.target'], '/foo');
+  assert.equal(spans[0].attributes['url.path'], '/foo');
 });

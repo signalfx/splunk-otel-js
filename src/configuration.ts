@@ -48,6 +48,7 @@ import {
 import { AttributeValue } from '@opentelemetry/api';
 import { convertSubstitution, envSubstitute } from './configuration/substitute';
 import { getEffectiveState } from './opamp/effective-state';
+import { DEFAULT_SNAPSHOT_SELECTION_PROBABILITY } from './tracing/snapshots';
 
 type ConfigSampler = ConfigSchemaSampler;
 
@@ -88,6 +89,9 @@ export type SplunkConfiguration = {
   };
   opamp?: {
     endpoint?: string | null;
+    features?: {
+      remote_config?: boolean | null;
+    } | null;
   };
 };
 export type DistroConfiguration = OpenTelemetryConfiguration & {
@@ -312,6 +316,9 @@ function fetchConfigValue(key: EnvVarKey, config: DistroConfiguration) {
     }
     case 'SPLUNK_OPAMP_ENDPOINT': {
       return splunkConfig(config)?.opamp?.endpoint;
+    }
+    case 'SPLUNK_OPAMP_REMOTE_CONFIG': {
+      return splunkConfig(config)?.opamp?.features?.remote_config === true;
     }
     case 'SPLUNK_ACCESS_TOKEN': {
       return undefined;
@@ -755,6 +762,17 @@ function getEffectiveEnvironmentConfig(): string {
         getConfigNumber('SPLUNK_SNAPSHOT_PROFILER_SAMPLING_INTERVAL', 1),
     ],
     [
+      'SPLUNK_SNAPSHOT_SELECTION_PROBABILITY',
+      state.snapshotSelectionProbability ??
+        getConfigNumber(
+          [
+            'SPLUNK_SNAPSHOT_SELECTION_PROBABILITY',
+            'SPLUNK_SNAPSHOT_SELECTION_RATE',
+          ],
+          DEFAULT_SNAPSHOT_SELECTION_PROBABILITY
+        ),
+    ],
+    [
       'SPLUNK_PROFILER_CALL_STACK_INTERVAL',
       state.callStackInterval ??
         getConfigNumber('SPLUNK_PROFILER_CALL_STACK_INTERVAL', 1000),
@@ -932,30 +950,44 @@ function projectMeterProvider(config: DistroConfiguration): object | undefined {
 // start is dropped from the report.
 function projectProfiling(config: DistroConfiguration): object | undefined {
   const profiling = splunkConfig(config)?.profiling;
-  if (profiling === undefined) {
-    return undefined;
-  }
-
   const state = getEffectiveState();
 
+  // A feature is reported when the runtime says it is actually running, OR when
+  // it is declared locally and no component reported it as stopped. The first
+  // case surfaces remote-config enables that have no local declaration; the
+  // second preserves declared config before any runtime outcome is recorded.
+  const featureRunning = (
+    configured: boolean,
+    runtime: boolean | undefined
+  ): boolean => runtime === true || (configured && runtime !== false);
+
+  const cpuRunning = featureRunning(
+    profiling?.always_on?.cpu_profiler !== undefined,
+    state.profilerEnabled
+  );
+  const memoryRunning = featureRunning(
+    profiling?.always_on?.memory_profiler !== undefined,
+    state.memoryProfilerEnabled
+  );
+  const callgraphsRunning = featureRunning(
+    profiling?.callgraphs !== undefined,
+    state.snapshotProfilerEnabled
+  );
+
   const alwaysOn: Record<string, unknown> = {};
-  const cpuProfiler = profiling.always_on?.cpu_profiler;
-  // A configured cpu_profiler implies always-on profiling is enabled, unless a
-  // component reported that it did not actually start.
-  if (cpuProfiler !== undefined && state.profilerEnabled !== false) {
+  if (cpuRunning) {
     alwaysOn.cpu_profiler = {
       // Prefer the interval the profiler actually started with; otherwise fill
       // the default sampling interval when omitted from the file.
       sampling_interval:
-        state.callStackInterval ?? cpuProfiler?.sampling_interval ?? 1000,
+        state.callStackInterval ??
+        profiling?.always_on?.cpu_profiler?.sampling_interval ??
+        1000,
     };
   }
-  if (
-    profiling.always_on?.memory_profiler !== undefined &&
-    state.memoryProfilerEnabled !== false &&
-    state.profilerEnabled !== false
-  ) {
-    alwaysOn.memory_profiler = profiling.always_on.memory_profiler;
+  // The memory profiler only runs alongside the CPU profiler.
+  if (memoryRunning && cpuRunning) {
+    alwaysOn.memory_profiler = profiling?.always_on?.memory_profiler ?? {};
   }
 
   const profilingOut: Record<string, unknown> = {};
@@ -965,19 +997,19 @@ function projectProfiling(config: DistroConfiguration): object | undefined {
   // The runtime treats snapshot profiling as enabled whenever a callgraphs key
   // is present, including a bare `callgraphs:` that YAML parses as null (see
   // SPLUNK_SNAPSHOT_PROFILER_ENABLED). Match that here so a config relying on
-  // default snapshot settings is not reported as inactive, unless a component
-  // reported it did not actually start.
-  if (
-    profiling.callgraphs !== undefined &&
-    state.snapshotProfilerEnabled !== false
-  ) {
+  // default snapshot settings is not reported as inactive.
+  if (callgraphsRunning) {
     profilingOut.callgraphs = {
       // Default the sampling interval (matching startSnapshotProfiling) when it
       // is absent, e.g. for a bare callgraphs block.
       sampling_interval:
         state.snapshotSamplingInterval ??
-        profiling.callgraphs?.sampling_interval ??
+        profiling?.callgraphs?.sampling_interval ??
         1,
+      selection_probability:
+        state.snapshotSelectionProbability ??
+        profiling?.callgraphs?.selection_probability ??
+        DEFAULT_SNAPSHOT_SELECTION_PROBABILITY,
     };
   }
 

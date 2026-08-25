@@ -19,9 +19,13 @@ import { ReadableSpan, Span } from '@opentelemetry/sdk-trace-base';
 import { SpanProcessor } from '@opentelemetry/sdk-trace-base';
 
 export type TraceIdCallback = (traceId: string) => void;
+// Returns whether a snapshot was actually begun. False when snapshot profiling
+// is inactive, so the processor can skip recording/stamping the span and keep
+// begin/end symmetric.
+export type TraceSnapshotBeginCallback = (traceId: string) => boolean;
 
 export interface SnapshotSpanProcessorOptions {
-  traceSnapshotBegin: TraceIdCallback;
+  traceSnapshotBegin: TraceSnapshotBeginCallback;
   traceSnapshotEnd: TraceIdCallback;
 }
 
@@ -31,7 +35,7 @@ function shouldProcessContext(context: Context): boolean {
 }
 
 export class SnapshotSpanProcessor implements SpanProcessor {
-  traceSnapshotBegin: TraceIdCallback;
+  traceSnapshotBegin: TraceSnapshotBeginCallback;
   traceSnapshotEnd: TraceIdCallback;
   // Mapping of span ID to trace ID.
   // We can't reconstruct the parent span context in processors onEnd,
@@ -58,10 +62,15 @@ export class SnapshotSpanProcessor implements SpanProcessor {
     )?.value;
 
     if (volumeFromBaggage === 'highest') {
-      span.setAttribute('splunk.snapshot.profiling', true);
       const spanCtx = span.spanContext();
-      this.snapshotSpans.set(spanCtx.spanId, spanCtx.traceId);
-      this.traceSnapshotBegin(span.spanContext().traceId);
+      // Only record and stamp the span if a snapshot actually began. When
+      // snapshot profiling is inactive the begin is a no-op, and recording it
+      // would leave a stale entry that fires an unbalanced traceSnapshotEnd.
+      const began = this.traceSnapshotBegin(spanCtx.traceId);
+      if (began) {
+        span.setAttribute('splunk.snapshot.profiling', true);
+        this.snapshotSpans.set(spanCtx.spanId, spanCtx.traceId);
+      }
     }
   }
 
@@ -75,6 +84,18 @@ export class SnapshotSpanProcessor implements SpanProcessor {
 
     this.traceSnapshotEnd(traceId);
     this.snapshotSpans.delete(spanId);
+  }
+
+  // Drops the in-flight span->trace mappings. Called when snapshot profiling is
+  // turned off so spans that started while active do not later (on onEnd) fire
+  // an unbalanced traceSnapshotEnd against a profiler that has been reset.
+  // Returns the distinct trace IDs that were in flight so the caller can remove
+  // their native trace-id filters (otherwise those entries leak, since the
+  // matching traceSnapshotEnd -> removeTraceIdFilter will never run).
+  clearActiveSnapshots(): string[] {
+    const traceIds = new Set(this.snapshotSpans.values());
+    this.snapshotSpans.clear();
+    return [...traceIds];
   }
 
   forceFlush(): Promise<void> {

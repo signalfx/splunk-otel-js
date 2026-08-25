@@ -18,7 +18,7 @@ for d in ./examples/esbuild/*/ ; do
     echo "$d"
     (
       cd "$d";
-      npm install
+      npm install "$PKG"
     )
   fi
 done

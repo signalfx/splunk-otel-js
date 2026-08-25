@@ -121,7 +121,7 @@ describe('start', () => {
         return { stop: signals.stop.metrics };
       }),
       profiling: mock.method(profiling, 'startProfiling', () => {
-        return { stop: signals.stop.profiling };
+        return { started: true, stop: signals.stop.profiling };
       }),
       tracing: mock.method(tracing, 'startTracing', () => true),
     };
@@ -132,15 +132,15 @@ describe('start', () => {
   });
 
   describe('toggling signals', () => {
-    it('should run only enable tracing by default', () => {
+    it('should run only enable tracing by default', async () => {
       start();
       assertCalled(signals.start, ['tracing']);
 
-      stop();
+      await stop();
       assertCalled(signals.stop, ['tracing']);
     });
 
-    it('should allow toggling signals via boolean', () => {
+    it('should allow toggling signals via boolean', async () => {
       start({
         metrics: true,
         profiling: true,
@@ -149,11 +149,11 @@ describe('start', () => {
       });
       assertCalled(signals.start, ['metrics', 'profiling', 'logging']);
 
-      stop();
+      await stop();
       assertCalled(signals.stop, ['metrics', 'profiling', 'logging']);
     });
 
-    it('should allow toggling signals via env', () => {
+    it('should allow toggling signals via env', async () => {
       process.env.SPLUNK_METRICS_ENABLED = 'y';
       process.env.SPLUNK_PROFILER_ENABLED = '1';
       process.env.SPLUNK_TRACING_ENABLED = 'no';
@@ -162,17 +162,17 @@ describe('start', () => {
       start();
       assertCalled(signals.start, ['profiling', 'metrics', 'logging']);
 
-      stop();
+      await stop();
       assertCalled(signals.stop, ['profiling', 'metrics', 'logging']);
     });
 
-    it('should throw if start called multiple times', () => {
+    it('should throw if start called multiple times', async () => {
       start();
       assert.throws(() => start());
 
       assertCalled(signals.start, ['tracing']);
 
-      stop();
+      await stop();
       assertCalled(signals.stop, ['tracing']);
     });
 

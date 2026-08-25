@@ -47,7 +47,10 @@ describe('snapshot span processor', () => {
 
   beforeEach(() => {
     opts = {
-      traceSnapshotBegin(_traceId) {},
+      // Returns true to model an active profiler that actually began a snapshot.
+      traceSnapshotBegin(_traceId) {
+        return true;
+      },
       traceSnapshotEnd(_traceId) {},
     };
 
@@ -168,5 +171,72 @@ describe('snapshot span processor', () => {
 
     assert.strictEqual(beginSnapshot.mock.callCount(), 0);
     assert.strictEqual(endSnapshot.mock.callCount(), 0);
+  });
+
+  it('does not record or stamp the span when the profiler is inactive', () => {
+    // An inactive profiler returns false from begin; the processor must not set
+    // the attribute, and onEnd must not fire an unbalanced end for the span.
+    beginSnapshot.mock.mockImplementation(() => false);
+
+    const baggage = propagation.createBaggage({
+      [VOLUME_BAGGAGE_KEY]: { value: 'highest' },
+    });
+    const parentCtx = propagation.setBaggage(ROOT_CONTEXT, baggage);
+    const span = tracer.startSpan('root') as SdkSpan;
+
+    processor.onStart(span, parentCtx);
+    assert.strictEqual(span.attributes['splunk.snapshot.profiling'], undefined);
+
+    processor.onEnd(span);
+    assert.strictEqual(beginSnapshot.mock.callCount(), 1);
+    assert.strictEqual(endSnapshot.mock.callCount(), 0);
+  });
+
+  it('clearActiveSnapshots drops in-flight spans so onEnd does not fire', () => {
+    const baggage = propagation.createBaggage({
+      [VOLUME_BAGGAGE_KEY]: { value: 'highest' },
+    });
+    const parentCtx = propagation.setBaggage(ROOT_CONTEXT, baggage);
+    const span = tracer.startSpan('root') as SdkSpan;
+
+    processor.onStart(span, parentCtx);
+    // Snapshot profiling is turned off mid-trace: the mapping is cleared and the
+    // in-flight trace id is returned so the caller can drop its native filter.
+    const dropped = processor.clearActiveSnapshots();
+    assert.deepStrictEqual(dropped, [span.spanContext().traceId]);
+    processor.onEnd(span);
+
+    assert.strictEqual(beginSnapshot.mock.callCount(), 1);
+    assert.strictEqual(endSnapshot.mock.callCount(), 0, 'end must not fire');
+  });
+
+  it('clearActiveSnapshots returns each in-flight trace id once', () => {
+    // Two spans sharing a trace, plus a span on a second trace: the dropped set
+    // is deduped by trace id so the caller removes each native filter once.
+    const baggage = propagation.createBaggage({
+      [VOLUME_BAGGAGE_KEY]: { value: 'highest' },
+    });
+
+    function startOnTrace(traceId: string, spanId: string) {
+      const parentCtx = propagation.setBaggage(
+        trace.setSpanContext(ROOT_CONTEXT, {
+          traceId,
+          spanId,
+          isRemote: true,
+          traceFlags: TraceFlags.SAMPLED,
+        }),
+        baggage
+      );
+      const span = tracer.startSpan('child', undefined, parentCtx) as SdkSpan;
+      processor.onStart(span, parentCtx);
+    }
+
+    const otherTrace = 'bbbbccccddddeeeeffff111122223333';
+    startOnTrace(TRACE_ID, 'aaaabbbbcccc0001');
+    startOnTrace(TRACE_ID, 'aaaabbbbcccc0002');
+    startOnTrace(otherTrace, 'aaaabbbbcccc0003');
+
+    const dropped = processor.clearActiveSnapshots();
+    assert.deepStrictEqual([...dropped].sort(), [otherTrace, TRACE_ID].sort());
   });
 });

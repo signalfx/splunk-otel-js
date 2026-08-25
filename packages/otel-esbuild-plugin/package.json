@@ -1,6 +1,6 @@
 {
   "name": "@splunk/otel-esbuild-plugin-node",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Splunk OpenTelemetry esbuild plugin for Node.js",
   "keywords": [
     "esbuild",
@@ -45,7 +45,7 @@
     "opentelemetry-esbuild-plugin-node": "^4.4.0"
   },
   "peerDependencies": {
-    "@splunk/otel": "^4.7.2"
+    "@splunk/otel": "^4.9.0"
   },
   "engines": {
     "node": ">=18"

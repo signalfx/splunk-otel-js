@@ -1,5 +1,23 @@
 # Change Log - @splunk/otel
 
+## 4.11.0
+
+- OpAMP: add snapshot selection probability. [#1179](https://github.com/signalfx/splunk-otel-js/pull/1179)
+- Upgrade to OpenTelemetry 2.10.0 / 0.221.0. [#1181](https://github.com/signalfx/splunk-otel-js/pull/1181)
+  - OTel moved to stable semantic conventions, thus a few attribute names have now changed.
+    See https://opentelemetry.io/docs/specs/semconv/non-normative/http-migration/
+    and https://opentelemetry.io/docs/specs/semconv/non-normative/db-migration/
+    for the changed attribute names.
+- Fix `OTEL_TRACES_SAMPLER` env var not building samplers correctly. The error
+  was introduced with `4.10.0`. Fixes [#1180](https://github.com/signalfx/splunk-otel-js/issues/1180). [#1182](https://github.com/signalfx/splunk-otel-js/pull/1182)
+
+## 4.10.0
+
+- Upgrade to OpenTelemetry 2.9.0 / 0.220.0. [#1175](https://github.com/signalfx/splunk-otel-js/pull/1175)
+- Add OpAMP remote configuration support. [#1170](https://github.com/signalfx/splunk-otel-js/pull/1170)
+- Add support for trace context propagation to `pg` instrumentation. [#1174](https://github.com/signalfx/splunk-otel-js/pull/1174)
+- Support `OTEL_CONFIG_FILE`. `OTEL_EXPERIMENTAL_CONFIG_FILE` still works, but support will be removed in 5.0. [#1171](https://github.com/signalfx/splunk-otel-js/pull/1171)
+
 ## 4.9.0
 
 - Upgrade to OpenTelemetry 2.8.0 / 0.219.0. [#1163](https://github.com/signalfx/splunk-otel-js/pull/1163)

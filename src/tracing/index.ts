@@ -36,10 +36,15 @@ import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-ho
 import type { StartTracingOptions, TracingOptions } from './types';
 import { isProfilingContextManagerSet } from '../profiling';
 import {
-  isSnapshotProfilingEnabled,
+  isSnapshotProfilingActive,
+  registerSnapshotPropagator,
   snapshotSpanProcessor,
+  unregisterSnapshotPropagator,
 } from './snapshots/Snapshots';
-import { SnapshotPropagator } from './snapshots';
+import {
+  DEFAULT_SNAPSHOT_SELECTION_PROBABILITY,
+  SnapshotPropagator,
+} from './snapshots';
 import { CompositePropagator } from '@opentelemetry/core';
 import { getConfigNumber } from '../configuration';
 
@@ -93,20 +98,27 @@ export function startTracing(options: TracingOptions): boolean {
 
   let propagator = options.propagatorFactory(options);
 
-  if (isSnapshotProfilingEnabled()) {
+  // Install the snapshot propagator whenever a snapshot profiler is registered,
+  // even an inactive one pre-registered for remote config: trace selection must
+  // happen at span creation so callgraphs can be toggled on later.
+  if (snapshotSpanProcessor() !== undefined) {
+    const snapshotPropagator = new SnapshotPropagator(
+      getConfigNumber(
+        [
+          'SPLUNK_SNAPSHOT_SELECTION_PROBABILITY',
+          'SPLUNK_SNAPSHOT_SELECTION_RATE',
+        ],
+        DEFAULT_SNAPSHOT_SELECTION_PROBABILITY
+      ),
+      // Only originate/observe snapshot-volume baggage while the profiler is
+      // actually collecting, not merely registered (it may be pre-registered
+      // inactive for remote config and never enabled).
+      isSnapshotProfilingActive
+    );
+    registerSnapshotPropagator(snapshotPropagator);
+
     propagator = new CompositePropagator({
-      propagators: [
-        propagator,
-        new SnapshotPropagator(
-          getConfigNumber(
-            [
-              'SPLUNK_SNAPSHOT_SELECTION_PROBABILITY',
-              'SPLUNK_SNAPSHOT_SELECTION_RATE',
-            ],
-            0.01
-          )
-        ),
-      ],
+      propagators: [propagator, snapshotPropagator],
     });
   }
   propagation.setGlobalPropagator(propagator);
@@ -131,11 +143,9 @@ export function startTracing(options: TracingOptions): boolean {
     spanProcessors = [spanProcessors];
   }
 
-  if (isSnapshotProfilingEnabled()) {
-    const processor = snapshotSpanProcessor();
-    if (processor !== undefined) {
-      spanProcessors.push(processor);
-    }
+  const processor = snapshotSpanProcessor();
+  if (processor !== undefined) {
+    spanProcessors.push(processor);
   }
 
   const tracerConfig: NodeTracerConfig = {
@@ -169,6 +179,7 @@ export async function stopTracing() {
   // mostly for tests.
   unregisterInstrumentations?.();
   unregisterInstrumentations = null;
+  unregisterSnapshotPropagator();
 
   const shutdownPromise = shutdownGlobalTracerProvider();
 

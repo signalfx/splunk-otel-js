@@ -213,7 +213,7 @@ describe('SecureAppInstrumentation log emission', () => {
   beforeEach(() => {
     exporter = new InMemoryLogRecordExporter();
     provider = new LoggerProvider({
-      processors: [new SimpleLogRecordProcessor(exporter)],
+      processors: [new SimpleLogRecordProcessor({ exporter })],
     });
     logsAPI.logs.setGlobalLoggerProvider(provider);
   });

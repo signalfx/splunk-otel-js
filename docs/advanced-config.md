@@ -70,15 +70,15 @@ This distribution supports all the configuration options supported by the compon
 | `SPLUNK_ACCESS_TOKEN`<br>`accessToken`                          |                         | Stable  | The optional access token for exporting signal data directly to SignalFx API.
 | `SPLUNK_REALM`<br>`realm`                                       |                         | Stable  | The name of your organization's realm, for example, ``us0``. When you set the realm, telemetry is sent directly to the ingest endpoint of Splunk Observability Cloud, bypassing the Splunk OpenTelemetry Collector. Overridden by settings that define a complete endpoint URL, like `OTEL_EXPORTER_OTLP_ENDPOINT`.
 | `SPLUNK_TRACE_RESPONSE_HEADER_ENABLED`<br>`tracing.serverTimingEnabled` | `true`          | Stable  | Enable injection of `Server-Timing` header to HTTP responses.
-| `SPLUNK_REDIS_INCLUDE_COMMAND_ARGS`                             | `false`                 | Stable  | Will include the full redis query in `db.statement` span attribute when using `redis` instrumentation.
+| `SPLUNK_REDIS_INCLUDE_COMMAND_ARGS`                             | `false`                 | Stable  | Will include the full redis query in `db.query.text` span attribute when using `redis` instrumentation.
 
 \*: Overwritten default value
 
 #### Sampling configuration
 
-| Environment variable     | Default value           | Support | Notes
-| ------------------------ | ------------------------ | -------------- | ------- | ----------- |
-| `OTEL_TRACES_SAMPLER`    | `always_on` | Stable  | Sampler to be used for traces. See [Sampling](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling)
+| Environment variable  | Default value | Support | Notes
+| --------------------- | ------------- | ------- | -----
+| `OTEL_TRACES_SAMPLER` | `always_on`   | Stable  | Sampler to be used for traces. See [Sampling](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling)
 
 Splunk Distribution of OpenTelemetry JS supports all standard samplers as provided by
 [OpenTelemetry JS SDK](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-sdk-trace-base#built-in-samplers).
@@ -99,7 +99,7 @@ All requests to downstream services that happen as a consequence of calling an e
 The value of `OTEL_TRACES_SAMPLER_ARG` is interpreted as a semicolon-separated list of rules.
 The following types of rules are supported:
 
-- `drop=<value>`: The sampler drops a span if its `url.path` (or `http.target` for instrumentations using older semantic conventions) attribute has a substring equal to the provided value.
+- `drop=<value>`: The sampler drops a span if its `url.path` attribute has a substring equal to the provided value.
   You can provide as many `drop` rules as you want.
 - `fallback=sampler`: Fallback sampler used if no `drop` rule matched a given span.
   Supported fallback samplers are `always_on` and `parentbased_always_on`.
@@ -127,6 +127,9 @@ The following config options can be set by passing them as tracing arguments to 
 
 - `tracing.tracerConfig`: An object that is merged into the default tracer config replacing any existing keys. It's passed to the tracer provider during initialization. This can be used to customize the tracer provider or tracer.
 
+#### Instrumentation specific
+
+* Fastify ignore-path glob matching, configured with `OTEL_FASTIFY_IGNORE_PATHS` or a string in the instrumentation's `ignorePaths` option, requires Node.js 20.17.0 through 20.x, 22.5.0 through 22.x, or 23.0.0 and later. It is unavailable on Node.js 21.x and Node.js 22.0.0 through 22.4.x. On unsupported Node.js versions, configure `ignorePaths` with a function instead.
 
 ### Metrics
 
@@ -152,7 +155,7 @@ The following config options can be set by passing them as tracing arguments to 
 | `SPLUNK_PROFILER_MEMORY_ENABLED`<br>`profiling.memoryProfilingEnabled` | `false`          | Experimental | Enable continuous memory profiling.
 | `SPLUNK_PROFILER_LOGS_ENDPOINT`<br>`endpoint`                   | `http://localhost:4318` | Experimental | The OTLP logs receiver endpoint used for profiling data.
 | `OTEL_SERVICE_NAME`<br>`serviceName`                            | `unnamed-node-service`  | Stable  | Service name of the application.
-| `OTEL_RESOURCE_ATTRIBUTES`                                      |                         | Stable  | Comma-separated list of resource attributes. <details><summary>Example</summary>`deployment.environment=demo,key2=val2`</details>
+| `OTEL_RESOURCE_ATTRIBUTES`                                      |                         | Stable  | Comma-separated list of resource attributes. <details><summary>Example</summary>`deployment.environment.name=demo,key2=val2`</details>
 
 ### File based configuration
 
