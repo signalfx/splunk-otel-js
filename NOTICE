@@ -9,3 +9,10 @@ The fastify instrumentation (src/instrumentations/external/fastify) is copied
 and derived from @fastify/otel (https://github.com/fastify/otel), licensed
 under the MIT License, Copyright (c) 2024-present The Fastify team. See
 src/instrumentations/external/fastify/LICENSE for the full license text.
+
+The mysql2 instrumentation (src/instrumentations/external/mysql2) is copied and
+derived from @opentelemetry/instrumentation-mysql2
+(https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/packages/instrumentation-mysql2),
+licensed under the Apache License, Version 2.0, Copyright The OpenTelemetry
+Authors. See src/instrumentations/external/mysql2/LICENSE for the full license
+text.

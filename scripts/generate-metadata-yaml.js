@@ -21,6 +21,7 @@ const KNOWN_TARGET_LIBRARY_VERSIONS = new Map([
   ['@opentelemetry/instrumentation-lru-memoizer', ['>=1.3 <3']],
   ['@opentelemetry/instrumentation-socket.io', ['>=2 <5']],
   ['@opentelemetry/instrumentation-undici', ['>=5.12.0']],
+  ['@opentelemetry/instrumentation-mysql2', ['>=1.4.2 <4']],
   ['@fastify/otel', ['>=4.0.0 <6']],
 ]);
 

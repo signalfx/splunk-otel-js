@@ -6,6 +6,7 @@
     "**/build/**",
     "src/profiling/proto/**",
     "src/instrumentations/external/fastify/*",
+    "src/instrumentations/external/mysql2/**",
     "**.yml",
     "**.yaml"
   ],
