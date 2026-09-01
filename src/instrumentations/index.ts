@@ -41,6 +41,7 @@ import { AmqplibInstrumentation } from '@opentelemetry/instrumentation-amqplib';
 import { AwsInstrumentation } from '@opentelemetry/instrumentation-aws-sdk';
 import { BunyanInstrumentation } from '@opentelemetry/instrumentation-bunyan';
 import { CassandraDriverInstrumentation } from '@opentelemetry/instrumentation-cassandra-driver';
+import { CouchbaseInstrumentation } from './external/couchbase';
 import { ConnectInstrumentation } from '@opentelemetry/instrumentation-connect';
 import { DataloaderInstrumentation } from '@opentelemetry/instrumentation-dataloader';
 import { DnsInstrumentation } from '@opentelemetry/instrumentation-dns';
@@ -108,6 +109,10 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
   {
     create: () => new CassandraDriverInstrumentation(),
     shortName: 'cassandra_driver',
+  },
+  {
+    create: () => new CouchbaseInstrumentation(),
+    shortName: 'couchbase',
   },
   {
     create: () => new ConnectInstrumentation(),

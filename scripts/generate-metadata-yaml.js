@@ -6,6 +6,7 @@ const { getInstrumentations } = require('../lib/instrumentations');
 const LOADED_INSTRUMENTATIONS = getInstrumentations();
 
 const KNOWN_TARGET_LIBRARY_VERSIONS = new Map([
+  ['splunk-opentelemetry-instrumentation-couchbase', ['>=4.7.0 <5']],
   ['splunk-opentelemetry-instrumentation-elasticsearch', ['>=5 <8']],
   ['splunk-opentelemetry-instrumentation-kafkajs', ['>=0.1.0 <3']],
   ['splunk-opentelemetry-instrumentation-sequelize', ['*']],
@@ -77,6 +78,11 @@ const INSTRUMENTATIONS = [
   { name: '@opentelemetry/instrumentation-tedious', target: 'tedious' },
   { name: '@opentelemetry/instrumentation-undici', target: 'undici' },
   { name: '@opentelemetry/instrumentation-winston', target: 'winston' },
+  {
+    name: 'splunk-opentelemetry-instrumentation-couchbase',
+    target: 'couchbase',
+    support: 'supported',
+  },
   {
     name: 'splunk-opentelemetry-instrumentation-elasticsearch',
     target: '@elastic/elasticsearch',
