@@ -32,7 +32,7 @@ describe('instrumentations', () => {
 
   it('loads instrumentations if they are installed', () => {
     const loadedInstrumentations = getInstrumentations();
-    assert.equal(loadedInstrumentations.length, 42);
+    assert.equal(loadedInstrumentations.length, 43);
   });
 
   it('does not load instrumentations if OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED is false', () => {
@@ -80,7 +80,7 @@ describe('instrumentations', () => {
       ),
       undefined
     );
-    assert.equal(loadedInstrumentations.length, 41);
+    assert.equal(loadedInstrumentations.length, 42);
   });
 
   describe('database trace context propagation', () => {

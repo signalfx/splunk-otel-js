@@ -77,6 +77,7 @@ By default, the following instrumentations are active:
 * [`@opentelemetry/instrumentation-typeorm`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/packages/instrumentation-typeorm)
 * [`@opentelemetry/instrumentation-undici`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/packages/instrumentation-undici)
 * [`@opentelemetry/instrumentation-winston`](https://github.com/open-telemetry/opentelemetry-js-contrib/tree/main/packages/instrumentation-winston)
+* [`splunk-opentelemetry-instrumentation-couchbase`](https://github.com/signalfx/splunk-otel-js/tree/main/src/instrumentations/external/couchbase) (Couchbase SDK 4.7+)
 * [`splunk-opentelemetry-instrumentation-elasticsearch`](https://github.com/signalfx/splunk-otel-js/tree/main/src/instrumentations/external/elasticsearch)
 * [`splunk-opentelemetry-instrumentation-neo4j`](https://github.com/signalfx/splunk-otel-js/tree/main/src/instrumentations/external/neo4j)
 
