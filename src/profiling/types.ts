@@ -94,6 +94,13 @@ export interface ProfilingExtension {
   collect(handle: number): CpuProfile | null;
   enterContext(context: unknown, traceId: string, spanId: string): void;
   exitContext(context: unknown): void;
+  continuationContextSupported(): boolean;
+  enableContinuationContext(contextKey: symbol): boolean;
+  disableContinuationContext(): void;
+  getContinuationContext(): unknown;
+  setContinuationContext(frame: unknown): void;
+  enterContinuationContext(): void;
+  exitContinuationContext(): void;
   startMemoryProfiling(options?: MemoryProfilingOptions): void;
   stopMemoryProfiling(): void;
   collectHeapProfile(): HeapProfile | null;

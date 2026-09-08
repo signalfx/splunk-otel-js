@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <inttypes.h>
 #include <nan.h>
+#include <node_version.h>
 #include <stdio.h>
 #include <v8-profiler.h>
 
@@ -158,6 +159,10 @@ struct Profiling {
   int32_t handle;
   khash_t(ActivationStack) * spanActivations;
   khash_t(TraceIdFilter) * traceIdFilter;
+  bool continuationActive;
+  int32_t continuationContextHash;
+  char continuationTraceId[32];
+  char continuationSpanId[16];
   // The name/prefix given via JS.
   char name[64];
 
@@ -183,6 +188,19 @@ struct ProfilingGlobals {
 };
 
 ProfilingGlobals globals;
+
+#if NODE_MAJOR_VERSION >= 24
+struct ContinuationContextState {
+  bool enabled = false;
+  v8::Isolate *isolate = nullptr;
+  v8::Global<v8::Value> contextKey;
+};
+
+ContinuationContextState continuationContext;
+#endif
+
+void CloseActiveContinuation(Profiling *profiling, int64_t timestamp);
+void SwitchToCurrentContinuation(v8::Isolate *isolate);
 
 Profiling *GetProfilingByHandle(int32_t handle) {
   for (size_t i = 0; i < globals.profilers.size(); i++) {
@@ -538,6 +556,7 @@ NAN_METHOD(StartCpuProfiler) {
   V8StartProfiling(profiling->profiler, title);
   profiling->sampleCutoffPoint = HrTime();
   profiling->running = true;
+  SwitchToCurrentContinuation(info.GetIsolate());
 
   info.GetReturnValue().Set(true);
   return;
@@ -636,6 +655,7 @@ NAN_METHOD(StartProfiling) {
   V8StartProfiling(profiling->profiler, title);
   profiling->sampleCutoffPoint = HrTime();
   profiling->running = true;
+  SwitchToCurrentContinuation(info.GetIsolate());
 
   info.GetReturnValue().Set(profiling->handle);
 }
@@ -855,6 +875,7 @@ void ProfilingReset(Profiling *profiling) {
   kh_clear(ActivationStack, profiling->spanActivations);
   PagedArenaReset(&profiling->arena);
   profiling->activationPeriod = NewActivationPeriod(profiling);
+  profiling->continuationActive = false;
 }
 
 NAN_METHOD(CollectProfilingData) {
@@ -880,9 +901,10 @@ NAN_METHOD(CollectProfilingData) {
   ProfileTitle(nextTitle, sizeof(nextTitle), profiling->name,
                profiling->profilerSeq);
 
-  profiling->activationDepth = 0;
   int64_t newStartTime = HrTime();
   int64_t newWallStart = MicroSecondsSinceEpoch() * 1000L;
+  CloseActiveContinuation(profiling, newStartTime);
+  profiling->activationDepth = 0;
 
   V8StartProfiling(profiling->profiler, nextTitle);
   int64_t profilerStopBegin = HrTime();
@@ -898,6 +920,7 @@ NAN_METHOD(CollectProfilingData) {
     // call
     profiling->startTime = newStartTime;
     profiling->wallStartTime = newWallStart;
+    SwitchToCurrentContinuation(info.GetIsolate());
     return;
   }
 
@@ -922,6 +945,7 @@ NAN_METHOD(CollectProfilingData) {
   profiling->startTime = newStartTime;
   profiling->wallStartTime = newWallStart;
   profiling->sampleCutoffPoint = HrTime();
+  SwitchToCurrentContinuation(info.GetIsolate());
 }
 
 NAN_METHOD(StopProfiling) {
@@ -939,6 +963,7 @@ NAN_METHOD(StopProfiling) {
     return;
   }
 
+  CloseActiveContinuation(profiling, HrTime());
   profiling->running = false;
 
   char title[128];
@@ -980,20 +1005,20 @@ bool IsValidTraceId(const char *id, int32_t length) {
   return memcmp(id, emptyTraceId, 32) != 0;
 }
 
-void ProfilingEnterContext(Profiling *profiling, int32_t contextHash,
+bool ProfilingEnterContext(Profiling *profiling, int32_t contextHash,
                            int64_t timestamp,
                            const v8::String::Utf8Value &traceId,
                            const v8::String::Utf8Value &spanId) {
 
   if (!profiling->running) {
-    return;
+    return false;
   }
 
   if (profiling->onlyFilteredStacktraces) {
     uint64_t traceIdHash = XXH3_64bits(*traceId, traceId.length());
     if (kh_get(TraceIdFilter, profiling->traceIdFilter, traceIdHash) ==
         kh_end(profiling->traceIdFilter)) {
-      return;
+      return false;
     }
   }
 
@@ -1007,7 +1032,7 @@ void ProfilingEnterContext(Profiling *profiling, int32_t contextHash,
     it = kh_put(ActivationStack, profiling->spanActivations, contextHash, &ret);
 
     if (ret == -1) {
-      return;
+      return false;
     }
 
     stack = &kh_value(profiling->spanActivations, it);
@@ -1019,7 +1044,7 @@ void ProfilingEnterContext(Profiling *profiling, int32_t contextHash,
   SpanActivation *activation = ActivationStackPush(stack, &profiling->arena);
 
   if (!activation) {
-    return;
+    return false;
   }
 
   memcpy(activation->traceId, *traceId, 32);
@@ -1030,6 +1055,7 @@ void ProfilingEnterContext(Profiling *profiling, int32_t contextHash,
 #endif
 
   profiling->activationDepth++;
+  return true;
 }
 
 void ProfilingExitContext(Profiling *profiling, int32_t contextHash,
@@ -1105,10 +1131,233 @@ NAN_METHOD(ExitContext) {
   }
 }
 
+void CloseActiveContinuation(Profiling *profiling, int64_t timestamp) {
+  if (!profiling->continuationActive) {
+    return;
+  }
+
+  ProfilingExitContext(profiling, profiling->continuationContextHash,
+                       timestamp);
+  profiling->continuationActive = false;
+}
+
+void ExitAllContinuationContexts(int64_t timestamp) {
+  for (size_t i = 0; i < globals.profilers.size(); i++) {
+    CloseActiveContinuation(globals.profilers[i], timestamp);
+  }
+}
+
+#if NODE_MAJOR_VERSION >= 24
+void SwitchToCurrentContinuation(v8::Isolate *isolate) {
+  if (!continuationContext.enabled || isolate != continuationContext.isolate) {
+    return;
+  }
+
+  v8::HandleScope handleScope(isolate);
+  v8::Local<v8::Context> context = isolate->GetCurrentContext();
+  bool hasRecord = false;
+  v8::Local<v8::Object> contextObject;
+  v8::Local<v8::String> traceIdValue;
+  v8::Local<v8::String> spanIdValue;
+
+  if (!context.IsEmpty()) {
+    v8::Local<v8::Value> frameValue =
+        isolate->GetContinuationPreservedEmbedderData();
+
+    if (!frameValue.IsEmpty() && frameValue->IsMap()) {
+      v8::Local<v8::Value> key = v8::Local<v8::Value>::New(
+          isolate, continuationContext.contextKey);
+      v8::Local<v8::Value> recordValue;
+
+      if (frameValue.As<v8::Map>()->Get(context, key).ToLocal(&recordValue) &&
+          recordValue->IsArray()) {
+        v8::Local<v8::Array> record = recordValue.As<v8::Array>();
+        v8::Local<v8::Value> candidateContext;
+        v8::Local<v8::Value> candidateTraceId;
+        v8::Local<v8::Value> candidateSpanId;
+
+        if (record->Get(context, 0).ToLocal(&candidateContext) &&
+            record->Get(context, 1).ToLocal(&candidateTraceId) &&
+            record->Get(context, 2).ToLocal(&candidateSpanId) &&
+            candidateContext->IsObject() && candidateTraceId->IsString() &&
+            candidateSpanId->IsString()) {
+          contextObject = candidateContext.As<v8::Object>();
+          traceIdValue = candidateTraceId.As<v8::String>();
+          spanIdValue = candidateSpanId.As<v8::String>();
+          hasRecord = true;
+        }
+      }
+    }
+  }
+
+  int64_t timestamp = HrTime();
+
+  if (!hasRecord) {
+    ExitAllContinuationContexts(timestamp);
+    return;
+  }
+
+  v8::String::Utf8Value traceId(isolate, traceIdValue);
+  v8::String::Utf8Value spanId(isolate, spanIdValue);
+
+  if (!IsValidTraceId(*traceId, traceId.length()) ||
+      !IsValidSpanId(*spanId, spanId.length())) {
+    ExitAllContinuationContexts(timestamp);
+    return;
+  }
+
+  int32_t contextHash = contextObject->GetIdentityHash();
+
+  for (size_t i = 0; i < globals.profilers.size(); i++) {
+    Profiling *profiling = globals.profilers[i];
+
+    if (!profiling->running) {
+      continue;
+    }
+
+    if (profiling->continuationActive &&
+        profiling->continuationContextHash == contextHash &&
+        memcmp(profiling->continuationTraceId, *traceId, 32) == 0 &&
+        memcmp(profiling->continuationSpanId, *spanId, 16) == 0) {
+      continue;
+    }
+
+    CloseActiveContinuation(profiling, timestamp);
+
+    if (ProfilingEnterContext(profiling, contextHash, timestamp, traceId,
+                              spanId)) {
+      profiling->continuationActive = true;
+      profiling->continuationContextHash = contextHash;
+      memcpy(profiling->continuationTraceId, *traceId, 32);
+      memcpy(profiling->continuationSpanId, *spanId, 16);
+    }
+  }
+}
+
+void BeforeCallEntered(v8::Isolate *isolate) {
+  SwitchToCurrentContinuation(isolate);
+}
+
+void CallCompleted(v8::Isolate *isolate) {
+  if (continuationContext.enabled && isolate == continuationContext.isolate) {
+    ExitAllContinuationContexts(HrTime());
+  }
+}
+#else
+void SwitchToCurrentContinuation(v8::Isolate *) {}
+#endif
+
+NAN_METHOD(ContinuationContextSupported) {
+#if NODE_MAJOR_VERSION >= 24
+  info.GetReturnValue().Set(true);
+#else
+  info.GetReturnValue().Set(false);
+#endif
+}
+
+NAN_METHOD(EnableContinuationContext) {
+#if NODE_MAJOR_VERSION >= 24
+  info.GetReturnValue().Set(false);
+
+  if (info.Length() < 1 || !info[0]->IsSymbol()) {
+    return;
+  }
+
+  v8::Isolate *isolate = info.GetIsolate();
+
+  if (!continuationContext.enabled) {
+    continuationContext.isolate = isolate;
+    isolate->AddBeforeCallEnteredCallback(BeforeCallEntered);
+    isolate->AddCallCompletedCallback(CallCompleted);
+    continuationContext.enabled = true;
+  } else if (continuationContext.isolate != isolate) {
+    return;
+  }
+
+  continuationContext.contextKey.Reset(isolate, info[0]);
+  SwitchToCurrentContinuation(isolate);
+  info.GetReturnValue().Set(true);
+#else
+  info.GetReturnValue().Set(false);
+#endif
+}
+
+NAN_METHOD(DisableContinuationContext) {
+#if NODE_MAJOR_VERSION >= 24
+  if (!continuationContext.enabled ||
+      continuationContext.isolate != info.GetIsolate()) {
+    return;
+  }
+
+  ExitAllContinuationContexts(HrTime());
+  v8::Isolate *isolate = continuationContext.isolate;
+  continuationContext.enabled = false;
+  isolate->RemoveBeforeCallEnteredCallback(BeforeCallEntered);
+  isolate->RemoveCallCompletedCallback(CallCompleted);
+  continuationContext.contextKey.Reset();
+  continuationContext.isolate = nullptr;
+#endif
+}
+
+NAN_METHOD(GetContinuationContext) {
+#if NODE_MAJOR_VERSION >= 24
+  v8::Local<v8::Value> data =
+      info.GetIsolate()->GetContinuationPreservedEmbedderData();
+
+  if (!data.IsEmpty()) {
+    info.GetReturnValue().Set(data);
+  }
+#endif
+}
+
+NAN_METHOD(SetContinuationContext) {
+#if NODE_MAJOR_VERSION >= 24
+  if (info.Length() < 1) {
+    return;
+  }
+
+  info.GetIsolate()->SetContinuationPreservedEmbedderData(info[0]);
+#endif
+}
+
+NAN_METHOD(EnterContinuationContext) {
+  SwitchToCurrentContinuation(info.GetIsolate());
+}
+
+NAN_METHOD(ExitContinuationContext) {
+#if NODE_MAJOR_VERSION >= 24
+  if (continuationContext.enabled &&
+      continuationContext.isolate == info.GetIsolate()) {
+    ExitAllContinuationContexts(HrTime());
+  }
+#endif
+}
+
+#if NODE_MAJOR_VERSION >= 24
+void CleanupContinuationContext(void *data) {
+  v8::Isolate *isolate = static_cast<v8::Isolate *>(data);
+
+  if (continuationContext.enabled &&
+      continuationContext.isolate == isolate) {
+    continuationContext.enabled = false;
+    isolate->RemoveBeforeCallEnteredCallback(BeforeCallEntered);
+    isolate->RemoveCallCompletedCallback(CallCompleted);
+    continuationContext.contextKey.Reset();
+    continuationContext.isolate = nullptr;
+  }
+}
+#endif
+
 } // namespace
 
 void Initialize(v8::Local<v8::Object> target) {
   globals.Init();
+
+#if NODE_MAJOR_VERSION >= 24
+  node::AddEnvironmentCleanupHook(target->GetIsolate(),
+                                  CleanupContinuationContext,
+                                  target->GetIsolate());
+#endif
 
   auto profilingModule = Nan::New<v8::Object>();
   Nan::Set(
@@ -1147,6 +1396,49 @@ void Initialize(v8::Local<v8::Object> target) {
 
   Nan::Set(profilingModule, Nan::New("exitContext").ToLocalChecked(),
            Nan::GetFunction(Nan::New<v8::FunctionTemplate>(ExitContext))
+               .ToLocalChecked());
+
+  Nan::Set(
+      profilingModule,
+      Nan::New("continuationContextSupported").ToLocalChecked(),
+      Nan::GetFunction(
+          Nan::New<v8::FunctionTemplate>(ContinuationContextSupported))
+          .ToLocalChecked());
+
+  Nan::Set(profilingModule,
+           Nan::New("enableContinuationContext").ToLocalChecked(),
+           Nan::GetFunction(
+               Nan::New<v8::FunctionTemplate>(EnableContinuationContext))
+               .ToLocalChecked());
+
+  Nan::Set(profilingModule,
+           Nan::New("disableContinuationContext").ToLocalChecked(),
+           Nan::GetFunction(
+               Nan::New<v8::FunctionTemplate>(DisableContinuationContext))
+               .ToLocalChecked());
+
+  Nan::Set(profilingModule,
+           Nan::New("getContinuationContext").ToLocalChecked(),
+           Nan::GetFunction(
+               Nan::New<v8::FunctionTemplate>(GetContinuationContext))
+               .ToLocalChecked());
+
+  Nan::Set(profilingModule,
+           Nan::New("setContinuationContext").ToLocalChecked(),
+           Nan::GetFunction(
+               Nan::New<v8::FunctionTemplate>(SetContinuationContext))
+               .ToLocalChecked());
+
+  Nan::Set(profilingModule,
+           Nan::New("enterContinuationContext").ToLocalChecked(),
+           Nan::GetFunction(
+               Nan::New<v8::FunctionTemplate>(EnterContinuationContext))
+               .ToLocalChecked());
+
+  Nan::Set(profilingModule,
+           Nan::New("exitContinuationContext").ToLocalChecked(),
+           Nan::GetFunction(
+               Nan::New<v8::FunctionTemplate>(ExitContinuationContext))
                .ToLocalChecked());
 
   Nan::Set(

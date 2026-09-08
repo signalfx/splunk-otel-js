@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { context, diag } from '@opentelemetry/api';
+import { ContextManager, context, diag } from '@opentelemetry/api';
 import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
 import {
   defaultServiceName,
@@ -43,7 +43,7 @@ import type {
   ProfilingOptions,
   StartProfilingOptions,
 } from './types';
-import { ProfilingContextManager } from './ProfilingContextManager';
+import { ContinuationPreservedContextManager } from './ContinuationPreservedContextManager';
 import { OtlpHttpProfilingExporter } from './OtlpHttpProfilingExporter';
 import { isTracingContextManagerEnabled } from '../tracing';
 
@@ -108,12 +108,48 @@ export function isProfilingContextManagerSet(): boolean {
   return profilingContextManagerEnabled;
 }
 
-export function ensureProfilingContextManager() {
+export function canUseContinuationPreservedContext(
+  extension: ProfilingExtension
+): boolean {
+  const nodeMajor = Number.parseInt(process.versions.node.split('.')[0], 10);
+  const flags = [
+    ...process.execArgv,
+    ...(process.env.NODE_OPTIONS?.split(/\s+/) ?? []),
+  ];
+
+  return (
+    nodeMajor >= 24 &&
+    !flags.includes('--no-async-context-frame') &&
+    typeof extension.continuationContextSupported === 'function' &&
+    extension.continuationContextSupported()
+  );
+}
+
+export function createProfilingContextManager(
+  extension: ProfilingExtension
+): ContextManager {
+  if (canUseContinuationPreservedContext(extension)) {
+    return new ContinuationPreservedContextManager(extension);
+  }
+
+  // Load the async_hooks-based compatibility manager only when the runtime
+  // cannot use continuation-preserved embedder data.
+  const { ProfilingContextManager } = require('./ProfilingContextManager') as {
+    ProfilingContextManager: new (
+      recorder: Pick<ProfilingExtension, 'enterContext' | 'exitContext'>
+    ) => ContextManager;
+  };
+  return new ProfilingContextManager(extension);
+}
+
+export function ensureProfilingContextManager(extension?: ProfilingExtension) {
   if (profilingContextManagerEnabled === true) {
     return;
   }
 
-  const contextManager = new ProfilingContextManager();
+  const contextManager = createProfilingContextManager(
+    extension ?? loadExtension() ?? noopExtension()
+  );
   contextManager.enable();
   context.setGlobalContextManager(contextManager);
   profilingContextManagerEnabled = true;
@@ -151,7 +187,7 @@ export function startProfiling(options: ProfilingOptions) {
       `Splunk profiling: unable to set up context manager due to tracing's context manager being active. Traces won't be correlated to profiling data. Please start profiling before tracing.`
     );
   } else if (!profilingContextManagerEnabled) {
-    ensureProfilingContextManager();
+    ensureProfilingContextManager(extension);
   }
 
   const samplingIntervalMicroseconds = options.callstackInterval * 1_000;
@@ -256,6 +292,13 @@ export function noopExtension(): ProfilingExtension {
     collect: (_handle: number) => null,
     enterContext: (_context: unknown, _traceId: string, _spanId: string) => {},
     exitContext: (_context: unknown) => {},
+    continuationContextSupported: () => false,
+    enableContinuationContext: (_contextKey: symbol) => false,
+    disableContinuationContext: () => {},
+    getContinuationContext: () => undefined,
+    setContinuationContext: (_frame: unknown) => {},
+    enterContinuationContext: () => {},
+    exitContinuationContext: () => {},
     startMemoryProfiling: (_options?: MemoryProfilingOptions) => {},
     stopMemoryProfiling: () => {},
     collectHeapProfile: () => null,

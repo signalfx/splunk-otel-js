@@ -30,6 +30,7 @@ import {
 } from '../../src/profiling';
 import { ProfilingStacktrace } from '../../src/profiling/types';
 import { ProfilingContextManager } from '../../src/profiling/ProfilingContextManager';
+import { ContinuationPreservedContextManager } from '../../src/profiling/ContinuationPreservedContextManager';
 import {
   CpuProfile,
   HeapProfile,
@@ -126,9 +127,12 @@ describe('profiling', () => {
         },
       });
 
-      assert(
-        context['_getContextManager']() instanceof ProfilingContextManager
-      );
+      const installedManager = context['_getContextManager']();
+      if (Number.parseInt(process.versions.node.split('.')[0], 10) >= 24) {
+        assert(installedManager instanceof ContinuationPreservedContextManager);
+      } else {
+        assert(installedManager instanceof ProfilingContextManager);
+      }
 
       const span = trace.getTracer('test-tracer').startSpan('test-span');
       const { spanId: expectedSpanId, traceId: expectedTraceId } =

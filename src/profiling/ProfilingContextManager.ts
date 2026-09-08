@@ -25,10 +25,10 @@ export class ProfilingContextManager extends AsyncHooksContextManager {
   protected _enterContextOriginal: (context: Context) => void;
   protected _recorder: ContextRecorder;
 
-  constructor() {
+  constructor(recorder?: ContextRecorder) {
     super();
 
-    let recorder: ContextRecorder | undefined = loadExtension();
+    recorder ??= loadExtension();
 
     if (recorder === undefined) {
       recorder = {
