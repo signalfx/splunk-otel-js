@@ -71,7 +71,7 @@ function getConfig(config: any) {
 export function getQueryText(
   query: string | Query | QueryOptions,
   format?: formatType,
-  values?: any[],
+  values?: any,
   maskStatement = false,
   maskStatementHook: MySQL2InstrumentationQueryMaskingHook = defaultMaskingHook
 ): string {
