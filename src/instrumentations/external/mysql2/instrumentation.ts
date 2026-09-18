@@ -3,7 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+/// <reference lib="es2021.weakref" />
+
 import * as api from '@opentelemetry/api';
+import { errorMonitor } from 'events';
 import {
   InstrumentationBase,
   InstrumentationNodeModuleDefinition,
@@ -37,9 +40,22 @@ interface PreparedStatement {
   execute: Function;
 }
 
+type PreparedStatementRef = WeakRef<PreparedStatement>;
+type PreparedStatementConnectionErrorHandler = (err: any) => void;
+
+interface PreparedStatementConnectionErrorState {
+  handlers: Set<PreparedStatementConnectionErrorHandler>;
+  listener: PreparedStatementConnectionErrorHandler;
+}
+
 const supportedVersions = ['>=1.4.2 <4'];
 
 export class MySQL2Instrumentation extends InstrumentationBase<MySQL2InstrumentationConfig> {
+  private readonly _preparedStatementConnectionErrorStates = new WeakMap<
+    mysqlTypes.Connection,
+    PreparedStatementConnectionErrorState
+  >();
+
   constructor(config: MySQL2InstrumentationConfig = {}) {
     super(PACKAGE_NAME, PACKAGE_VERSION, config);
   }
@@ -51,7 +67,14 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
         format = moduleExports.format;
       }
     }
-    const preparedStatements = new Set<PreparedStatement>();
+    // Keep statements weakly reachable while retaining the ability to unwrap
+    // statements that are still alive when the instrumentation is disabled.
+    const preparedStatementRefs = new Set<PreparedStatementRef>();
+    const preparedStatementFinalizer = new FinalizationRegistry<PreparedStatementRef>(
+      statementRef => {
+        preparedStatementRefs.delete(statementRef);
+      }
+    );
     let patchActive = false;
     const patch = (ConnectionPrototype: mysqlTypes.Connection) => {
       patchActive = true;
@@ -80,7 +103,8 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
         'prepare',
         this._patchPrepare(
           format,
-          preparedStatements,
+          preparedStatementRefs,
+          preparedStatementFinalizer,
           () => patchActive
         ) as any
       );
@@ -90,12 +114,14 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
       this._unwrap(ConnectionPrototype, 'query');
       this._unwrap(ConnectionPrototype, 'execute');
       this._unwrap(ConnectionPrototype, 'prepare');
-      for (const statement of preparedStatements) {
-        if (isWrapped(statement.execute)) {
+      for (const statementRef of preparedStatementRefs) {
+        preparedStatementFinalizer.unregister(statementRef);
+        const statement = statementRef.deref();
+        if (statement && isWrapped(statement.execute)) {
           this._unwrap(statement, 'execute');
         }
       }
-      preparedStatements.clear();
+      preparedStatementRefs.clear();
     };
     return [
       new InstrumentationNodeModuleDefinition(
@@ -218,7 +244,8 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
 
   private _patchPrepare(
     format: formatType | undefined,
-    preparedStatements: Set<PreparedStatement>,
+    preparedStatementRefs: Set<PreparedStatementRef>,
+    preparedStatementFinalizer: FinalizationRegistry<PreparedStatementRef>,
     isPatchActive: () => boolean
   ) {
     return (originalPrepare: Function): Function => {
@@ -238,7 +265,8 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
           thisPlugin._patchPreparedStatementCallback(
             format,
             this,
-            preparedStatements,
+            preparedStatementRefs,
+            preparedStatementFinalizer,
             isPatchActive
           )
         );
@@ -251,7 +279,8 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
   private _patchPreparedStatementCallback(
     format: formatType | undefined,
     connection: mysqlTypes.Connection,
-    preparedStatements: Set<PreparedStatement>,
+    preparedStatementRefs: Set<PreparedStatementRef>,
+    preparedStatementFinalizer: FinalizationRegistry<PreparedStatementRef>,
     isPatchActive: () => boolean
   ) {
     return (originalCallback: Function) => {
@@ -275,7 +304,13 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
               connection
             )
           );
-          preparedStatements.add(statement);
+          const statementRef = new WeakRef(statement);
+          preparedStatementRefs.add(statementRef);
+          preparedStatementFinalizer.register(
+            statement,
+            statementRef,
+            statementRef
+          );
         }
 
         return originalCallback(...arguments);
@@ -320,24 +355,124 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
             thisPlugin._patchCallbackQuery(endSpan)
           );
         } else {
-          const streamableQuery: mysqlTypes.Query = originalExecute.apply(
-            this,
-            arguments
-          );
+          let streamableQuery: mysqlTypes.Query | undefined;
+          let completed = false;
+          let removeConnectionErrorHandler = () => {};
 
-          streamableQuery
-            .once('error', err => {
-              endSpan(err);
-            })
-            .once('result', results => {
-              endSpan(undefined, results);
-            });
+          const cleanup = () => {
+            removeConnectionErrorHandler();
+            streamableQuery?.removeListener('error', onCommandError);
+            streamableQuery?.removeListener('end', onCommandEnd);
+          };
+          const complete = (err?: any) => {
+            if (completed) return;
+            completed = true;
+            cleanup();
+            endSpan(err);
+          };
+          const onCommandError = (err: any) => {
+            complete(err);
+          };
+          const onCommandEnd = () => {
+            complete();
+          };
+
+          // A callback-less SELECT emits `result` once per row, and no
+          // `result` event at all for an empty result set. Wait for `end` so
+          // the span covers the whole command and can still record a later
+          // command error.
+          //
+          // Fatal/network errors for callback-less commands are emitted only
+          // by the connection. Register before calling mysql2 because a
+          // closed connection emits that error synchronously.
+          removeConnectionErrorHandler =
+            thisPlugin._registerPreparedStatementConnectionErrorHandler(
+              connection,
+              complete
+            );
+
+          try {
+            streamableQuery = originalExecute.apply(this, arguments);
+          } catch (err) {
+            complete(err);
+            throw err;
+          }
+
+          if (
+            !streamableQuery ||
+            typeof streamableQuery.once !== 'function' ||
+            typeof streamableQuery.removeListener !== 'function'
+          ) {
+            // Closed connections return no command after emitting their
+            // connection error. `complete` is idempotent, so the original
+            // connection error wins; this fallback covers an unexpected
+            // driver implementation that returns no event emitter silently.
+            complete(
+              new Error(
+                'Prepared statement execution did not return a query command'
+              )
+            );
+            return streamableQuery;
+          }
+
+          if (!completed) {
+            streamableQuery.once('error', onCommandError);
+            streamableQuery.once('end', onCommandEnd);
+          }
 
           return streamableQuery;
         }
 
-        return originalExecute.apply(this, arguments);
+        try {
+          return originalExecute.apply(this, arguments);
+        } catch (err) {
+          endSpan(err);
+          throw err;
+        }
       };
+    };
+  }
+
+  private _registerPreparedStatementConnectionErrorHandler(
+    connection: mysqlTypes.Connection,
+    handler: PreparedStatementConnectionErrorHandler
+  ): () => void {
+    let state = this._preparedStatementConnectionErrorStates.get(connection);
+
+    if (!state) {
+      // One fatal connection error invalidates the active command and every
+      // queued callback-less command. Share one monitor per connection to end
+      // all affected spans without adding a listener per queued execution.
+      // `errorMonitor` observes the error without consuming it, preserving
+      // Node's normal handled/unhandled `error` behavior for the application.
+      const handlers = new Set<PreparedStatementConnectionErrorHandler>();
+      const listener = (err: any) => {
+        this._preparedStatementConnectionErrorStates.delete(connection);
+
+        for (const pendingHandler of [...handlers]) {
+          pendingHandler(err);
+        }
+        handlers.clear();
+      };
+
+      state = { handlers, listener };
+      this._preparedStatementConnectionErrorStates.set(connection, state);
+      connection.prependOnceListener(errorMonitor, listener);
+    }
+
+    state.handlers.add(handler);
+
+    return () => {
+      state.handlers.delete(handler);
+      if (state.handlers.size === 0) {
+        connection.removeListener(errorMonitor, state.listener);
+        if (
+          this._preparedStatementConnectionErrorStates.get(connection) ===
+          state
+        ) {
+          this._preparedStatementConnectionErrorStates.delete(connection);
+        }
+      }
     };
   }
 

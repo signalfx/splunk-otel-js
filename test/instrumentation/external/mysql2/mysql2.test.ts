@@ -15,9 +15,10 @@
  */
 
 import { strict as assert } from 'assert';
-import { EventEmitter } from 'events';
+import { errorMonitor, EventEmitter } from 'events';
 import { dirname, join } from 'path';
 import { describe, it } from 'node:test';
+import { SpanStatusCode } from '@opentelemetry/api';
 import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import {
   InMemorySpanExporter,
@@ -35,9 +36,12 @@ type CommandCallback = (
 
 class FakeCommand extends EventEmitter {}
 
-class FakeConnection {
+class FakeConnection extends EventEmitter {
   config = { host: 'localhost', port: 3306, database: 'test' };
   events: string[] = [];
+  autoComplete = true;
+  preparedStatementExecuteError?: Error;
+  preparedStatementConnectionError?: Error;
   private queue: Array<{
     label: string;
     callback?: CommandCallback;
@@ -101,6 +105,9 @@ class FakeConnection {
 
     this.active = true;
     this.events.push(`started:${entry.label}`);
+    if (!this.autoComplete) {
+      return;
+    }
     setImmediate(() => {
       this.events.push(`completed:${entry.label}`);
       entry.callback?.(null, [], []);
@@ -122,6 +129,18 @@ class FakePreparedStatement {
     parametersOrCallback?: unknown | CommandCallback,
     callback?: CommandCallback
   ) {
+    if (this.connection.preparedStatementExecuteError) {
+      const error = this.connection.preparedStatementExecuteError;
+      this.connection.preparedStatementExecuteError = undefined;
+      throw error;
+    }
+    if (this.connection.preparedStatementConnectionError) {
+      const error = this.connection.preparedStatementConnectionError;
+      this.connection.preparedStatementConnectionError = undefined;
+      this.connection.emit('error', error);
+      return undefined as unknown as FakeCommand;
+    }
+
     const executeCallback =
       typeof parametersOrCallback === 'function'
         ? (parametersOrCallback as CommandCallback)
@@ -139,8 +158,8 @@ function createPatchedConnection() {
   instrumentation.setTracerProvider(provider);
   const [definition] =
     instrumentation.getModuleDefinitions() as InstrumentationNodeModuleDefinition[];
-  const connectionFile = definition.files.find(
-    (file) => file.name === 'mysql2/lib/connection.js'
+  const connectionFile = definition.files.find((file) =>
+    file.name.replace(/\\/g, '/').endsWith('mysql2/lib/connection.js')
   );
   assert.ok(connectionFile);
   connectionFile.patch(FakeConnection, '3.15.3');
@@ -249,6 +268,172 @@ describe('mysql2 prepared statements', () => {
       await promiseStatement.execute([1]);
 
       assert.equal(exporter.getFinishedSpans().length, 1);
+    } finally {
+      connectionFile.unpatch(FakeConnection, '3.15.3');
+    }
+  });
+
+  it('waits for completion when executed without a callback', async () => {
+    const { connectionFile, exporter } = createPatchedConnection();
+    const connection = new FakeConnection();
+
+    try {
+      const statement = await prepareStatement(connection, 'SELECT ?');
+      connection.autoComplete = false;
+      const command = statement.execute([1]);
+
+      command.emit('result', { id: 1 });
+      command.emit('result', { id: 2 });
+      assert.equal(exporter.getFinishedSpans().length, 0);
+
+      command.emit('end');
+      assert.equal(exporter.getFinishedSpans().length, 1);
+    } finally {
+      connectionFile.unpatch(FakeConnection, '3.15.3');
+    }
+  });
+
+  it('ends a zero-row execution on command completion', async () => {
+    const { connectionFile, exporter } = createPatchedConnection();
+    const connection = new FakeConnection();
+
+    try {
+      const statement = await prepareStatement(connection, 'SELECT ?');
+      connection.autoComplete = false;
+      const command = statement.execute([1]);
+
+      command.emit('end');
+
+      assert.equal(exporter.getFinishedSpans().length, 1);
+    } finally {
+      connectionFile.unpatch(FakeConnection, '3.15.3');
+    }
+  });
+
+  it('ends a no-callback execution on error', async () => {
+    const { connectionFile, exporter } = createPatchedConnection();
+    const connection = new FakeConnection();
+
+    try {
+      const statement = await prepareStatement(connection, 'SELECT ?');
+      connection.autoComplete = false;
+      const command = statement.execute([1]);
+      const error = new Error('query failed');
+
+      command.emit('result', { id: 1 });
+      assert.equal(exporter.getFinishedSpans().length, 0);
+
+      command.emit('error', error);
+      command.emit('end');
+
+      const [span] = exporter.getFinishedSpans();
+      assert.ok(span);
+      assert.equal(span.status.code, SpanStatusCode.ERROR);
+      assert.equal(span.status.message, error.message);
+      assert.equal(connection.listenerCount('error'), 0);
+      assert.equal(command.listenerCount('error'), 0);
+      assert.equal(command.listenerCount('end'), 0);
+    } finally {
+      connectionFile.unpatch(FakeConnection, '3.15.3');
+    }
+  });
+
+  it('ends a no-callback execution on a connection error', async () => {
+    const { connectionFile, exporter } = createPatchedConnection();
+    const connection = new FakeConnection();
+
+    try {
+      const statement = await prepareStatement(connection, 'SELECT ?');
+      const error = new Error('connection lost');
+      connection.preparedStatementConnectionError = error;
+      connection.once('error', () => {});
+
+      assert.equal(statement.execute([1]), undefined);
+
+      const [span] = exporter.getFinishedSpans();
+      assert.ok(span);
+      assert.equal(span.status.code, SpanStatusCode.ERROR);
+      assert.equal(span.status.message, error.message);
+      assert.equal(connection.listenerCount('error'), 0);
+      assert.equal(connection.listenerCount(errorMonitor), 0);
+    } finally {
+      connectionFile.unpatch(FakeConnection, '3.15.3');
+    }
+  });
+
+  it('preserves unhandled connection error behavior', async () => {
+    const { connectionFile, exporter } = createPatchedConnection();
+    const connection = new FakeConnection();
+
+    try {
+      const statement = await prepareStatement(connection, 'SELECT ?');
+      const error = new Error('connection lost');
+      connection.preparedStatementConnectionError = error;
+
+      assert.throws(() => statement.execute([1]), error);
+
+      const [span] = exporter.getFinishedSpans();
+      assert.ok(span);
+      assert.equal(span.status.code, SpanStatusCode.ERROR);
+      assert.equal(span.status.message, error.message);
+      assert.equal(connection.listenerCount(errorMonitor), 0);
+    } finally {
+      connectionFile.unpatch(FakeConnection, '3.15.3');
+    }
+  });
+
+  it('shares one connection error listener across queued executions', async () => {
+    const { connectionFile, exporter } = createPatchedConnection();
+    const connection = new FakeConnection();
+
+    try {
+      const statement = await prepareStatement(connection, 'SELECT ?');
+      connection.autoComplete = false;
+      const commands = Array.from({ length: 12 }, (_, value) =>
+        statement.execute([value])
+      );
+      const error = new Error('connection lost');
+
+      assert.equal(connection.listenerCount(errorMonitor), 1);
+      connection.once('error', () => {});
+      connection.emit('error', error);
+
+      const spans = exporter.getFinishedSpans();
+      assert.equal(spans.length, commands.length);
+      assert.ok(
+        spans.every(
+          (span) =>
+            span.status.code === SpanStatusCode.ERROR &&
+            span.status.message === error.message
+        )
+      );
+      assert.equal(connection.listenerCount('error'), 0);
+      assert.equal(connection.listenerCount(errorMonitor), 0);
+      for (const command of commands) {
+        assert.equal(command.listenerCount('error'), 0);
+        assert.equal(command.listenerCount('end'), 0);
+      }
+    } finally {
+      connectionFile.unpatch(FakeConnection, '3.15.3');
+    }
+  });
+
+  it('ends the span and rethrows a synchronous execution error', async () => {
+    const { connectionFile, exporter } = createPatchedConnection();
+    const connection = new FakeConnection();
+
+    try {
+      const statement = await prepareStatement(connection, 'SELECT ?');
+      const error = new Error('invalid parameters');
+      connection.preparedStatementExecuteError = error;
+
+      assert.throws(() => statement.execute([undefined]), error);
+
+      const [span] = exporter.getFinishedSpans();
+      assert.ok(span);
+      assert.equal(span.status.code, SpanStatusCode.ERROR);
+      assert.equal(span.status.message, error.message);
+      assert.equal(connection.listenerCount('error'), 0);
     } finally {
       connectionFile.unpatch(FakeConnection, '3.15.3');
     }
