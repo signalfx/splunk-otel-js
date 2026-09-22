@@ -266,6 +266,8 @@ jobs:
           node-version: ${{ matrix.nodejs }}
       - name: Install npm dependencies
         run: npm ci
+      - name: Build native extension
+        run: npm run prebuild:current
       - name: Test
         run: npm run test
         env:
@@ -295,6 +297,8 @@ jobs:
           node-version: ${{ matrix.nodejs }}
       - name: Install npm dependencies
         run: npm ci
+      - name: Build native extension
+        run: npm run prebuild:current
       - name: Test
         run: npm run test
 
