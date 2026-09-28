@@ -53,7 +53,7 @@
     "compile:jsonschema-to-typescript": "npm run -w @splunk/jsonschema-to-typescript compile",
     "gen-metadata": "node scripts/generate-metadata-yaml.js",
     "prepare-release-artifact": "node scripts/prepare-release-artifact.mjs",
-    "install": "node-gyp-build",
+    "install": "node-gyp-build-optional",
     "fmt:check": "oxfmt --check",
     "fmt:fix": "oxfmt",
     "lint": "oxlint --deny-warnings && npm run fmt:check",
