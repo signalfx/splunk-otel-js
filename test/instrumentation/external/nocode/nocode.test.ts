@@ -19,7 +19,12 @@ import * as fs from 'fs';
 import { strict as assert } from 'assert';
 import { after, before, beforeEach, describe, it } from 'node:test';
 import { NoCodeInstrumentation } from '../../../../src/instrumentations/external/nocode';
-import { getTestSpans, setInstrumentation, provider, exporter } from '../setup';
+import {
+  getTestSpans,
+  setInstrumentation,
+  registerProvider,
+  exporter,
+} from '../setup';
 
 const configPath = './test/instrumentation/external/nocode/nocode.config.json';
 const absolutePathToUtils = path.resolve(__dirname, 'sample-utils.ts');
@@ -135,7 +140,7 @@ fs.writeFileSync(path.join(fakeModulePath, 'index.js'), moduleContent);
 fs.writeFileSync(path.join(fakeModulePath, 'fake-utils.js'), moduleContent);
 
 const instrumentation = new NoCodeInstrumentation();
-provider.register();
+registerProvider();
 import {
   muchWork,
   muchWorkWithPromise,

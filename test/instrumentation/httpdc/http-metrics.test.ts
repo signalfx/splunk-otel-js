@@ -19,7 +19,7 @@ import {
   DataPointType,
   MeterProvider,
 } from '@opentelemetry/sdk-metrics';
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import { TracerProvider } from '@opentelemetry/sdk-trace';
 import {
   ATTR_ERROR_TYPE,
   ATTR_HTTP_REQUEST_METHOD,
@@ -57,7 +57,7 @@ const serverPort = 22446;
 const protocol = 'http';
 const hostname = 'localhost';
 const pathname = '/test';
-const tracerProvider = new NodeTracerProvider();
+const tracerProvider = new TracerProvider();
 
 const metricReader = new TestMetricReader(AggregationTemporality.DELTA);
 const meterProvider = new MeterProvider({ readers: [metricReader] });

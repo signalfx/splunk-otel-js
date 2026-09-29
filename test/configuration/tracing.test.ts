@@ -46,7 +46,7 @@ import {
   ParentBasedSampler,
   SimpleSpanProcessor,
   TraceIdRatioBasedSampler,
-} from '@opentelemetry/sdk-trace-base';
+} from '@opentelemetry/sdk-trace';
 import {
   W3CBaggagePropagator,
   W3CTraceContextPropagator,

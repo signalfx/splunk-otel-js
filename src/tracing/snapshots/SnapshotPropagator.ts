@@ -25,7 +25,7 @@ import {
 import {
   SamplingDecision,
   TraceIdRatioBasedSampler,
-} from '@opentelemetry/sdk-trace-base';
+} from '@opentelemetry/sdk-trace';
 
 export const VOLUME_BAGGAGE_KEY = 'splunk.trace.snapshot.volume' as const;
 export const DEFAULT_SNAPSHOT_SELECTION_PROBABILITY = 0.01;

@@ -17,7 +17,7 @@ import * as http from 'http';
 import * as assert from 'assert';
 import { URL } from 'url';
 import { SpanKind } from '@opentelemetry/api';
-import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
+import { ReadableSpan } from '@opentelemetry/sdk-trace';
 import * as semver from 'semver';
 
 type GetResult = Promise<{

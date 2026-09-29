@@ -19,10 +19,15 @@ import { after, before, beforeEach, describe, it } from 'node:test';
 import * as os from 'os';
 import { ElasticsearchInstrumentation } from '../../../../src/instrumentations/external/elasticsearch';
 
-import { getTestSpans, setInstrumentation, exporter, provider } from '../setup';
+import {
+  getTestSpans,
+  setInstrumentation,
+  exporter,
+  registerProvider,
+} from '../setup';
 
 const instrumentation = new ElasticsearchInstrumentation();
-provider.register();
+registerProvider();
 import { Client } from '@elastic/elasticsearch';
 const esMockUrl = 'http://localhost:9200';
 const esNock = nock(esMockUrl);

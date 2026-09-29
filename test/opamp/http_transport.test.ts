@@ -15,14 +15,15 @@
  */
 
 import { strict as assert } from 'assert';
-import { SpanKind } from '@opentelemetry/api';
+import { context, SpanKind, trace } from '@opentelemetry/api';
+import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import { TracerProvider } from '@opentelemetry/sdk-trace';
 import {
   InMemorySpanExporter,
   SimpleSpanProcessor,
-} from '@opentelemetry/sdk-trace-base';
+} from '@opentelemetry/sdk-trace';
 import { HttpTransport } from '../../src/opamp/HttpTransport';
 
 const httpInstrumentation = new HttpInstrumentation();
@@ -30,11 +31,12 @@ const httpInstrumentation = new HttpInstrumentation();
 import * as http from 'http';
 
 const memoryExporter = new InMemorySpanExporter();
-const provider = new NodeTracerProvider({
-  spanProcessors: [new SimpleSpanProcessor(memoryExporter)],
+const provider = new TracerProvider({
+  spanProcessors: [new SimpleSpanProcessor({ exporter: memoryExporter })],
 });
 httpInstrumentation.setTracerProvider(provider);
-provider.register();
+context.setGlobalContextManager(new AsyncLocalStorageContextManager().enable());
+trace.setGlobalTracerProvider(provider);
 
 describe('HttpTransport', () => {
   let server: http.Server;

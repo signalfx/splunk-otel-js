@@ -20,10 +20,7 @@ import {
   ROOT_CONTEXT,
   TraceFlags,
 } from '@opentelemetry/api';
-import {
-  NodeTracerProvider,
-  Span as SdkSpan,
-} from '@opentelemetry/sdk-trace-node';
+import { TracerProvider, Span as SdkSpan } from '@opentelemetry/sdk-trace';
 import { strict as assert } from 'assert';
 import { beforeEach, describe, it, mock, Mock } from 'node:test';
 import { VOLUME_BAGGAGE_KEY } from '../../src/tracing/snapshots/SnapshotPropagator';
@@ -32,7 +29,7 @@ import {
   SnapshotSpanProcessorOptions,
 } from '../../src/tracing/snapshots/SnapshotSpanProcessor';
 
-const provider = new NodeTracerProvider();
+const provider = new TracerProvider();
 trace.setGlobalTracerProvider(provider);
 const tracer = trace.getTracer('test');
 
