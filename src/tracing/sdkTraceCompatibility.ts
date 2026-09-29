@@ -110,9 +110,9 @@ export function toTracerProviderOptions(
         linkCountLimit: getNumberFromEnv('OTEL_SPAN_LINK_COUNT_LIMIT') ?? 128,
         eventCountLimit: getNumberFromEnv('OTEL_SPAN_EVENT_COUNT_LIMIT') ?? 128,
         attributePerEventCountLimit:
-          getNumberFromEnv('OTEL_SPAN_ATTRIBUTE_PER_EVENT_COUNT_LIMIT') ?? 128,
+          getNumberFromEnv('OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT') ?? 128,
         attributePerLinkCountLimit:
-          getNumberFromEnv('OTEL_SPAN_ATTRIBUTE_PER_LINK_COUNT_LIMIT') ?? 128,
+          getNumberFromEnv('OTEL_LINK_ATTRIBUTE_COUNT_LIMIT') ?? 128,
       },
     },
     { ...config, spanLimits }

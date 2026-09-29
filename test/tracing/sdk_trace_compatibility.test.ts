@@ -62,6 +62,42 @@ test('legacy tracer limits still apply to recorded spans', () => {
   }
 });
 
+test('partial span limits retain standard event and link environment limits', () => {
+  const previousEventLimit = process.env.OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT;
+  const previousLinkLimit = process.env.OTEL_LINK_ATTRIBUTE_COUNT_LIMIT;
+  process.env.OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT = '17';
+  process.env.OTEL_LINK_ATTRIBUTE_COUNT_LIMIT = '23';
+
+  try {
+    const options = toTracerProviderOptions({
+      spanLimits: { eventCountLimit: 7 },
+    });
+    assert.equal(options.spanLimits?.eventCountLimit, 7);
+    assert.equal(options.spanLimits?.attributePerEventCountLimit, 17);
+    assert.equal(options.spanLimits?.attributePerLinkCountLimit, 23);
+
+    const overridden = toTracerProviderOptions({
+      spanLimits: {
+        attributePerEventCountLimit: 5,
+        attributePerLinkCountLimit: 6,
+      },
+    });
+    assert.equal(overridden.spanLimits?.attributePerEventCountLimit, 5);
+    assert.equal(overridden.spanLimits?.attributePerLinkCountLimit, 6);
+  } finally {
+    if (previousEventLimit === undefined) {
+      delete process.env.OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT;
+    } else {
+      process.env.OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT = previousEventLimit;
+    }
+    if (previousLinkLimit === undefined) {
+      delete process.env.OTEL_LINK_ATTRIBUTE_COUNT_LIMIT;
+    } else {
+      process.env.OTEL_LINK_ATTRIBUTE_COUNT_LIMIT = previousLinkLimit;
+    }
+  }
+});
+
 test('legacy batch settings retain environment fallbacks and explicit overrides', () => {
   const previousQueueSize = process.env.OTEL_BSP_MAX_QUEUE_SIZE;
   process.env.OTEL_BSP_MAX_QUEUE_SIZE = '42';
