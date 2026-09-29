@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import { Context } from '@opentelemetry/api';
-import { ReadableSpan, Span } from '@opentelemetry/sdk-trace-base';
-import { SpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { ReadableSpan, Span } from '@opentelemetry/sdk-trace';
+import { SpanProcessor } from '@opentelemetry/sdk-trace';
 
 // Workaround for high cardinality span names in Next.js
 // https://github.com/vercel/next.js/issues/54694

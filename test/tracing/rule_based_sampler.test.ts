@@ -22,7 +22,7 @@ import {
   Sampler,
   SamplingDecision,
   SpanProcessor,
-} from '@opentelemetry/sdk-trace-base';
+} from '@opentelemetry/sdk-trace';
 import { parseOptionsAndConfigureInstrumentations } from '../../src/instrumentations';
 import { createRuleBasedSampler } from '../../src/tracing/RuleBasedSampler';
 import { startTracing, stopTracing } from '../../src/tracing';

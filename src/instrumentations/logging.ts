@@ -15,7 +15,7 @@
  */
 
 import { Span } from '@opentelemetry/api';
-import { Span as SdkSpan } from '@opentelemetry/sdk-trace-base';
+import { Span as SdkSpan } from '@opentelemetry/sdk-trace';
 import {
   ATTR_SERVICE_NAME,
   ATTR_SERVICE_VERSION,

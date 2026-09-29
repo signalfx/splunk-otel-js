@@ -29,11 +29,16 @@ import {
 import { map, mergeMap } from 'rxjs/operators';
 // eslint-disable-next-line n/no-extraneous-import
 import { concat } from 'rxjs';
-import { setInstrumentation, getTestSpans, provider, exporter } from '../setup';
+import {
+  setInstrumentation,
+  getTestSpans,
+  registerProvider,
+  exporter,
+} from '../setup';
 import { startContainer, stopContainer } from '../../../utils';
 
 const instrumentation = new Neo4jInstrumentation();
-provider.register();
+registerProvider();
 
 import neo4j, { Driver } from 'neo4j-driver';
 import { normalizeResponse, assertSpan } from './utils';

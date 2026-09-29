@@ -20,8 +20,8 @@ import {
   SimpleSpanProcessor,
   SpanExporter,
   SpanProcessor,
-} from '@opentelemetry/sdk-trace-base';
-import { buildSamplerFromEnv } from '@opentelemetry/sdk-trace-base/build/src/config';
+} from '@opentelemetry/sdk-trace';
+import { buildSamplerFromEnv } from './sdkTraceCompatibility';
 import { createRuleBasedSampler } from './RuleBasedSampler';
 import { B3Propagator, B3InjectEncoding } from '@opentelemetry/propagator-b3';
 import { AWSXRayPropagator } from '@opentelemetry/propagator-aws-xray';
@@ -53,11 +53,11 @@ import { SplunkBatchSpanProcessor } from './SplunkBatchSpanProcessor';
 import { Resource, resourceFromAttributes } from '@opentelemetry/resources';
 import { NextJsSpanProcessor } from './NextJsSpanProcessor';
 import type {
+  NodeTracerConfig,
   SpanExporterFactory,
   StartTracingOptions,
   TracingOptions,
 } from './types';
-import { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
 import {
   configGetPropagators,
   configGetResource,
@@ -479,7 +479,7 @@ export function defaultSpanProcessorFactory(
       const exporter = toSpanExporter(processor.simple?.exporter);
 
       if (exporter !== undefined) {
-        processors.push(new SimpleSpanProcessor(exporter));
+        processors.push(new SimpleSpanProcessor({ exporter }));
       }
     }
   }

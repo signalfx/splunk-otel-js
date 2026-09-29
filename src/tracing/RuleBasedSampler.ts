@@ -15,7 +15,7 @@
  */
 
 import { SpanKind } from '@opentelemetry/api';
-import { Sampler } from '@opentelemetry/sdk-trace-base';
+import { Sampler } from '@opentelemetry/sdk-trace';
 import {
   createComposableAlwaysOffSampler,
   createComposableAlwaysOnSampler,

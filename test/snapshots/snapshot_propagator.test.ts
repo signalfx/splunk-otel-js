@@ -15,7 +15,7 @@
  */
 
 import { propagation, trace, ROOT_CONTEXT } from '@opentelemetry/api';
-import { SamplingDecision } from '@opentelemetry/sdk-trace-node';
+import { SamplingDecision } from '@opentelemetry/sdk-trace';
 import { strict as assert } from 'assert';
 import { describe, it, mock } from 'node:test';
 import {

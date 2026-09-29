@@ -29,7 +29,7 @@ import {
   trace,
   TracerProvider,
 } from '@opentelemetry/api';
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import { TracerProvider as SdkTracerProvider } from '@opentelemetry/sdk-trace';
 import { OTLPTraceExporter as OTLPHttpTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
 import { OTLPTraceExporter as OTLPGrpcTraceExporter } from '@opentelemetry/exporter-trace-otlp-grpc';
 // eslint bugs and reports these as extraneous even though instanceof is used
@@ -234,7 +234,7 @@ export function stopContainer(container: string) {
 
 export function getSpanProcessors(tracerProvider: TracerProvider) {
   const proxy = tracerProvider as ProxyTracerProvider;
-  const provider = proxy.getDelegate() as NodeTracerProvider;
+  const provider = proxy.getDelegate() as SdkTracerProvider;
 
   return provider['_activeSpanProcessor']['_spanProcessors'];
 }

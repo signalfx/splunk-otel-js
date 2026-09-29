@@ -13,26 +13,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import { TracerProvider } from '@opentelemetry/sdk-trace';
 import {
   InMemorySpanExporter,
   SimpleSpanProcessor,
-} from '@opentelemetry/sdk-trace-base';
+} from '@opentelemetry/sdk-trace';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { Instrumentation } from '@opentelemetry/instrumentation';
-import { diag, DiagConsoleLogger, DiagLogLevel } from '@opentelemetry/api';
+import {
+  context,
+  diag,
+  DiagConsoleLogger,
+  DiagLogLevel,
+  propagation,
+  trace,
+} from '@opentelemetry/api';
+import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
+import {
+  CompositePropagator,
+  W3CBaggagePropagator,
+  W3CTraceContextPropagator,
+} from '@opentelemetry/core';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 
 diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.ERROR);
 
 export const exporter = new InMemorySpanExporter();
-export const provider: NodeTracerProvider = new NodeTracerProvider({
+export const provider: TracerProvider = new TracerProvider({
   resource: resourceFromAttributes({
     [ATTR_SERVICE_NAME]: 'instrumentations-test',
   }),
-  spanProcessors: [new SimpleSpanProcessor(exporter)],
+  spanProcessors: [new SimpleSpanProcessor({ exporter })],
 });
 export let instrumentation: Instrumentation | undefined = undefined;
+
+export function registerProvider() {
+  context.setGlobalContextManager(
+    new AsyncLocalStorageContextManager().enable()
+  );
+  propagation.setGlobalPropagator(
+    new CompositePropagator({
+      propagators: [
+        new W3CTraceContextPropagator(),
+        new W3CBaggagePropagator(),
+      ],
+    })
+  );
+  trace.setGlobalTracerProvider(provider);
+}
 
 export function getTestSpans() {
   return exporter.getFinishedSpans();

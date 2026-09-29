@@ -20,7 +20,7 @@ import { inspect } from 'util';
 
 import { context, trace } from '@opentelemetry/api';
 import { resourceFromAttributes } from '@opentelemetry/resources';
-import { InMemorySpanExporter } from '@opentelemetry/sdk-trace-base';
+import { InMemorySpanExporter } from '@opentelemetry/sdk-trace';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 
 import { start, stop } from '../../src';
