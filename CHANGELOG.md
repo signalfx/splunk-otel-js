@@ -1,5 +1,12 @@
 # Change Log - @splunk/otel
 
+## 4.12.0
+
+- Upgrade to OpenTelemetry 2.11.0 / 0.222.0 and migrate to `@opentelemetry/sdk-trace`. [#1189](https://github.com/signalfx/splunk-otel-js/pull/1189)
+- Add instrumentation for Couchbase SDK 4.7+. [#1185](https://github.com/signalfx/splunk-otel-js/pull/1185)
+- Vendor in MySQL2 instrumentation. [#1157](https://github.com/signalfx/splunk-otel-js/pull/1157)
+- Skip native extension compilation during installation when no prebuilt binary is available. [#1188](https://github.com/signalfx/splunk-otel-js/pull/1188)
+
 ## 4.11.0
 
 - OpAMP: add snapshot selection probability. [#1179](https://github.com/signalfx/splunk-otel-js/pull/1179)
