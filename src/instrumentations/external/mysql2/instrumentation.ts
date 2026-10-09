@@ -67,9 +67,13 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
         format = moduleExports.format;
       }
     }
-    // Keep statements weakly reachable while retaining the ability to unwrap
-    // statements that are still alive when the instrumentation is disabled.
+    // Keep statements weakly reachable so they can be unwrapped on disable
+    // and rewrapped on enable without retaining evicted statements.
     const preparedStatementRefs = new Set<PreparedStatementRef>();
+    const preparedStatementConnections = new WeakMap<
+      PreparedStatement,
+      mysqlTypes.Connection
+    >();
     const preparedStatementFinalizer = new FinalizationRegistry<PreparedStatementRef>(
       statementRef => {
         preparedStatementRefs.delete(statementRef);
@@ -104,10 +108,30 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
         this._patchPrepare(
           format,
           preparedStatementRefs,
+          preparedStatementConnections,
           preparedStatementFinalizer,
           () => patchActive
         ) as any
       );
+      for (const statementRef of preparedStatementRefs) {
+        const statement = statementRef.deref();
+        if (!statement) {
+          preparedStatementRefs.delete(statementRef);
+          continue;
+        }
+        const connection = preparedStatementConnections.get(statement);
+        if (
+          connection &&
+          typeof statement.execute === 'function' &&
+          !isWrapped(statement.execute)
+        ) {
+          this._wrap(
+            statement,
+            'execute',
+            this._patchPreparedStatementExecute(format, connection)
+          );
+        }
+      }
     };
     const unpatch = (ConnectionPrototype: mysqlTypes.Connection) => {
       patchActive = false;
@@ -115,13 +139,11 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
       this._unwrap(ConnectionPrototype, 'execute');
       this._unwrap(ConnectionPrototype, 'prepare');
       for (const statementRef of preparedStatementRefs) {
-        preparedStatementFinalizer.unregister(statementRef);
         const statement = statementRef.deref();
         if (statement && isWrapped(statement.execute)) {
           this._unwrap(statement, 'execute');
         }
       }
-      preparedStatementRefs.clear();
     };
     return [
       new InstrumentationNodeModuleDefinition(
@@ -245,6 +267,10 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
   private _patchPrepare(
     format: formatType | undefined,
     preparedStatementRefs: Set<PreparedStatementRef>,
+    preparedStatementConnections: WeakMap<
+      PreparedStatement,
+      mysqlTypes.Connection
+    >,
     preparedStatementFinalizer: FinalizationRegistry<PreparedStatementRef>,
     isPatchActive: () => boolean
   ) {
@@ -266,6 +292,7 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
             format,
             this,
             preparedStatementRefs,
+            preparedStatementConnections,
             preparedStatementFinalizer,
             isPatchActive
           )
@@ -280,6 +307,10 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
     format: formatType | undefined,
     connection: mysqlTypes.Connection,
     preparedStatementRefs: Set<PreparedStatementRef>,
+    preparedStatementConnections: WeakMap<
+      PreparedStatement,
+      mysqlTypes.Connection
+    >,
     preparedStatementFinalizer: FinalizationRegistry<PreparedStatementRef>,
     isPatchActive: () => boolean
   ) {
@@ -306,11 +337,8 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
           );
           const statementRef = new WeakRef(statement);
           preparedStatementRefs.add(statementRef);
-          preparedStatementFinalizer.register(
-            statement,
-            statementRef,
-            statementRef
-          );
+          preparedStatementConnections.set(statement, connection);
+          preparedStatementFinalizer.register(statement, statementRef);
         }
 
         return originalCallback(...arguments);
@@ -356,22 +384,27 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
           );
         } else {
           let streamableQuery: mysqlTypes.Query | undefined;
+          let firstResult: unknown;
           let completed = false;
           let removeConnectionErrorHandler = () => {};
 
           const cleanup = () => {
             removeConnectionErrorHandler();
-            streamableQuery?.removeListener('error', onCommandError);
+            streamableQuery?.removeListener(errorMonitor, onCommandError);
+            streamableQuery?.removeListener('result', onResult);
             streamableQuery?.removeListener('end', onCommandEnd);
           };
           const complete = (err?: any) => {
             if (completed) return;
             completed = true;
             cleanup();
-            endSpan(err);
+            endSpan(err, firstResult);
           };
           const onCommandError = (err: any) => {
             complete(err);
+          };
+          const onResult = (result: unknown) => {
+            firstResult = result;
           };
           const onCommandEnd = () => {
             complete();
@@ -380,7 +413,8 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
           // A callback-less SELECT emits `result` once per row, and no
           // `result` event at all for an empty result set. Wait for `end` so
           // the span covers the whole command and can still record a later
-          // command error.
+          // command error. Keep only the first result for the response hook,
+          // matching callback-less connection queries without buffering rows.
           //
           // Fatal/network errors for callback-less commands are emitted only
           // by the connection. Register before calling mysql2 because a
@@ -416,7 +450,10 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
           }
 
           if (!completed) {
-            streamableQuery.once('error', onCommandError);
+            // Observe command errors without making an otherwise unhandled
+            // `error` event appear handled to Node.js.
+            streamableQuery.once(errorMonitor, onCommandError);
+            streamableQuery.once('result', onResult);
             streamableQuery.once('end', onCommandEnd);
           }
 

@@ -78,11 +78,11 @@ export function getQueryText(
   const [querySql, queryValues] =
     typeof query === 'string'
       ? [query, values]
-      : [query.sql, hasValues(query) ? values || query.values : values];
+      : [query.sql, hasValues(query) ? values ?? query.values : values];
   try {
     if (maskStatement) {
       return maskStatementHook(querySql);
-    } else if (format && queryValues) {
+    } else if (format && queryValues !== undefined && queryValues !== null) {
       return format(querySql, queryValues);
     } else {
       return querySql;

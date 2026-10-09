@@ -26,7 +26,12 @@ import {
 } from '@opentelemetry/sdk-trace-base';
 import { InstrumentationNodeModuleDefinition } from '@opentelemetry/instrumentation';
 import { ATTR_DB_QUERY_TEXT } from '@opentelemetry/semantic-conventions';
-import { MySQL2Instrumentation } from '../../../../src/instrumentations/external/mysql2';
+import { format } from 'mysql2';
+import {
+  MySQL2Instrumentation,
+  MySQL2InstrumentationConfig,
+} from '../../../../src/instrumentations/external/mysql2';
+import { getQueryText } from '../../../../src/instrumentations/external/mysql2/utils';
 
 type CommandCallback = (
   err: Error | null,
@@ -149,12 +154,15 @@ class FakePreparedStatement {
   }
 }
 
-function createPatchedConnection() {
+function createPatchedConnection(config: MySQL2InstrumentationConfig = {}) {
   const exporter = new InMemorySpanExporter();
   const provider = new NodeTracerProvider({
     spanProcessors: [new SimpleSpanProcessor(exporter)],
   });
-  const instrumentation = new MySQL2Instrumentation({ enabled: false });
+  const instrumentation = new MySQL2Instrumentation({
+    ...config,
+    enabled: false,
+  });
   instrumentation.setTracerProvider(provider);
   const [definition] =
     instrumentation.getModuleDefinitions() as InstrumentationNodeModuleDefinition[];
@@ -231,18 +239,17 @@ describe('mysql2 prepared statements', () => {
     }
   });
 
-  it('supports scalar and named parameter values', async () => {
+  it('supports falsy parameter values in arrays', async () => {
     const { connectionFile, exporter } = createPatchedConnection();
     const connection = new FakeConnection();
 
     try {
-      const statement = await prepareStatement(connection, {
-        sql: 'SELECT :value',
-      });
-      await executeStatement(statement, { value: 1 });
-      await executeStatement(statement, 1);
+      const statement = await prepareStatement(connection, 'SELECT ?');
+      await executeStatement(statement, [0]);
+      await executeStatement(statement, [false]);
+      await executeStatement(statement, ['']);
 
-      assert.equal(exporter.getFinishedSpans().length, 2);
+      assert.equal(exporter.getFinishedSpans().length, 3);
     } finally {
       connectionFile.unpatch(FakeConnection, '3.15.3');
     }
@@ -274,7 +281,12 @@ describe('mysql2 prepared statements', () => {
   });
 
   it('waits for completion when executed without a callback', async () => {
-    const { connectionFile, exporter } = createPatchedConnection();
+    const hookResults: unknown[] = [];
+    const { connectionFile, exporter } = createPatchedConnection({
+      responseHook: (_span, { queryResults }) => {
+        hookResults.push(queryResults);
+      },
+    });
     const connection = new FakeConnection();
 
     try {
@@ -282,19 +294,28 @@ describe('mysql2 prepared statements', () => {
       connection.autoComplete = false;
       const command = statement.execute([1]);
 
-      command.emit('result', { id: 1 });
+      const firstRow = { id: 1 };
+      command.emit('result', firstRow);
       command.emit('result', { id: 2 });
       assert.equal(exporter.getFinishedSpans().length, 0);
+      assert.deepEqual(hookResults, []);
 
       command.emit('end');
       assert.equal(exporter.getFinishedSpans().length, 1);
+      assert.deepEqual(hookResults, [firstRow]);
+      assert.equal(command.listenerCount('result'), 0);
     } finally {
       connectionFile.unpatch(FakeConnection, '3.15.3');
     }
   });
 
   it('ends a zero-row execution on command completion', async () => {
-    const { connectionFile, exporter } = createPatchedConnection();
+    const hookResults: unknown[] = [];
+    const { connectionFile, exporter } = createPatchedConnection({
+      responseHook: (_span, { queryResults }) => {
+        hookResults.push(queryResults);
+      },
+    });
     const connection = new FakeConnection();
 
     try {
@@ -305,13 +326,20 @@ describe('mysql2 prepared statements', () => {
       command.emit('end');
 
       assert.equal(exporter.getFinishedSpans().length, 1);
+      assert.deepEqual(hookResults, [undefined]);
+      assert.equal(command.listenerCount('result'), 0);
     } finally {
       connectionFile.unpatch(FakeConnection, '3.15.3');
     }
   });
 
   it('ends a no-callback execution on error', async () => {
-    const { connectionFile, exporter } = createPatchedConnection();
+    const hookResults: unknown[] = [];
+    const { connectionFile, exporter } = createPatchedConnection({
+      responseHook: (_span, { queryResults }) => {
+        hookResults.push(queryResults);
+      },
+    });
     const connection = new FakeConnection();
 
     try {
@@ -323,16 +351,49 @@ describe('mysql2 prepared statements', () => {
       command.emit('result', { id: 1 });
       assert.equal(exporter.getFinishedSpans().length, 0);
 
+      let applicationError: Error | undefined;
+      command.once('error', (err) => {
+        applicationError = err;
+      });
       command.emit('error', error);
       command.emit('end');
+
+      assert.strictEqual(applicationError, error);
+      const [span] = exporter.getFinishedSpans();
+      assert.ok(span);
+      assert.equal(span.status.code, SpanStatusCode.ERROR);
+      assert.equal(span.status.message, error.message);
+      assert.deepEqual(hookResults, []);
+      assert.equal(connection.listenerCount('error'), 0);
+      assert.equal(command.listenerCount('error'), 0);
+      assert.equal(command.listenerCount(errorMonitor), 0);
+      assert.equal(command.listenerCount('result'), 0);
+      assert.equal(command.listenerCount('end'), 0);
+    } finally {
+      connectionFile.unpatch(FakeConnection, '3.15.3');
+    }
+  });
+
+  it('preserves unhandled command error behavior', async () => {
+    const { connectionFile, exporter } = createPatchedConnection();
+    const connection = new FakeConnection();
+
+    try {
+      const statement = await prepareStatement(connection, 'SELECT ?');
+      connection.autoComplete = false;
+      const command = statement.execute([1]);
+      const error = new Error('query failed');
+
+      assert.throws(() => command.emit('error', error), error);
 
       const [span] = exporter.getFinishedSpans();
       assert.ok(span);
       assert.equal(span.status.code, SpanStatusCode.ERROR);
       assert.equal(span.status.message, error.message);
-      assert.equal(connection.listenerCount('error'), 0);
       assert.equal(command.listenerCount('error'), 0);
+      assert.equal(command.listenerCount(errorMonitor), 0);
       assert.equal(command.listenerCount('end'), 0);
+      assert.equal(connection.listenerCount(errorMonitor), 0);
     } finally {
       connectionFile.unpatch(FakeConnection, '3.15.3');
     }
@@ -454,5 +515,27 @@ describe('mysql2 prepared statements', () => {
     assert.strictEqual(FakeConnection.prototype.execute, originalExecute);
     assert.strictEqual(FakeConnection.prototype.prepare, originalPrepare);
     assert.strictEqual(statement.execute, originalStatementExecute);
+  });
+});
+
+describe('mysql2 query text formatting', () => {
+  it('formats falsy scalar values when provided', () => {
+    const cases: Array<[unknown, string]> = [
+      [0, 'SELECT 0'],
+      [false, 'SELECT false'],
+      ['', "SELECT ''"],
+    ];
+
+    for (const [value, expected] of cases) {
+      assert.equal(getQueryText('SELECT ?', format, value), expected);
+      assert.equal(
+        getQueryText({ sql: 'SELECT ?', values: value }, format),
+        expected
+      );
+      assert.equal(
+        getQueryText({ sql: 'SELECT ?', values: [1] }, format, value),
+        expected
+      );
+    }
   });
 });
