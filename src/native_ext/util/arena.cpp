@@ -55,51 +55,42 @@ static ArenaNode* PagedArenaNewNode(size_t capacity) {
 }
 
 void PagedArenaInit(PagedArena* arena, size_t pageSize) {
-  arena->nodes = PagedArenaNewNode(pageSize);
-  arena->freeNodes = nullptr;
+  arena->head = PagedArenaNewNode(pageSize);
+  arena->current = arena->head;
   arena->pageSize = pageSize;
 }
 
 void* SPLK_ASSUME_ALIGNED(16) PagedArenaAlloc(PagedArena* arena, size_t size) {
-  void* mem = MemArenaAlloc(&arena->nodes->arena, size);
+  ArenaNode* node = arena->current;
+  void* mem = MemArenaAlloc(&node->arena, size);
 
   if (mem != nullptr) {
     return mem;
   }
 
-  ArenaNode* node = arena->freeNodes;
-
-  if (node) {
-    arena->freeNodes = node->next;
-  } else {
-    node = PagedArenaNewNode(arena->pageSize);
-    if (!node) {
+  if (!node->next) {
+    node->next = PagedArenaNewNode(arena->pageSize);
+    if (!node->next) {
       return nullptr;
     }
   }
 
-  node->next = arena->nodes;
-  arena->nodes = node;
+  arena->current = node->next;
 
-  return MemArenaAlloc(&node->arena, size);
+  return MemArenaAlloc(&arena->current->arena, size);
 }
 
 void PagedArenaReset(PagedArena* arena) {
-  ArenaNode* node = arena->nodes;
-
-  while (node) {
+  for (ArenaNode* node = arena->head; node; node = node->next) {
     MemArenaReset(&node->arena);
-    node = node->next;
   }
-
-  arena->freeNodes = arena->nodes->next;
-  arena->nodes->next = nullptr;
+  arena->current = arena->head;
 }
 
 size_t PagedArenaUsedMemory(const PagedArena* arena) {
   size_t used = 0;
 
-  ArenaNode* node = arena->nodes;
+  ArenaNode* node = arena->head;
   while (node) {
     used += node->arena.offset;
     node = node->next;
