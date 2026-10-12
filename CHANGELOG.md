@@ -1,5 +1,10 @@
 # Change Log - @splunk/otel
 
+## 4.12.1
+
+- Fix potential memory growth during native profiling by retaining and reusing arena pages across resets. [#1195](https://github.com/signalfx/splunk-otel-js/pull/1195)
+- Update `@grpc/grpc-js`, `nan`, `protobufjs`, `yaml`, and development dependencies. [#1196](https://github.com/signalfx/splunk-otel-js/pull/1196)
+
 ## 4.12.0
 
 - Upgrade to OpenTelemetry 2.11.0 / 0.222.0 and migrate to `@opentelemetry/sdk-trace`. [#1189](https://github.com/signalfx/splunk-otel-js/pull/1189)
