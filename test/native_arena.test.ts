@@ -25,24 +25,28 @@ const shouldRunTest =
   (process.arch === 'x64' || process.arch === 'arm64') &&
   process.versions.node.split('.')[0] === '24';
 
-it('preserves and reuses arena pages across consecutive resets', {
-  skip: shouldRunTest ? false : 'Linux x64/arm64 with Node 24 only',
-}, () => {
-  const root = resolve(process.cwd());
-  const outputDir = mkdtempSync(join(tmpdir(), 'splunk-arena-test-'));
-  const executable = join(outputDir, 'arena-reuse');
-  try {
-    execFileSync(process.env.CXX || 'g++', [
-      '-std=c++17',
-      '-I',
-      root,
-      join(root, 'test/native_ext/arena_reuse.cpp'),
-      join(root, 'src/native_ext/util/arena.cpp'),
-      '-o',
-      executable,
-    ]);
-    execFileSync(executable);
-  } finally {
-    rmSync(outputDir, { recursive: true, force: true });
+it(
+  'preserves and reuses arena pages across consecutive resets',
+  {
+    skip: shouldRunTest ? false : 'Linux x64/arm64 with Node 24 only',
+  },
+  () => {
+    const root = resolve(process.cwd());
+    const outputDir = mkdtempSync(join(tmpdir(), 'splunk-arena-test-'));
+    const executable = join(outputDir, 'arena-reuse');
+    try {
+      execFileSync(process.env.CXX || 'g++', [
+        '-std=c++17',
+        '-I',
+        root,
+        join(root, 'test/native_ext/arena_reuse.cpp'),
+        join(root, 'src/native_ext/util/arena.cpp'),
+        '-o',
+        executable,
+      ]);
+      execFileSync(executable);
+    } finally {
+      rmSync(outputDir, { recursive: true, force: true });
+    }
   }
-});
+);
