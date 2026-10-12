@@ -19,11 +19,11 @@ import { errorMonitor, EventEmitter } from 'events';
 import { dirname, join } from 'path';
 import { describe, it } from 'node:test';
 import { SpanStatusCode } from '@opentelemetry/api';
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 import {
   InMemorySpanExporter,
   SimpleSpanProcessor,
-} from '@opentelemetry/sdk-trace-base';
+  TracerProvider,
+} from '@opentelemetry/sdk-trace';
 import { InstrumentationNodeModuleDefinition } from '@opentelemetry/instrumentation';
 import { ATTR_DB_QUERY_TEXT } from '@opentelemetry/semantic-conventions';
 import { format } from 'mysql2';
@@ -156,8 +156,8 @@ class FakePreparedStatement {
 
 function createPatchedConnection(config: MySQL2InstrumentationConfig = {}) {
   const exporter = new InMemorySpanExporter();
-  const provider = new NodeTracerProvider({
-    spanProcessors: [new SimpleSpanProcessor(exporter)],
+  const provider = new TracerProvider({
+    spanProcessors: [new SimpleSpanProcessor({ exporter })],
   });
   const instrumentation = new MySQL2Instrumentation({
     ...config,
