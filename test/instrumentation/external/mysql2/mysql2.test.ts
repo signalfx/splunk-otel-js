@@ -126,7 +126,8 @@ class FakeConnection extends EventEmitter {
 
 class FakePreparedStatement {
   constructor(
-    private readonly connection: FakeConnection,
+    // mysql2's promise wrapper reads this field before delegating to execute().
+    public readonly _connection: FakeConnection,
     public readonly query: string
   ) {}
 
@@ -134,15 +135,15 @@ class FakePreparedStatement {
     parametersOrCallback?: unknown | CommandCallback,
     callback?: CommandCallback
   ) {
-    if (this.connection.preparedStatementExecuteError) {
-      const error = this.connection.preparedStatementExecuteError;
-      this.connection.preparedStatementExecuteError = undefined;
+    if (this._connection.preparedStatementExecuteError) {
+      const error = this._connection.preparedStatementExecuteError;
+      this._connection.preparedStatementExecuteError = undefined;
       throw error;
     }
-    if (this.connection.preparedStatementConnectionError) {
-      const error = this.connection.preparedStatementConnectionError;
-      this.connection.preparedStatementConnectionError = undefined;
-      this.connection.emit('error', error);
+    if (this._connection.preparedStatementConnectionError) {
+      const error = this._connection.preparedStatementConnectionError;
+      this._connection.preparedStatementConnectionError = undefined;
+      this._connection.emit('error', error);
       return undefined as unknown as FakeCommand;
     }
 
@@ -150,7 +151,7 @@ class FakePreparedStatement {
       typeof parametersOrCallback === 'function'
         ? (parametersOrCallback as CommandCallback)
         : callback;
-    return this.connection.enqueue(`prepared:${this.query}`, executeCallback);
+    return this._connection.enqueue(`prepared:${this.query}`, executeCallback);
   }
 }
 
