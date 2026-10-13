@@ -71,18 +71,18 @@ function getConfig(config: any) {
 export function getQueryText(
   query: string | Query | QueryOptions,
   format?: formatType,
-  values?: any[],
+  values?: any,
   maskStatement = false,
   maskStatementHook: MySQL2InstrumentationQueryMaskingHook = defaultMaskingHook
 ): string {
   const [querySql, queryValues] =
     typeof query === 'string'
       ? [query, values]
-      : [query.sql, hasValues(query) ? values || query.values : values];
+      : [query.sql, hasValues(query) ? values ?? query.values : values];
   try {
     if (maskStatement) {
       return maskStatementHook(querySql);
-    } else if (format && queryValues) {
+    } else if (format && queryValues !== undefined && queryValues !== null) {
       return format(querySql, queryValues);
     } else {
       return querySql;
