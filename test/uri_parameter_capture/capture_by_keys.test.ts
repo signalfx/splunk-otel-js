@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-  InMemorySpanExporter,
-  SpanProcessor,
-} from '@opentelemetry/sdk-trace-base';
+import { InMemorySpanExporter, SpanProcessor } from '@opentelemetry/sdk-trace';
 import { strict as assert } from 'assert';
 import { after, test } from 'node:test';
 import { parseOptionsAndConfigureInstrumentations } from '../../src/instrumentations';

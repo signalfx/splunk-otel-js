@@ -14,12 +14,23 @@
  * limitations under the License.
  */
 import { context, Context, propagation } from '@opentelemetry/api';
-import { Span } from '@opentelemetry/sdk-trace-base';
-import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import {
+  BatchSpanProcessor,
+  type Span,
+  type SpanExporter,
+} from '@opentelemetry/sdk-trace';
+import {
+  type LegacyBatchSpanProcessorConfig,
+  toBatchSpanProcessorOptions,
+} from './sdkTraceCompatibility';
 
 export const SYNTHETIC_RUN_ID_FIELD = 'Synthetics-RunId';
 
 export class SplunkBatchSpanProcessor extends BatchSpanProcessor {
+  constructor(exporter: SpanExporter, config?: LegacyBatchSpanProcessorConfig) {
+    super(toBatchSpanProcessorOptions(exporter, config));
+  }
+
   onStart(_span: Span, parentContext: Context = context.active()) {
     super.onStart(_span, parentContext);
 

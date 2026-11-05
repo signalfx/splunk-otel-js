@@ -14,10 +14,18 @@
  * limitations under the License.
  */
 import { context, Context, propagation } from '@opentelemetry/api';
-import { SimpleSpanProcessor, Span } from '@opentelemetry/sdk-trace-base';
+import {
+  SimpleSpanProcessor,
+  type Span,
+  type SpanExporter,
+} from '@opentelemetry/sdk-trace';
 import { SYNTHETIC_RUN_ID_FIELD } from './SplunkBatchSpanProcessor';
 
 export class SplunkSimpleSpanProcessor extends SimpleSpanProcessor {
+  constructor(exporter: SpanExporter) {
+    super({ exporter });
+  }
+
   onStart(_span: Span, parentContext: Context = context.active()) {
     super.onStart(_span, parentContext);
 

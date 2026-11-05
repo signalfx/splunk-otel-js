@@ -15,11 +15,8 @@
  */
 
 import { context, propagation, trace } from '@opentelemetry/api';
-import {
-  InMemorySpanExporter,
-  SpanProcessor,
-} from '@opentelemetry/sdk-trace-base';
-import { RandomIdGenerator } from '@opentelemetry/sdk-trace-base';
+import { InMemorySpanExporter, SpanProcessor } from '@opentelemetry/sdk-trace';
+import { RandomIdGenerator } from '@opentelemetry/sdk-trace';
 import { assertIncludes } from './common';
 import { defaultSpanProcessorFactory } from '../../src/tracing/options';
 import { SYNTHETIC_RUN_ID_FIELD } from '../../src/tracing/SplunkBatchSpanProcessor';

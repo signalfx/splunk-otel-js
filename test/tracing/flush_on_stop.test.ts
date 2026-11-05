@@ -18,7 +18,7 @@ import { strict as assert } from 'assert';
 import { test, mock } from 'node:test';
 
 import { trace } from '@opentelemetry/api';
-import { InMemorySpanExporter } from '@opentelemetry/sdk-trace-base';
+import { InMemorySpanExporter } from '@opentelemetry/sdk-trace';
 import { parseOptionsAndConfigureInstrumentations } from '../../src/instrumentations';
 import { startTracing, stopTracing } from '../../src/tracing';
 

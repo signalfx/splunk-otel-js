@@ -20,7 +20,7 @@ import {
   Exception,
 } from '@opentelemetry/api';
 import { hrTimeToNanoseconds } from '@opentelemetry/core';
-import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
+import { ReadableSpan } from '@opentelemetry/sdk-trace';
 import {
   SEMATTRS_HTTP_METHOD,
   SEMATTRS_HTTP_REQUEST_CONTENT_LENGTH,

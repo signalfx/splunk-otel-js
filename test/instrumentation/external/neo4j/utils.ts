@@ -15,7 +15,7 @@
  */
 import { strict as assert } from 'assert';
 import { QueryResult } from 'neo4j-driver';
-import { ReadableSpan } from '@opentelemetry/sdk-trace-base';
+import { ReadableSpan } from '@opentelemetry/sdk-trace';
 import {
   ATTR_DB_NAME,
   ATTR_DB_SYSTEM,

@@ -43,7 +43,7 @@ import {
   InMemorySpanExporter,
   AlwaysOffSampler,
   TraceIdRatioBasedSampler,
-} from '@opentelemetry/sdk-trace-base';
+} from '@opentelemetry/sdk-trace';
 
 import { strict as assert } from 'assert';
 import { afterEach, beforeEach, describe, it, mock } from 'node:test';
@@ -544,10 +544,10 @@ function testSpanProcessorFactory(options: TracingOptions) {
   const exporters = options.spanExporterFactory(options);
 
   if (Array.isArray(exporters)) {
-    return exporters.map((e) => new SimpleSpanProcessor(e));
+    return exporters.map((exporter) => new SimpleSpanProcessor({ exporter }));
   }
 
-  return new SimpleSpanProcessor(exporters);
+  return new SimpleSpanProcessor({ exporter: exporters });
 }
 
 function testPropagatorFactory(

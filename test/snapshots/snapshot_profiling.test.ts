@@ -21,7 +21,7 @@ import {
   ROOT_CONTEXT,
   TraceFlags,
 } from '@opentelemetry/api';
-import { Span as SdkSpan } from '@opentelemetry/sdk-trace-node';
+import { Span as SdkSpan } from '@opentelemetry/sdk-trace';
 import { strict as assert } from 'assert';
 import {
   after,
@@ -44,7 +44,7 @@ import { noopExtension } from '../../src/profiling';
 import type { ProfilingExtension } from '../../src/profiling/types';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { CpuProfile } from '../../src/profiling/types';
-import { RandomIdGenerator } from '@opentelemetry/sdk-trace-base';
+import { RandomIdGenerator } from '@opentelemetry/sdk-trace';
 import { emptyResource } from '@opentelemetry/resources';
 
 const NODE_MAJOR_VERSION = process.versions.node.split('.').map(Number)[0];

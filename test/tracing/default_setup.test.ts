@@ -21,7 +21,7 @@ import { assertTracingPipeline } from './common';
 import { parseOptionsAndConfigureInstrumentations } from '../../src/instrumentations';
 import { startTracing, stopTracing } from '../../src/tracing';
 import { trace } from '@opentelemetry/api';
-import { AlwaysOnSampler } from '@opentelemetry/sdk-trace-base';
+import { AlwaysOnSampler } from '@opentelemetry/sdk-trace';
 
 test('Tracing: set up with defaults', async () => {
   const { tracingOptions } = parseOptionsAndConfigureInstrumentations();

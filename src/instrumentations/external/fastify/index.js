@@ -1,7 +1,7 @@
 'use strict'
 const dc = require('node:diagnostics_channel')
 const path = require('node:path')
-const { context, trace, SpanStatusCode, propagation, diag } = require('@opentelemetry/api')
+const { context, trace, SpanKind, SpanStatusCode, propagation } = require('@opentelemetry/api')
 const { getRPCMetadata, RPCType } = require('@opentelemetry/core')
 const {
   ATTR_HTTP_ROUTE,
@@ -11,8 +11,8 @@ const {
 } = require('@opentelemetry/semantic-conventions')
 const { InstrumentationBase } = require('@opentelemetry/instrumentation')
 
-const PACKAGE_NAME = '@fastify/otel';
-const PACKAGE_VERSION = '0.18.1'; // https://github.com/fastify/otel/commit/bae80d6caef4287e7f01ff3c8dc753243706ea86
+const PACKAGE_NAME = '@fastify/otel'
+const PACKAGE_VERSION = '0.21.0' // https://github.com/fastify/otel/commit/0a1164310b1c96a2be2b8a56bad6cf3c591a0760
 
 // Constants
 const SUPPORTED_VERSIONS = '>=4.0.0 <6'
@@ -43,10 +43,104 @@ const ANONYMOUS_FUNCTION_NAME = 'anonymous'
 const kInstrumentation = Symbol('fastify otel instance')
 const kRequestSpan = Symbol('fastify otel request spans')
 const kRequestContext = Symbol('fastify otel request context')
+const kErrorStatusSet = Symbol('fastify otel error status set')
 const kAddHookOriginal = Symbol('fastify otel addhook original')
 const kSetNotFoundOriginal = Symbol('fastify otel setnotfound original')
 const kIgnorePaths = Symbol('fastify otel ignore path')
 const kRecordExceptions = Symbol('fastify otel record exceptions')
+const kInstrumentHooks = Symbol('fastify otel instrument hooks')
+const kInstrumentHandler = Symbol('fastify otel instrument handler')
+
+function isRouteOtelDisabled (config) {
+  return config?.otel === false
+}
+
+function normalizeInstrumentHooks (value, { strict = false, logger = null } = {}) {
+  if (value === true || value === undefined) {
+    return { mode: 'all' }
+  }
+
+  if (value === false) {
+    return { mode: 'none' }
+  }
+
+  if (!Array.isArray(value)) {
+    if (strict) {
+      throw new TypeError('instrumentHooks must be a boolean or an array of hook names')
+    }
+    return { mode: 'none' }
+  }
+
+  if (strict && value.length === 0) {
+    throw new TypeError('instrumentHooks must be a boolean or an array of hook names')
+  }
+
+  const allowlist = new Set()
+
+  for (const hookName of value) {
+    if (typeof hookName !== 'string' || !FASTIFY_HOOKS.includes(hookName)) {
+      if (strict) {
+        throw new TypeError('instrumentHooks must be a boolean or an array of hook names')
+      }
+      logger?.debug(
+        `Ignoring unknown instrumentHooks entry "${hookName}"`
+      )
+      continue
+    }
+    allowlist.add(hookName)
+  }
+
+  if (allowlist.size === 0) {
+    return { mode: 'none' }
+  }
+
+  return { mode: 'allowlist', set: allowlist }
+}
+
+function getHookPolicy (config, globalPolicy, logger = null) {
+  const otel = config?.otel
+  if (otel != null && typeof otel === 'object' && otel.instrumentHooks !== undefined) {
+    return normalizeInstrumentHooks(otel.instrumentHooks, { strict: false, logger })
+  }
+  return globalPolicy
+}
+
+function shouldInstrumentHandler (config, globalSetting) {
+  const otel = config?.otel
+  if (otel != null && typeof otel === 'object' && typeof otel.instrumentHandler === 'boolean') {
+    return otel.instrumentHandler
+  }
+  return globalSetting
+}
+
+function lifecycleHookBaseName (hookName) {
+  if (FASTIFY_HOOKS.includes(hookName)) {
+    return hookName
+  }
+  if (hookName.includes(' - ')) {
+    const base = hookName.split(' - ').pop()
+    if (FASTIFY_HOOKS.includes(base)) {
+      return base
+    }
+  }
+  return null
+}
+
+function shouldInstrumentLifecycleHook (hookName, policy) {
+  const base = lifecycleHookBaseName(hookName)
+  /* c8 ignore start */
+  if (base == null) {
+    return false
+  }
+  /* c8 ignore stop */
+  if (policy.mode === 'all') {
+    return true
+  }
+  if (policy.mode === 'none') {
+    return false
+  }
+  return policy.set.has(base)
+}
 
 class FastifyOtelInstrumentation extends InstrumentationBase {
   _requestHook = null
@@ -56,6 +150,8 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
     super(PACKAGE_NAME, PACKAGE_VERSION, config)
     this[kIgnorePaths] = null
     this[kRecordExceptions] = true
+    this[kInstrumentHooks] = normalizeInstrumentHooks(true)
+    this[kInstrumentHandler] = true
 
     if (config?.recordExceptions != null) {
       if (typeof config.recordExceptions !== 'boolean') {
@@ -64,11 +160,25 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
 
       this[kRecordExceptions] = config.recordExceptions
     }
+    if (config?.instrumentHandler != null) {
+      if (typeof config.instrumentHandler !== 'boolean') {
+        throw new TypeError('instrumentHandler must be a boolean')
+      }
+
+      this[kInstrumentHandler] = config.instrumentHandler
+    }
     if (typeof config?.requestHook === 'function') {
       this._requestHook = config.requestHook
     }
     if (typeof config?.lifecycleHook === 'function') {
       this._lifecycleHook = config.lifecycleHook
+    }
+
+    if (config?.instrumentHooks != null) {
+      this[kInstrumentHooks] = normalizeInstrumentHooks(config.instrumentHooks, {
+        strict: true,
+        logger: this._diag
+      })
     }
 
     if (config?.ignorePaths != null || process.env.OTEL_FASTIFY_IGNORE_PATHS != null) {
@@ -150,9 +260,13 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
       instance.decorateRequest('opentelemetry', function openetelemetry () {
         const ctx = this[kRequestContext]
         const span = this[kRequestSpan]
+        const enabled = instrumentation.isEnabled() &&
+          !isRouteOtelDisabled(this.routeOptions.config)
+        const instrumented = span != null && ctx != null
 
         return {
-          enabled: this.routeOptions.config?.otel !== false,
+          enabled,
+          instrumented,
           span,
           tracer: instrumentation.tracer,
           context: ctx,
@@ -166,6 +280,7 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
       })
       instance.decorateRequest(kRequestSpan, null)
       instance.decorateRequest(kRequestContext, null)
+      instance.decorateRequest(kErrorStatusSet, false)
 
       instance.addHook('onRoute', function otelWireRoute (routeOptions) {
         if (instrumentation[kIgnorePaths]?.(routeOptions) === true) {
@@ -175,7 +290,7 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
           return
         }
 
-        if (routeOptions.config?.otel === false) {
+        if (isRouteOtelDisabled(routeOptions.config)) {
           instrumentation._diag.debug(
             `Ignoring route instrumentation ${routeOptions.method} ${routeOptions.url} because it is disabled`
           )
@@ -183,8 +298,18 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
           return
         }
 
+        const hookPolicy = getHookPolicy(
+          routeOptions.config,
+          instrumentation[kInstrumentHooks],
+          instrumentation._diag
+        )
+
         for (const hook of FASTIFY_HOOKS) {
           if (routeOptions[hook] != null) {
+            if (!shouldInstrumentLifecycleHook(hook, hookPolicy)) {
+              continue
+            }
+
             const handlerLike = routeOptions[hook]
 
             if (typeof handlerLike === 'function') {
@@ -237,21 +362,23 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
           routeOptions.onError = recordErrorInSpanHook
         }
 
-        routeOptions.handler = handlerWrapper(routeOptions.handler, 'handler', {
-          [ATTRIBUTE_NAMES.HOOK_NAME]: `${this.pluginName} - route-handler`,
-          [ATTRIBUTE_NAMES.FASTIFY_TYPE]: HOOK_TYPES.HANDLER,
-          [ATTR_HTTP_ROUTE]: routeOptions.url,
-          [ATTRIBUTE_NAMES.HOOK_CALLBACK_NAME]:
-            routeOptions.handler.name.length > 0
-              ? routeOptions.handler.name
-              : ANONYMOUS_FUNCTION_NAME
-        })
+        if (shouldInstrumentHandler(routeOptions.config, instrumentation[kInstrumentHandler])) {
+          routeOptions.handler = handlerWrapper(routeOptions.handler, 'handler', {
+            [ATTRIBUTE_NAMES.HOOK_NAME]: `${this.pluginName} - route-handler`,
+            [ATTRIBUTE_NAMES.FASTIFY_TYPE]: HOOK_TYPES.HANDLER,
+            [ATTR_HTTP_ROUTE]: routeOptions.url,
+            [ATTRIBUTE_NAMES.HOOK_CALLBACK_NAME]:
+              routeOptions.handler.name.length > 0
+                ? routeOptions.handler.name
+                : ANONYMOUS_FUNCTION_NAME
+          })
+        }
       })
 
       instance.addHook('onRequest', function startRequestSpanHook (request, _reply, hookDone) {
         if (
           this[kInstrumentation].isEnabled() === false ||
-          request.routeOptions.config?.otel === false
+          isRouteOtelDisabled(request.routeOptions.config)
         ) {
           return hookDone()
         }
@@ -292,8 +419,16 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
         }
 
         /** @type {import('@opentelemetry/api').Span} */
+        // When an upstream HTTP server instrumentation is active (e.g.
+        // @opentelemetry/instrumentation-http via auto-instrumentations-node),
+        // the incoming request already has a SERVER span and RPC metadata in
+        // the active context. Creating a second SERVER span for the same
+        // request breaks span-kind semantics and makes backends that map
+        // SERVER spans to transactions report the request twice. In that case
+        // the request span is INTERNAL; standalone usage keeps SERVER.
         const span = this[kInstrumentation].tracer.startSpan('request', {
-          attributes
+          attributes,
+          kind: rpcMetadata?.type === RPCType.HTTP ? SpanKind.INTERNAL : SpanKind.SERVER
         }, ctx)
 
         try {
@@ -322,6 +457,7 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
         }
 
         request[kRequestSpan] = null
+        request[kErrorStatusSet] = false
 
         hookDone()
       })
@@ -336,7 +472,11 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
         const span = request[kRequestSpan]
 
         if (span != null) {
-          if (reply.statusCode >= 500) {
+          // setStatus replaces the status, so setting a bare ERROR here would
+          // drop the description recorded by recordErrorInSpanHook. A 5xx that
+          // never threw (e.g. reply.code(500).send()) has no description of its
+          // own, so it still needs the bare status.
+          if (reply.statusCode >= 500 && request[kErrorStatusSet] === false) {
             span.setStatus({ code: SpanStatusCode.ERROR })
           }
 
@@ -347,6 +487,7 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
         }
 
         request[kRequestSpan] = null
+        request[kErrorStatusSet] = false
 
         hookDone(null, payload)
       }
@@ -360,6 +501,7 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
             code: SpanStatusCode.ERROR,
             message: error.message
           })
+          request[kErrorStatusSet] = true
           if (instrumentation[kRecordExceptions] !== false) {
             span.recordException(error)
           }
@@ -371,7 +513,10 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
       function addHookPatched (name, hook) {
         const addHookOriginal = this[kAddHookOriginal]
 
-        if (FASTIFY_HOOKS.includes(name)) {
+        if (
+          FASTIFY_HOOKS.includes(name) &&
+          instrumentation[kInstrumentHooks].mode !== 'none'
+        ) {
           return addHookOriginal.call(
             this,
             name,
@@ -389,6 +534,14 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
         }
       }
 
+      function wrapNotFoundHookHandler (handlerLike, hookName, getSpanAttributes) {
+        if (Array.isArray(handlerLike)) {
+          return handlerLike.map(handler => handlerWrapper(handler, hookName, getSpanAttributes(handler)))
+        }
+
+        return handlerWrapper(handlerLike, hookName, getSpanAttributes(handlerLike))
+      }
+
       function setNotFoundHandlerPatched (hooks, handler) {
         const setNotFoundHandlerOriginal = this[kSetNotFoundOriginal]
         if (typeof hooks === 'function') {
@@ -402,26 +555,34 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
           })
           setNotFoundHandlerOriginal.call(this, handler)
         } else {
-          if (hooks.preValidation != null) {
-            hooks.preValidation = handlerWrapper(hooks.preValidation, 'notFoundHandler - preValidation', {
+          const globalHookPolicy = instrumentation[kInstrumentHooks]
+
+          if (
+            hooks.preValidation != null &&
+            shouldInstrumentLifecycleHook('preValidation', globalHookPolicy)
+          ) {
+            hooks.preValidation = wrapNotFoundHookHandler(hooks.preValidation, 'notFoundHandler - preValidation', handler => ({
               [ATTRIBUTE_NAMES.HOOK_NAME]: `${this.pluginName} - not-found-handler - preValidation`,
               [ATTRIBUTE_NAMES.FASTIFY_TYPE]: HOOK_TYPES.INSTANCE,
               [ATTRIBUTE_NAMES.HOOK_CALLBACK_NAME]:
-                hooks.preValidation.name?.length > 0
-                  ? hooks.preValidation.name
+                handler.name?.length > 0
+                  ? handler.name
                   : ANONYMOUS_FUNCTION_NAME /* c8 ignore next */
-            })
+            }))
           }
 
-          if (hooks.preHandler != null) {
-            hooks.preHandler = handlerWrapper(hooks.preHandler, 'notFoundHandler - preHandler', {
+          if (
+            hooks.preHandler != null &&
+            shouldInstrumentLifecycleHook('preHandler', globalHookPolicy)
+          ) {
+            hooks.preHandler = wrapNotFoundHookHandler(hooks.preHandler, 'notFoundHandler - preHandler', handler => ({
               [ATTRIBUTE_NAMES.HOOK_NAME]: `${this.pluginName} - not-found-handler - preHandler`,
               [ATTRIBUTE_NAMES.FASTIFY_TYPE]: HOOK_TYPES.INSTANCE,
               [ATTRIBUTE_NAMES.HOOK_CALLBACK_NAME]:
-                hooks.preHandler.name?.length > 0
-                  ? hooks.preHandler.name
+                handler.name?.length > 0
+                  ? handler.name
                   : ANONYMOUS_FUNCTION_NAME /* c8 ignore next */
-            })
+            }))
           }
 
           handler = handlerWrapper(handler, 'notFoundHandler', {
@@ -459,7 +620,7 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
             return handler.call(this, ...args)
           }
 
-          if (instrumentation.isEnabled() === false || request.routeOptions.config?.otel === false) {
+          if (instrumentation.isEnabled() === false || isRouteOtelDisabled(request.routeOptions.config)) {
             instrumentation._diag.debug(
               `Ignoring route instrumentation ${request.routeOptions.method} ${request.routeOptions.url} because it is disabled`
             )
@@ -474,6 +635,20 @@ class FastifyOtelInstrumentation extends InstrumentationBase {
               `Ignoring route instrumentation ${request.routeOptions.method} ${request.routeOptions.url} because it matches the ignore path`
             )
             return handler.call(this, ...args)
+          }
+
+          if (lifecycleHookBaseName(hookName) != null) {
+            const hookPolicy = getHookPolicy(
+              request.routeOptions.config,
+              instrumentation[kInstrumentHooks],
+              instrumentation._diag
+            )
+            if (!shouldInstrumentLifecycleHook(hookName, hookPolicy)) {
+              instrumentation._diag.debug(
+                `Ignoring hook instrumentation for ${hookName} because instrumentHooks excludes it`
+              )
+              return handler.call(this, ...args)
+            }
           }
 
           /* c8 ignore next */

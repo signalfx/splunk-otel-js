@@ -21,7 +21,7 @@ import { trace } from '@opentelemetry/api';
 import {
   ConsoleSpanExporter,
   SimpleSpanProcessor,
-} from '@opentelemetry/sdk-trace-base';
+} from '@opentelemetry/sdk-trace';
 import { parseOptionsAndConfigureInstrumentations } from '../../src/instrumentations';
 import { startTracing, stopTracing } from '../../src/tracing';
 import { getSpanProcessors } from '../utils';
@@ -30,7 +30,9 @@ test('Tracing: set up with span processor', async () => {
   const { tracingOptions } = parseOptionsAndConfigureInstrumentations({
     tracing: {
       spanProcessorFactory: () => {
-        return new SimpleSpanProcessor(new ConsoleSpanExporter());
+        return new SimpleSpanProcessor({
+          exporter: new ConsoleSpanExporter(),
+        });
       },
     },
   });

@@ -21,7 +21,7 @@ import { assertTracingPipeline } from './common';
 import { parseOptionsAndConfigureInstrumentations } from '../../src/instrumentations';
 import { startTracing, stopTracing } from '../../src/tracing';
 import { context, trace, TraceFlags } from '@opentelemetry/api';
-import { TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
+import { TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace';
 
 test('Tracing: honors standard sampler env options', async () => {
   const url = 'url-from-env:3030';

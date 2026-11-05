@@ -15,8 +15,8 @@
  */
 
 import { propagation, trace, Context } from '@opentelemetry/api';
-import { ReadableSpan, Span } from '@opentelemetry/sdk-trace-base';
-import { SpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { ReadableSpan, Span } from '@opentelemetry/sdk-trace';
+import { SpanProcessor } from '@opentelemetry/sdk-trace';
 
 export type TraceIdCallback = (traceId: string) => void;
 // Returns whether a snapshot was actually begun. False when snapshot profiling

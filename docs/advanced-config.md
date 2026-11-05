@@ -81,7 +81,7 @@ This distribution supports all the configuration options supported by the compon
 | `OTEL_TRACES_SAMPLER` | `always_on`   | Stable  | Sampler to be used for traces. See [Sampling](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/trace/sdk.md#sampling)
 
 Splunk Distribution of OpenTelemetry JS supports all standard samplers as provided by
-[OpenTelemetry JS SDK](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/opentelemetry-sdk-trace-base#built-in-samplers).
+[OpenTelemetry JS SDK](https://github.com/open-telemetry/opentelemetry-js/tree/main/packages/sdk-trace#built-in-samplers).
 In addition, the distribution adds the following samplers:
 
 ### `rules`

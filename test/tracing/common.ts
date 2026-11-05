@@ -18,7 +18,7 @@ import { strict as assert } from 'assert';
 
 import { ProxyTracerProvider, trace } from '@opentelemetry/api';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
-import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
+import { BatchSpanProcessor } from '@opentelemetry/sdk-trace';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { exporterHeaders, exporterUrl, getSpanProcessors } from '../utils';
 

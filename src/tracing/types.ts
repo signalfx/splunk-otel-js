@@ -17,8 +17,8 @@
 import type {
   SpanExporter,
   SpanProcessor,
-} from '@opentelemetry/sdk-trace-base';
-import type { NodeTracerConfig } from '@opentelemetry/sdk-trace-node';
+  TracerProviderOptions,
+} from '@opentelemetry/sdk-trace';
 import type { Span, TextMapPropagator } from '@opentelemetry/api';
 import type { Instrumentation } from '@opentelemetry/instrumentation';
 import type { ResourceFactory } from '../types';
@@ -37,6 +37,14 @@ export type CaptureHttpUriParameters = (
   span: Span,
   params: Record<string, string | string[] | undefined>
 ) => void;
+
+/** Keeps the existing tracerConfig option shape while using sdk-trace. */
+export interface NodeTracerConfig extends TracerProviderOptions {
+  generalLimits?: {
+    attributeValueLengthLimit?: number;
+    attributeCountLimit?: number;
+  };
+}
 
 export interface TracingOptions {
   accessToken: string;

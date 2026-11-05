@@ -24,16 +24,18 @@ import {
   trace,
   TracerProvider,
 } from '@opentelemetry/api';
-import {
-  NodeTracerConfig,
-  NodeTracerProvider,
-} from '@opentelemetry/sdk-trace-node';
+import { TracerProvider as SdkTracerProvider } from '@opentelemetry/sdk-trace';
 import {
   Instrumentation,
   registerInstrumentations,
 } from '@opentelemetry/instrumentation';
 import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
-import type { StartTracingOptions, TracingOptions } from './types';
+import type {
+  NodeTracerConfig,
+  StartTracingOptions,
+  TracingOptions,
+} from './types';
+import { toTracerProviderOptions } from './sdkTraceCompatibility';
 import { isProfilingContextManagerSet } from '../profiling';
 import {
   isSnapshotProfilingActive,
@@ -132,12 +134,6 @@ export function startTracing(options: TracingOptions): boolean {
     tracingContextManagerEnabled = true;
   }
 
-  // Workaround for https://github.com/open-telemetry/opentelemetry-js/issues/3422
-  const envTracesExporter = process.env.OTEL_TRACES_EXPORTER;
-  if (envTracesExporter !== undefined) {
-    process.env.OTEL_TRACES_EXPORTER = '';
-  }
-
   let spanProcessors = options.spanProcessorFactory(options);
   if (!Array.isArray(spanProcessors)) {
     spanProcessors = [spanProcessors];
@@ -153,10 +149,7 @@ export function startTracing(options: TracingOptions): boolean {
     ...options.tracerConfig,
   };
 
-  const provider = new NodeTracerProvider(tracerConfig);
-  if (envTracesExporter !== undefined) {
-    process.env.OTEL_TRACES_EXPORTER = envTracesExporter;
-  }
+  const provider = new SdkTracerProvider(toTracerProviderOptions(tracerConfig));
 
   // instrumentations
   unregisterInstrumentations = registerInstrumentations({

@@ -20,9 +20,9 @@ import { trace, context } from '@opentelemetry/api';
 import {
   InMemorySpanExporter,
   SimpleSpanProcessor,
-} from '@opentelemetry/sdk-trace-base';
+} from '@opentelemetry/sdk-trace';
 import { NextJsSpanProcessor } from '../../src/tracing/NextJsSpanProcessor';
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import { TracerProvider } from '@opentelemetry/sdk-trace';
 import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
 import { describe, it, afterEach } from 'node:test';
 import { resourceFromAttributes } from '@opentelemetry/resources';
@@ -30,10 +30,10 @@ import { resourceFromAttributes } from '@opentelemetry/resources';
 describe('Next.js span processor', () => {
   const exporter = new InMemorySpanExporter();
 
-  const provider: NodeTracerProvider = new NodeTracerProvider({
+  const provider: TracerProvider = new TracerProvider({
     spanProcessors: [
       new NextJsSpanProcessor(),
-      new SimpleSpanProcessor(exporter),
+      new SimpleSpanProcessor({ exporter }),
     ],
     resource: resourceFromAttributes({
       [ATTR_SERVICE_NAME]: 'nextjs',

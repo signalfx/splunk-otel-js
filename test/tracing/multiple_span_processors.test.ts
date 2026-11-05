@@ -17,14 +17,14 @@
 import { strict as assert } from 'assert';
 import { test } from 'node:test';
 import { ProxyTracerProvider, trace } from '@opentelemetry/api';
-import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
+import { TracerProvider } from '@opentelemetry/sdk-trace';
 
 import {
   BatchSpanProcessor,
   ConsoleSpanExporter,
   InMemorySpanExporter,
   SimpleSpanProcessor,
-} from '@opentelemetry/sdk-trace-base';
+} from '@opentelemetry/sdk-trace';
 import { parseOptionsAndConfigureInstrumentations } from '../../src/instrumentations';
 import { startTracing } from '../../src/tracing';
 
@@ -33,8 +33,8 @@ test('Tracing: set up with multiple span processors', async () => {
     tracing: {
       spanProcessorFactory: () => {
         return [
-          new SimpleSpanProcessor(new ConsoleSpanExporter()),
-          new BatchSpanProcessor(new InMemorySpanExporter()),
+          new SimpleSpanProcessor({ exporter: new ConsoleSpanExporter() }),
+          new BatchSpanProcessor({ exporter: new InMemorySpanExporter() }),
         ];
       },
     },
@@ -43,7 +43,7 @@ test('Tracing: set up with multiple span processors', async () => {
   startTracing(tracingOptions);
 
   const proxy = trace.getTracerProvider() as ProxyTracerProvider;
-  const provider = proxy.getDelegate() as NodeTracerProvider;
+  const provider = proxy.getDelegate() as TracerProvider;
 
   const [p1, p2] = provider['_activeSpanProcessor']['_spanProcessors'];
 

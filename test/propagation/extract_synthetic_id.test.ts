@@ -15,7 +15,7 @@
  */
 
 import { context, propagation } from '@opentelemetry/api';
-import { RandomIdGenerator } from '@opentelemetry/sdk-trace-base';
+import { RandomIdGenerator } from '@opentelemetry/sdk-trace';
 import { assertIncludes } from './common';
 import { parseOptionsAndConfigureInstrumentations } from '../../src/instrumentations';
 import { startTracing } from '../../src/tracing';

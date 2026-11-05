@@ -23,7 +23,7 @@ import {
   ProfilingExtension,
 } from '../../src/profiling/types';
 import * as utils from '../utils';
-import { RandomIdGenerator } from '@opentelemetry/sdk-trace-base';
+import { RandomIdGenerator } from '@opentelemetry/sdk-trace';
 
 const extension: ProfilingExtension =
   require('../../src/native_ext').profiling!;

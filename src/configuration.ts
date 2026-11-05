@@ -36,8 +36,8 @@ import {
   AlwaysOnSampler,
   ParentBasedSampler,
   TraceIdRatioBasedSampler,
-} from '@opentelemetry/sdk-trace-base';
-import { Sampler } from '@opentelemetry/sdk-trace-base';
+} from '@opentelemetry/sdk-trace';
+import { Sampler } from '@opentelemetry/sdk-trace';
 import { parseDocument, stringify as stringifyYaml, visit } from 'yaml';
 import { bundledInstrumentations } from './instrumentations';
 import {

@@ -17,8 +17,8 @@ struct ArenaNode {
 };
 
 struct PagedArena {
-  ArenaNode* nodes;
-  ArenaNode* freeNodes;
+  ArenaNode* head; // All available nodes.
+  ArenaNode* current;
   size_t pageSize;
 };
 
