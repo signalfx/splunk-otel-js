@@ -67,6 +67,8 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
         format = moduleExports.format;
       }
     }
+    // The connection file can be patched before mysql2 exports its formatter.
+    const getFormat = () => format;
     // Keep statements weakly reachable so they can be unwrapped on disable
     // and rewrapped on enable without retaining evicted statements.
     const preparedStatementRefs = new Set<PreparedStatementRef>();
@@ -106,7 +108,7 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
         ConnectionPrototype,
         'prepare',
         this._patchPrepare(
-          format,
+          getFormat,
           preparedStatementRefs,
           preparedStatementConnections,
           preparedStatementFinalizer,
@@ -128,7 +130,7 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
           this._wrap(
             statement,
             'execute',
-            this._patchPreparedStatementExecute(format, connection)
+            this._patchPreparedStatementExecute(getFormat, connection)
           );
         }
       }
@@ -265,7 +267,7 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
   }
 
   private _patchPrepare(
-    format: formatType | undefined,
+    getFormat: () => formatType | undefined,
     preparedStatementRefs: Set<PreparedStatementRef>,
     preparedStatementConnections: WeakMap<
       PreparedStatement,
@@ -289,7 +291,7 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
           arguments,
           1,
           thisPlugin._patchPreparedStatementCallback(
-            format,
+            getFormat,
             this,
             preparedStatementRefs,
             preparedStatementConnections,
@@ -304,7 +306,7 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
   }
 
   private _patchPreparedStatementCallback(
-    format: formatType | undefined,
+    getFormat: () => formatType | undefined,
     connection: mysqlTypes.Connection,
     preparedStatementRefs: Set<PreparedStatementRef>,
     preparedStatementConnections: WeakMap<
@@ -317,6 +319,7 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
     return (originalCallback: Function) => {
       const thisPlugin = this;
       return function preparedStatementCallback(
+        this: unknown,
         err: mysqlTypes.QueryError | null,
         statement?: PreparedStatement
       ) {
@@ -331,7 +334,7 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
             statement,
             'execute',
             thisPlugin._patchPreparedStatementExecute(
-              format,
+              getFormat,
               connection
             )
           );
@@ -341,13 +344,13 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
           preparedStatementFinalizer.register(statement, statementRef);
         }
 
-        return originalCallback(...arguments);
+        return originalCallback.apply(this, arguments);
       };
     };
   }
 
   private _patchPreparedStatementExecute(
-    format: formatType | undefined,
+    getFormat: () => formatType | undefined,
     connection: mysqlTypes.Connection
   ) {
     return (originalExecute: Function): Function => {
@@ -365,7 +368,7 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
         };
         const { endSpan } = thisPlugin._createSpan(
           query,
-          format,
+          getFormat(),
           values,
           connection.config
         );

@@ -39,7 +39,9 @@ type CommandCallback = (
   fields?: unknown
 ) => void;
 
-class FakeCommand extends EventEmitter {}
+class FakeCommand extends EventEmitter {
+  query?: string;
+}
 
 class FakeConnection extends EventEmitter {
   config = { host: 'localhost', port: 3306, database: 'test' };
@@ -84,10 +86,12 @@ class FakeConnection extends EventEmitter {
   ) {
     const sql = typeof options === 'string' ? options : options.sql;
     const statement = new FakePreparedStatement(this, sql);
-    return this.enqueue(
+    const command = this.enqueue(
       `prepare:${sql}`,
-      callback && ((err) => callback(err, statement))
+      callback && ((err) => callback.call(command, err, statement))
     );
+    command.query = sql;
+    return command;
   }
 
   enqueue(label: string, callback?: CommandCallback) {
@@ -173,7 +177,7 @@ function createPatchedConnection(config: MySQL2InstrumentationConfig = {}) {
   assert.ok(connectionFile);
   connectionFile.patch(FakeConnection, '3.15.3');
 
-  return { connectionFile, exporter };
+  return { connectionFile, exporter, definition };
 }
 
 function prepareStatement(
@@ -213,6 +217,88 @@ function executeStatement(
 }
 
 describe('mysql2 prepared statements', () => {
+  it('preserves the prepare callback receiver and arguments', async () => {
+    const { connectionFile, exporter } = createPatchedConnection();
+    const connection = new FakeConnection();
+
+    try {
+      let command: FakeCommand | undefined;
+      const result = await new Promise<{
+        receiver: FakeCommand;
+        error: Error | null;
+        statement: FakePreparedStatement;
+      }>((resolve) => {
+        command = connection.prepare(
+          'SELECT ?',
+          function (this: FakeCommand, err, statement) {
+            resolve({ receiver: this, error: err, statement });
+          }
+        );
+      });
+
+      assert.strictEqual(result.receiver, command);
+      assert.equal(result.receiver.query, 'SELECT ?');
+      assert.equal(result.error, null);
+      assert.ok(result.statement instanceof FakePreparedStatement);
+      await executeStatement(result.statement, [1]);
+      assert.equal(exporter.getFinishedSpans().length, 1);
+    } finally {
+      connectionFile.unpatch(FakeConnection, '3.15.3');
+    }
+  });
+
+  const formattingCases: Array<{
+    label: string;
+    config: MySQL2InstrumentationConfig;
+    queryText: string;
+  }> = [
+    { label: 'unmasked', config: {}, queryText: 'SELECT 11' },
+    {
+      label: 'masked',
+      config: { maskStatement: true },
+      queryText: 'SELECT ?',
+    },
+    {
+      label: 'custom masked',
+      config: {
+        maskStatement: true,
+        maskStatementHook: () => 'custom masked query',
+      },
+      queryText: 'custom masked query',
+    },
+  ];
+
+  for (const { label, config, queryText } of formattingCases) {
+    it(`keeps ${label} query text consistent when the formatter loads after patching`, async () => {
+      const { connectionFile, exporter, definition } =
+        createPatchedConnection(config);
+      const connection = new FakeConnection();
+
+      try {
+        const statement = await prepareStatement(connection, 'SELECT ?');
+        // mysql2's connection file loads before the main module exports format.
+        definition.patch!({ format }, '3.15.3');
+        await executeStatement(statement, [11]);
+
+        connectionFile.unpatch(FakeConnection, '3.15.3');
+        await executeStatement(statement, [11]);
+        assert.equal(exporter.getFinishedSpans().length, 1);
+
+        connectionFile.patch(FakeConnection, '3.15.3');
+        await executeStatement(statement, [11]);
+
+        const spans = exporter.getFinishedSpans();
+        assert.equal(spans.length, 2);
+        assert.deepEqual(
+          spans.map((span) => span.attributes[ATTR_DB_QUERY_TEXT]),
+          [queryText, queryText]
+        );
+      } finally {
+        connectionFile.unpatch(FakeConnection, '3.15.3');
+      }
+    });
+  }
+
   it('creates a span when an explicit prepared statement is executed', async () => {
     const { connectionFile, exporter } = createPatchedConnection();
     const connection = new FakeConnection();
