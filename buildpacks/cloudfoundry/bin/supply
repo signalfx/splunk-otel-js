@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# -ne 4 || ! "$4" =~ ^[0-9]+$ ]]; then
+  echo 'Usage: supply BUILD_DIR CACHE_DIR DEPS_DIR INDEX' >&2
+  exit 1
+fi
+
+buildpack_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+dep_dir="$3/$4"
+
+if [[ ! -f "$buildpack_dir/splunk-otel/instrument.js" || ! -d "$buildpack_dir/splunk-otel/node_modules" ]]; then
+  echo 'Missing bundled agent. Use the Cloud Foundry buildpack ZIP from GitHub Releases.' >&2
+  exit 1
+fi
+
+echo "-----> Installing Splunk OpenTelemetry for Node.js $(cat "$buildpack_dir/VERSION")"
+mkdir -p "$dep_dir/profile.d"
+cp -a "$buildpack_dir/splunk-otel" "$dep_dir/"
+cp "$buildpack_dir/config.yml" "$dep_dir/config.yml"
+sed "s/@INDEX@/$4/g" "$buildpack_dir/profile/splunk-otel.sh" > "$dep_dir/profile.d/splunk-otel.sh"
