@@ -67,8 +67,6 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
         format = moduleExports.format;
       }
     }
-    // The connection file can be patched before mysql2 exports its formatter.
-    const getFormat = () => format;
     // Keep statements weakly reachable so they can be unwrapped on disable
     // and rewrapped on enable without retaining evicted statements.
     const preparedStatementRefs = new Set<PreparedStatementRef>();
@@ -108,7 +106,6 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
         ConnectionPrototype,
         'prepare',
         this._patchPrepare(
-          getFormat,
           preparedStatementRefs,
           preparedStatementConnections,
           preparedStatementFinalizer,
@@ -130,7 +127,7 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
           this._wrap(
             statement,
             'execute',
-            this._patchPreparedStatementExecute(getFormat, connection)
+            this._patchPreparedStatementExecute(connection)
           );
         }
       }
@@ -267,7 +264,6 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
   }
 
   private _patchPrepare(
-    getFormat: () => formatType | undefined,
     preparedStatementRefs: Set<PreparedStatementRef>,
     preparedStatementConnections: WeakMap<
       PreparedStatement,
@@ -291,7 +287,6 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
           arguments,
           1,
           thisPlugin._patchPreparedStatementCallback(
-            getFormat,
             this,
             preparedStatementRefs,
             preparedStatementConnections,
@@ -306,7 +301,6 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
   }
 
   private _patchPreparedStatementCallback(
-    getFormat: () => formatType | undefined,
     connection: mysqlTypes.Connection,
     preparedStatementRefs: Set<PreparedStatementRef>,
     preparedStatementConnections: WeakMap<
@@ -333,10 +327,7 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
           thisPlugin._wrap(
             statement,
             'execute',
-            thisPlugin._patchPreparedStatementExecute(
-              getFormat,
-              connection
-            )
+            thisPlugin._patchPreparedStatementExecute(connection)
           );
           const statementRef = new WeakRef(statement);
           preparedStatementRefs.add(statementRef);
@@ -350,7 +341,6 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
   }
 
   private _patchPreparedStatementExecute(
-    getFormat: () => formatType | undefined,
     connection: mysqlTypes.Connection
   ) {
     return (originalExecute: Function): Function => {
@@ -360,16 +350,13 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
         _parametersOrCallback?: unknown,
         _callback?: Function
       ) {
-        const values =
-          typeof arguments[0] === 'function' ? undefined : arguments[0];
-        const query: mysqlTypes.QueryOptions = {
-          sql: this.query,
-          values,
-        };
+        // Keep bind parameters out of telemetry formatting. mysql2.format()
+        // can invoke getters or toSqlString() methods that its binary protocol
+        // serializer does not, changing the values sent to the database.
         const { endSpan } = thisPlugin._createSpan(
-          query,
-          getFormat(),
-          values,
+          this.query,
+          undefined,
+          undefined,
           connection.config
         );
 

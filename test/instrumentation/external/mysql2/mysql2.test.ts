@@ -159,7 +159,10 @@ class FakePreparedStatement {
   }
 }
 
-function createPatchedConnection(config: MySQL2InstrumentationConfig = {}) {
+function createPatchedConnection(
+  config: MySQL2InstrumentationConfig = {},
+  Connection = FakeConnection
+) {
   const exporter = new InMemorySpanExporter();
   const provider = new TracerProvider({
     spanProcessors: [new SimpleSpanProcessor({ exporter })],
@@ -175,9 +178,50 @@ function createPatchedConnection(config: MySQL2InstrumentationConfig = {}) {
     file.name.replace(/\\/g, '/').endsWith('mysql2/lib/connection.js')
   );
   assert.ok(connectionFile);
-  connectionFile.patch(FakeConnection, '3.15.3');
+  connectionFile.patch(Connection, '3.15.3');
 
   return { connectionFile, exporter, definition };
+}
+
+// Use mysql2's real prepare/execute commands and binary serializer, without a
+// server. Only command transport and the server's completion are stubbed.
+function createDriverConnection() {
+  const mysqlDirectory = dirname(require.resolve('mysql2'));
+  const Connection = require(join(mysqlDirectory, 'lib/connection.js'));
+  const ConnectionConfig = require(
+    join(mysqlDirectory, 'lib/connection_config.js')
+  );
+  const connection = Object.create(Connection.prototype);
+  EventEmitter.call(connection);
+  connection.config = new ConnectionConfig({ database: 'test' });
+  connection._statements = new Map();
+  connection.addCommand = (command) => command;
+  let packet: Buffer | undefined;
+  connection.writePacket = (value) => {
+    // mysql2 writes the protocol header in the transport layer, which is
+    // stubbed here. Compare just the serialized command and parameters.
+    packet = Buffer.from(value.buffer.subarray(4));
+  };
+
+  return {
+    Connection,
+    execute(parameters: unknown[]) {
+      let statement;
+      const prepare = connection.prepare('SELECT ?', (err, result) => {
+        assert.ifError(err);
+        statement = result;
+      });
+      prepare.prepareDone(connection);
+      const command = statement.execute(parameters, (err) => {
+        assert.ifError(err);
+      });
+      assert.strictEqual(command.parameters, parameters);
+      command.start(undefined, connection);
+      assert.ok(packet);
+      command.onResult(null, [], []);
+      return packet;
+    },
+  };
 }
 
 function prepareStatement(
@@ -217,6 +261,88 @@ function executeStatement(
 }
 
 describe('mysql2 prepared statements', () => {
+  const parameterCases = [
+    {
+      label: 'toSqlString methods',
+      create() {
+        let calls = 0;
+        const value = {
+          value: 1,
+          toSqlString() {
+            calls++;
+            this.value = 99;
+            return 'anything';
+          },
+        };
+        return { parameters: [value], calls: () => calls };
+      },
+    },
+    {
+      label: 'JSON property getters',
+      create() {
+        let calls = 0;
+        const value = {
+          get value() {
+            return ++calls;
+          },
+        };
+        return { parameters: [value], calls: () => calls };
+      },
+    },
+    {
+      label: 'parameter array getters',
+      create() {
+        let calls = 0;
+        const parameters = Object.defineProperty([], '0', {
+          get() {
+            return ++calls;
+          },
+        });
+        return { parameters, calls: () => calls };
+      },
+    },
+    {
+      label: 'parameter proxy traps',
+      create() {
+        let calls = 0;
+        const parameters = new Proxy([1], {
+          get(target, property, receiver) {
+            calls++;
+            return Reflect.get(target, property, receiver);
+          },
+        });
+        return { parameters, calls: () => calls };
+      },
+    },
+  ];
+
+  for (const { label, create } of parameterCases) {
+    it(`does not add evaluations of ${label} when recording prepared SQL`, () => {
+      const driver = createDriverConnection();
+      const baseline = create();
+      const expectedPacket = driver.execute(baseline.parameters);
+      const expectedCalls = baseline.calls();
+      const { connectionFile, exporter, definition } = createPatchedConnection(
+        {},
+        driver.Connection
+      );
+
+      try {
+        definition.patch!({ format }, '3.15.3');
+        const instrumented = create();
+        const packet = driver.execute(instrumented.parameters);
+
+        assert.deepEqual(packet, expectedPacket);
+        assert.equal(instrumented.calls(), expectedCalls);
+        const [span] = exporter.getFinishedSpans();
+        assert.ok(span);
+        assert.equal(span.attributes[ATTR_DB_QUERY_TEXT], 'SELECT ?');
+      } finally {
+        connectionFile.unpatch(driver.Connection, '3.15.3');
+      }
+    });
+  }
+
   for (const withValues of [false, true]) {
     const signature = withValues
       ? 'execute(values, callback)'
@@ -300,11 +426,11 @@ describe('mysql2 prepared statements', () => {
     config: MySQL2InstrumentationConfig;
     queryText: string;
   }> = [
-    { label: 'unmasked', config: {}, queryText: 'SELECT 11' },
+    { label: 'unmasked', config: {}, queryText: 'SELECT ?, 42' },
     {
       label: 'masked',
       config: { maskStatement: true },
-      queryText: 'SELECT ?',
+      queryText: 'SELECT ?, ?',
     },
     {
       label: 'custom masked',
@@ -317,13 +443,13 @@ describe('mysql2 prepared statements', () => {
   ];
 
   for (const { label, config, queryText } of formattingCases) {
-    it(`keeps ${label} query text consistent when the formatter loads after patching`, async () => {
+    it(`keeps ${label} prepared SQL consistent across formatter loading and re-enabling`, async () => {
       const { connectionFile, exporter, definition } =
         createPatchedConnection(config);
       const connection = new FakeConnection();
 
       try {
-        const statement = await prepareStatement(connection, 'SELECT ?');
+        const statement = await prepareStatement(connection, 'SELECT ?, 42');
         // mysql2's connection file loads before the main module exports format.
         definition.patch!({ format }, '3.15.3');
         await executeStatement(statement, [11]);
