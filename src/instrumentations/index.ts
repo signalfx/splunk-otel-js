@@ -58,7 +58,7 @@ import { KnexInstrumentation } from '@opentelemetry/instrumentation-knex';
 import { KoaInstrumentation } from '@opentelemetry/instrumentation-koa';
 import { LruMemoizerInstrumentation } from '@opentelemetry/instrumentation-lru-memoizer';
 import { MemcachedInstrumentation } from '@opentelemetry/instrumentation-memcached';
-import { MongoDBInstrumentation } from '@opentelemetry/instrumentation-mongodb';
+import { MongoDBInstrumentation } from './external/mongodb';
 import { MongooseInstrumentation } from '@opentelemetry/instrumentation-mongoose';
 import { MySQLInstrumentation } from '@opentelemetry/instrumentation-mysql';
 import { MySQL2Instrumentation } from './external/mysql2';
