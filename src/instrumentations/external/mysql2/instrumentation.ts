@@ -574,12 +574,13 @@ export class MySQL2Instrumentation extends InstrumentationBase<MySQL2Instrumenta
   private _patchCallbackQuery(endSpan: Function) {
     return (originalCallback: Function) => {
       return function (
+        this: unknown,
         err: mysqlTypes.QueryError | null,
         results?: any,
         fields?: mysqlTypes.FieldPacket[]
       ) {
         endSpan(err, results);
-        return originalCallback(...arguments);
+        return originalCallback.apply(this, arguments);
       };
     };
   }

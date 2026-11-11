@@ -119,7 +119,7 @@ class FakeConnection extends EventEmitter {
     }
     setImmediate(() => {
       this.events.push(`completed:${entry.label}`);
-      entry.callback?.(null, [], []);
+      entry.callback?.call(entry.command, null, [], []);
       entry.command.emit('result', []);
       entry.command.emit('end');
       this.active = false;
@@ -217,6 +217,54 @@ function executeStatement(
 }
 
 describe('mysql2 prepared statements', () => {
+  for (const withValues of [false, true]) {
+    const signature = withValues
+      ? 'execute(values, callback)'
+      : 'execute(callback)';
+    it(`preserves the callback receiver and arguments for ${signature}`, async () => {
+      const { connectionFile, exporter } = createPatchedConnection();
+      const connection = new FakeConnection();
+
+      try {
+        const statement = await prepareStatement(connection, 'SELECT ?');
+        let command: FakeCommand | undefined;
+        const result = await new Promise<{
+          receiver: FakeCommand;
+          error: Error | null;
+          results: unknown;
+          fields: unknown;
+          finishedSpanCount: number;
+        }>((resolve) => {
+          const callback = function (
+            this: FakeCommand,
+            err: Error | null,
+            results?: unknown,
+            fields?: unknown
+          ) {
+            resolve({
+              receiver: this,
+              error: err,
+              results,
+              fields,
+              finishedSpanCount: exporter.getFinishedSpans().length,
+            });
+          };
+          command = withValues
+            ? statement.execute([1], callback)
+            : statement.execute(callback);
+        });
+
+        assert.strictEqual(result.receiver, command);
+        assert.equal(result.error, null);
+        assert.deepEqual(result.results, []);
+        assert.deepEqual(result.fields, []);
+        assert.equal(result.finishedSpanCount, 1);
+      } finally {
+        connectionFile.unpatch(FakeConnection, '3.15.3');
+      }
+    });
+  }
+
   it('preserves the prepare callback receiver and arguments', async () => {
     const { connectionFile, exporter } = createPatchedConnection();
     const connection = new FakeConnection();
