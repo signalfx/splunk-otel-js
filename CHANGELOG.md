@@ -1,5 +1,10 @@
 # Change Log - @splunk/otel
 
+## 4.13.0
+
+- Add CloudFoundry buildpack support. [#1201](https://github.com/signalfx/splunk-otel-js/pull/1201)
+- Add tracing support for mysql2 prepared statements. [#1187](https://github.com/signalfx/splunk-otel-js/pull/1187)
+
 ## 4.12.1
 
 - Fix potential memory growth during native profiling by retaining and reusing arena pages across resets. [#1195](https://github.com/signalfx/splunk-otel-js/pull/1195)
