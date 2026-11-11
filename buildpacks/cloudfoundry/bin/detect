@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+# This supply buildpack must be selected explicitly before nodejs_buildpack.
+exit 100

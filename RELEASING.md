@@ -34,3 +34,10 @@ Once the PR is approved, you need to merge it. The rest of the process is automa
 Go to the internal Splunk mirror of this repository and verify that the pipeline job for your new version was successful.
 
 Go to [https://www.npmjs.com/package/@splunk/otel](https://www.npmjs.com/package/@splunk/otel) and verify the new package was published. It may take a few minutes for the npmjs.com web interface to reflect the new package but it should be installable instantly.
+
+The GitHub publish workflow also downloads the `cloudfoundry-buildpack` artifact
+from the selected CI run and attaches `splunk-otel-js-cloudfoundry-<VERSION>.zip`
+to the GitHub release alongside the npm tarball and `checksums.txt`. Use a CI run
+from the release commit where `create-package`, `cloudfoundry-buildpack`, and all
+`cloudfoundry-buildpack-tests` jobs completed successfully. See the [Cloud Foundry buildpack reference](buildpacks/cloudfoundry/README.md)
+for installation and validation.

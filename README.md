@@ -28,6 +28,8 @@ If you're using the SignalFx Tracing Library for Node and want to migrate to the
 
 For complete instructions on how to get started with the Splunk Distribution of OpenTelemetry JS, see [Instrument a Node application for Splunk Observability Cloud](https://quickdraw.splunk.com/redirect/?product=Observability&version=current&location=nodejs.application.gdi) in the official documentation.
 
+For Cloud Foundry / PCF deployments, see the [Cloud Foundry buildpack](buildpacks/cloudfoundry/README.md).
+
 ## Correlate traces and logs
 
 The Splunk Distribution of OpenTelemetry JS automatically injects trace metadata into logs so that Node.js logging libraries can access it. You can use trace metadata to correlate traces with log events and explore logs in Observability Cloud.
