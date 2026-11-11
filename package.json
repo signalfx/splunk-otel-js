@@ -52,6 +52,8 @@
     "compile:all": "npm run compile && npm run compile:workspaces",
     "compile:jsonschema-to-typescript": "npm run -w @splunk/jsonschema-to-typescript compile",
     "gen-metadata": "node scripts/generate-metadata-yaml.js",
+    "package:cloudfoundry": "node scripts/package-cloudfoundry.mjs",
+    "test:cloudfoundry": "node --test test/cloudfoundry/*.test.mjs",
     "prepare-release-artifact": "node scripts/prepare-release-artifact.mjs",
     "install": "node-gyp-build-optional",
     "fmt:check": "oxfmt --check",
