@@ -15,6 +15,10 @@ if [[ ! -f "$buildpack_dir/splunk-otel/instrument.js" || ! -d "$buildpack_dir/sp
 fi
 
 echo "-----> Installing Splunk OpenTelemetry for Node.js $(cat "$buildpack_dir/VERSION")"
+if [[ "${OPTIMIZE_MEMORY:-}" == true && "${SPLUNK_OTEL_NODEJS_ENABLED:-true}" != false ]]; then
+  echo '-----> WARNING: OPTIMIZE_MEMORY=true can overwrite NODE_OPTIONS and disable the Splunk preload.' >&2
+  echo '       Set OPTIMIZE_MEMORY=false, set your heap limit in NODE_OPTIONS, and restage.' >&2
+fi
 mkdir -p "$dep_dir/profile.d"
 cp -a "$buildpack_dir/splunk-otel" "$dep_dir/"
 cp "$buildpack_dir/config.yml" "$dep_dir/config.yml"

@@ -36,7 +36,7 @@ import { test } from 'node:test';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const source = join(root, 'buildpacks/cloudfoundry');
 
-function fixture(t, archive) {
+function fixture(t, archive, stagingEnv = {}) {
   const work = mkdtempSync(join(tmpdir(), 'splunk-cf-test-'));
   t.after(() => rmSync(work, { recursive: true, force: true }));
   const buildpack = join(work, 'buildpack');
@@ -60,13 +60,13 @@ function fixture(t, archive) {
   const deps = join(staging, 'deps');
   mkdirSync(app, { recursive: true });
   writeFileSync(join(app, 'package.json'), '{"name":"cf-test"}');
-  execFileSync('bash', [
-    join(buildpack, 'bin/supply'),
-    app,
-    join(work, 'cache'),
-    deps,
-    '2',
-  ]);
+  const supplied = spawnSync(
+    'bash',
+    [join(buildpack, 'bin/supply'), app, join(work, 'cache'), deps, '2'],
+    { env: { ...process.env, ...stagingEnv }, encoding: 'utf8' }
+  );
+  assert.equal(supplied.error, undefined);
+  assert.equal(supplied.status, 0, supplied.stderr);
   assert.deepEqual(
     readdirSync(app),
     ['package.json'],
@@ -91,15 +91,16 @@ function fixture(t, archive) {
     buildpack,
     runtime,
     profile: join(runtime, 'profile.d/2_splunk-otel.sh'),
+    stagingStderr: supplied.stderr,
   };
 }
 
-function launch(f, code, env = {}) {
+function launch(f, code, env = {}, command = 'exec "$2" -e "$3"') {
   return execFileSync(
     'bash',
     [
       '-c',
-      'source "$1"; source "$1"; exec "$2" -e "$3"',
+      `source "$1"; source "$1"; ${command}`,
       'launch',
       f.profile,
       process.execPath,
@@ -143,6 +144,60 @@ test('allows instrumentation to be disabled at launch', (t) => {
       SPLUNK_OTEL_NODEJS_ENABLED: 'false',
     }
   );
+});
+
+test('warns about automatic memory optimization only when instrumentation is enabled', (t) => {
+  for (const [env, warned] of [
+    [{ OPTIMIZE_MEMORY: 'true', SPLUNK_OTEL_NODEJS_ENABLED: 'true' }, true],
+    [{ OPTIMIZE_MEMORY: 'false', SPLUNK_OTEL_NODEJS_ENABLED: 'true' }, false],
+    [{ OPTIMIZE_MEMORY: 'true', SPLUNK_OTEL_NODEJS_ENABLED: 'false' }, false],
+  ]) {
+    const f = fixture(t, undefined, env);
+    assert.equal(
+      f.stagingStderr.includes('WARNING: OPTIMIZE_MEMORY=true'),
+      warned
+    );
+    if (warned) {
+      assert.match(f.stagingStderr, /OPTIMIZE_MEMORY=false/);
+      assert.match(f.stagingStderr, /heap limit in NODE_OPTIONS/);
+      assert.match(f.stagingStderr, /restage/);
+    }
+  }
+});
+
+test('manual heap configuration preserves instrumentation through npm start', (t) => {
+  const f = fixture(t, undefined, { OPTIMIZE_MEMORY: 'false' });
+  const app = join(f.runtime, 'app');
+  writeFileSync(
+    join(app, 'package.json'),
+    JSON.stringify({
+      name: 'cf-test',
+      private: true,
+      scripts: { start: 'node index.js' },
+    })
+  );
+  writeFileSync(
+    join(app, 'index.js'),
+    `
+    const assert = require('node:assert/strict');
+    assert.equal(globalThis.splunkLoaded, 1);
+    assert.ok(process.env.NODE_OPTIONS.includes('--max-old-space-size=384'));
+    assert.ok(process.env.NODE_OPTIONS.includes('--max-semi-space-size=4'));
+    assert.ok(require('node:v8').getHeapStatistics().heap_size_limit < 512 * 1024 * 1024);
+    console.log('Agent loaded with the configured heap limit');
+  `
+  );
+  const output = launch(
+    f,
+    '',
+    {
+      OPTIMIZE_MEMORY: 'false',
+      // Bound the young generation too, independently of the host's RAM.
+      NODE_OPTIONS: '--max-old-space-size=384 --max-semi-space-size=4',
+    },
+    'exec npm start --silent'
+  );
+  assert.match(output, /Agent loaded with the configured heap limit/);
 });
 
 test('declines automatic detection and explains incorrect buildpack ordering', () => {

@@ -25,6 +25,10 @@ Run `cf push`. Keep `nodejs_buildpack` last and ensure it supports `cflinuxfs5`.
 Use a Node.js version supported by the [agent](../../package.json) and foundation.
 Custom buildpack URLs must be allowed; otherwise use an operator-installed buildpack name.
 
+`OPTIMIZE_MEMORY=true` currently overwrites the agent preload in the Node.js
+buildpack's default start command. Use `NODE_OPTIONS` for heap limits instead,
+leaving room for other memory. Restage after changing `OPTIMIZE_MEMORY`.
+
 Restage after buildpack upgrades. Restart after environment changes. Set
 `SPLUNK_OTEL_NODEJS_ENABLED=false` to disable the preload. See
 [agent configuration](https://quickdraw.splunk.com/redirect/?product=Observability&version=current&location=nodejs.application.gdi).
