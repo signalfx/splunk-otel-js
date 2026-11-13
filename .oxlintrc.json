@@ -40,6 +40,7 @@
   "globals": {},
   "ignorePatterns": [
     "src/instrumentations/external/fastify/*",
+    "src/instrumentations/external/mongodb/**",
     "src/instrumentations/external/mysql2/**"
   ],
   "overrides": [

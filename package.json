@@ -108,7 +108,6 @@
     "@opentelemetry/instrumentation-koa": "0.70.0",
     "@opentelemetry/instrumentation-lru-memoizer": "0.66.0",
     "@opentelemetry/instrumentation-memcached": "0.65.0",
-    "@opentelemetry/instrumentation-mongodb": "0.75.0",
     "@opentelemetry/instrumentation-mongoose": "0.68.0",
     "@opentelemetry/instrumentation-mysql": "0.68.0",
     "@opentelemetry/instrumentation-nestjs-core": "0.68.0",
