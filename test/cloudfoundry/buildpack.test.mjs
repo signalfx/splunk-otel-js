@@ -47,7 +47,7 @@ function fixture(t, archive, stagingEnv = {}) {
     mkdirSync(join(buildpack, 'splunk-otel/node_modules'), { recursive: true });
     writeFileSync(
       join(buildpack, 'splunk-otel/instrument.js'),
-      'globalThis.splunkLoaded = (globalThis.splunkLoaded || 0) + 1;'
+      'globalThis.splunkLoaded = (globalThis.splunkLoaded || 0) + 1; globalThis.splunkStartupEnv = { ...process.env };'
     );
     writeFileSync(join(buildpack, 'VERSION'), 'test');
     writeFileSync(
@@ -111,7 +111,10 @@ function launch(f, code, env = {}, command = 'exec "$2" -e "$3"') {
       env: {
         ...Object.fromEntries(
           Object.entries(process.env).filter(
-            ([key]) => !/^(OTEL_|SPLUNK_)/.test(key)
+            ([key]) =>
+              !/^(OTEL_|SPLUNK_|VCAP_SERVICES(?:_FILE_PATH)?$|SERVICE_BINDING_ROOT$)/.test(
+                key
+              )
           )
         ),
         NODE_OPTIONS: '',
@@ -121,6 +124,31 @@ function launch(f, code, env = {}, command = 'exec "$2" -e "$3"') {
       encoding: 'utf8',
       timeout: 30000,
     }
+  );
+}
+
+function services(credentials, names = { name: 'test-splunk-o11y' }) {
+  return JSON.stringify({
+    'user-provided': [{ ...names, credentials }],
+    database: [
+      { name: 'unrelated', credentials: { 'splunk.realm': 'ignored' } },
+    ],
+  });
+}
+
+function assertBindingEnvironment(f, env, expected) {
+  return launch(
+    f,
+    [
+      'const assert = require("node:assert/strict");',
+      'assert.equal(globalThis.splunkLoaded, 1);',
+      'const expected = ' + JSON.stringify(expected) + ';',
+      'for (const [key, value] of Object.entries(expected)) {',
+      '  assert.equal(globalThis.splunkStartupEnv[key] ?? null, value, key);',
+      '}',
+    ].join('\n'),
+    env,
+    'exec "$2" -e "$3" 2>&1'
   );
 }
 
@@ -143,6 +171,365 @@ test('allows instrumentation to be disabled at launch', (t) => {
     {
       SPLUNK_OTEL_NODEJS_ENABLED: 'false',
     }
+  );
+});
+
+test('reads runtime splunk-o11y credentials before starting instrumentation', (t) => {
+  const stagingToken = 'staging-token-must-not-be-baked-in';
+  const f = fixture(t, undefined, {
+    VCAP_SERVICES: services({ 'splunk.access.token': stagingToken }),
+  });
+  const token = 'runtime-token-with-"quotes"-and-$()-characters';
+  const output = assertBindingEnvironment(
+    f,
+    {
+      VCAP_SERVICES: services({
+        'splunk.realm': 'eu0',
+        'splunk.access.token': token,
+        'otel.service.name': 'bound-app',
+        'otel.resource.attributes': 'deployment.environment=cf-test',
+        'otel.exporter.otlp.endpoint': 'https://collector.example.com',
+        'otel.instrumentation.http.capture_headers.server.request':
+          'x-request-id',
+        'splunk.metrics.enabled': false,
+        'otel.metric.export.interval': 1234,
+        'splunk.invalid': { nested: 'ignored' },
+        'otel.invalid': ['ignored'],
+        'splunk.empty': null,
+        'splunk.invalid.value': 'invalid\0value',
+        'otel.bad-key': 'ignored',
+        NODE_OPTIONS: '--invalid-option',
+        UNRELATED_SECRET: 'ignored',
+      }),
+    },
+    {
+      SPLUNK_REALM: 'eu0',
+      SPLUNK_ACCESS_TOKEN: token,
+      OTEL_SERVICE_NAME: 'bound-app',
+      OTEL_RESOURCE_ATTRIBUTES: 'deployment.environment=cf-test',
+      OTEL_EXPORTER_OTLP_ENDPOINT: 'https://collector.example.com',
+      OTEL_INSTRUMENTATION_HTTP_CAPTURE_HEADERS_SERVER_REQUEST: 'x-request-id',
+      SPLUNK_METRICS_ENABLED: 'false',
+      OTEL_METRIC_EXPORT_INTERVAL: '1234',
+      SPLUNK_INVALID: null,
+      OTEL_INVALID: null,
+      SPLUNK_EMPTY: null,
+      SPLUNK_INVALID_VALUE: null,
+      OTEL_BAD_KEY: null,
+      UNRELATED_SECRET: null,
+    }
+  );
+  assert.ok(!readFileSync(f.profile, 'utf8').includes(stagingToken));
+  assert.ok(!output.includes(token));
+  assert.ok(!output.includes('WARNING'));
+});
+
+test('supports every Java credential key alias', (t) => {
+  const f = fixture(t);
+  for (const [key, envKey] of [
+    ['realm', 'SPLUNK_REALM'],
+    ['access_token', 'SPLUNK_ACCESS_TOKEN'],
+    ['accessToken', 'SPLUNK_ACCESS_TOKEN'],
+    ['token', 'SPLUNK_ACCESS_TOKEN'],
+    ['otlp_endpoint', 'OTEL_EXPORTER_OTLP_ENDPOINT'],
+    ['otlpEndpoint', 'OTEL_EXPORTER_OTLP_ENDPOINT'],
+    ['endpoint', 'OTEL_EXPORTER_OTLP_ENDPOINT'],
+  ]) {
+    const output = assertBindingEnvironment(
+      f,
+      { VCAP_SERVICES: services({ [key]: 'alias-value' }) },
+      { [envKey]: 'alias-value' }
+    );
+    assert.equal(output, '');
+  }
+});
+
+test('dotted credentials take precedence over aliases regardless of input order, including empty values', (t) => {
+  const f = fixture(t);
+  const entries = Object.entries({
+    realm: 'alias-realm',
+    token: 'alias-token',
+    endpoint: 'https://alias.example.com',
+    'splunk.realm': 'dotted-realm',
+    'splunk.access.token': 'dotted-token',
+    'otel.exporter.otlp.endpoint': '',
+  });
+  for (const ordered of [entries, [...entries].reverse()]) {
+    assertBindingEnvironment(
+      f,
+      { VCAP_SERVICES: services(Object.fromEntries(ordered)) },
+      {
+        SPLUNK_REALM: 'dotted-realm',
+        SPLUNK_ACCESS_TOKEN: 'dotted-token',
+        OTEL_EXPORTER_OTLP_ENDPOINT: '',
+      }
+    );
+  }
+});
+
+test('uses Java alias preference order and skips invalid credential values', (t) => {
+  const f = fixture(t);
+  for (const [credentials, expected] of [
+    [
+      {
+        token: 'third-token',
+        accessToken: 'second-token',
+        access_token: 'first-token',
+        endpoint: 'https://third.example.com',
+        otlpEndpoint: 'https://second.example.com',
+        otlp_endpoint: 'https://first.example.com',
+      },
+      {
+        SPLUNK_ACCESS_TOKEN: 'first-token',
+        OTEL_EXPORTER_OTLP_ENDPOINT: 'https://first.example.com',
+      },
+    ],
+    [
+      {
+        access_token: null,
+        accessToken: 'second-token',
+        token: 'third-token',
+        otlp_endpoint: {},
+        otlpEndpoint: 'https://second.example.com',
+        endpoint: 'https://third.example.com',
+      },
+      {
+        SPLUNK_ACCESS_TOKEN: 'second-token',
+        OTEL_EXPORTER_OTLP_ENDPOINT: 'https://second.example.com',
+      },
+    ],
+    [
+      {
+        'splunk.access.token': [],
+        realm: {},
+        access_token: 'invalid\0token',
+        accessToken: null,
+        token: 'fallback-token',
+        otlp_endpoint: [],
+        otlpEndpoint: 'invalid\0endpoint',
+        endpoint: 'https://fallback.example.com',
+      },
+      {
+        SPLUNK_REALM: null,
+        SPLUNK_ACCESS_TOKEN: 'fallback-token',
+        OTEL_EXPORTER_OTLP_ENDPOINT: 'https://fallback.example.com',
+      },
+    ],
+    [
+      {
+        access_token: '',
+        accessToken: 'unused-token',
+        otlp_endpoint: '',
+        otlpEndpoint: 'https://unused.example.com',
+      },
+      { SPLUNK_ACCESS_TOKEN: '', OTEL_EXPORTER_OTLP_ENDPOINT: '' },
+    ],
+  ]) {
+    const output = assertBindingEnvironment(
+      f,
+      { VCAP_SERVICES: services(credentials) },
+      expected
+    );
+    assert.equal(output, '');
+  }
+});
+
+test('explicit agent environment variables override binding credentials, including empty values', (t) => {
+  const f = fixture(t);
+  assertBindingEnvironment(
+    f,
+    {
+      VCAP_SERVICES: services({
+        'splunk.realm': 'binding-realm',
+        'splunk.access.token': 'binding-token',
+        'otel.service.name': 'binding-name',
+        'splunk.metrics.enabled': true,
+        realm: 'alias-realm',
+        access_token: 'alias-token',
+        otlp_endpoint: 'https://alias.example.com',
+      }),
+      SPLUNK_REALM: 'explicit-realm',
+      SPLUNK_ACCESS_TOKEN: 'explicit-token',
+      OTEL_SERVICE_NAME: '',
+      SPLUNK_METRICS_ENABLED: 'false',
+      OTEL_EXPORTER_OTLP_ENDPOINT: '',
+    },
+    {
+      SPLUNK_REALM: 'explicit-realm',
+      SPLUNK_ACCESS_TOKEN: 'explicit-token',
+      OTEL_SERVICE_NAME: '',
+      SPLUNK_METRICS_ENABLED: 'false',
+      OTEL_EXPORTER_OTLP_ENDPOINT: '',
+    }
+  );
+});
+
+test('matches service instance names and binding aliases', (t) => {
+  const f = fixture(t);
+  for (const names of [
+    { name: 'alias', instance_name: 'production-splunk-o11y' },
+    { name: 'alias', binding_name: 'splunk-o11y-binding' },
+  ]) {
+    assertBindingEnvironment(
+      f,
+      {
+        VCAP_SERVICES: services({ 'splunk.realm': 'us0' }, names),
+      },
+      { SPLUNK_REALM: 'us0' }
+    );
+  }
+});
+
+test('leaves configuration unchanged without a matching bound service', (t) => {
+  const f = fixture(t);
+  for (const env of [
+    {},
+    { VCAP_SERVICES: '{}' },
+    {
+      VCAP_SERVICES: services({ 'splunk.realm': 'ignored' }, { name: 'other' }),
+    },
+  ]) {
+    const output = assertBindingEnvironment(f, env, { SPLUNK_REALM: null });
+    assert.equal(output, '');
+  }
+});
+
+test('loads credentials from file-based VCAP_SERVICES', (t) => {
+  const f = fixture(t);
+  const file = join(f.work, 'vcap-services.json');
+  writeFileSync(
+    file,
+    services({ 'splunk.realm': 'eu0', 'splunk.access.token': 'file-token' })
+  );
+  assertBindingEnvironment(
+    f,
+    { VCAP_SERVICES_FILE_PATH: file },
+    {
+      SPLUNK_REALM: 'eu0',
+      SPLUNK_ACCESS_TOKEN: 'file-token',
+    }
+  );
+});
+
+test('loads credentials from SERVICE_BINDING_ROOT using CF metadata', (t) => {
+  const f = fixture(t);
+  const root = join(f.work, 'service-bindings');
+  const matching = join(root, 'binding-id');
+  const unrelated = join(root, 'database');
+  mkdirSync(matching, { recursive: true });
+  mkdirSync(unrelated);
+  writeFileSync(join(matching, 'instance-name'), 'production-splunk-o11y');
+  writeFileSync(join(matching, 'splunk.realm'), 'us0');
+  writeFileSync(join(matching, 'splunk.access.token'), 'mounted-token');
+  writeFileSync(
+    join(matching, 'otel.resource.attributes'),
+    'deployment.environment=mounted'
+  );
+  writeFileSync(join(matching, 'NODE_OPTIONS'), '--invalid-option');
+  writeFileSync(join(unrelated, 'splunk.realm'), 'ignored');
+  assertBindingEnvironment(
+    f,
+    { SERVICE_BINDING_ROOT: root },
+    {
+      SPLUNK_REALM: 'us0',
+      SPLUNK_ACCESS_TOKEN: 'mounted-token',
+      OTEL_RESOURCE_ATTRIBUTES: 'deployment.environment=mounted',
+    }
+  );
+});
+
+test('loads aliases from both file-based binding formats', (t) => {
+  const f = fixture(t);
+  const credentials = {
+    realm: 'eu0',
+    accessToken: 'file-alias-token',
+    otlpEndpoint: 'https://collector.example.com',
+  };
+  const file = join(f.work, 'vcap-services.json');
+  writeFileSync(file, services(credentials));
+  const root = join(f.work, 'service-bindings');
+  const directory = join(root, 'splunk-o11y');
+  mkdirSync(directory, { recursive: true });
+  for (const [key, value] of Object.entries(credentials)) {
+    writeFileSync(join(directory, key), value);
+  }
+  for (const env of [
+    { VCAP_SERVICES_FILE_PATH: file },
+    { SERVICE_BINDING_ROOT: root },
+  ]) {
+    assertBindingEnvironment(f, env, {
+      SPLUNK_REALM: 'eu0',
+      SPLUNK_ACCESS_TOKEN: 'file-alias-token',
+      OTEL_EXPORTER_OTLP_ENDPOINT: 'https://collector.example.com',
+    });
+  }
+});
+
+test('skips malformed or unreadable bindings without logging their contents', (t) => {
+  const f = fixture(t);
+  const secret = 'synthetic-secret-must-not-be-logged';
+  for (const env of [
+    { VCAP_SERVICES: '{"' + secret + '":' },
+    { VCAP_SERVICES: 'null' },
+    { VCAP_SERVICES: '[]' },
+    { VCAP_SERVICES: services([secret]) },
+    { VCAP_SERVICES: services(null) },
+    { VCAP_SERVICES_FILE_PATH: join(f.work, 'missing-file') },
+    { SERVICE_BINDING_ROOT: join(f.work, 'missing-directory') },
+  ]) {
+    const output = assertBindingEnvironment(f, env, { SPLUNK_REALM: null });
+    assert.match(output, /Unable to read splunk-o11y service credentials/);
+    assert.ok(!output.includes(secret));
+  }
+});
+
+test('does not choose arbitrarily between multiple splunk-o11y services', (t) => {
+  const f = fixture(t);
+  const secret = 'synthetic-token-must-not-be-logged';
+  const output = assertBindingEnvironment(
+    f,
+    {
+      VCAP_SERVICES: JSON.stringify({
+        'user-provided': [
+          {
+            name: 'splunk-o11y-one',
+            credentials: {
+              'splunk.realm': 'us0',
+              'splunk.access.token': secret,
+            },
+          },
+          {
+            name: 'splunk-o11y-two',
+            credentials: {
+              'splunk.realm': 'eu0',
+              'splunk.access.token': secret,
+            },
+          },
+        ],
+      }),
+    },
+    { SPLUNK_REALM: null, SPLUNK_ACCESS_TOKEN: null }
+  );
+  assert.match(output, /Multiple splunk-o11y services/);
+  assert.ok(!output.includes(secret));
+});
+
+test('honors the preload disable switch supplied by a binding or the environment', (t) => {
+  const f = fixture(t);
+  launch(
+    f,
+    'require("node:assert/strict").equal(globalThis.splunkLoaded, undefined);',
+    {
+      VCAP_SERVICES: services({ 'splunk.otel.nodejs.enabled': false }),
+    }
+  );
+  assertBindingEnvironment(
+    f,
+    {
+      VCAP_SERVICES: services({ 'splunk.otel.nodejs.enabled': false }),
+      SPLUNK_OTEL_NODEJS_ENABLED: 'true',
+    },
+    { SPLUNK_OTEL_NODEJS_ENABLED: 'true' }
   );
 });
 
@@ -263,6 +650,8 @@ test(
     assert.equal(span.isRecording(), true);
     assert.match(span.spanContext().traceId, /^[a-f0-9]{32}$/);
     assert.equal(span.resource.attributes['service.name'], 'cf-test');
+    assert.equal(span.resource.attributes['deployment.environment'], 'cf-binding-test');
+    assert.equal(process.env.OTEL_EXPORTER_OTLP_ENDPOINT, 'http://127.0.0.1:4318');
     span.end();
     const http = require('node:http');
     const server = http.createServer((_req, res) => {
@@ -281,7 +670,11 @@ test(
   `,
       {
         CF_TEST_AGENT: agent,
-        OTEL_SERVICE_NAME: 'cf-test',
+        VCAP_SERVICES: services({
+          'otel.service.name': 'cf-test',
+          'otel.resource.attributes': 'deployment.environment=cf-binding-test',
+          endpoint: 'http://127.0.0.1:4318',
+        }),
         SPLUNK_METRICS_ENABLED: 'false',
         SPLUNK_PROFILER_ENABLED: 'false',
         OTEL_TRACES_EXPORTER: 'console',

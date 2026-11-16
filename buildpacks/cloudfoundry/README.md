@@ -5,8 +5,8 @@ bundled agent dependencies.
 
 ## Use
 
-Replace `X.Y.Z` with a [released version](https://github.com/signalfx/splunk-otel-js/releases)
-and set a Collector endpoint reachable from the app in `manifest.yml`:
+Replace `X.Y.Z` with a [released version](https://github.com/signalfx/splunk-otel-js/releases).
+Configure the agent through environment variables or a service binding:
 
 ```yaml
 applications:
@@ -32,6 +32,22 @@ leaving room for other memory. Restage after changing `OPTIMIZE_MEMORY`.
 Restage after buildpack upgrades. Restart after environment changes. Set
 `SPLUNK_OTEL_NODEJS_ENABLED=false` to disable the preload. See
 [agent configuration](https://quickdraw.splunk.com/redirect/?product=Observability&version=current&location=nodejs.application.gdi).
+
+## Service bindings
+
+Bind one user-provided service whose name contains `splunk-o11y`:
+
+```sh
+cf cups splunk-o11y -p '{"splunk.realm":"us0","splunk.access.token":"<token>","otel.resource.attributes":"deployment.environment=production"}'
+cf bind-service my-node-app splunk-o11y
+cf restage my-node-app
+```
+
+At startup, dotted `otel.*` / `splunk.*` credentials become environment variables
+(e.g. `splunk.access.token` → `SPLUNK_ACCESS_TOKEN`). Use Node.js-supported settings;
+explicit environment variables take precedence. Supports `VCAP_SERVICES`,
+`VCAP_SERVICES_FILE_PATH`, and `SERVICE_BINDING_ROOT`. Invalid or ambiguous
+bindings are skipped with a warning that omits credential values.
 
 ## Build and test
 
