@@ -4,7 +4,15 @@
  */
 
 import { InstrumentationConfig } from '@opentelemetry/instrumentation';
-import { Span } from '@opentelemetry/api';
+import { Span, TextMapPropagator } from '@opentelemetry/api';
+
+/** Information about the server selected for an operation. */
+export interface MongoDBServerInfo {
+  readonly address: string;
+  readonly maxWireVersion: number | undefined;
+  readonly maxBsonObjectSize: number;
+  readonly maxMessageSizeBytes: number;
+}
 
 export interface MongoDBInstrumentationExecutionResponseHook {
   (span: Span, responseInfo: MongoResponseHookInformation): void;
@@ -19,6 +27,29 @@ export interface MongoDBInstrumentationExecutionResponseHook {
 export type DbStatementSerializer = (cmd: Record<string, unknown>) => string;
 
 export interface MongoDBInstrumentationConfig extends InstrumentationConfig {
+  /**
+   * Propagate context through OP_MSG command comments. Defaults to false.
+   * Read at construction; later setConfig() calls cannot change this option.
+   */
+  addCommentToCommands?: boolean;
+
+  /**
+   * Overrides the global propagator for command comments only.
+   * Read at construction; later setConfig() calls cannot change this option.
+   */
+  commentPropagator?: TextMapPropagator;
+
+  /**
+   * Confirms that the selected server accepts document-valued command comments.
+   * Defaults to a MongoDB server check: maxWireVersion must be a valid integer
+   * >= 9 (MongoDB 4.4 or later). Unknown or older versions skip injection.
+   * MongoDB-compatible services must override this with their own capability check.
+   * Injection is skipped unless the selected callback returns true.
+   * The callback is selected at construction and evaluated for each operation.
+   * Later setConfig() calls cannot replace it.
+   */
+  supportsDocumentComments?: (server: MongoDBServerInfo) => boolean;
+
   /**
    * If true, additional information about query parameters and
    * results will be attached (as `attributes`) to spans representing

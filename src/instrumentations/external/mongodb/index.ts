@@ -11,4 +11,5 @@ export type {
   MongoDBInstrumentationConfig,
   MongoDBInstrumentationExecutionResponseHook,
   MongoResponseHookInformation,
+  MongoDBServerInfo,
 } from './types';

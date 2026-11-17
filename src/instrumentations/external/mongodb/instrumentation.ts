@@ -49,24 +49,52 @@ import {
   Replacer,
 } from './internal-types';
 import { V4Connect, V4Session } from './internal-types';
+import {
+  addCommentToMessage,
+  createCallbackCommandRunner,
+  createPromiseCommandRunner,
+  MONGODB_COMMENT_CONTEXT_KEY,
+  type CommentPropagationContext,
+  type MongoDBCommands,
+} from './comment-propagation';
 /** @knipignore */
 import { PACKAGE_NAME, PACKAGE_VERSION } from './version';
 
 const DEFAULT_CONFIG: MongoDBInstrumentationConfig = {
   requireParentSpan: true,
+  supportsDocumentComments: ({ maxWireVersion }) =>
+    maxWireVersion !== undefined &&
+    Number.isSafeInteger(maxWireVersion) &&
+    maxWireVersion >= 9,
 };
+// OP_MSG constructors expose the command after driver metadata is added, before
+// command monitoring and sending, so we can inject comments and validate the final
+// BSON and wire-message sizes.
+const COMMAND_CONSTRUCTORS = [
+  'Msg', // OP_MSG in mongodb >=4.0.0 <6.3.0.
+  'OpMsgRequest', // OP_MSG in mongodb >=6.3.0 <8.0.0.
+] as const;
 
 /** mongodb instrumentation plugin for OpenTelemetry */
 export class MongoDBInstrumentation extends InstrumentationBase<MongoDBInstrumentationConfig> {
   declare private _connectionsCount: UpDownCounter;
   declare private _poolName: string;
+  // Base construction calls setConfig() and init() before derived fields initialize.
+  declare private _commentConfig: Readonly<MongoDBInstrumentationConfig>;
 
   constructor(config: MongoDBInstrumentationConfig = {}) {
     super(PACKAGE_NAME, PACKAGE_VERSION, { ...DEFAULT_CONFIG, ...config });
   }
 
   override setConfig(config: MongoDBInstrumentationConfig = {}) {
-    super.setConfig({ ...DEFAULT_CONFIG, ...config });
+    this._commentConfig ??= Object.freeze({
+      addCommentToCommands: config.addCommentToCommands === true,
+      commentPropagator: config.commentPropagator,
+      supportsDocumentComments:
+        config.supportsDocumentComments ??
+        DEFAULT_CONFIG.supportsDocumentComments,
+    });
+    super.setConfig({ ...DEFAULT_CONFIG, ...config, ...this._commentConfig });
   }
 
   override _updateMetricInstruments() {
@@ -127,6 +155,21 @@ export class MongoDBInstrumentation extends InstrumentationBase<MongoDBInstrumen
         undefined,
         undefined,
         [
+          ...(this._commentConfig.addCommentToCommands
+            ? [
+                new InstrumentationNodeModuleFile(
+                  'mongodb/lib/cmap/commands.js',
+                  ['>=4.0.0 <8'],
+                  moduleExports => this._patchCommands(moduleExports),
+                  moduleExports => {
+                    for (const name of COMMAND_CONSTRUCTORS) {
+                      if (moduleExports?.[name])
+                        this._unwrap(moduleExports, name);
+                    }
+                  }
+                ),
+              ]
+            : []),
           new InstrumentationNodeModuleFile(
             'mongodb/lib/cmap/connection.js',
             ['>=4.0.0 <6.4'],
@@ -160,6 +203,40 @@ export class MongoDBInstrumentation extends InstrumentationBase<MongoDBInstrumen
         ]
       ),
     ];
+  }
+
+  private _patchCommands(moduleExports: MongoDBCommands) {
+    const instrumentation = this;
+    for (const name of COMMAND_CONSTRUCTORS) {
+      if (!moduleExports[name]) continue;
+      if (isWrapped(moduleExports[name])) this._unwrap(moduleExports, name);
+      this._wrap(moduleExports, name, Original => {
+        if (!Original) return Original;
+        const Constructor = Original;
+        function Message(...args: unknown[]) {
+          const message = Reflect.construct(Constructor, args, new.target);
+          const activeContext = context.active();
+          const propagationContext = activeContext.getValue(
+            MONGODB_COMMENT_CONTEXT_KEY
+          ) as CommentPropagationContext | undefined;
+          if (propagationContext) {
+            try {
+              addCommentToMessage(message, activeContext, propagationContext);
+            } catch (err) {
+              instrumentation._diag.debug(
+                'Skipping MongoDB comment propagation',
+                err
+              );
+            }
+          }
+          return message;
+        }
+        Message.prototype = Original.prototype;
+        Object.setPrototypeOf(Message, Original);
+        return Message as unknown as typeof Original;
+      });
+    }
+    return moduleExports;
   }
 
   private _getV3ConnectionPatches<T extends WireProtocolInternal>() {
@@ -560,6 +637,22 @@ export class MongoDBInstrumentation extends InstrumentationBase<MongoDBInstrumen
   private _getV4PatchCommandCallback() {
     const instrumentation = this;
     return (original: V4Connection['commandCallback']) => {
+      const runCommand = instrumentation._commentConfig.addCommentToCommands
+        ? createCallbackCommandRunner(
+            original,
+            instrumentation._commentConfig,
+            instrumentation._diag
+          )
+        : function (
+            this: any,
+            _span: Span | undefined,
+            ns: MongodbNamespace,
+            cmd: any,
+            options: unknown,
+            callback: any
+          ) {
+            return original.call(this, ns, cmd, options, callback);
+          };
       return function patchedV4ServerCommand(
         this: any,
         ns: MongodbNamespace,
@@ -598,7 +691,7 @@ export class MongoDBInstrumentation extends InstrumentationBase<MongoDBInstrumen
           commandType
         );
 
-        return original.call(this, ns, cmd, options, patchedCallback);
+        return runCommand.call(this, span, ns, cmd, options, patchedCallback);
       };
     };
   }
@@ -606,6 +699,19 @@ export class MongoDBInstrumentation extends InstrumentationBase<MongoDBInstrumen
   private _getV4PatchCommandPromise() {
     const instrumentation = this;
     return (original: V4Connection['commandPromise']) => {
+      const runCommand = instrumentation._commentConfig.addCommentToCommands
+        ? createPromiseCommandRunner(
+            original,
+            instrumentation._commentConfig,
+            instrumentation._diag
+          )
+        : function (
+            this: any,
+            _span: Span | undefined,
+            args: Parameters<V4Connection['commandPromise']>
+          ) {
+            return original.apply(this, args);
+          };
       return function patchedV4ServerCommand(
         this: any,
         ...args: Parameters<V4Connection['commandPromise']>
@@ -644,7 +750,7 @@ export class MongoDBInstrumentation extends InstrumentationBase<MongoDBInstrumen
           commandType
         );
 
-        const result = original.apply(this, args);
+        const result = runCommand.call(this, span, args);
         result.then(
           (res: any) => patchedCallback(null, res),
           (err: any) => patchedCallback(err)
