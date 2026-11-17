@@ -32,6 +32,7 @@ import {
 } from '@opentelemetry/api';
 import { W3CTraceContextPropagator } from '@opentelemetry/core';
 import { strict as assert } from 'assert';
+import { normalize } from 'node:path';
 import { describe, it, beforeEach } from 'node:test';
 import { TediousInstrumentation } from '@opentelemetry/instrumentation-tedious';
 import { OracleInstrumentation } from '@opentelemetry/instrumentation-oracledb';
@@ -129,7 +130,8 @@ describe('instrumentations', () => {
           assert.strictEqual(
             definitions.some((definition) =>
               definition.files?.some(
-                (file) => file.name === 'mongodb/lib/cmap/commands.js'
+                (file) =>
+                  file.name === normalize('mongodb/lib/cmap/commands.js')
               )
             ),
             enabled
