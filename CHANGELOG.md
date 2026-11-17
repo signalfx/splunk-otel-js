@@ -1,5 +1,10 @@
 # Change Log - @splunk/otel
 
+## 4.14.0
+
+- Add service binding support for the CloudFoundry buildpack. [#1205](https://github.com/signalfx/splunk-otel-js/pull/1205)
+- Add context propagation for MongoDB via comments. [#1204](https://github.com/signalfx/splunk-otel-js/pull/1204)
+
 ## 4.13.0
 
 - Add CloudFoundry buildpack support. [#1201](https://github.com/signalfx/splunk-otel-js/pull/1201)
