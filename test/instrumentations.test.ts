@@ -21,11 +21,23 @@ import {
 } from '../src/instrumentations';
 import { cleanEnvironment } from './utils';
 import { Instrumentation } from '@opentelemetry/instrumentation';
+import type { InstrumentationNodeModuleDefinition } from '@opentelemetry/instrumentation';
+import {
+  ROOT_CONTEXT,
+  TraceFlags,
+  createTraceState,
+  defaultTextMapSetter,
+  propagation,
+  trace,
+} from '@opentelemetry/api';
+import { W3CTraceContextPropagator } from '@opentelemetry/core';
 import { strict as assert } from 'assert';
 import { describe, it, beforeEach } from 'node:test';
 import { TediousInstrumentation } from '@opentelemetry/instrumentation-tedious';
 import { OracleInstrumentation } from '@opentelemetry/instrumentation-oracledb';
 import { PgInstrumentation } from '@opentelemetry/instrumentation-pg';
+import { MongoDBInstrumentation } from '../src/instrumentations/external/mongodb';
+import { _setDefaultOptions } from '../src/tracing/options';
 
 describe('instrumentations', () => {
   beforeEach(cleanEnvironment);
@@ -84,6 +96,85 @@ describe('instrumentations', () => {
   });
 
   describe('database trace context propagation', () => {
+    for (const [name, option, env, enabled] of [
+      ['disabled by default', undefined, undefined, false],
+      ['disabled explicitly', false, undefined, false],
+      ['enabled by option', true, undefined, true],
+      ['enabled by environment', undefined, 'true', true],
+    ] as const) {
+      it(`configures MongoDB at construction (${name})`, () => {
+        process.env.OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED = 'false';
+        process.env.OTEL_INSTRUMENTATION_MONGODB_ENABLED = 'true';
+        if (env !== undefined) {
+          process.env.SPLUNK_DB_TRACE_CONTEXT_PROPAGATION_ENABLED = env;
+        }
+        const options = _setDefaultOptions({
+          databaseTraceContextPropagationEnabled: option,
+        });
+        const instrumentations = options.instrumentations.flat();
+        try {
+          assert.strictEqual(instrumentations.length, 1);
+          const instrumentation = instrumentations[0];
+          assert.ok(instrumentation instanceof MongoDBInstrumentation);
+          assert.strictEqual(
+            options.databaseTraceContextPropagationEnabled,
+            enabled
+          );
+          assert.strictEqual(
+            instrumentation.getConfig().addCommentToCommands,
+            enabled
+          );
+          const definitions =
+            instrumentation.getModuleDefinitions() as InstrumentationNodeModuleDefinition[];
+          assert.strictEqual(
+            definitions.some((definition) =>
+              definition.files?.some(
+                (file) => file.name === 'mongodb/lib/cmap/commands.js'
+              )
+            ),
+            enabled
+          );
+        } finally {
+          instrumentations.forEach((instrumentation) =>
+            instrumentation.disable()
+          );
+        }
+      });
+    }
+
+    it('defaults MongoDB comments to W3C Trace Context without baggage', () => {
+      process.env.OTEL_INSTRUMENTATION_COMMON_DEFAULT_ENABLED = 'false';
+      process.env.OTEL_INSTRUMENTATION_MONGODB_ENABLED = 'true';
+      const [instrumentation] = getInstrumentations({
+        databaseTraceContextPropagationEnabled: true,
+      }) as MongoDBInstrumentation[];
+      try {
+        const propagator = instrumentation.getConfig().commentPropagator;
+        assert.ok(propagator instanceof W3CTraceContextPropagator);
+        const ctx = trace.setSpanContext(
+          propagation.setBaggage(
+            ROOT_CONTEXT,
+            propagation.createBaggage({ job: { value: 'rollup' } })
+          ),
+          {
+            traceId: '0123456789abcdef0123456789abcdef',
+            spanId: '0123456789abcdef',
+            traceFlags: TraceFlags.SAMPLED,
+            traceState: createTraceState('vendor=value'),
+          }
+        );
+        const carrier = {};
+        propagator.inject(ctx, carrier, defaultTextMapSetter);
+        assert.deepStrictEqual(carrier, {
+          traceparent:
+            '00-0123456789abcdef0123456789abcdef-0123456789abcdef-01',
+          tracestate: 'vendor=value',
+        });
+      } finally {
+        instrumentation.disable();
+      }
+    });
+
     it('sets enableTraceContextPropagation on TediousInstrumentation when enabled', () => {
       const tediousInstr = new TediousInstrumentation();
 

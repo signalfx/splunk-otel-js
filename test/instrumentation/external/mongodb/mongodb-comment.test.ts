@@ -33,6 +33,7 @@ import {
 } from '../../../../src/instrumentations/external/mongodb';
 import type { MongoClient, CommandStartedEvent } from 'mongodb';
 import { AlwaysOffSampler, TracerProvider } from '@opentelemetry/sdk-trace';
+import { bundledInstrumentations } from '../../../../src/instrumentations';
 
 describe(
   'MongoDB command comment propagation',
@@ -53,7 +54,17 @@ describe(
       instance.disable();
       return instance;
     }
+    const bundledMongo = bundledInstrumentations.find(
+      (instrumentation) => instrumentation.shortName === 'mongodb'
+    );
+    assert.ok(bundledMongo);
+    const distroMongo = bundledMongo.create({
+      databaseTraceContextPropagationEnabled: true,
+    }) as MongoDBInstrumentation;
+    distroMongo.setTracerProvider(provider);
+    distroMongo.disable();
     const instrumentations = {
+      distro: distroMongo,
       enabled: create(config),
       disabled: create(),
       unsupported: create({ ...config, supportsDocumentComments: () => false }),
@@ -216,6 +227,25 @@ describe(
       );
       await context.with(ctx, () => run());
       assert.ok(!Object.hasOwn(events[0].command.comment, 'baggage'));
+      assertPropagated(events[0]);
+      const carrier = {};
+      propagation.inject(ctx, carrier);
+      assert.strictEqual(
+        (carrier as Record<string, string>).baggage,
+        'job=rollup'
+      );
+    });
+
+    it('uses W3C Trace Context without baggage for the bundled MongoDB instrumentation', async () => {
+      configure(instrumentations.distro);
+      const ctx = propagation.setBaggage(
+        context.active(),
+        propagation.createBaggage({ job: { value: 'rollup' } })
+      );
+      await context.with(ctx, () => run());
+      assert.deepStrictEqual(Object.keys(events[0].command.comment), [
+        'traceparent',
+      ]);
       assertPropagated(events[0]);
       const carrier = {};
       propagation.inject(ctx, carrier);

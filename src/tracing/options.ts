@@ -179,7 +179,12 @@ export function _setDefaultOptions(
     ...extraTracerConfig,
   };
 
-  const instrumentations = options.instrumentations || getInstrumentations();
+  const databaseTraceContextPropagationEnabled =
+    options.databaseTraceContextPropagationEnabled ||
+    getConfigBoolean('SPLUNK_DB_TRACE_CONTEXT_PROPAGATION_ENABLED', false);
+  const instrumentations =
+    options.instrumentations ||
+    getInstrumentations({ databaseTraceContextPropagationEnabled });
 
   if (instrumentations.length === 0) {
     diag.warn(
@@ -199,9 +204,7 @@ export function _setDefaultOptions(
       options.captureHttpRequestUriParams || configGetUriParameterCapture(),
     instrumentations,
     tracerConfig,
-    databaseTraceContextPropagationEnabled:
-      options.databaseTraceContextPropagationEnabled ||
-      getConfigBoolean('SPLUNK_DB_TRACE_CONTEXT_PROPAGATION_ENABLED', false),
+    databaseTraceContextPropagationEnabled,
     spanExporterFactory:
       options.spanExporterFactory || defaultSpanExporterFactory(realm),
     spanProcessorFactory:

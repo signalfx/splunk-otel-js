@@ -22,6 +22,7 @@ import type { ProfilingOptions, StartProfilingOptions } from '../profiling';
 import type { OpAMPOptions, StartOpAMPOptions } from '../opamp';
 import type { Options as StartOptions } from '../start';
 import type { Instrumentation } from '@opentelemetry/instrumentation';
+import { W3CTraceContextPropagator } from '@opentelemetry/core';
 
 import { _setDefaultOptions as setDefaultTracingOptions } from '../tracing/options';
 import { _setDefaultOptions as setDefaultLoggingOptions } from '../logging';
@@ -84,7 +85,7 @@ import { HttpDcInstrumentation } from './httpdc/httpdc';
 
 type InstrumentationInfo = {
   shortName: string;
-  create: () => Instrumentation;
+  create: (options?: StartTracingOptions) => Instrumentation;
   disabledByDefault?: boolean;
 };
 
@@ -179,7 +180,11 @@ export const bundledInstrumentations: InstrumentationInfo[] = [
     shortName: 'memcached',
   },
   {
-    create: () => new MongoDBInstrumentation(),
+    create: (options) =>
+      new MongoDBInstrumentation({
+        addCommentToCommands: options?.databaseTraceContextPropagationEnabled,
+        commentPropagator: new W3CTraceContextPropagator(),
+      }),
     shortName: 'mongodb',
   },
   {
@@ -310,11 +315,13 @@ function getInstrumentationsToLoad() {
   return instrumentations;
 }
 
-export function getInstrumentations(): Instrumentation[] {
+export function getInstrumentations(
+  options: StartTracingOptions = {}
+): Instrumentation[] {
   const instrumentations: Instrumentation[] = [];
 
   for (const desc of getInstrumentationsToLoad()) {
-    instrumentations.push(desc.create());
+    instrumentations.push(desc.create(options));
   }
 
   return instrumentations;
