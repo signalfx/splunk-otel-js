@@ -27,3 +27,8 @@ The bundled instance uses `W3CTraceContextPropagator` to inject `traceparent` an
 propagator. The setting is applied at construction and cannot be toggled at runtime.
 Custom MongoDB instrumentation instances in `tracing.instrumentations` retain
 their own constructor settings.
+
+When context is injected, an existing `comment` is preserved under `originalComment`,
+retaining its BSON value and type. For example, `comment: 'nightly-job'` becomes
+`comment: { traceparent: '00-...', originalComment: 'nightly-job' }`.
+Database logs and profiling data may show this wrapped structure.
